@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "approval-policy.schema.json",
+  "title": "Versioned path-scoped business approval policy",
+  "description": "PROPOSED canonical Git policy. CODEOWNERS remains engineering-only. One independent approver is required in MVP; quorum and multiple approvers are deferred. Exactly one longest normalized path-prefix rule selects the eligible groups; less-specific rules never widen that selection.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_bundle_id",
+    "repository_id",
+    "space_id",
+    "rules"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "approval-policy-v1"
+    },
+    "policy_bundle_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[a-z0-9][a-z0-9._:-]*$"
+    },
+    "repository_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "space_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 63,
+      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$"
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "items": {
+        "$ref": "#/$defs/approvalRule"
+      }
+    }
+  },
+  "x-contract-invariants": [
+    {
+      "id": "APPROVAL_UNIQUE_RULE_IDS",
+      "rule": "rule_id is unique within rules. Duplicate rule_id makes the complete bundle invalid and preserves the previously active bundle.",
+      "error": "INVALID_POLICY"
+    },
+    {
+      "id": "APPROVAL_CANONICAL_PREFIXES",
+      "rule": "Normalize each path_prefix to NFC with forward slashes before activation. A prefix is '/' or starts with exactly one '/', has no empty, '.' or '..' segment, no trailing slash, no backslash/control character, and no ambiguous separator. The canonical value must equal the stored value after NFC normalization.",
+      "error": "INVALID_POLICY"
+    },
+    {
+      "id": "APPROVAL_DUPLICATE_PREFIX_REJECTED",
+      "rule": "Normalized path_prefix values are unique. Identical prefixes are rejected even when rule_id or external_group_ids differ; '/pricing' and '/pricing/' and NFC/NFD duplicates cannot coexist.",
+      "error": "INVALID_POLICY"
+    },
+    {
+      "id": "APPROVAL_LONGEST_NORMALIZED_PREFIX",
+      "rule": "For a normalized absolute document path, consider only rules whose prefix is '/' or equals the complete path or ends at a path-segment boundary of that path. Select exactly one rule with the greatest normalized prefix length. Only external_group_ids of that selected rule are eligible; groups from less-specific rules are not unioned. If no rule matches, review is denied.",
+      "error": "APPROVER_CONFLICT"
+    }
+  ],
+  "$defs": {
+    "approvalRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "path_prefix",
+        "external_group_ids",
+        "approvers_required",
+        "self_approval_allowed"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-z0-9][a-z0-9._:-]*$"
+        },
+        "path_prefix": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 513,
+          "pattern": "^/[^\\u0000-\\u001F\\\\]*$",
+          "not": {
+            "pattern": "(?:^|/)\\.\\.(?:/|$)"
+          },
+          "description": "NFC-normalized path prefix for review routing only; it does not create a page-level read ACL."
+        },
+        "external_group_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "approvers_required": {
+          "const": 1
+        },
+        "self_approval_allowed": {
+          "const": false
+        }
+      }
+    }
+  }
+}

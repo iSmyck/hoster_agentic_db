@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "docops-review-metadata.schema.json",
+  "title": "DocOps review metadata projection",
+  "description": "PROPOSED versioned projection of canonical document-front-matter-v2 valid_until and provenance. It drives review queues and events, never authorization, and is bound to one exact document revision.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "document_id",
+    "space_id",
+    "repository_id",
+    "document_revision_sha",
+    "valid_until",
+    "review_required",
+    "review_state",
+    "provenance",
+    "metadata_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "docops-review-metadata-v1"
+    },
+    "document_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "space_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 63,
+      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$"
+    },
+    "repository_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "document_revision_sha": {
+      "$ref": "#/$defs/gitSha"
+    },
+    "valid_until": {
+      "type": ["string", "null"],
+      "format": "date"
+    },
+    "review_required": {
+      "type": "boolean"
+    },
+    "review_state": {
+      "type": "string",
+      "enum": ["scheduled", "due", "in_review", "resolved", "removed"]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recorded_at", "recorded_by_stable_id", "metadata_ref"],
+      "properties": {
+        "recorded_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "recorded_by_stable_id": {
+          "$ref": "./proposal-record.schema.json#/$defs/stableId"
+        },
+        "metadata_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "description": "Opaque immutable DocOps/registry projection reference, not a mutable URL or credential."
+        },
+        "origin": {
+          "$ref": "./source-origin.schema.json"
+        }
+      }
+    },
+    "metadata_sha256": {
+      "$ref": "#/$defs/sha256",
+      "description": "SHA-256 of JCS UTF-8 for this object with metadata_sha256 omitted."
+    }
+  },
+  "x-contract-invariants": [
+    {
+      "id": "DOCOPS_CANONICAL_REVISION_EQUALITY",
+      "rule": "document_id, space_id, repository_id, document_revision_sha, valid_until, and optional provenance.origin exactly match the canonical document-front-matter-v2 revision. A registry row cannot override canonical metadata or grant access.",
+      "error": "VALIDATION_ERROR"
+    },
+    {
+      "id": "DOCOPS_EXPIRY_DERIVATION",
+      "rule": "When review_required=true and review_state is scheduled/due/in_review, valid_until is a date. At server evaluation time, a date before the current UTC date makes the item due; a future or current date is not expired. Expiry enqueues review and never archives or changes authorization automatically.",
+      "error": "INVALID_STATE"
+    },
+    {
+      "id": "DOCOPS_REMOVED_DATE",
+      "rule": "review_state=removed requires review_required=false and valid_until=null. Removing a date is itself projected from a reviewed canonical revision and preserves prior provenance/history.",
+      "error": "INVALID_STATE"
+    }
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "review_required": {
+            "const": true
+          }
+        },
+        "required": ["review_required"]
+      },
+      "then": {
+        "properties": {
+          "valid_until": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "review_required": {
+            "const": false
+          }
+        },
+        "required": ["review_required"]
+      },
+      "then": {
+        "properties": {
+          "valid_until": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "review_state": {
+            "enum": ["due", "in_review"]
+          }
+        },
+        "required": ["review_state"]
+      },
+      "then": {
+        "properties": {
+          "review_required": {
+            "const": true
+          },
+          "valid_until": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "review_state": {
+            "const": "removed"
+          }
+        },
+        "required": ["review_state"]
+      },
+      "then": {
+        "properties": {
+          "review_required": {
+            "const": false
+          },
+          "valid_until": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "gitSha": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

@@ -1,0 +1,3163 @@
+openapi: 3.1.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  title: Corporate KB GO API
+  version: 0.2.0-proposed
+  description: >-
+    PROPOSED собственный контракт GO под логическим префиксом /api/kb/v1. Это не Open WebUI upstream API и не описание непроверенных GitLab routes. Open WebUI commit, GitLab version/edition, реальные upstream session/CSRF/service-credential механизмы и object format — UNKNOWN до T00. Серверный trusted AuthzContext обязателен для каждого вызова; ни один request schema не принимает actor, groups или tenant как доказательство.
+x-contract-status: PROPOSED
+x-mutation-idempotency: Every mutating operation requires Idempotency-Key bound to authenticated actor, normalized route, and normalized payload SHA-256. Before insertion GO performs a global key-registry lookup across actors and routes; replay with a different actor, route, concrete path, or payload returns IDEMPOTENCY_KEY_REUSED with zero writes.
+x-contract-invariants:
+  - id: PATH_BODY_SPACE_ID
+    operations: [proposeCreateDocument, createImportDryRun, commitImport, createSpaceExport, applySpaceCutover, readLiveOperational]
+    rule: path.space_id == body.space_id and the trusted per-Space AuthzContext repository/policy binding; validate before any side effect.
+    error: VALIDATION_ERROR
+    alternative_denials:
+      - condition: mismatch is confirmed inside an already authorized object scope
+        error: VALIDATION_ERROR
+      - condition: returning object existence or mismatch details would violate anti-enumeration policy
+        error: NOT_FOUND
+  - id: PATH_BODY_DOCUMENT_ID
+    operations: [saveDocumentDraft, proposeEditDocument, proposeWholeDocumentEdit, proposeDocumentRestore]
+    rule: path.document_id == body.document_id and the authorized document UUID in the exact base revision; validate before any side effect.
+    error: VALIDATION_ERROR
+    alternative_denials:
+      - condition: mismatch is confirmed inside an already authorized object scope
+        error: VALIDATION_ERROR
+      - condition: returning object existence or mismatch details would violate anti-enumeration policy
+        error: NOT_FOUND
+  - id: PATH_BODY_PROPOSAL_ID
+    operations: [editProposalVersion, applyProposalDecision]
+    rule: path.proposal_id == body.proposal_id == decision/proposal record proposal_id in the path Space/repository; validate before any side effect.
+    error: VALIDATION_ERROR
+    alternative_denials:
+      - condition: mismatch is confirmed inside an already authorized object scope
+        error: VALIDATION_ERROR
+      - condition: returning object existence or mismatch details would violate anti-enumeration policy
+        error: NOT_FOUND
+  - id: PATH_BODY_IMPORT_ID
+    operations: [commitImport]
+    rule: path.import_id == body.import_id and path.space_id == body.space_id == dry-run manifest Space; the manifest hash binds the same import.
+    error: VALIDATION_ERROR
+    alternative_denials:
+      - condition: mismatch is confirmed inside an already authorized object scope
+        error: VALIDATION_ERROR
+      - condition: returning object existence or mismatch details would violate anti-enumeration policy
+        error: NOT_FOUND
+  - id: PATH_BODY_RUN_ID
+    operations: [reportIndexRunStatus]
+    rule: path.run_id == body.run_id and the callback belongs to the same run, Space, repository, generation, profile, and snapshot; validate before status writes.
+    error: VALIDATION_ERROR
+  - id: BODY_HEADER_IDEMPOTENCY
+    operations: [saveDocumentDraft, proposeCreateDocument, proposeEditDocument, proposeWholeDocumentEdit, editProposalVersion, applyProposalDecision, proposeDocumentRestore, createImportDryRun, commitImport, createSpaceExport, applySpaceCutover, ingestGitLabWebhook, reportIndexRunStatus]
+    rule: body.idempotency_key == Idempotency-Key header. The global key registry compares verified actor, normalized operation/route, concrete path parameters, and normalized payload before insert or side effect.
+    error: IDEMPOTENCY_KEY_REUSED
+  - id: DECISION_KEY_AND_PROPOSAL_EQUALITY
+    operations: [applyProposalDecision]
+    rule: decision_id == body.idempotency_key == Idempotency-Key header; path.proposal_id == body.proposal_id; expected_proposal_sha/base_sha equal the reviewed immutable version.
+    error: VALIDATION_ERROR
+  - id: AGENT_RESTRICTED_WRITE_SCHEMA
+    operations: [proposeCreateDocument, proposeEditDocument]
+    rule: boundedAgentCredential may use only the closed body-only create/patch schemas. It cannot invoke editProposalVersion, whole-document replacement, merge, decisions, grants, archive, restore, import commit, export, cutover, or attachment management. GO independently rejects forbidden diffs and credentials on every channel.
+    error: FORBIDDEN
+  - id: CONNECTOR_POST_CUTOVER_PROPOSAL_ONLY
+    operations: [createImportDryRun, commitImport]
+    rule: connectorCredential is bound to authorized source bindings. Dry-run has canonical_writes=false; commit is permitted only in post_cutover_proposal mode. Connector cannot select pre_cutover_controlled staging, merge, grants, index writes, or another Space/binding.
+    error: FORBIDDEN
+  - id: SEARCH_PER_SPACE_SNAPSHOTS
+    operations: [searchDocuments]
+    rule: Fan out only to requested Spaces present in trusted AuthzContext. Each result and cursor page preserves the full per-Space snapshot/repository/policy bundle/revisions/group snapshot/revocation epoch/profile set. No global or borrowed snapshot is allowed; every item's space_id/snapshot_id and citation match its descriptor.
+    error: AUTHZ_CONTEXT_STALE
+  - id: INDEX_STATUS_SNAPSHOT_BINDING
+    operations: [reportIndexRunStatus]
+    rule: body.snapshot_sha/main_generation_id/index_profile_version equal the corresponding snapshot fields. Active requires a non-preflight published descriptor and publication CAS evidence; preflight can never be active or serving.
+    error: INDEX_GENERATION_CONFLICT
+  - id: CUTOVER_SAME_SNAPSHOT_ACTIVATION
+    operations: [applySpaceCutover]
+    rule: Activated records dereference distinct preflight/published run and snapshot IDs with cutover_sha=main_sha=preflight_snapshot_sha=published_snapshot_sha. Preflight is full/ready/non-serving; published is a new fully validated non-preflight purpose=published active descriptor. Pointer CAS uses the current per-Space/profile publication fence.
+    error: INDEX_NOT_READY
+  - id: EXPORT_READY_COMPLETE
+    operations: [createSpaceExport, getSpaceExport]
+    rule: state=ready requires a manifest with closure.complete=decisions_complete=assets_complete=authorization_complete=true, missing=[], all assets exported, and decision/note/tag/hash/outcome closure. Missing/rejected assets or incomplete batches require incomplete or failed, never ready.
+    error: INVALID_STATE
+  - id: RESOLVED_LINK_DOCUMENT_ID
+    operations: [getDocumentLinks, listDocuments, readDocument]
+    rule: Every resolved link's target_document_id equals the UUID of the target document projection in the same Space and exact snapshot; source_document_id equals the path/document UUID. Swapped, orphan, and cycle states are not resolved.
+    error: INVALID_STRUCTURE
+  - id: LIVE_OPERATIONAL_TYPED_READ_ONLY
+    operations: [readLiveOperational]
+    rule: path.space_id == body.space_id and path.source_binding_id == body.source_binding_id. Only registered typed operations and bounded filters are allowed. Response has snapshot_time and immutable source version/hash; canonical_writes, proposal_cursor_effects, and index_writes are false. No wiki/MR/document/seen/proposed/merged cursor is created.
+    error: INVALID_STATE
+servers:
+  - url: /api/kb/v1
+    description: Logical GO prefix only; no deployment endpoint is selected.
+tags:
+  - name: documents
+  - name: proposals
+  - name: retrieval
+  - name: imports
+  - name: exports
+  - name: cutover
+  - name: integrations
+  - name: sources
+  - name: docops
+paths:
+  /spaces/{space_id}/documents:
+    get:
+      operationId: listDocuments
+      tags: [documents]
+      security:
+        - browserSession: []
+        - boundedAgentCredential: []
+      parameters:
+        - $ref: '#/components/parameters/SpaceId'
+        - name: parent_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Authorized page from one repository=Space snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentList'
+        default:
+          $ref: '#/components/responses/Error'
+  /documents/{document_id}:
+    get:
+      operationId: readDocument
+      tags: [documents]
+      security:
+        - browserSession: []
+        - boundedAgentCredential: []
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+        - name: revision_sha
+          in: query
+          schema:
+            $ref: '#/components/schemas/GitSha'
+        - name: section
+          in: query
+          description: Opaque section selector previously returned by the API; heading structure is not parsed by the client.
+          schema:
+            type: string
+            maxLength: 2048
+        - $ref: '#/components/parameters/Cursor'
+        - name: max_chars
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200000
+            default: 20000
+      responses:
+        '200':
+          description: Canonical whole/section read with explicit bounds and truncation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentRead'
+        default:
+          $ref: '#/components/responses/Error'
+  /documents/{document_id}/links:
+    get:
+      operationId: getDocumentLinks
+      tags: [documents]
+      security:
+        - browserSession: []
+        - boundedAgentCredential: []
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+        - name: revision_sha
+          in: query
+          schema:
+            $ref: '#/components/schemas/GitSha'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Authorized stable-ID links.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentLinks'
+        default:
+          $ref: '#/components/responses/Error'
+  /documents/{document_id}/history:
+    get:
+      operationId: listDocumentHistory
+      tags: [documents]
+      description: Bounded ACL-filtered canonical Git history for business restore/revert-MR. Protected objects use NOT_FOUND anti-enumeration; no GitLab user is required.
+      security:
+        - browserSession: []
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Exact revision page with ancestry and explicit continuation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentHistoryPage'
+        default:
+          $ref: '#/components/responses/Error'
+  /documents/{document_id}/drafts:
+    post:
+      operationId: saveDocumentDraft
+      tags: [documents]
+      description: Human draft autosave to a branch; main is unchanged. Agent flows use propose operations instead.
+      security:
+        - browserSession: []
+          csrfToken: []
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DraftSaveInput'
+      responses:
+        '200':
+          description: Existing idempotent draft result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DraftView'
+        '201':
+          description: Durable draft created on exact base.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DraftView'
+        default:
+          $ref: '#/components/responses/Error'
+  /spaces/{space_id}/proposals:
+    post:
+      operationId: proposeCreateDocument
+      tags: [proposals]
+      description: Single-page create through GO branch+MR+ProposalRecord; never a direct main write.
+      security:
+        - browserSession: []
+          csrfToken: []
+        - boundedAgentCredential: []
+      parameters:
+        - $ref: '#/components/parameters/SpaceId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposeCreateDocumentInput'
+      responses:
+        '201':
+          description: ProposalVersion and append-only ProposalRecord.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalView'
+        '200':
+          description: Existing proposal returned for the same idempotency context.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalView'
+        default:
+          $ref: '#/components/responses/Error'
+  /documents/{document_id}/proposals:
+    post:
+      operationId: proposeEditDocument
+      tags: [proposals]
+      description: Single-page edit from exact base SHA. Ambiguous patches and stale bases perform zero canonical writes.
+      security:
+        - browserSession: []
+          csrfToken: []
+        - boundedAgentCredential: []
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposeEditDocumentInput'
+      responses:
+        '201':
+          description: ProposalVersion and append-only ProposalRecord.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalView'
+        '200':
+          description: Existing idempotent proposal.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalView'
+        default:
+          $ref: '#/components/responses/Error'
+  /documents/{document_id}/replacement-proposals:
+    post:
+      operationId: proposeWholeDocumentEdit
+      tags: [proposals]
+      description: Human-only whole-document replacement including reviewed front matter and attachment changes. Bounded agents are forbidden and must use the restricted body-only patch operation.
+      security:
+        - browserSession: []
+          csrfToken: []
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HumanWholeDocumentEditInput'
+      responses:
+        '201':
+          description: Human ProposalVersion with complete front matter/link/attachment review.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalView'
+        '200':
+          description: Existing idempotent proposal.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalView'
+        default:
+          $ref: '#/components/responses/Error'
+  /spaces/{space_id}/review-proposals:
+    get:
+      operationId: listReviewProposals
+      tags: [proposals]
+      description: Bounded group-assigned approver queue. Server derives groups and longest-normalized-prefix rule from fresh per-Space policy context; no GitLab user or caller-supplied authority is accepted.
+      security:
+        - browserSession: []
+      parameters:
+        - $ref: '#/components/parameters/SpaceId'
+        - name: path_prefix
+          in: query
+          description: Optional narrowing prefix; it cannot widen the effective rule or Space scope.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 513
+            pattern: '^/[^\\u0000-\\u001F\\\\]*$'
+            not:
+              pattern: '(?:^|/)\.\.(?:/|$)'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Exact ProposalVersions assigned to current external groups, with per-Space policy/group evidence and truncation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewQueuePage'
+        default:
+          $ref: '#/components/responses/Error'
+  /proposals/{proposal_id}:
+    get:
+      operationId: getProposal
+      tags: [proposals]
+      security:
+        - browserSession: []
+        - boundedAgentCredential: []
+      parameters:
+        - $ref: '#/components/parameters/ProposalId'
+        - name: proposal_sha
+          in: query
+          description: Optional exact version selector; omission returns the current authorized version.
+          schema:
+            $ref: '#/components/schemas/GitSha'
+      responses:
+        '200':
+          description: Exact diff, preview reliability, principals, rationale, evidence, and decisions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalView'
+        default:
+          $ref: '#/components/responses/Error'
+  /proposals/{proposal_id}/versions:
+    post:
+      operationId: editProposalVersion
+      tags: [proposals]
+      description: Human-only creation of a new immutable ProposalVersion and ProposalRecord. Previous approval is invalid. Agents must create a new single-page proposal through the restricted propose operations and cannot edit an existing proposal version.
+      security:
+        - browserSession: []
+          csrfToken: []
+      parameters:
+        - $ref: '#/components/parameters/ProposalId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposalVersionInput'
+      responses:
+        '201':
+          description: New proposal SHA and version author; old approval is not inherited.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalView'
+        default:
+          $ref: '#/components/responses/Error'
+  /proposals/{proposal_id}/decisions:
+    post:
+      operationId: applyProposalDecision
+      tags: [proposals]
+      description: Human-only accept/reject/cancel. accepted executes the GO merge protocol; agent and connector credentials are never allowed. Idempotency-Key must equal decision_id.
+      security:
+        - browserSession: []
+          csrfToken: []
+      parameters:
+        - $ref: '#/components/parameters/ProposalId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionCommand'
+      responses:
+        '200':
+          description: Existing Git-derived result or durable reject/cancel outcome.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionResult'
+        '202':
+          description: Decision is durable but merge outcome is pending or quarantined; this is not merged success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionResult'
+        default:
+          $ref: '#/components/responses/Error'
+  /documents/{document_id}/restore-proposals:
+    post:
+      operationId: proposeDocumentRestore
+      tags: [proposals]
+      description: Human revert-MR/new commit workflow; history is never rewritten.
+      security:
+        - browserSession: []
+          csrfToken: []
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreProposalInput'
+      responses:
+        '201':
+          description: Restore proposal created for human review.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalView'
+        default:
+          $ref: '#/components/responses/Error'
+  /spaces/{space_id}/docops/review-queue:
+    get:
+      operationId: listDocOpsReviewQueue
+      tags: [docops]
+      description: Bounded ACL-filtered queue for expired, scheduled, and active DocOps reviews projected from canonical valid_until. Expiry never grants access or archives automatically.
+      security:
+        - browserSession: []
+      parameters:
+        - $ref: '#/components/parameters/SpaceId'
+        - name: review_state
+          in: query
+          schema:
+            type: string
+            enum: [scheduled, due, in_review]
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Exact revision-bound DocOps metadata with per-Space policy/group evidence and truncation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocOpsReviewQueuePage'
+        default:
+          $ref: '#/components/responses/Error'
+  /spaces/{space_id}/sources/{source_binding_id}/cursor:
+    get:
+      operationId: getSourceSyncCursor
+      tags: [sources]
+      description: Read one managed source cursor within the authorized binding. live_operational has no cursor and returns INVALID_STATE; no cursor is exposed across Spaces.
+      security:
+        - browserSession: []
+        - connectorCredential: []
+      parameters:
+        - $ref: '#/components/parameters/SpaceId'
+        - name: source_binding_id
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 128
+        - name: source_object_id
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 512
+      responses:
+        '200':
+          description: Durable seen/proposed/merged state for a non-live source binding.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceSyncCursor'
+        default:
+          $ref: '#/components/responses/Error'
+  /spaces/{space_id}/live-operational/{source_binding_id}/read:
+    post:
+      operationId: readLiveOperational
+      tags: [sources]
+      description: Read-only typed operation on a registered live_operational binding. It never creates a wiki page, proposal, index entry, or source cursor and is not an arbitrary source query.
+      security:
+        - browserSession: []
+        - connectorCredential: []
+      parameters:
+        - $ref: '#/components/parameters/SpaceId'
+        - name: source_binding_id
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LiveOperationalReadInput'
+      responses:
+        '200':
+          description: Bounded typed facts with snapshot_time and no canonical/cursor/index effects.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LiveOperationalReadResult'
+        default:
+          $ref: '#/components/responses/Error'
+  /retrieval/search:
+    post:
+      operationId: searchDocuments
+      tags: [retrieval]
+      description: Read-only exact or semantic bounded search with per-Space authorization and fan-out. Every response/cursor chain preserves the complete set of active per-Space snapshots, profiles, policy bundles, revisions, group snapshots, and revocation epochs.
+      security:
+        - browserSession: []
+        - boundedAgentCredential: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchDocumentsInput'
+      responses:
+        '200':
+          description: Authorized candidates; stale or revoked candidates are rejected before payload exposure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchPage'
+        default:
+          $ref: '#/components/responses/Error'
+  /spaces/{space_id}/index/active:
+    get:
+      operationId: getActiveIndexSnapshot
+      tags: [retrieval]
+      security:
+        - browserSession: []
+      parameters:
+        - $ref: '#/components/parameters/SpaceId'
+      responses:
+        '200':
+          description: Current active published index descriptor; never an inactive preflight.
+          content:
+            application/json:
+              schema:
+                $ref: './index-snapshot.schema.json'
+        default:
+          $ref: '#/components/responses/Error'
+  /spaces/{space_id}/imports/dry-runs:
+    post:
+      operationId: createImportDryRun
+      tags: [imports]
+      description: Creates only bounded staging/report artifacts; no branch, MR, main commit, active index entry, or merged cursor.
+      security:
+        - browserSession: []
+          csrfToken: []
+        - internalCICredential: []
+        - connectorCredential: []
+      parameters:
+        - $ref: '#/components/parameters/SpaceId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportDryRunInput'
+      responses:
+        '201':
+          description: Deterministic path-to-ID/provenance/links/assets/errors manifest.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportManifest'
+        default:
+          $ref: '#/components/responses/Error'
+  /spaces/{space_id}/imports/{import_id}/commit:
+    post:
+      operationId: commitImport
+      tags: [imports]
+      description: Commits a validated dry-run into the applicable GO workflow. After cutover this always creates an MR for human merge; controlled bulk staging is available only to authorized browser/engineering flow before cutover. Connector credential is restricted to its source binding and post_cutover_proposal mode.
+      security:
+        - browserSession: []
+          csrfToken: []
+        - connectorCredential: []
+      parameters:
+        - $ref: '#/components/parameters/SpaceId'
+        - name: import_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportCommitInput'
+      responses:
+        '201':
+          description: Post-cutover proposal or pre-cutover controlled staging result; not an automatic publication.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportCommitResult'
+        default:
+          $ref: '#/components/responses/Error'
+  /spaces/{space_id}/exports:
+    post:
+      operationId: createSpaceExport
+      tags: [exports]
+      description: Human privileged full clone+manifests operation with fresh group/export/history authorization on every batch.
+      security:
+        - browserSession: []
+          csrfToken: []
+      parameters:
+        - $ref: '#/components/parameters/SpaceId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportInput'
+      responses:
+        '202':
+          description: Export job accepted; no payload is returned before closure and authorization validation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportJob'
+        default:
+          $ref: '#/components/responses/Error'
+  /exports/{export_id}:
+    get:
+      operationId: getSpaceExport
+      tags: [exports]
+      security:
+        - browserSession: []
+      parameters:
+        - name: export_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job status and, only when complete, the full export manifest.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportJob'
+        default:
+          $ref: '#/components/responses/Error'
+  /spaces/{space_id}/cutover:
+    post:
+      operationId: applySpaceCutover
+      tags: [cutover]
+      description: Privileged resumable cutover state machine. It starts with write freeze and HEAD==cutover_sha; success requires protections, inactive preflight, published pointer, then Space activation.
+      security:
+        - browserSession: []
+          csrfToken: []
+      parameters:
+        - $ref: '#/components/parameters/SpaceId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CutoverCommand'
+      responses:
+        '200':
+          description: Existing cutover state for the same Space+SHA.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CutoverRecord'
+        '202':
+          description: Cutover is incomplete; user access remains closed until activation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CutoverRecord'
+        default:
+          $ref: '#/components/responses/Error'
+  /integrations/gitlab/webhooks:
+    post:
+      operationId: ingestGitLabWebhook
+      tags: [integrations]
+      description: PROPOSED normalized GO intake boundary, not an asserted upstream GitLab route/header contract. The adapter must verify authenticity and replay before trusting actor/event identity. Provider mapping is UNKNOWN T00.
+      security:
+        - webhookCredential: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookInput'
+      responses:
+        '202':
+          description: Verified event accepted/deduplicated; Git state is read separately before CI dispatch.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookAck'
+        default:
+          $ref: '#/components/responses/Error'
+  /internal/index-runs/{run_id}/events:
+    post:
+      operationId: reportIndexRunStatus
+      tags: [integrations]
+      description: Internal CI-only status mutation. CI cannot move main, merge, alter grants, or directly expose an index snapshot for retrieval.
+      security:
+        - internalCICredential: []
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndexRunStatusInput'
+      responses:
+        '200':
+          description: Status accepted or deduplicated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexRunStatusResult'
+        default:
+          $ref: '#/components/responses/Error'
+components:
+  securitySchemes:
+    browserSession:
+      type: apiKey
+      in: cookie
+      name: kb_browser_session
+      description: PROPOSED logical placeholder for the upstream authenticated session. Actual Open WebUI cookie/session mechanism is UNKNOWN T00; anonymous managed access is forbidden.
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: PROPOSED own-GO CSRF contract for browser mutations. Actual upstream CSRF header/token issuance and validation are UNKNOWN T00 and must be mapped without weakening server checks.
+    boundedAgentCredential:
+      type: http
+      scheme: bearer
+      bearerFormat: bounded-agent-capability
+      description: Separate least-privilege server-issued agent credential with read/search/propose only. It has no merge, grants, shell, generic SQL, arbitrary Git/filesystem, export, Tool Creation, or arbitrary Python capability.
+    connectorCredential:
+      type: http
+      scheme: bearer
+      bearerFormat: source-connector-proposal-capability
+      description: Separate source-binding-scoped connector identity for immutable dry-run, post-cutover proposals, typed source reads, and cursor reads. It is neither browser nor agent credential and has no merge, grant, pre-cutover bulk, arbitrary query, or index-write capability.
+    internalCICredential:
+      type: http
+      scheme: bearer
+      bearerFormat: internal-ci-capability
+      description: Separate CI/index credential limited to exact-main reads, approved index work, and status callbacks. It is not an agent or merge credential.
+    webhookCredential:
+      type: apiKey
+      in: header
+      name: X-KB-Webhook-Credential
+      description: PROPOSED logical webhook credential header. Actual GitLab secret/signature/replay fields are UNKNOWN T00. Secrets exist only in deployment secret storage and are never represented in schemas/examples.
+  parameters:
+    SpaceId:
+      name: space_id
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 63
+        pattern: '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$'
+    DocumentId:
+      name: document_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProposalId:
+      name: proposal_id
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Stable across retries of the same actor+route+payload. For proposal decisions it must equal decision_id. Never replace it to mask an uncertain merge outcome.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+    Cursor:
+      name: cursor
+      in: query
+      description: Opaque bounded server cursor tied to query, scope, snapshot/profile, and authorization revision. It grants no independent permission.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 4096
+        pattern: '^[A-Za-z0-9_-]+$'
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+  responses:
+    Error:
+      description: Sanitized machine-readable error. Anti-enumeration uses NOT_FOUND where disclosure of existence is forbidden.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    GitSha:
+      type: string
+      pattern: '^(?:[0-9a-f]{40}|[0-9a-f]{64})$'
+      description: Full lowercase Git object ID; no short SHA. Repository object format is UNKNOWN T00.
+    Sha256:
+      type: string
+      pattern: '^[0-9a-f]{64}$'
+    StableId:
+      type: string
+      minLength: 1
+      maxLength: 512
+    Error:
+      type: object
+      additionalProperties: false
+      required: [code, message, request_id, retryable]
+      properties:
+        code:
+          type: string
+          enum: [NOT_FOUND, FORBIDDEN, STALE_BASE, PROPOSAL_VERSION_MISMATCH, PATCH_AMBIGUOUS, INVALID_STRUCTURE, INVALID_STATE, UPSTREAM_UNAVAILABLE, LIMIT_EXCEEDED, IDEMPOTENCY_KEY_REUSED, POLICY_REVISION_MISMATCH, DECISION_INVALID, RECOVERY_REQUIRED, AUTHZ_CONTEXT_STALE, GROUP_SNAPSHOT_STALE, IDENTITY_UNAVAILABLE, APPROVER_CONFLICT, INVALID_POLICY, INDEX_NOT_READY, STALE_INDEX_CANDIDATE, INDEX_GENERATION_CONFLICT, REVISION_CONFLICT, DEPENDENCY_CLOSURE_MISMATCH, PROFILE_MISMATCH, SECURITY_REJECTED, PII_REVIEW_REQUIRED, UNSUPPORTED_FORMAT, EXTRACTION_LOSS, OUTSTANDING_PROPOSAL_EXISTS, CURATED_CONFLICT, SOURCE_GONE, CSRF_REJECTED, WEBHOOK_REJECTED, VALIDATION_ERROR]
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        request_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        details:
+          type: object
+          maxProperties: 32
+          additionalProperties:
+            type: [string, number, boolean, 'null']
+          description: Optional sanitized scalar metadata only; no raw private content, secrets, or provider payloads.
+        retryable:
+          type: boolean
+          description: Never infer merge absence from retryable/timeout. RECOVERY_REQUIRED requires reconciliation, not blind retry.
+    Truncation:
+      type: object
+      additionalProperties: false
+      required: [truncated, reason, next_cursor]
+      properties:
+        truncated:
+          type: boolean
+        reason:
+          type: string
+          enum: [none, item_limit, character_limit, byte_limit, snapshot_boundary]
+        next_cursor:
+          type: [string, 'null']
+          minLength: 1
+          maxLength: 4096
+          pattern: '^[A-Za-z0-9_-]+$'
+      allOf:
+        - if:
+            properties:
+              truncated:
+                const: false
+            required: [truncated]
+          then:
+            properties:
+              reason:
+                const: none
+              next_cursor:
+                type: 'null'
+        - if:
+            properties:
+              truncated:
+                const: true
+            required: [truncated]
+          then:
+            properties:
+              reason:
+                enum: [item_limit, character_limit, byte_limit, snapshot_boundary]
+              next_cursor:
+                type: string
+    Section:
+      type: object
+      additionalProperties: false
+      required: [heading_path, occurrence]
+      properties:
+        heading_path:
+          type: array
+          maxItems: 16
+          items:
+            type: string
+            minLength: 1
+            maxLength: 512
+        anchor:
+          type: string
+          minLength: 1
+          maxLength: 256
+        occurrence:
+          type: integer
+          minimum: 1
+          maximum: 1000
+    DocumentSummary:
+      type: object
+      additionalProperties: false
+      required: [document_id, space_id, parent_id, title, path, ownership_mode, state, document_revision_sha, archived]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+        parent_id:
+          type: [string, 'null']
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 512
+        path:
+          type: string
+          minLength: 1
+          maxLength: 1024
+        ownership_mode:
+          type: string
+          enum: [migrated, source_managed, curated]
+        state:
+          type: string
+          enum: [draft, in_review, published, indexed, archived, conflicted]
+        document_revision_sha:
+          $ref: '#/components/schemas/GitSha'
+        archived:
+          type: boolean
+    DocumentList:
+      type: object
+      additionalProperties: false
+      required: [items, snapshot_sha, limit, truncation]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/DocumentSummary'
+        snapshot_sha:
+          $ref: '#/components/schemas/GitSha'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        truncation:
+          $ref: '#/components/schemas/Truncation'
+    DocumentHistoryEntry:
+      type: object
+      additionalProperties: false
+      required: [document_id, revision_sha, parent_shas, root, committed_at, current]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        revision_sha:
+          $ref: '#/components/schemas/GitSha'
+        parent_shas:
+          type: array
+          minItems: 0
+          maxItems: 2
+          items:
+            $ref: '#/components/schemas/GitSha'
+        root:
+          type: boolean
+          description: True only after server verification that the Git commit has zero parents. Non-root revisions have one or two parent SHAs.
+        committed_at:
+          type: string
+          format: date-time
+        author_stable_id:
+          type: [string, 'null']
+          minLength: 1
+          maxLength: 512
+        proposal_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        current:
+          type: boolean
+          description: True only for the exact history_head_sha revision; ordering follows Git ancestry, never SHA sorting.
+      allOf:
+        - if:
+            properties:
+              root:
+                const: true
+            required: [root]
+          then:
+            properties:
+              parent_shas:
+                maxItems: 0
+        - if:
+            properties:
+              root:
+                const: false
+            required: [root]
+          then:
+            properties:
+              parent_shas:
+                minItems: 1
+    DocumentHistoryPage:
+      type: object
+      additionalProperties: false
+      required: [document_id, history_head_sha, items, limit, truncation]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        history_head_sha:
+          $ref: '#/components/schemas/GitSha'
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/DocumentHistoryEntry'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        truncation:
+          $ref: '#/components/schemas/Truncation'
+      x-contract-invariants:
+        - id: DOCUMENT_HISTORY_EXACT_REVISION
+          rule: Every item.document_id equals the path/page document_id; current=true iff revision_sha=history_head_sha. Cursor binds that document and head. root=true is permitted only after Git verifies zero parents and requires parent_shas=[]; root=false requires one or two verified parents. parent_shas and ordering come from Git ancestry, and restore creates a revert-MR from the selected exact revision without history rewrite.
+          error: REVISION_CONFLICT
+    ListDocumentsInput:
+      type: object
+      additionalProperties: false
+      required: [space_id]
+      properties:
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+        parent_id:
+          type: string
+          format: uuid
+        cursor:
+          type: string
+          minLength: 1
+          maxLength: 4096
+          pattern: '^[A-Za-z0-9_-]+$'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+    DocumentRead:
+      type: object
+      additionalProperties: false
+      required: [document_id, document_revision_sha, path, content, content_format, historical, truncation]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        document_revision_sha:
+          $ref: '#/components/schemas/GitSha'
+        path:
+          type: string
+          minLength: 1
+          maxLength: 1024
+        section:
+          $ref: '#/components/schemas/Section'
+        content:
+          type: string
+          maxLength: 200000
+        content_format:
+          type: string
+          enum: [markdown_with_front_matter, markdown_fragment]
+        front_matter:
+          $ref: './front-matter.schema.json'
+        historical:
+          type: boolean
+          description: Explicit historical reads are authorized and labelled; stale retrieval never silently sets this fallback.
+        truncation:
+          $ref: '#/components/schemas/Truncation'
+    ReadDocumentInput:
+      type: object
+      additionalProperties: false
+      required: [document_id]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        revision_sha:
+          $ref: '#/components/schemas/GitSha'
+        section:
+          $ref: '#/components/schemas/Section'
+        cursor:
+          type: string
+          minLength: 1
+          maxLength: 4096
+          pattern: '^[A-Za-z0-9_-]+$'
+        max_chars:
+          type: integer
+          minimum: 1
+          maximum: 200000
+          default: 20000
+    SearchScope:
+      type: object
+      additionalProperties: false
+      description: Client scope can only narrow the server-issued effective AuthzContext.
+      properties:
+        space_ids:
+          type: array
+          minItems: 1
+          maxItems: 16
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 63
+        document_ids:
+          type: array
+          minItems: 1
+          maxItems: 32
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        subtree:
+          type: object
+          additionalProperties: false
+          required: [space_id, path_prefix]
+          properties:
+            space_id:
+              type: string
+              minLength: 1
+              maxLength: 63
+            path_prefix:
+              type: string
+              minLength: 1
+              maxLength: 513
+              pattern: '^/[^\\u0000-\\u001F\\\\]*$'
+              not:
+                pattern: '(?:^|/)\.\.(?:/|$)'
+    SearchDocumentsInput:
+      type: object
+      additionalProperties: false
+      required: [query, mode]
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 2048
+        mode:
+          type: string
+          enum: [exact, semantic]
+        scope:
+          $ref: '#/components/schemas/SearchScope'
+        cursor:
+          type: string
+          minLength: 1
+          maxLength: 4096
+          pattern: '^[A-Za-z0-9_-]+$'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+    GroupSnapshotDescriptor:
+      type: object
+      additionalProperties: false
+      required: [snapshot_id, captured_at, membership_sha256]
+      properties:
+        snapshot_id:
+          type: string
+          format: uuid
+        captured_at:
+          type: string
+          format: date-time
+        membership_sha256:
+          $ref: '#/components/schemas/Sha256'
+    PerSpaceAuthorization:
+      type: object
+      additionalProperties: false
+      required: [space_id, repository_id, policy_bundle_id, access_policy_revision, approval_policy_revision, group_snapshot, revocation_epoch]
+      properties:
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+        repository_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        policy_bundle_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+        access_policy_revision:
+          $ref: '#/components/schemas/GitSha'
+        approval_policy_revision:
+          $ref: '#/components/schemas/GitSha'
+        group_snapshot:
+          $ref: '#/components/schemas/GroupSnapshotDescriptor'
+        revocation_epoch:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+    SnapshotDescriptor:
+      type: object
+      additionalProperties: false
+      required: [authorization, snapshot_id, snapshot_sha, main_generation_id, index_profile_version]
+      properties:
+        authorization:
+          $ref: '#/components/schemas/PerSpaceAuthorization'
+        snapshot_id:
+          type: string
+          format: uuid
+        snapshot_sha:
+          $ref: '#/components/schemas/GitSha'
+        main_generation_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        index_profile_version:
+          type: string
+          minLength: 1
+          maxLength: 128
+    SearchResult:
+      type: object
+      additionalProperties: false
+      required: [space_id, document_id, document_revision_sha, snapshot_id, snapshot_sha, match_mode, section, citation]
+      properties:
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+        document_id:
+          type: string
+          format: uuid
+        document_revision_sha:
+          $ref: '#/components/schemas/GitSha'
+        snapshot_id:
+          type: string
+          format: uuid
+        snapshot_sha:
+          $ref: '#/components/schemas/GitSha'
+        match_mode:
+          type: string
+          enum: [exact, semantic]
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+        section:
+          $ref: '#/components/schemas/Section'
+        snippet:
+          type: string
+          maxLength: 4000
+          description: Returned only after fresh payload authorization.
+        citation:
+          type: object
+          additionalProperties: false
+          required: [space_id, document_id, document_revision_sha, section]
+          properties:
+            space_id:
+              type: string
+              minLength: 1
+              maxLength: 63
+            document_id:
+              type: string
+              format: uuid
+            document_revision_sha:
+              $ref: '#/components/schemas/GitSha'
+            section:
+              $ref: '#/components/schemas/Section'
+    SearchPage:
+      type: object
+      additionalProperties: false
+      required: [items, snapshots, limit, truncation]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        snapshots:
+          type: array
+          minItems: 1
+          maxItems: 16
+          items:
+            $ref: '#/components/schemas/SnapshotDescriptor'
+          description: Complete ordered per-Space fan-out context. Cursor chains bind the entire set, not one global snapshot.
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        truncation:
+          $ref: '#/components/schemas/Truncation'
+    DocumentLinkEntry:
+      type: object
+      additionalProperties: false
+      required: [source_document_id, target_document_id, relation]
+      properties:
+        source_document_id:
+          type: string
+          format: uuid
+        target_document_id:
+          type: string
+          format: uuid
+        relation:
+          type: string
+          enum: [references, supersedes, replaces]
+        section:
+          $ref: '#/components/schemas/Section'
+    DocumentLinks:
+      type: object
+      additionalProperties: false
+      required: [document_id, document_revision_sha, items, limit, truncation]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        document_revision_sha:
+          $ref: '#/components/schemas/GitSha'
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/DocumentLinkEntry'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        truncation:
+          $ref: '#/components/schemas/Truncation'
+    GetDocumentLinksInput:
+      type: object
+      additionalProperties: false
+      required: [document_id]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        revision_sha:
+          $ref: '#/components/schemas/GitSha'
+        cursor:
+          type: string
+          minLength: 1
+          maxLength: 4096
+          pattern: '^[A-Za-z0-9_-]+$'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+    ReviewQueueItem:
+      type: object
+      additionalProperties: false
+      required: [proposal_id, proposal_version_id, document_id, path, base_sha, proposal_sha, state, author_stable_id, version_author_stable_id, requester_stable_id, assigned_group_ids, created_at]
+      properties:
+        proposal_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        proposal_version_id:
+          type: string
+          format: uuid
+        document_id:
+          type: string
+          format: uuid
+        path:
+          type: string
+          minLength: 1
+          maxLength: 1024
+        base_sha:
+          $ref: '#/components/schemas/GitSha'
+        proposal_sha:
+          $ref: '#/components/schemas/GitSha'
+        state:
+          type: string
+          enum: [in_review, conflicted]
+        author_stable_id:
+          $ref: '#/components/schemas/StableId'
+        version_author_stable_id:
+          $ref: '#/components/schemas/StableId'
+        requester_stable_id:
+          $ref: '#/components/schemas/StableId'
+        assigned_group_ids:
+          type: array
+          minItems: 1
+          maxItems: 64
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 512
+          description: Groups from exactly one selected longest-normalized-prefix approval rule, intersected with current approver membership.
+        created_at:
+          type: string
+          format: date-time
+    ReviewQueuePage:
+      type: object
+      additionalProperties: false
+      required: [authorization, items, limit, truncation]
+      properties:
+        authorization:
+          $ref: '#/components/schemas/PerSpaceAuthorization'
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ReviewQueueItem'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        truncation:
+          $ref: '#/components/schemas/Truncation'
+      x-contract-invariants:
+        - id: REVIEW_QUEUE_GROUP_ASSIGNMENT
+          rule: authorization.space_id equals the path Space. Every item belongs to that Space and is assigned only to current approver groups from exactly one longest-normalized-prefix rule. base_sha/proposal_sha identify one immutable version; cursor binds the complete authorization and queue filter. No caller group, GitLab user, or less-specific prefix can widen the queue.
+          error: FORBIDDEN
+    DocOpsReviewQueuePage:
+      type: object
+      additionalProperties: false
+      required: [authorization, items, limit, truncation]
+      properties:
+        authorization:
+          $ref: '#/components/schemas/PerSpaceAuthorization'
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: './docops-review-metadata.schema.json'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        truncation:
+          $ref: '#/components/schemas/Truncation'
+      x-contract-invariants:
+        - id: DOCOPS_QUEUE_CANONICAL_BINDING
+          rule: Every item is freshly authorized in authorization.space_id and exactly matches its canonical document_id/revision/valid_until/provenance. due is recomputed using server UTC at evaluation; future/current dates remain scheduled and removed dates do not enter the active queue. Cursor binds Space, policy/group evidence, filter, and revision set.
+          error: AUTHZ_CONTEXT_STALE
+    SourceSyncCursor:
+      type: object
+      additionalProperties: false
+      required: [source_binding_id, source_object_id, space_id, repository_id, ownership_mode, sync_state, seen_version, seen_hash, proposed_version, proposed_hash, outstanding_proposal_id, outstanding_proposal_sha, merged_version, merged_hash, merge_commit_sha, merge_verified]
+      properties:
+        source_binding_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        source_object_id:
+          type: string
+          minLength: 1
+          maxLength: 512
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+        repository_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        document_id:
+          type: string
+          format: uuid
+        ownership_mode:
+          type: string
+          enum: [migrated, source_managed, curated]
+        sync_state:
+          type: string
+          enum: [observed, seen_durable, no_op, proposal_pending, merged, rejected, conflicted, tombstone, retry, dead_letter]
+        seen_version:
+          type: [string, 'null']
+          minLength: 1
+          maxLength: 512
+        seen_hash:
+          type: [string, 'null']
+          pattern: '^[0-9a-f]{64}$'
+        proposed_version:
+          type: [string, 'null']
+          minLength: 1
+          maxLength: 512
+        proposed_hash:
+          type: [string, 'null']
+          pattern: '^[0-9a-f]{64}$'
+        outstanding_proposal_id:
+          type: [string, 'null']
+          minLength: 1
+          maxLength: 128
+        outstanding_proposal_sha:
+          type: [string, 'null']
+          pattern: '^(?:[0-9a-f]{40}|[0-9a-f]{64})$'
+        merged_version:
+          type: [string, 'null']
+          minLength: 1
+          maxLength: 512
+        merged_hash:
+          type: [string, 'null']
+          pattern: '^[0-9a-f]{64}$'
+        merge_commit_sha:
+          type: [string, 'null']
+          pattern: '^(?:[0-9a-f]{40}|[0-9a-f]{64})$'
+        merge_verified:
+          type: boolean
+      x-contract-invariants:
+        - id: SOURCE_CURSOR_HASH_PAIRS
+          rule: (seen_version IS NULL) iff (seen_hash IS NULL), (proposed_version IS NULL) iff (proposed_hash IS NULL), and (merged_version IS NULL) iff (merged_hash IS NULL). proposal_pending requires proposed version+hash and outstanding proposal ID+SHA. merged requires merged version+hash+merge_commit_sha, merge_verified=true, and outstanding_proposal_id/outstanding_proposal_sha=null. Every state other than proposal_pending clears both outstanding fields; rejected/cancelled/terminal replay does not reuse a completed proposal as outstanding. merge_commit_sha is present only for sync_state=merged with a verified Git-derived merge. live_operational cannot be represented in this cursor contract.
+          error: INVALID_STATE
+      allOf:
+        - if:
+            properties:
+              sync_state:
+                const: proposal_pending
+            required: [sync_state]
+          then:
+            properties:
+              outstanding_proposal_id:
+                type: string
+              outstanding_proposal_sha:
+                type: string
+              proposed_version:
+                type: string
+              proposed_hash:
+                type: string
+              merge_verified:
+                const: false
+        - if:
+            properties:
+              sync_state:
+                const: merged
+            required: [sync_state]
+          then:
+            required: [merge_commit_sha]
+            properties:
+              merged_version:
+                type: string
+              merged_hash:
+                type: string
+              merge_verified:
+                const: true
+              outstanding_proposal_id:
+                type: 'null'
+              outstanding_proposal_sha:
+                type: 'null'
+        - if:
+            properties:
+              sync_state:
+                not:
+                  const: merged
+            required: [sync_state]
+          then:
+            properties:
+              merge_verified:
+                const: false
+              merge_commit_sha:
+                type: 'null'
+        - if:
+            properties:
+              sync_state:
+                not:
+                  const: proposal_pending
+            required: [sync_state]
+          then:
+            properties:
+              outstanding_proposal_id:
+                type: 'null'
+              outstanding_proposal_sha:
+                type: 'null'
+        - if:
+            properties:
+              seen_version:
+                type: string
+            required: [seen_version]
+          then:
+            properties:
+              seen_hash:
+                type: string
+        - if:
+            properties:
+              seen_version:
+                type: 'null'
+            required: [seen_version]
+          then:
+            properties:
+              seen_hash:
+                type: 'null'
+        - if:
+            properties:
+              proposed_version:
+                type: string
+            required: [proposed_version]
+          then:
+            properties:
+              proposed_hash:
+                type: string
+        - if:
+            properties:
+              proposed_version:
+                type: 'null'
+            required: [proposed_version]
+          then:
+            properties:
+              proposed_hash:
+                type: 'null'
+        - if:
+            properties:
+              merged_version:
+                type: string
+            required: [merged_version]
+          then:
+            properties:
+              merged_hash:
+                type: string
+        - if:
+            properties:
+              merged_version:
+                type: 'null'
+            required: [merged_version]
+          then:
+            properties:
+              merged_hash:
+                type: 'null'
+    LiveOperationalFilter:
+      type: object
+      additionalProperties: false
+      required: [field, operator, value_type]
+      properties:
+        field:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: '^[a-z][a-z0-9_]*$'
+        operator:
+          type: string
+          enum: [eq, lt, lte, gt, gte]
+        value_type:
+          type: string
+          enum: [string, number, boolean]
+        string_value:
+          type: string
+          maxLength: 2048
+        number_value:
+          type: number
+        boolean_value:
+          type: boolean
+      allOf:
+        - if:
+            properties:
+              value_type:
+                const: string
+            required: [value_type]
+          then:
+            required: [string_value]
+            not:
+              anyOf:
+                - required: [number_value]
+                - required: [boolean_value]
+        - if:
+            properties:
+              value_type:
+                const: number
+            required: [value_type]
+          then:
+            required: [number_value]
+            not:
+              anyOf:
+                - required: [string_value]
+                - required: [boolean_value]
+        - if:
+            properties:
+              value_type:
+                const: boolean
+            required: [value_type]
+          then:
+            required: [boolean_value]
+            not:
+              anyOf:
+                - required: [string_value]
+                - required: [number_value]
+    LiveOperationalReadInput:
+      type: object
+      additionalProperties: false
+      required: [space_id, source_binding_id, operation_id, filters, limit]
+      properties:
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+        source_binding_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        operation_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: '^[a-z][a-z0-9._-]*$'
+          description: Registered typed operation only; never an arbitrary query language.
+        filters:
+          type: array
+          maxItems: 32
+          items:
+            $ref: '#/components/schemas/LiveOperationalFilter'
+        cursor:
+          type: string
+          minLength: 1
+          maxLength: 4096
+          pattern: '^[A-Za-z0-9_-]+$'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+    LiveOperationalFact:
+      type: object
+      additionalProperties: false
+      required: [fact_id, source_object_id, field, value_type, observed_at]
+      properties:
+        fact_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        source_object_id:
+          type: string
+          minLength: 1
+          maxLength: 512
+        field:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: '^[a-z][a-z0-9_]*$'
+        value_type:
+          type: string
+          enum: [string, number, boolean]
+        string_value:
+          type: string
+          maxLength: 10000
+        number_value:
+          type: number
+        boolean_value:
+          type: boolean
+        observed_at:
+          type: string
+          format: date-time
+      allOf:
+        - if:
+            properties:
+              value_type:
+                const: string
+            required: [value_type]
+          then:
+            required: [string_value]
+            not:
+              anyOf:
+                - required: [number_value]
+                - required: [boolean_value]
+        - if:
+            properties:
+              value_type:
+                const: number
+            required: [value_type]
+          then:
+            required: [number_value]
+            not:
+              anyOf:
+                - required: [string_value]
+                - required: [boolean_value]
+        - if:
+            properties:
+              value_type:
+                const: boolean
+            required: [value_type]
+          then:
+            required: [boolean_value]
+            not:
+              anyOf:
+                - required: [string_value]
+                - required: [number_value]
+    LiveOperationalReadResult:
+      type: object
+      additionalProperties: false
+      required: [space_id, source_binding_id, operation_id, snapshot_time, source_version, source_content_sha256, facts, truncation, canonical_writes, proposal_cursor_effects, index_writes]
+      properties:
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+        source_binding_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        operation_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        snapshot_time:
+          type: string
+          format: date-time
+        source_version:
+          type: string
+          minLength: 1
+          maxLength: 512
+        source_content_sha256:
+          $ref: '#/components/schemas/Sha256'
+        facts:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/LiveOperationalFact'
+        truncation:
+          $ref: '#/components/schemas/Truncation'
+        canonical_writes:
+          const: false
+        proposal_cursor_effects:
+          const: false
+        index_writes:
+          const: false
+    WholeDocumentChange:
+      type: object
+      additionalProperties: false
+      required: [mode, markdown]
+      properties:
+        mode:
+          const: whole_document
+        markdown:
+          type: string
+          minLength: 1
+          maxLength: 1000000
+          description: Full canonical Markdown including front matter; exact base and complete review are mandatory.
+    PatchOperation:
+      type: object
+      additionalProperties: false
+      required: [expected_text, replacement_text, occurrence]
+      properties:
+        section:
+          $ref: '#/components/schemas/Section'
+        expected_text:
+          type: string
+          minLength: 1
+          maxLength: 100000
+        replacement_text:
+          type: string
+          maxLength: 100000
+        occurrence:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: One-based occurrence in the selected raw Markdown scope. Zero or multiple effective matches produce PATCH_AMBIGUOUS.
+    AnchoredPatchChange:
+      type: object
+      additionalProperties: false
+      required: [mode, operations]
+      properties:
+        mode:
+          const: anchored_patch
+        operations:
+          type: array
+          minItems: 1
+          maxItems: 64
+          items:
+            $ref: '#/components/schemas/PatchOperation'
+    AgentPatchOperation:
+      type: object
+      additionalProperties: false
+      required: [section, expected_text, replacement_text, occurrence]
+      properties:
+        section:
+          $ref: '#/components/schemas/Section'
+        expected_text:
+          type: string
+          minLength: 1
+          maxLength: 100000
+        replacement_text:
+          type: string
+          maxLength: 100000
+        occurrence:
+          type: integer
+          minimum: 1
+          maximum: 1000
+      description: Restricted Markdown body-section patch. YAML front matter, delimiters, attachments, archive, ownership, links metadata, and raw whole-document targets are outside this schema.
+    AgentAnchoredPatchChange:
+      type: object
+      additionalProperties: false
+      required: [mode, operations]
+      properties:
+        mode:
+          const: anchored_patch
+        operations:
+          type: array
+          minItems: 1
+          maxItems: 64
+          items:
+            $ref: '#/components/schemas/AgentPatchOperation'
+    ProposeCreateDocumentInput:
+      type: object
+      additionalProperties: false
+      required: [space_id, parent_id, base_sha, path, title, markdown, ownership_mode, rationale, evidence, idempotency_key]
+      properties:
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+        parent_id:
+          type: [string, 'null']
+          format: uuid
+        base_sha:
+          $ref: '#/components/schemas/GitSha'
+        path:
+          type: string
+          minLength: 1
+          maxLength: 1024
+          pattern: '^(?!/)[^\\u0000-\\u001F\\\\]+$'
+          not:
+            pattern: '(?:^|/)\.\.(?:/|$)'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 512
+        markdown:
+          type: string
+          maxLength: 1000000
+          description: Markdown body; GO creates and validates stable front matter including document UUID.
+        ownership_mode:
+          const: curated
+          description: Direct UI/agent create is curated only. Imported/source-managed provenance is created exclusively by the authorized import/connector workflow; agent input has no origin, attachment, archive, or access field.
+        rationale:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        evidence:
+          type: array
+          maxItems: 64
+          items:
+            $ref: './proposal-record.schema.json#/$defs/evidence'
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+    ProposeEditDocumentInput:
+      type: object
+      additionalProperties: false
+      required: [document_id, base_sha, change, rationale, evidence, idempotency_key]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        base_sha:
+          $ref: '#/components/schemas/GitSha'
+        change:
+          $ref: '#/components/schemas/AgentAnchoredPatchChange'
+        rationale:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        evidence:
+          type: array
+          maxItems: 64
+          items:
+            $ref: './proposal-record.schema.json#/$defs/evidence'
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+    HumanWholeDocumentEditInput:
+      type: object
+      additionalProperties: false
+      required: [document_id, base_sha, change, rationale, evidence, idempotency_key]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        base_sha:
+          $ref: '#/components/schemas/GitSha'
+        change:
+          $ref: '#/components/schemas/WholeDocumentChange'
+        rationale:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        evidence:
+          type: array
+          maxItems: 64
+          items:
+            $ref: './proposal-record.schema.json#/$defs/evidence'
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+    DraftSaveInput:
+      type: object
+      additionalProperties: false
+      required: [document_id, base_sha, change, idempotency_key]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        base_sha:
+          $ref: '#/components/schemas/GitSha'
+        change:
+          oneOf:
+            - $ref: '#/components/schemas/WholeDocumentChange'
+            - $ref: '#/components/schemas/AnchoredPatchChange'
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+    DraftView:
+      type: object
+      additionalProperties: false
+      required: [proposal_id, base_sha, proposal_sha, state]
+      properties:
+        proposal_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        base_sha:
+          $ref: '#/components/schemas/GitSha'
+        proposal_sha:
+          $ref: '#/components/schemas/GitSha'
+        state:
+          const: draft
+    ProposalVersionInput:
+      type: object
+      additionalProperties: false
+      required: [proposal_id, expected_proposal_sha, base_sha, change, rationale, evidence, idempotency_key]
+      properties:
+        proposal_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        expected_proposal_sha:
+          $ref: '#/components/schemas/GitSha'
+        base_sha:
+          $ref: '#/components/schemas/GitSha'
+        change:
+          oneOf:
+            - $ref: '#/components/schemas/WholeDocumentChange'
+            - $ref: '#/components/schemas/AnchoredPatchChange'
+        rationale:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        evidence:
+          type: array
+          maxItems: 64
+          items:
+            $ref: './proposal-record.schema.json#/$defs/evidence'
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+    ProposalView:
+      type: object
+      additionalProperties: false
+      required: [record, state, diff, preview_reliable, decisions]
+      properties:
+        record:
+          $ref: './proposal-record.schema.json'
+        state:
+          type: string
+          enum: [draft, in_review, conflicted, rejected, cancelled, published, archived, superseded]
+        diff:
+          type: object
+          additionalProperties: false
+          required: [complete, changed_paths, includes_front_matter, includes_links, includes_attachments]
+          properties:
+            complete:
+              type: boolean
+            changed_paths:
+              type: array
+              maxItems: 1024
+              items:
+                type: string
+                minLength: 1
+                maxLength: 1024
+            includes_front_matter:
+              type: boolean
+            includes_links:
+              type: boolean
+            includes_attachments:
+              type: boolean
+        preview_reliable:
+          type: boolean
+          description: False blocks merge even when a textual diff exists.
+        decisions:
+          type: array
+          maxItems: 1024
+          items:
+            $ref: './decision-record.schema.json'
+    GetProposalInput:
+      type: object
+      additionalProperties: false
+      required: [proposal_id]
+      properties:
+        proposal_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        proposal_sha:
+          $ref: '#/components/schemas/GitSha'
+    DecisionCommand:
+      type: object
+      additionalProperties: false
+      required: [decision_id, proposal_id, expected_proposal_sha, base_sha, action, rationale, evidence, idempotency_key]
+      properties:
+        decision_id:
+          type: string
+          format: uuid
+        proposal_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        expected_proposal_sha:
+          $ref: '#/components/schemas/GitSha'
+        base_sha:
+          $ref: '#/components/schemas/GitSha'
+        action:
+          type: string
+          enum: [accepted, rejected, cancelled]
+        rationale:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        evidence:
+          type: array
+          maxItems: 64
+          items:
+            $ref: './proposal-record.schema.json#/$defs/evidence'
+        idempotency_key:
+          type: string
+          format: uuid
+          description: Must equal decision_id and the Idempotency-Key header.
+    DecisionAttempt:
+      type: object
+      additionalProperties: false
+      required: [attempt_id, request_state, no_merge_proven, reconciliation_evidence]
+      properties:
+        attempt_id:
+          type: string
+          format: uuid
+        request_state:
+          type: string
+          enum: [prepared, in_flight, completed, unknown]
+        no_merge_proven:
+          type: boolean
+        reconciliation_evidence:
+          type: array
+          maxItems: 64
+          items:
+            $ref: './proposal-record.schema.json#/$defs/evidence'
+      allOf:
+        - if:
+            properties:
+              no_merge_proven:
+                const: true
+            required: [no_merge_proven]
+          then:
+            properties:
+              request_state:
+                const: completed
+        - if:
+            properties:
+              request_state:
+                enum: [prepared, in_flight, unknown]
+            required: [request_state]
+          then:
+            properties:
+              no_merge_proven:
+                const: false
+    DecisionResult:
+      type: object
+      additionalProperties: false
+      required: [decision, state, attempts, reconciliation_evidence, recovery_required, target_quarantined, retryable]
+      properties:
+        decision:
+          $ref: './decision-record.schema.json'
+        state:
+          type: string
+          enum: [recorded, merge_attempted, merged, failed, conflicted, invalid]
+          description: Canonical projection states are preserved. Quarantine is merge_attempted plus recovery_required=true and target_quarantined=true, not a substitute state.
+        attempts:
+          type: array
+          maxItems: 1000
+          items:
+            $ref: '#/components/schemas/DecisionAttempt'
+          description: Only real durable merge_operations, ordered oldest to newest. Empty before the first accepted merge transaction and for rejected/cancelled actions; no synthetic no-merge attempt is created.
+        note:
+          $ref: './export-manifest.schema.json#/$defs/noteExport'
+        tag:
+          $ref: './export-manifest.schema.json#/$defs/decisionTagExport'
+        reconciliation_evidence:
+          type: array
+          maxItems: 64
+          items:
+            $ref: './proposal-record.schema.json#/$defs/evidence'
+          description: Decision-level recovery or verified MR-closure evidence independent of merge attempts. May be empty during the recorded accepted crash window.
+        merge_proof:
+          $ref: './export-manifest.schema.json#/$defs/mergeExport'
+        recovery_required:
+          type: boolean
+        target_quarantined:
+          type: boolean
+        retryable:
+          type: boolean
+          description: True only for conclusive failed after request completion and proven no-merge. A replay never creates an attempt; guarded recovery retry uses the same decision_id after fresh preconditions. conflicted and invalid are terminal.
+      x-contract-invariants:
+        - id: DECISION_RESULT_REPLAY_AND_RETRY
+          rule: Same decision_id plus identical command is read-only and returns one current Git-derived outcome. Only a recovery coordinator may transition conclusive failed to a new merge_attempted attempt with the same decision_id, fresh preconditions, request_state=completed and no_merge_proven=true. Unknown outcomes remain merge_attempted/quarantined with retryable=false; conflicted and invalid never retry.
+          error: RECOVERY_REQUIRED
+        - id: DECISION_RESULT_REAL_ATTEMPTS_ONLY
+          rule: attempts[] maps one-to-one to real durable merge_operations for action=accepted and is ordered oldest to newest; the last attempt drives the current attempt outcome. recorded accepted and every rejected/cancelled action have attempts=[] and never synthesize request_state or no_merge_proven. A recorded accepted crash window may have recovery_required/target_quarantined=true with no no-merge claim. Normal rejected/cancelled closure uses decision-level reconciliation_evidence instead.
+          error: INVALID_STATE
+        - id: DECISION_RESULT_MERGE_LINKAGE
+          rule: For state=merged, decision.action=accepted and merge_proof.first_parent_sha=decision.base_sha, second_parent_sha=decision.proposal_sha. merge_proof.merge_commit_sha is verified by GO in decision.repository_id/decision.target_branch first-parent ancestry and its raw bytes match commit_content_sha256. trailers.Decision-ID=decision.decision_id, Decision-Note-ID=note.note_id, Decision-Hash=decision.record_sha256=note.record_sha256, Approved-by=decision.actor_stable_id. note.proposal_id=decision.proposal_id; tag.ref_name='refs/tags/kb-decisions/'+decision.decision_id and tag.target_proposal_sha=decision.proposal_sha. note.canonical_json_sha256=tag.canonical_json_sha256=SHA-256(JCS UTF-8 of complete decision including record_sha256). target_ancestry_verified=note_tag_hash_verified=true is backed by actual Git verification, not a caller assertion. The same semantic rule is shared with EXPORT_MERGE_LINKAGE and EXPORT_DECISION_NOTE_TAG_RECORD_LINKAGE.
+          error: DECISION_INVALID
+      allOf:
+        - if:
+            properties:
+              state:
+                const: merged
+            required: [state]
+          then:
+            required: [merge_proof, note, tag]
+            properties:
+              decision:
+                properties:
+                  action:
+                    const: accepted
+              recovery_required:
+                const: false
+              target_quarantined:
+                const: false
+              retryable:
+                const: false
+              attempts:
+                minItems: 1
+                contains:
+                  properties:
+                    request_state:
+                      const: completed
+                    no_merge_proven:
+                      const: false
+        - if:
+            properties:
+              state:
+                not:
+                  const: merged
+            required: [state]
+          then:
+            not:
+              required: [merge_proof]
+        - if:
+            properties:
+              state:
+                const: merge_attempted
+            required: [state]
+          then:
+            properties:
+              decision:
+                properties:
+                  action:
+                    const: accepted
+              recovery_required:
+                const: true
+              target_quarantined:
+                const: true
+              retryable:
+                const: false
+              attempts:
+                minItems: 1
+                contains:
+                  properties:
+                    request_state:
+                      enum: [prepared, in_flight, completed, unknown]
+                    no_merge_proven:
+                      const: false
+        - if:
+            properties:
+              state:
+                const: failed
+            required: [state]
+          then:
+            properties:
+              decision:
+                properties:
+                  action:
+                    const: accepted
+              recovery_required:
+                const: false
+              target_quarantined:
+                const: false
+              attempts:
+                minItems: 1
+                contains:
+                  properties:
+                    request_state:
+                      const: completed
+                    no_merge_proven:
+                      const: true
+                    reconciliation_evidence:
+                      minItems: 1
+        - if:
+            properties:
+              state:
+                const: conflicted
+            required: [state]
+          then:
+            properties:
+              decision:
+                properties:
+                  action:
+                    const: accepted
+              recovery_required:
+                const: false
+              target_quarantined:
+                const: false
+              retryable:
+                const: false
+              attempts:
+                minItems: 1
+                contains:
+                  properties:
+                    request_state:
+                      const: completed
+                    no_merge_proven:
+                      const: true
+                    reconciliation_evidence:
+                      minItems: 1
+        - if:
+            properties:
+              state:
+                const: invalid
+            required: [state]
+          then:
+            properties:
+              retryable:
+                const: false
+        - if:
+            properties:
+              state:
+                const: recorded
+            required: [state]
+          then:
+            properties:
+              retryable:
+                const: false
+        - if:
+            properties:
+              state:
+                const: recorded
+              decision:
+                properties:
+                  action:
+                    const: accepted
+                required: [action]
+            required: [state, decision]
+          then:
+            properties:
+              attempts:
+                maxItems: 0
+        - if:
+            properties:
+              state:
+                const: invalid
+              attempts:
+                contains:
+                  properties:
+                    no_merge_proven:
+                      const: false
+                minItems: 1
+            required: [state, attempts]
+          then:
+            properties:
+              recovery_required:
+                const: true
+              target_quarantined:
+                const: true
+        - if:
+            properties:
+              decision:
+                properties:
+                  action:
+                    enum: [rejected, cancelled]
+                required: [action]
+            required: [decision]
+          then:
+            properties:
+              state:
+                enum: [recorded, invalid]
+              attempts:
+                maxItems: 0
+        - if:
+            properties:
+              state:
+                const: recorded
+              decision:
+                properties:
+                  action:
+                    enum: [rejected, cancelled]
+                required: [action]
+            required: [state, decision]
+          then:
+            properties:
+              recovery_required:
+                const: false
+              target_quarantined:
+                const: false
+              retryable:
+                const: false
+              reconciliation_evidence:
+                minItems: 1
+    RestoreProposalInput:
+      type: object
+      additionalProperties: false
+      required: [document_id, base_sha, restore_revision_sha, rationale, evidence, idempotency_key]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        base_sha:
+          $ref: '#/components/schemas/GitSha'
+        restore_revision_sha:
+          $ref: '#/components/schemas/GitSha'
+        rationale:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        evidence:
+          type: array
+          maxItems: 64
+          items:
+            $ref: './proposal-record.schema.json#/$defs/evidence'
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+    ImportDryRunInput:
+      type: object
+      additionalProperties: false
+      required: [space_id, source_binding_id, source_snapshot, config_sha256, ownership_mode, data_profile, idempotency_key]
+      properties:
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+        source_binding_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        source_snapshot:
+          type: object
+          additionalProperties: false
+          required: [source_id, source_version, content_sha256, package_ref]
+          properties:
+            source_id:
+              type: string
+              minLength: 1
+              maxLength: 128
+            source_version:
+              type: string
+              minLength: 1
+              maxLength: 512
+            content_sha256:
+              $ref: '#/components/schemas/Sha256'
+            package_ref:
+              type: string
+              minLength: 1
+              maxLength: 2048
+        config_sha256:
+          $ref: '#/components/schemas/Sha256'
+        ownership_mode:
+          type: string
+          enum: [migrated, source_managed, curated]
+        data_profile:
+          type: string
+          enum: [strict, pii_permitted]
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+    ImportManifest:
+      type: object
+      additionalProperties: false
+      required: [import_id, manifest_sha256, status, entries, attachments, errors, warnings, canonical_writes]
+      properties:
+        import_id:
+          type: string
+          format: uuid
+        manifest_sha256:
+          $ref: '#/components/schemas/Sha256'
+        status:
+          type: string
+          enum: [validated, blocked]
+        entries:
+          type: array
+          maxItems: 100000
+          items:
+            type: object
+            additionalProperties: false
+            required: [source_object_id, path, document_id, parent_id, origin, links]
+            properties:
+              source_object_id:
+                type: string
+                minLength: 1
+                maxLength: 512
+              path:
+                type: string
+                minLength: 1
+                maxLength: 1024
+              document_id:
+                type: string
+                format: uuid
+              parent_id:
+                type: [string, 'null']
+                format: uuid
+              origin:
+                $ref: './source-origin.schema.json'
+              links:
+                type: array
+                maxItems: 1024
+                items:
+                  $ref: './front-matter.schema.json#/$defs/documentLink'
+        attachments:
+          type: array
+          maxItems: 100000
+          items:
+            $ref: './front-matter.schema.json#/$defs/attachment'
+        errors:
+          type: array
+          maxItems: 10000
+          items:
+            $ref: '#/components/schemas/Error'
+        warnings:
+          type: array
+          maxItems: 10000
+          items:
+            type: string
+            minLength: 1
+            maxLength: 2000
+        canonical_writes:
+          const: false
+      allOf:
+        - if:
+            properties:
+              status:
+                const: validated
+            required: [status]
+          then:
+            properties:
+              errors:
+                maxItems: 0
+        - if:
+            properties:
+              status:
+                const: blocked
+            required: [status]
+          then:
+            properties:
+              errors:
+                minItems: 1
+    ImportCommitInput:
+      type: object
+      additionalProperties: false
+      required: [space_id, import_id, dry_run_manifest_sha256, expected_base_sha, rationale, evidence, idempotency_key]
+      properties:
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+        import_id:
+          type: string
+          format: uuid
+        dry_run_manifest_sha256:
+          $ref: '#/components/schemas/Sha256'
+        expected_base_sha:
+          $ref: '#/components/schemas/GitSha'
+        rationale:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        evidence:
+          type: array
+          minItems: 1
+          maxItems: 64
+          items:
+            $ref: './proposal-record.schema.json#/$defs/evidence'
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+    ImportCommitResult:
+      type: object
+      additionalProperties: false
+      required: [import_id, mode, status]
+      properties:
+        import_id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum: [pre_cutover_controlled, post_cutover_proposal]
+        status:
+          type: string
+          enum: [staged_pre_cutover, proposal_created, no_op]
+        proposal:
+          $ref: '#/components/schemas/ProposalView'
+        staging_package_ref:
+          type: string
+          minLength: 1
+          maxLength: 2048
+        existing_result_ref:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          description: Required for no_op; references the prior staging result or outstanding proposal without claiming a new write.
+      allOf:
+        - if:
+            properties:
+              mode:
+                const: pre_cutover_controlled
+            required: [mode]
+          then:
+            properties:
+              status:
+                enum: [staged_pre_cutover, no_op]
+        - if:
+            properties:
+              mode:
+                const: post_cutover_proposal
+            required: [mode]
+          then:
+            properties:
+              status:
+                enum: [proposal_created, no_op]
+        - if:
+            properties:
+              status:
+                const: staged_pre_cutover
+            required: [status]
+          then:
+            required: [staging_package_ref]
+            not:
+              required: [proposal]
+        - if:
+            properties:
+              status:
+                const: proposal_created
+            required: [status]
+          then:
+            required: [proposal]
+            not:
+              required: [staging_package_ref]
+        - if:
+            properties:
+              status:
+                const: no_op
+            required: [status]
+          then:
+            required: [existing_result_ref]
+            not:
+              anyOf:
+                - required: [proposal]
+                - required: [staging_package_ref]
+    ExportInput:
+      type: object
+      additionalProperties: false
+      required: [space_id, snapshot_sha, format, include_decisions, include_assets, idempotency_key]
+      properties:
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+        snapshot_sha:
+          $ref: '#/components/schemas/GitSha'
+        format:
+          const: git_clone_with_manifests
+        include_decisions:
+          const: true
+        include_assets:
+          const: true
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+    ExportJob:
+      type: object
+      additionalProperties: false
+      required: [export_id, state]
+      properties:
+        export_id:
+          type: string
+          format: uuid
+        state:
+          type: string
+          enum: [requested, building, validating, ready, incomplete, failed]
+        manifest:
+          $ref: './export-manifest.schema.json'
+        error:
+          $ref: '#/components/schemas/Error'
+      allOf:
+        - if:
+            properties:
+              state:
+                const: ready
+            required: [state]
+          then:
+            required: [manifest]
+            not:
+              required: [error]
+            properties:
+              manifest:
+                properties:
+                  closure:
+                    properties:
+                      complete:
+                        const: true
+                      decisions_complete:
+                        const: true
+                      assets_complete:
+                        const: true
+                      authorization_complete:
+                        const: true
+                      missing:
+                        maxItems: 0
+                  assets:
+                    items:
+                      properties:
+                        export_status:
+                          const: exported
+                      required: [exported_object_sha256]
+        - if:
+            properties:
+              state:
+                const: incomplete
+            required: [state]
+          then:
+            required: [manifest, error]
+            properties:
+              manifest:
+                properties:
+                  closure:
+                    properties:
+                      complete:
+                        const: false
+        - if:
+            properties:
+              state:
+                const: failed
+            required: [state]
+          then:
+            required: [error]
+            properties:
+              manifest:
+                properties:
+                  closure:
+                    properties:
+                      complete:
+                        not:
+                          const: true
+    CutoverCommand:
+      type: object
+      additionalProperties: false
+      required: [space_id, cutover_sha, repository_id, validation_evidence, idempotency_key]
+      properties:
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+        cutover_sha:
+          $ref: '#/components/schemas/GitSha'
+        repository_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        validation_evidence:
+          type: array
+          minItems: 1
+          maxItems: 64
+          items:
+            $ref: './proposal-record.schema.json#/$defs/evidence'
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+    CutoverRecord:
+      type: object
+      additionalProperties: false
+      required: [cutover_id, space_id, repository_id, cutover_sha, main_sha, validation_evidence, sign_off_actor_stable_id, timestamp, state, write_frozen, user_access_enabled]
+      properties:
+        cutover_id:
+          type: string
+          format: uuid
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+        repository_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        cutover_sha:
+          $ref: '#/components/schemas/GitSha'
+        main_sha:
+          $ref: '#/components/schemas/GitSha'
+        validation_evidence:
+          type: array
+          minItems: 1
+          maxItems: 64
+          items:
+            $ref: './proposal-record.schema.json#/$defs/evidence'
+        sign_off_actor_stable_id:
+          $ref: '#/components/schemas/StableId'
+        timestamp:
+          type: string
+          format: date-time
+        state:
+          type: string
+          enum: [freeze_pending, frozen, protected, preflight, activating, activated, failed, conflicted]
+        protected_tag_ref:
+          type: string
+          minLength: 1
+          maxLength: 1024
+        preflight_snapshot_id:
+          type: string
+          format: uuid
+        preflight_run_id:
+          type: string
+          format: uuid
+        preflight_snapshot_sha:
+          $ref: '#/components/schemas/GitSha'
+        preflight_validated_at:
+          type: string
+          format: date-time
+        published_snapshot_id:
+          type: string
+          format: uuid
+        published_run_id:
+          type: string
+          format: uuid
+        published_snapshot_sha:
+          $ref: '#/components/schemas/GitSha'
+        published_validated_at:
+          type: string
+          format: date-time
+        publication_fence:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Current per-Space/profile CAS fence returned by the single pointer writer after same-SHA published activation.
+        write_frozen:
+          type: boolean
+        user_access_enabled:
+          type: boolean
+          description: False until the validated published pointer exists and GO activates the Space; only then true.
+      x-contract-invariants:
+        - id: CUTOVER_RECORD_SNAPSHOT_EQUALITY
+          rule: cutover_sha == main_sha == preflight_snapshot_sha == published_snapshot_sha. preflight_snapshot_id != published_snapshot_id and preflight_run_id != published_run_id. Dereferenced preflight prerequisite is a different conclusive full run in canonical ready state with preflight_validated_at, purpose=cutover_preflight/is_preflight=true/serving_allowed=false, complete closure, missing_inputs=[], and non-null exact+semantic hashes; requested/failed/empty evidence is forbidden. Dereferenced published is purpose=published/is_preflight=false/active/serving_allowed=true with published_validated_at and full validation. The preflight descriptor is never mutated into the published descriptor.
+          error: INDEX_NOT_READY
+      allOf:
+        - if:
+            properties:
+              state:
+                const: activated
+            required: [state]
+          then:
+            required: [protected_tag_ref, preflight_snapshot_id, preflight_run_id, preflight_snapshot_sha, preflight_validated_at, published_snapshot_id, published_run_id, published_snapshot_sha, published_validated_at, publication_fence]
+            properties:
+              write_frozen:
+                const: true
+              user_access_enabled:
+                const: true
+          else:
+            properties:
+              user_access_enabled:
+                const: false
+        - if:
+            properties:
+              state:
+                enum: [frozen, protected, preflight, activating, activated]
+            required: [state]
+          then:
+            properties:
+              write_frozen:
+                const: true
+        - if:
+            properties:
+              state:
+                enum: [protected, preflight, activating, activated]
+            required: [state]
+          then:
+            required: [protected_tag_ref]
+        - if:
+            properties:
+              state:
+                enum: [preflight, activating, activated]
+            required: [state]
+          then:
+            required: [preflight_snapshot_id, preflight_run_id, preflight_snapshot_sha, preflight_validated_at]
+        - if:
+            properties:
+              state:
+                const: activating
+            required: [state]
+          then:
+            required: [published_snapshot_id, published_run_id, published_snapshot_sha, published_validated_at, publication_fence]
+            properties:
+              user_access_enabled:
+                const: false
+        - if:
+            required: [published_snapshot_id]
+          then:
+            required: [published_run_id, published_snapshot_sha, published_validated_at, publication_fence]
+    WebhookInput:
+      type: object
+      additionalProperties: false
+      required: [verified_event_id, provider_event_type, repository_id, occurred_at, provider_payload_sha256, provider_payload, idempotency_key]
+      properties:
+        verified_event_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+        provider_event_type:
+          type: string
+          minLength: 1
+          maxLength: 128
+        repository_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        occurred_at:
+          type: string
+          format: date-time
+        provider_payload_sha256:
+          $ref: '#/components/schemas/Sha256'
+        provider_payload:
+          type: object
+          maxProperties: 128
+          description: Version-tolerant uninterpreted provider fields. GO does not trust embedded actor or revision as merge proof.
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+    WebhookAck:
+      type: object
+      additionalProperties: false
+      required: [event_id, status, duplicate]
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [accepted, duplicate, ignored, quarantined]
+        duplicate:
+          type: boolean
+        observed_main_sha:
+          $ref: '#/components/schemas/GitSha'
+        index_request_id:
+          type: string
+          format: uuid
+    IndexPublicationInput:
+      type: object
+      additionalProperties: false
+      required: [expected_publication_fence, expected_active_snapshot_id, expected_latest_main_sha]
+      properties:
+        expected_publication_fence:
+          type: string
+          minLength: 1
+          maxLength: 128
+        expected_active_snapshot_id:
+          type: [string, 'null']
+          format: uuid
+        expected_latest_main_sha:
+          $ref: '#/components/schemas/GitSha'
+      description: Atomic CAS predicate evaluated by the single writer under the per-Space/profile publication lock. A stale fence, active pointer, ancestry, or validated run updates zero rows.
+    IndexRunStatusInput:
+      type: object
+      additionalProperties: false
+      required: [run_id, space_id, snapshot_sha, main_generation_id, index_profile_version, state, idempotency_key]
+      properties:
+        run_id:
+          type: string
+          format: uuid
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+        snapshot_sha:
+          $ref: '#/components/schemas/GitSha'
+        main_generation_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        index_profile_version:
+          type: string
+          minLength: 1
+          maxLength: 128
+        state:
+          type: string
+          enum: [requested, resolving, building, validating, ready, active, superseded, failed, dead_letter]
+        snapshot:
+          $ref: './index-snapshot.schema.json'
+        publication:
+          $ref: '#/components/schemas/IndexPublicationInput'
+        error:
+          $ref: '#/components/schemas/Error'
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+      x-contract-invariants:
+        - id: INDEX_CALLBACK_PUBLICATION_EQUALITY
+          rule: snapshot_sha == publication.expected_latest_main_sha == snapshot.snapshot_sha; body generation/profile/Space match snapshot and run. The active descriptor has purpose=published, preflight.is_preflight=false, serving_allowed=true, ready hashes, complete closure, and rewrite/full or incremental-equivalence proof. Ready/active incremental requires nonempty closure.equivalence_evidence for a distinct conclusive ready/active full run+snapshot with validated_at, same perimeter/SHA/profile/closure hash and empty missing inputs; requested/failed/empty prerequisites are rejected. CAS failure returns rejected_stale and writes zero pointer rows.
+          error: INDEX_GENERATION_CONFLICT
+      allOf:
+        - if:
+            properties:
+              state:
+                enum: [ready, active]
+            required: [state]
+          then:
+            required: [snapshot]
+        - if:
+            properties:
+              state:
+                const: ready
+            required: [state]
+          then:
+            properties:
+              snapshot:
+                properties:
+                  state:
+                    const: ready
+        - if:
+            properties:
+              state:
+                const: active
+            required: [state]
+          then:
+            required: [publication]
+            properties:
+              snapshot:
+                properties:
+                  purpose:
+                    const: published
+                  state:
+                    const: active
+                  preflight:
+                    properties:
+                      is_preflight:
+                        const: false
+                      serving_allowed:
+                        const: true
+        - if:
+            properties:
+              state:
+                not:
+                  const: active
+            required: [state]
+          then:
+            not:
+              required: [publication]
+    IndexRunStatusResult:
+      type: object
+      additionalProperties: false
+      required: [accepted, deduplicated]
+      properties:
+        accepted:
+          type: boolean
+        deduplicated:
+          type: boolean
+        publication_state:
+          type: string
+          enum: [not_applicable, published, rejected_stale]
+        publication_fence:
+          type: string
+          minLength: 1
+          maxLength: 128

@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "proposal-record.schema.json",
+  "title": "Append-only ProposalRecord for one ProposalVersion",
+  "description": "PROPOSED canonical MR metadata. Every edit or rebase creates a new proposal_sha and ProposalRecord. Service or bot identities never replace the three human/stable principals.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "proposal_id",
+    "proposal_version_id",
+    "repository_id",
+    "space_id",
+    "target_branch",
+    "proposal_sha",
+    "base_sha",
+    "author_stable_id",
+    "version_author_stable_id",
+    "requester_stable_id",
+    "actor_type",
+    "rationale",
+    "evidence",
+    "idempotency_key",
+    "payload_hash",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "proposal-record-v1"
+    },
+    "proposal_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Repository-scoped opaque proposal/MR identifier."
+    },
+    "proposal_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "repository_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "space_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 63,
+      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$"
+    },
+    "target_branch": {
+      "$ref": "#/$defs/branchName"
+    },
+    "proposal_sha": {
+      "$ref": "#/$defs/gitSha"
+    },
+    "base_sha": {
+      "$ref": "#/$defs/gitSha"
+    },
+    "author_stable_id": {
+      "$ref": "#/$defs/stableId"
+    },
+    "version_author_stable_id": {
+      "$ref": "#/$defs/stableId"
+    },
+    "requester_stable_id": {
+      "$ref": "#/$defs/stableId"
+    },
+    "actor_type": {
+      "type": "string",
+      "enum": ["human", "agent", "connector"]
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Trusted orchestration run ID, mandatory for agent proposals and never supplied as proof by the model."
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10000
+    },
+    "evidence": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "origin": {
+      "$ref": "./source-origin.schema.json"
+    },
+    "supersedes_proposal_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "payload_hash": {
+      "$ref": "#/$defs/sha256"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "actor_type": {
+            "const": "agent"
+          }
+        },
+        "required": ["actor_type"]
+      },
+      "then": {
+        "required": ["run_id"]
+      }
+    },
+    {
+      "if": {
+        "required": ["origin"]
+      },
+      "then": {
+        "properties": {
+          "origin": {
+            "properties": {
+              "ownership_mode": {
+                "enum": ["migrated", "source_managed", "curated"]
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "gitSha": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "stableId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "AD objectGUID, OpenLDAP entryUUID, or issuer-scoped OIDC sub; never email/login or a bot substitute."
+    },
+    "branchName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^[^\\u0000-\\u0020~^:?*\\\\\\[\\]]+$",
+      "not": {
+        "pattern": "(?:\\.\\.|@\\{|//|^/|/$)"
+      }
+    },
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["heading_path", "occurrence"],
+      "properties": {
+        "heading_path": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "anchor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "occurrence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "Disambiguates repeated headings."
+        }
+      }
+    },
+    "lineRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_line", "end_line"],
+      "x-contract-invariants": [
+        {
+          "id": "EVIDENCE_LINE_RANGE_ORDER",
+          "rule": "end_line >= start_line; a reversed range is rejected before proposal creation.",
+          "error": "VALIDATION_ERROR"
+        }
+      ],
+      "properties": {
+        "start_line": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000000
+        },
+        "end_line": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000000
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "ref", "sha256"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["document_revision", "source_object", "attachment_revision", "validation_report"]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "description": "Opaque verifiable reference; no credentials or signed URLs."
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 of the cited immutable content or validation report."
+        },
+        "document_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "revision_sha": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "source_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "section": {
+          "$ref": "#/$defs/section"
+        },
+        "range": {
+          "$ref": "#/$defs/lineRange"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "document_revision"
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "required": ["document_id", "revision_sha"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "source_object"
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "required": ["source_id", "source_version"]
+          }
+        }
+      ]
+    }
+  }
+}

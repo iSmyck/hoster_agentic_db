@@ -1,0 +1,2394 @@
+catalog_version: database-catalog-v1
+kind: logical_database_catalog
+status: design_draft_g0
+date: '2026-11-06'
+executable_migration: false
+production_approved: false
+description: "Machine-readable проекция database.md для планирования и contract tests; не DDL и не migration."
+sources:
+  - _bmad-output/planning-artifacts/architecture/architecture-corp_ai_db-2026-11-06/ARCHITECTURE-SPINE.md
+  - specs/corporate-kb/architecture.md
+  - specs/corporate-kb/spec.md
+  - specs/corporate-kb/components
+  - specs/corporate-kb/adr
+requirements: [R01, R02, R03, R04, R05, R06, R07, R08, R09, R10, R11, R12, R13, R14, R15, R16, R17, R18, I01, I02, I03, I04, I05, I06, I07, I08, I09, I10, I11, I12, I13, I14]
+instance:
+  topology: single_dedicated_postgresql_instance_per_client
+  cross_client_sharing: forbidden
+  canonical_write_path: gitlab_tags_mr_notes_and_immutable_object_storage
+  database_role: projections_and_operations_only
+  product_schemas: [kb_authz, kb_ops, kb_index]
+  upstream_zone: upstream
+  cross_schema_table_writes: forbidden
+  cross_schema_foreign_keys: forbidden
+  cross_component_access: versioned_api_events_only
+  repository_space_cardinality: one_to_one
+  default_private: true
+  raw_secrets_storage: forbidden
+  unnecessary_private_content_in_audit: forbidden
+access_rules:
+  - "Browser, agent и connector не получают direct PostgreSQL access."
+  - "Один owning component выполняет writes и migrations только своей схемы."
+  - "Identity/AuthZ adapter меняет managed upstream grants только через supported upstream seam."
+  - "Logical cross-schema IDs не создают FK, join authorization или shared-table mutation."
+  - "Все Space-scoped queries обязаны ограничивать space_id и повторно авторизовывать payload."
+  - "Front matter access и path-scoped approver rules не создают page-level read ACL."
+classifications:
+  security_metadata: "Identity, policy и grant security metadata."
+  security_personal: "Membership, AuthzContext и revocation security/personal metadata."
+  operational: "Operational IDs, hashes и state без document content."
+  operational_private: "Operations/provenance metadata с потенциально private context."
+  private_projection: "Private per-Space published projection, включая titles, paths, chunks и vectors."
+  audit_restricted: "Sanitized append-only operational audit без raw private content/secrets."
+check_macros:
+  git_sha:
+    storage_type: text
+    rule: "Полный lowercase Git SHA длиной 40 или 64; short SHA запрещён; алгоритм target Git T00."
+    null_handling: skip_null
+  sha256:
+    storage_type: text
+    rule: "Ровно 64 lowercase hex-символа SHA-256."
+    null_handling: skip_null
+  nonempty:
+    storage_type: text
+    rule: "btrim(value) непустой."
+    null_handling: skip_null
+  normalized_path:
+    storage_type: text
+    rule: "Normalized NFC repository-relative document path без absolute/parent traversal и неоднозначных separators/Unicode."
+    null_handling: skip_null
+  normalized_policy_path:
+    storage_type: text
+    rule: "Nonempty repository-relative NFC policy path без leading/trailing separators, parent traversal/backslash; canonical boundary добавляет ровно один leading '/'."
+    null_handling: skip_null
+  normalized_path_scope:
+    storage_type: text
+    rule: "Repository-relative NFC approver/AuthZ scope без absolute/parent traversal/backslash; пустой prefix ↔ canonical '/' для всего Space."
+    null_handling: skip_null
+schemas:
+  upstream:
+    kind: logical_ownership_zone
+    physical_schema: null
+    physical_schema_status: unknown_t00_pinned_upstream_audit
+    table_discovery_required: true
+    owner:
+      component: open_webui_upstream
+      writer_role: upstream_owner_t00
+      migration_owner: open_webui_upstream
+    readers:
+      - role: upstream_supported_seams
+        components: [identity_authz_adapter]
+        access: managed_grants_only_via_supported_seam
+      - role: upstream_native_components
+        components: [open_webui_fork]
+        access: native_upstream_behavior_only
+    tables: {}
+  kb_authz:
+    owner:
+      component: identity_authz_adapter
+      writer_role: kb_authz_writer
+      migration_owner: identity_authz_adapter
+    readers:
+      - role: kb_authz_reader
+        components: [identity_authz_adapter]
+        access: read_only_internal_authz_paths
+    direct_database_consumers_forbidden: [git_orchestrator, retrieval_adapter, open_webui_browser, agent, connector, ci_index_worker]
+    tables:
+      spaces:
+        purpose: "Реестр 1:1 Space/repository и наблюдаемой активации."
+        canonical_source: "GitLab repository + deployment config + CutoverRecord через GO API."
+        rebuildable: true
+        rebuild_strategy: "Current-state rebuild из repository/config/GO observations; internal timestamps disposable."
+        classification: security_metadata
+        retention: {policy: space_lifecycle_owner_decision, rule: "Удаление row не удаляет Git/history; lifecycle соответствует Space."}
+        security: "Default private; нет credentials и cross-Space mapping."
+        columns:
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          title: {type: text, nullable: false}
+          managed: {type: boolean, nullable: false}
+          activation_state: {type: text, nullable: false}
+          data_profile: {type: text, nullable: false}
+          default_private: {type: boolean, nullable: false}
+          observed_cutover_sha: {type: text, nullable: true}
+          observed_activation_at: {type: timestamptz, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [space_id]
+        foreign_keys: []
+        uniques:
+          - columns: [repository_id]
+          - columns: [space_id, repository_id]
+        checks:
+          - macro: nonempty
+            columns: [space_id, repository_id]
+          - macro: git_sha
+            columns: [observed_cutover_sha]
+          - expression: "space_id = lower(space_id)"
+          - expression: "activation_state IN ('provisioning','inactive','preflight','active','suspended','archived')"
+          - expression: "data_profile IN ('strict','pii_permitted')"
+        indexes:
+          - columns: [activation_state]
+          - columns: [data_profile]
+      identities:
+        purpose: "Stable LDAP/OIDC identity ↔ upstream user mapping."
+        canonical_source: "LDAP/OIDC provider + Open WebUI upstream identity seam."
+        rebuildable: true
+        rebuild_strategy: "JIT/sync из IdP/upstream; internal identity_id может быть перевыпущен без смены stable_id."
+        classification: security_personal
+        retention: {policy: identity_owner_decision, rule: "Disabled attribution не стирается молча; history зависит от identity/chat policy."}
+        security: "No passwords, bind secrets, tokens или полных provider payloads; email/login не identity key."
+        columns:
+          identity_id: {type: uuid, nullable: false}
+          issuer: {type: text, nullable: false}
+          provider_type: {type: text, nullable: false}
+          stable_id: {type: text, nullable: false}
+          stable_id_attribute: {type: text, nullable: false}
+          upstream_user_ref: {type: text, nullable: true}
+          username: {type: text, nullable: true}
+          display_name: {type: text, nullable: true}
+          status: {type: text, nullable: false}
+          first_seen_at: {type: timestamptz, nullable: false}
+          last_seen_at: {type: timestamptz, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [identity_id]
+        foreign_keys: []
+        uniques:
+          - columns: [issuer, stable_id]
+          - columns: [identity_id, issuer, stable_id]
+          - columns: [identity_id, stable_id]
+          - columns: [issuer, upstream_user_ref]
+            predicate: "upstream_user_ref IS NOT NULL"
+        checks:
+          - macro: nonempty
+            columns: [issuer, stable_id]
+          - expression: "provider_type IN ('ldap','oidc')"
+          - expression: "stable_id_attribute IN ('objectguid','entryuuid','sub')"
+          - expression: "status IN ('active','disabled','unknown')"
+          - expression: "(provider_type = 'oidc' AND stable_id_attribute = 'sub') OR (provider_type = 'ldap' AND stable_id_attribute IN ('objectguid','entryuuid'))"
+        indexes:
+          - columns: [status]
+          - columns: [stable_id]
+      group_snapshots:
+        purpose: "Метаданные идемпотентного external membership snapshot."
+        canonical_source: "LDAP/OIDC nested group membership."
+        rebuildable: true
+        rebuild_strategy: "Fresh nested-group sync; старый snapshot не является бессрочным allow."
+        classification: security_personal
+        retention: {policy: group_snapshot_owner_decision, rule: "Refresh <=15 минут и revocation <=30 минут не являются retention values."}
+        security: "Ошибки без provider payload/DN dump; только necessary sync metadata."
+        columns:
+          group_snapshot_id: {type: uuid, nullable: false}
+          sync_key: {type: text, nullable: false}
+          issuer: {type: text, nullable: false}
+          provider_type: {type: text, nullable: false}
+          snapshot_at: {type: timestamptz, nullable: false}
+          sync_started_at: {type: timestamptz, nullable: false}
+          completed_at: {type: timestamptz, nullable: true}
+          status: {type: text, nullable: false}
+          membership_hash: {type: text, nullable: true}
+          revocation_epoch: {type: bigint, nullable: false}
+          error_code: {type: text, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+        primary_key: [group_snapshot_id]
+        foreign_keys: []
+        uniques:
+          - columns: [sync_key]
+          - columns: [group_snapshot_id, issuer]
+          - columns: [group_snapshot_id, issuer, status]
+          - columns: [group_snapshot_id, issuer, snapshot_at, membership_hash, status, revocation_epoch]
+        checks:
+          - macro: sha256
+            columns: [membership_hash]
+          - expression: "provider_type IN ('ldap','oidc')"
+          - expression: "revocation_epoch >= 0"
+          - expression: "status IN ('building','ready','failed','superseded')"
+          - expression: "status <> 'ready' OR (completed_at IS NOT NULL AND membership_hash IS NOT NULL)"
+          - expression: "status <> 'failed' OR error_code IS NOT NULL"
+        indexes:
+          - columns: [issuer, status, snapshot_at]
+          - columns: [snapshot_at]
+      group_memberships:
+        purpose: "Effective direct/nested membership rows одного snapshot."
+        canonical_source: "LDAP/OIDC provider, включая nested AD groups."
+        rebuildable: true
+        rebuild_strategy: "Пересоздаётся вместе с parent snapshot."
+        classification: security_personal
+        retention: {policy: inherit_group_snapshot, rule: "Удаление старого projection snapshot не меняет IdP membership."}
+        security: "Только necessary stable group/member IDs; no provider secrets."
+        columns:
+          group_snapshot_id: {type: uuid, nullable: false}
+          group_stable_id: {type: text, nullable: false}
+          identity_id: {type: uuid, nullable: true}
+          issuer: {type: text, nullable: false}
+          member_stable_id: {type: text, nullable: false}
+          identity_binding_mode: {type: text, nullable: false}
+          membership_kind: {type: text, nullable: false}
+          resolved_via_group_stable_id: {type: text, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+        primary_key: [group_snapshot_id, group_stable_id, issuer, member_stable_id]
+        foreign_keys:
+          - columns: [group_snapshot_id, issuer]
+            references: {schema: kb_authz, table: group_snapshots, columns: [group_snapshot_id, issuer]}
+            on_delete: restrict
+          - columns: [identity_id, issuer, member_stable_id]
+            references: {schema: kb_authz, table: identities, columns: [identity_id, issuer, stable_id]}
+            on_delete: restrict
+        uniques: []
+        checks:
+          - macro: nonempty
+            columns: [group_stable_id, issuer, member_stable_id]
+          - expression: "identity_binding_mode IN ('registry','external_only')"
+          - expression: "identity_binding_mode <> 'registry' OR identity_id IS NOT NULL"
+          - expression: "identity_binding_mode <> 'external_only' OR identity_id IS NULL"
+          - expression: "membership_kind IN ('direct','nested')"
+          - expression: "membership_kind <> 'nested' OR resolved_via_group_stable_id IS NOT NULL"
+        indexes:
+          - columns: [identity_id, group_snapshot_id]
+          - columns: [group_stable_id, group_snapshot_id]
+      policy_snapshots:
+        purpose: "Неизменяемая проекция согласованного access+approval policy bundle."
+        canonical_source: "Versioned Git access policy + approval-policy.yaml."
+        rebuildable: true
+        rebuild_strategy: "Exact-SHA read, normalization и validation; invalid bundle не активируется."
+        classification: security_metadata
+        retention: {policy: git_policy_and_owner_audit_retention, rule: "Projection history не заменяет versioned Git policy."}
+        security: "Default private; path scopes не page ACL; front matter access не grant source."
+        columns:
+          policy_snapshot_id: {type: uuid, nullable: false}
+          space_id: {type: text, nullable: false}
+          policy_bundle_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          access_policy_path: {type: text, nullable: false}
+          approval_policy_path: {type: text, nullable: false}
+          access_policy_revision: {type: text, nullable: false}
+          approval_policy_revision: {type: text, nullable: false}
+          normalized_policy: {type: jsonb, nullable: false}
+          content_hash: {type: text, nullable: false}
+          validation_state: {type: text, nullable: false}
+          validation_errors: {type: jsonb, nullable: false}
+          observed_at: {type: timestamptz, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+        primary_key: [policy_snapshot_id]
+        foreign_keys:
+          - columns: [space_id, repository_id]
+            references: {schema: kb_authz, table: spaces, columns: [space_id, repository_id]}
+            on_delete: restrict
+        uniques:
+          - columns: [policy_bundle_id, access_policy_revision, approval_policy_revision]
+          - columns: [policy_snapshot_id, space_id]
+          - columns: [policy_snapshot_id, space_id, repository_id]
+          - columns: [policy_snapshot_id, space_id, repository_id, validation_state]
+          - columns: [policy_snapshot_id, space_id, repository_id, policy_bundle_id, access_policy_revision, approval_policy_revision]
+          - columns: [policy_snapshot_id, space_id, repository_id, policy_bundle_id, access_policy_revision, approval_policy_revision, validation_state]
+        checks:
+          - macro: git_sha
+            columns: [access_policy_revision, approval_policy_revision]
+          - macro: sha256
+            columns: [content_hash]
+          - macro: normalized_policy_path
+            columns: [access_policy_path, approval_policy_path]
+          - macro: nonempty
+            columns: [policy_bundle_id, repository_id]
+          - expression: "validation_state IN ('pending','valid','invalid','superseded')"
+        indexes:
+          - columns: [space_id, validation_state]
+      policy_cutovers:
+        purpose: "Атомарная активация согласованного policy bundle и single active policy pointer."
+        canonical_source: "Git policy + IdP; activation является operational projection, не canonical Space CutoverRecord."
+        rebuildable: true
+        rebuild_strategy: "Восстановить последний полностью согласованный active bundle; partial activation отбрасывается."
+        classification: security_metadata
+        retention: {policy: policy_cutover_owner_audit_retention, rule: "Failed history не даёт прав; active pointer сохраняет согласованность."}
+        security: "Один writer меняет previous/current внутри kb_authz; AccessPolicyChanged публикуется после commit и идемпотентен."
+        columns:
+          policy_cutover_id: {type: uuid, nullable: false}
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          policy_snapshot_id: {type: uuid, nullable: false}
+          previous_policy_snapshot_id: {type: uuid, nullable: true}
+          group_snapshot_id: {type: uuid, nullable: true}
+          state: {type: text, nullable: false}
+          requested_by_stable_id: {type: text, nullable: false}
+          desired_state_hash: {type: text, nullable: false}
+          requested_at: {type: timestamptz, nullable: false}
+          activated_at: {type: timestamptz, nullable: true}
+          superseded_at: {type: timestamptz, nullable: true}
+          failure_code: {type: text, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [policy_cutover_id]
+        foreign_keys:
+          - columns: [space_id, repository_id]
+            references: {schema: kb_authz, table: spaces, columns: [space_id, repository_id]}
+            on_delete: restrict
+          - columns: [policy_snapshot_id, space_id, repository_id]
+            references: {schema: kb_authz, table: policy_snapshots, columns: [policy_snapshot_id, space_id, repository_id]}
+            on_delete: restrict
+          - columns: [previous_policy_snapshot_id, space_id, repository_id]
+            references: {schema: kb_authz, table: policy_snapshots, columns: [policy_snapshot_id, space_id, repository_id]}
+            on_delete: restrict
+          - columns: [group_snapshot_id]
+            references: {schema: kb_authz, table: group_snapshots, columns: [group_snapshot_id]}
+            on_delete: restrict
+        uniques:
+          - columns: [space_id, policy_snapshot_id]
+          - columns: [space_id]
+            predicate: "state = 'active'"
+        checks:
+          - macro: sha256
+            columns: [desired_state_hash]
+          - expression: "state IN ('validating','activating','active','failed','superseded')"
+          - expression: "state <> 'active' OR activated_at IS NOT NULL"
+          - expression: "previous_policy_snapshot_id IS NULL OR previous_policy_snapshot_id <> policy_snapshot_id"
+        indexes:
+          - columns: [state, requested_at]
+      access_grants:
+        purpose: "Effective Space/path grant projection из Git policy и IdP groups."
+        canonical_source: "Versioned Git access/approval policy + LDAP/OIDC groups."
+        rebuildable: true
+        rebuild_strategy: "Recompute effective grants; DB row не является самостоятельной привилегией."
+        classification: security_personal
+        retention: {policy: grant_owner_decision, rule: "Revoke следует fresh policy/group evidence; history по owner policy."}
+        security: "Default private; personal grants только аудируемое исключение; cross-Space subjects запрещены."
+        columns:
+          grant_id: {type: uuid, nullable: false}
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          policy_snapshot_id: {type: uuid, nullable: false}
+          policy_validation_state: {type: text, nullable: false}
+          subject_type: {type: text, nullable: false}
+          subject_issuer: {type: text, nullable: false}
+          subject_stable_id: {type: text, nullable: false}
+          identity_id: {type: uuid, nullable: true}
+          identity_binding_mode: {type: text, nullable: false}
+          group_snapshot_id: {type: uuid, nullable: true}
+          group_snapshot_status: {type: text, nullable: true}
+          source_group_stable_id: {type: text, nullable: true}
+          role: {type: text, nullable: false}
+          capabilities: {type: jsonb, nullable: false}
+          path_scope: {type: text, nullable: false, note: "Repository-relative NFC scope; пустой prefix ↔ canonical '/' для всего Space."}
+          grant_kind: {type: text, nullable: false}
+          exception_reason: {type: text, nullable: true}
+          desired_state_hash: {type: text, nullable: false}
+          valid_from: {type: timestamptz, nullable: false}
+          valid_to: {type: timestamptz, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [grant_id]
+        foreign_keys:
+          - columns: [space_id, repository_id]
+            references: {schema: kb_authz, table: spaces, columns: [space_id, repository_id]}
+            on_delete: restrict
+          - columns: [policy_snapshot_id, space_id, repository_id, policy_validation_state]
+            references: {schema: kb_authz, table: policy_snapshots, columns: [policy_snapshot_id, space_id, repository_id, validation_state]}
+            on_delete: restrict
+          - columns: [identity_id, subject_issuer, subject_stable_id]
+            references: {schema: kb_authz, table: identities, columns: [identity_id, issuer, stable_id]}
+            on_delete: restrict
+          - columns: [group_snapshot_id, subject_issuer, group_snapshot_status]
+            references: {schema: kb_authz, table: group_snapshots, columns: [group_snapshot_id, issuer, status]}
+            on_delete: restrict
+        uniques:
+          - columns: [policy_snapshot_id, space_id, subject_type, subject_stable_id, role, path_scope, grant_kind]
+        checks:
+          - macro: sha256
+            columns: [desired_state_hash]
+          - macro: normalized_path_scope
+            columns: [path_scope]
+          - macro: nonempty
+            columns: [subject_issuer, subject_stable_id, role]
+          - expression: "subject_type IN ('group','identity')"
+          - expression: "grant_kind IN ('group_policy','personal_exception')"
+          - expression: "policy_validation_state = 'valid'"
+          - expression: "identity_binding_mode IN ('registry','external_only','not_applicable')"
+          - expression: "identity_binding_mode <> 'registry' OR identity_id IS NOT NULL"
+          - expression: "identity_binding_mode = 'registry' OR identity_id IS NULL"
+          - expression: "grant_kind <> 'personal_exception' OR (subject_type = 'identity' AND identity_binding_mode IN ('registry','external_only') AND btrim(exception_reason) <> '' AND group_snapshot_id IS NULL AND group_snapshot_status IS NULL)"
+          - expression: "grant_kind <> 'group_policy' OR (subject_type = 'group' AND identity_id IS NULL AND identity_binding_mode = 'not_applicable' AND exception_reason IS NULL AND group_snapshot_id IS NOT NULL AND group_snapshot_status = 'ready')"
+          - expression: "valid_to IS NULL OR valid_to > valid_from"
+        indexes:
+          - columns: [subject_issuer, subject_stable_id, space_id]
+          - columns: [subject_stable_id, space_id]
+          - columns: [space_id, role, path_scope]
+          - columns: [valid_to]
+      managed_grant_syncs:
+        purpose: "Desired/observed state и drift managed upstream grant synchronization."
+        canonical_source: "Desired Git/IdP state + observed Open WebUI upstream grants."
+        rebuildable: true
+        rebuild_strategy: "Current desired/observed reconciliation через upstream seam; exact retry history disposable."
+        classification: security_metadata
+        retention: {policy: grant_sync_owner_decision, rule: "Drift не расширяет права; operational history по owner policy."}
+        security: "No arbitrary upstream SQL или credentials; только supported grant references."
+        columns:
+          grant_sync_id: {type: uuid, nullable: false}
+          grant_id: {type: uuid, nullable: false}
+          upstream_grant_ref: {type: text, nullable: true}
+          desired_state_hash: {type: text, nullable: false}
+          observed_state_hash: {type: text, nullable: true}
+          state: {type: text, nullable: false}
+          attempt_count: {type: integer, nullable: false}
+          last_attempt_at: {type: timestamptz, nullable: true}
+          synced_at: {type: timestamptz, nullable: true}
+          last_error_code: {type: text, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [grant_sync_id]
+        foreign_keys:
+          - columns: [grant_id]
+            references: {schema: kb_authz, table: access_grants, columns: [grant_id]}
+            on_delete: restrict
+        uniques:
+          - columns: [grant_id]
+        checks:
+          - macro: sha256
+            columns: [desired_state_hash, observed_state_hash]
+          - expression: "state IN ('pending','in_sync','drifted','retry','failed','revoked')"
+          - expression: "attempt_count >= 0"
+        indexes:
+          - columns: [state, last_attempt_at]
+          - columns: [desired_state_hash]
+      authz_contexts:
+        purpose: "Server-issued authz-context-v2 identity/session envelope; policy и group evidence нормализованы per Space."
+        canonical_source: "AuthZ evaluation из trusted upstream session и независимых per-Space Git policy + IdP inputs."
+        rebuildable: false
+        rebuild_strategy: "Действующие contexts не восстанавливаются; после потери БД прежние invalid и выдаются fresh."
+        classification: security_personal
+        retention: {policy: authz_context_owner_decision, rule: "Короткий audit TTL не ослабляет revocation SLO; expired/revoked contexts не дают доступ."}
+        security: "Server-only context_id не bearer credential; context_hash связывает полный набор per-Space bindings."
+        columns:
+          context_id: {type: uuid, nullable: false}
+          identity_id: {type: uuid, nullable: false}
+          issuer: {type: text, nullable: false}
+          stable_id: {type: text, nullable: false}
+          actor_type: {type: text, nullable: false}
+          revocation_epoch: {type: bigint, nullable: false}
+          evaluated_at: {type: timestamptz, nullable: false}
+          expires_at: {type: timestamptz, nullable: false}
+          revoked_at: {type: timestamptz, nullable: true}
+          revocation_reason: {type: text, nullable: true}
+          context_hash: {type: text, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+        primary_key: [context_id]
+        foreign_keys:
+          - columns: [identity_id, issuer, stable_id]
+            references: {schema: kb_authz, table: identities, columns: [identity_id, issuer, stable_id]}
+            on_delete: restrict
+        uniques:
+          - columns: [context_id, issuer, evaluated_at]
+        checks:
+          - macro: sha256
+            columns: [context_hash]
+          - macro: nonempty
+            columns: [issuer, stable_id]
+          - expression: "actor_type IN ('human','agent','connector','internal_ci','service')"
+          - expression: "revocation_epoch >= 0"
+          - expression: "expires_at > evaluated_at"
+        indexes:
+          - columns: [identity_id, expires_at]
+          - columns: [revoked_at]
+            predicate: "revoked_at IS NOT NULL"
+      authz_context_spaces:
+        purpose: "Независимый authz-context-v2 policy/group/revocation binding для каждого space_scopes[] entry."
+        canonical_source: "Per-Space AuthZ evaluation из одного repository=Space policy bundle и одного membership snapshot."
+        rebuildable: false
+        rebuild_strategy: "Не восстанавливается как действующий binding; fresh context пересчитывает каждый Space независимо."
+        classification: security_personal
+        retention: {policy: inherit_authz_context, rule: "Хранится не дольше parent context audit TTL; revocation не ждёт cleanup."}
+        security: "Запрещено применять bundle/groups/revisions/snapshot одного Space к другому; path_scopes содержат только этот Space."
+        columns:
+          context_id: {type: uuid, nullable: false}
+          issuer: {type: text, nullable: false}
+          context_evaluated_at: {type: timestamptz, nullable: false}
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          policy_snapshot_id: {type: uuid, nullable: false}
+          policy_bundle_id: {type: text, nullable: false}
+          access_policy_revision: {type: text, nullable: false}
+          approval_policy_revision: {type: text, nullable: false}
+          policy_validation_state: {type: text, nullable: false}
+          group_snapshot_id: {type: uuid, nullable: false}
+          group_snapshot_status: {type: text, nullable: false}
+          group_snapshot_at: {type: timestamptz, nullable: false}
+          membership_sha256: {type: text, nullable: false}
+          groups: {type: jsonb, nullable: false}
+          space_capabilities: {type: jsonb, nullable: false}
+          path_scopes: {type: jsonb, nullable: false}
+          revocation_epoch: {type: bigint, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+        primary_key: [context_id, space_id]
+        foreign_keys:
+          - columns: [context_id, issuer, context_evaluated_at]
+            references: {schema: kb_authz, table: authz_contexts, columns: [context_id, issuer, evaluated_at]}
+            on_delete: restrict
+          - columns: [policy_snapshot_id, space_id, repository_id, policy_bundle_id, access_policy_revision, approval_policy_revision, policy_validation_state]
+            references: {schema: kb_authz, table: policy_snapshots, columns: [policy_snapshot_id, space_id, repository_id, policy_bundle_id, access_policy_revision, approval_policy_revision, validation_state]}
+            on_delete: restrict
+          - columns: [group_snapshot_id, issuer, group_snapshot_at, membership_sha256, group_snapshot_status, revocation_epoch]
+            references: {schema: kb_authz, table: group_snapshots, columns: [group_snapshot_id, issuer, snapshot_at, membership_hash, status, revocation_epoch]}
+            on_delete: restrict
+        uniques:
+          - columns: [context_id, space_id, repository_id, revocation_epoch]
+        checks:
+          - macro: git_sha
+            columns: [access_policy_revision, approval_policy_revision]
+          - macro: sha256
+            columns: [membership_sha256]
+          - macro: nonempty
+            columns: [issuer, repository_id, policy_bundle_id]
+          - expression: "policy_validation_state = 'valid'"
+          - expression: "group_snapshot_status = 'ready'"
+          - expression: "group_snapshot_at <= context_evaluated_at"
+          - expression: "revocation_epoch >= 0"
+        indexes:
+          - columns: [space_id, revocation_epoch]
+          - columns: [policy_snapshot_id]
+          - columns: [group_snapshot_id]
+      revocation_events:
+        purpose: "Revocation propagation, payload denial и live subscription closure projection."
+        canonical_source: "IdP/Git policy/session changes + operational propagation observations."
+        rebuildable: false
+        rebuild_strategy: "Event history не гарантирован; fresh IdP/policy diff заново создаёт deny barrier."
+        classification: security_personal
+        retention: {policy: revocation_owner_decision, rule: "Active events нельзя удалять до completion; revocation SLO <=30 минут обязателен."}
+        security: "Revocation не ждёт reindex; live subscriptions закрываются; raw content отсутствует."
+        columns:
+          revocation_event_id: {type: uuid, nullable: false}
+          identity_id: {type: uuid, nullable: false}
+          stable_id: {type: text, nullable: false}
+          revocation_epoch: {type: bigint, nullable: false}
+          event_dedupe_hash: {type: text, nullable: false}
+          space_id: {type: text, nullable: true}
+          repository_id: {type: text, nullable: true}
+          policy_snapshot_id: {type: uuid, nullable: true}
+          group_snapshot_id: {type: uuid, nullable: true}
+          event_type: {type: text, nullable: false}
+          canonical_reason: {type: text, nullable: true}
+          detected_at: {type: timestamptz, nullable: false}
+          deadline_at: {type: timestamptz, nullable: false}
+          state: {type: text, nullable: false}
+          attempt_count: {type: integer, nullable: false}
+          last_error_code: {type: text, nullable: true}
+          completed_at: {type: timestamptz, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [revocation_event_id]
+        foreign_keys:
+          - columns: [identity_id, stable_id]
+            references: {schema: kb_authz, table: identities, columns: [identity_id, stable_id]}
+            on_delete: restrict
+          - columns: [space_id]
+            references: {schema: kb_authz, table: spaces, columns: [space_id]}
+            on_delete: restrict
+          - columns: [policy_snapshot_id, space_id, repository_id]
+            references: {schema: kb_authz, table: policy_snapshots, columns: [policy_snapshot_id, space_id, repository_id]}
+            on_delete: restrict
+          - columns: [group_snapshot_id]
+            references: {schema: kb_authz, table: group_snapshots, columns: [group_snapshot_id]}
+            on_delete: restrict
+        uniques:
+          - columns: [event_dedupe_hash]
+        checks:
+          - macro: sha256
+            columns: [event_dedupe_hash]
+          - macro: nonempty
+            columns: [stable_id]
+          - expression: "event_type IN ('group_changed','policy_changed','session_revoked','manual_disable','sync_failed')"
+          - expression: "canonical_reason IS NULL OR canonical_reason IN ('group_removed','policy_changed','session_revoked','mover','leaver')"
+          - expression: "state IN ('pending','propagating','completed','retry','dead_letter')"
+          - expression: "revocation_epoch >= 0"
+          - expression: "policy_snapshot_id IS NULL OR (space_id IS NOT NULL AND repository_id IS NOT NULL)"
+          - expression: "deadline_at >= detected_at"
+          - expression: "attempt_count >= 0"
+          - expression: "state <> 'completed' OR completed_at IS NOT NULL"
+        indexes:
+          - columns: [state, deadline_at]
+          - columns: [identity_id, revocation_epoch, state]
+          - columns: [identity_id, state]
+          - columns: [space_id, state]
+  kb_ops:
+    owner:
+      component: git_orchestrator
+      writer_role: kb_ops_writer
+      migration_owner: git_orchestrator
+    readers:
+      - role: kb_ops_reader
+        components: [git_orchestrator]
+        access: read_only_go_status_query_paths
+    direct_database_consumers_forbidden: [identity_authz_adapter, retrieval_adapter, open_webui_browser, agent, connector, ci_index_worker]
+    tables:
+      proposals:
+        purpose: "Текущая GitLab MR/Proposal projection для queue/status."
+        canonical_source: "GitLab merge request + append-only ProposalRecords."
+        rebuildable: true
+        rebuild_strategy: "Полный scan MR/notes/tags; optional title projection можно не восстанавливать."
+        classification: operational_private
+        retention: {policy: mr_lifecycle_owner_decision, rule: "Projection следует MR/audit retention; канон остаётся в GitLab."}
+        security: "Title не попадает в audit/logs; evidence раскрывается только после AuthZ."
+        columns:
+          proposal_id: {type: text, nullable: false}
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          gitlab_mr_iid: {type: bigint, nullable: false}
+          source_branch: {type: text, nullable: false}
+          target_branch: {type: text, nullable: false}
+          state: {type: text, nullable: false}
+          current_base_sha: {type: text, nullable: false}
+          current_proposal_sha: {type: text, nullable: false}
+          author_stable_id: {type: text, nullable: false}
+          requester_stable_id: {type: text, nullable: false}
+          title: {type: text, nullable: true}
+          opened_at: {type: timestamptz, nullable: false}
+          closed_at: {type: timestamptz, nullable: true}
+          observed_at: {type: timestamptz, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [proposal_id]
+        foreign_keys: []
+        uniques:
+          - columns: [repository_id, gitlab_mr_iid]
+          - columns: [proposal_id, repository_id, space_id, target_branch]
+          - columns: [proposal_id, space_id, repository_id]
+        checks:
+          - macro: git_sha
+            columns: [current_base_sha, current_proposal_sha]
+          - macro: nonempty
+            columns: [proposal_id, repository_id, author_stable_id, requester_stable_id]
+          - expression: "gitlab_mr_iid > 0"
+          - expression: "state IN ('draft','in_review','published','conflicted','rejected','cancelled','superseded')"
+        indexes:
+          - columns: [space_id, state]
+          - columns: [repository_id, target_branch, state]
+      proposal_versions:
+        purpose: "Immutable ProposalVersion и append-only ProposalRecord projection с author/version_author/requester/run."
+        canonical_source: "Immutable MR source commit + append-only ProposalRecord в GitLab metadata."
+        rebuildable: true
+        rebuild_strategy: "Scan каждого exact source SHA и ProposalRecord; новая версия не перезаписывает старую."
+        classification: operational_private
+        retention: {policy: proposal_record_owner_audit_retention, rule: "Старые versions сохраняются по MR/audit policy; approval не переносится."}
+        security: "Rationale/evidence не дублируются в audit; principals/run принимаются только из trusted context."
+        columns:
+          proposal_id: {type: text, nullable: false}
+          proposal_version_id: {type: uuid, nullable: false}
+          proposal_sha: {type: text, nullable: false}
+          supersedes_proposal_version_id: {type: uuid, nullable: true}
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          target_branch: {type: text, nullable: false}
+          base_sha: {type: text, nullable: false}
+          author_stable_id: {type: text, nullable: false}
+          version_author_stable_id: {type: text, nullable: false}
+          requester_stable_id: {type: text, nullable: false}
+          actor_type: {type: text, nullable: false}
+          run_id: {type: text, nullable: true}
+          rationale: {type: text, nullable: false}
+          evidence: {type: jsonb, nullable: false}
+          origin: {type: jsonb, nullable: true}
+          idempotency_key: {type: text, nullable: false}
+          payload_hash: {type: text, nullable: false}
+          proposal_record_sha256: {type: text, nullable: false}
+          record_locator: {type: jsonb, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+        primary_key: [proposal_id, proposal_sha]
+        foreign_keys:
+          - columns: [proposal_id, repository_id, space_id, target_branch]
+            references: {schema: kb_ops, table: proposals, columns: [proposal_id, repository_id, space_id, target_branch]}
+            on_delete: restrict
+          - columns: [supersedes_proposal_version_id, proposal_id, space_id, repository_id, target_branch]
+            references: {schema: kb_ops, table: proposal_versions, columns: [proposal_version_id, proposal_id, space_id, repository_id, target_branch]}
+            on_delete: restrict
+        uniques:
+          - columns: [proposal_version_id]
+          - columns: [proposal_version_id, proposal_id, space_id, repository_id, target_branch]
+          - columns: [proposal_id, proposal_sha, repository_id, space_id, target_branch]
+          - columns: [proposal_id, proposal_sha, repository_id, space_id, target_branch, base_sha]
+          - columns: [proposal_id, proposal_sha, space_id, repository_id]
+        checks:
+          - macro: git_sha
+            columns: [proposal_sha, base_sha]
+          - macro: sha256
+            columns: [proposal_record_sha256, payload_hash]
+          - macro: nonempty
+            columns: [author_stable_id, version_author_stable_id, requester_stable_id, idempotency_key]
+          - expression: "actor_type IN ('human','agent','connector')"
+          - expression: "actor_type <> 'agent' OR run_id IS NOT NULL"
+        indexes:
+          - columns: [base_sha]
+          - columns: [version_author_stable_id]
+          - columns: [run_id]
+          - columns: [created_at]
+      decisions:
+        purpose: "Rebuildable projection canonical DecisionRecord note+tag и Git-derived outcome."
+        canonical_source: "Одинаковый canonical JSON в structured MR note + protected annotated tag на proposal_sha; merge commit/trailers."
+        rebuildable: true
+        rebuild_strategy: "Git-derived scan notes/tags/MR/main; missing/mismatch -> invalid; transient timestamps disposable."
+        classification: operational_private
+        retention: {policy: canonical_git_decision_retention, rule: "Canonical retention в Git/decisions manifest не зависит от DB row."}
+        security: "Rationale/evidence не копируются в operational audit; approver separation проверяет GO до accept."
+        columns:
+          decision_id: {type: uuid, nullable: false}
+          proposal_id: {type: text, nullable: false}
+          proposal_sha: {type: text, nullable: false}
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          target_branch: {type: text, nullable: false}
+          base_sha: {type: text, nullable: false}
+          action: {type: text, nullable: false}
+          actor_stable_id: {type: text, nullable: false}
+          actor_type: {type: text, nullable: false}
+          authz_context_id: {type: uuid, nullable: true, reference_kind: logical_api_only}
+          decided_at: {type: timestamptz, nullable: false}
+          request_id: {type: text, nullable: true}
+          payload_hash: {type: text, nullable: false}
+          rationale: {type: text, nullable: false}
+          evidence: {type: jsonb, nullable: false}
+          policy_bundle_id: {type: text, nullable: false}
+          access_policy_revision: {type: text, nullable: false}
+          approval_policy_revision: {type: text, nullable: false}
+          record_sha256: {type: text, nullable: false}
+          canonical_json_sha256: {type: text, nullable: true}
+          note_body_sha256: {type: text, nullable: true}
+          tag_message_sha256: {type: text, nullable: true}
+          note_id: {type: text, nullable: true}
+          tag_name: {type: text, nullable: true}
+          tag_object_sha: {type: text, nullable: true}
+          tag_target_sha: {type: text, nullable: true}
+          supersedes_decision_id: {type: uuid, nullable: true}
+          state: {type: text, nullable: false}
+          merge_operation_allowed: {type: boolean, nullable: false}
+          invalid_reason: {type: text, nullable: true}
+          merge_commit_sha: {type: text, nullable: true}
+          mr_closure_evidence: {type: jsonb, nullable: false}
+          state_evidence: {type: jsonb, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [decision_id]
+        foreign_keys:
+          - columns: [proposal_id, proposal_sha, repository_id, space_id, target_branch, base_sha]
+            references: {schema: kb_ops, table: proposal_versions, columns: [proposal_id, proposal_sha, repository_id, space_id, target_branch, base_sha]}
+            on_delete: restrict
+          - columns: [supersedes_decision_id, proposal_id, proposal_sha, space_id, repository_id, target_branch]
+            references: {schema: kb_ops, table: decisions, columns: [decision_id, proposal_id, proposal_sha, space_id, repository_id, target_branch]}
+            on_delete: restrict
+        uniques:
+          - columns: [decision_id, space_id, repository_id, target_branch]
+          - columns: [decision_id, space_id, repository_id, target_branch, action]
+          - columns: [decision_id, space_id, repository_id, target_branch, action, base_sha, proposal_sha]
+          - columns: [decision_id, space_id, repository_id, target_branch, action, base_sha, proposal_sha, merge_operation_allowed]
+          - columns: [decision_id, space_id, repository_id, target_branch, base_sha, proposal_sha]
+          - columns: [decision_id, proposal_id, proposal_sha, space_id, repository_id, target_branch]
+          - columns: [repository_id, note_id]
+            predicate: "note_id IS NOT NULL"
+          - columns: [repository_id, tag_name]
+            predicate: "tag_name IS NOT NULL"
+          - columns: [repository_id, target_branch, merge_commit_sha]
+            predicate: "merge_commit_sha IS NOT NULL"
+        checks:
+          - macro: git_sha
+            columns: [proposal_sha, base_sha, tag_object_sha, tag_target_sha, merge_commit_sha, access_policy_revision, approval_policy_revision]
+          - macro: sha256
+            columns: [record_sha256, canonical_json_sha256, note_body_sha256, tag_message_sha256, payload_hash]
+          - macro: nonempty
+            columns: [actor_stable_id, policy_bundle_id]
+          - expression: "action IN ('accept','reject','cancel')"
+          - expression: "actor_type = 'human'"
+          - expression: "state IN ('recorded','merge_attempted','merged','failed','conflicted','invalid')"
+          - expression: "merge_operation_allowed = (action = 'accept' AND state <> 'recorded')"
+          - expression: "(action = 'accept') OR state IN ('recorded','invalid')"
+          - expression: "state <> 'merged' OR (action = 'accept' AND merge_commit_sha IS NOT NULL AND note_id IS NOT NULL AND tag_name IS NOT NULL AND tag_target_sha = proposal_sha)"
+          - expression: "state NOT IN ('recorded','merge_attempted','merged','failed','conflicted') OR (note_id IS NOT NULL AND tag_name IS NOT NULL AND tag_object_sha IS NOT NULL AND tag_target_sha = proposal_sha AND canonical_json_sha256 IS NOT NULL AND note_body_sha256 IS NOT NULL AND tag_message_sha256 IS NOT NULL)"
+          - expression: "state = 'invalid' OR tag_target_sha = proposal_sha"
+          - expression: "state = 'invalid' OR invalid_reason IS NULL"
+          - expression: "state <> 'invalid' OR invalid_reason IN ('missing_integrity','mismatched_integrity','policy_mismatch','self_approval','incomplete_review','recovery_evidence_invalid')"
+          - expression: "state <> 'invalid' OR (note_id IS NOT NULL AND tag_name IS NOT NULL AND tag_object_sha IS NOT NULL AND canonical_json_sha256 IS NOT NULL AND note_body_sha256 IS NOT NULL AND tag_message_sha256 IS NOT NULL) OR invalid_reason = 'missing_integrity'"
+          - expression: "state <> 'invalid' OR tag_target_sha = proposal_sha OR invalid_reason = 'mismatched_integrity'"
+          - expression: "NOT (state = 'recorded' AND action IN ('reject','cancel')) OR (jsonb_typeof(mr_closure_evidence) = 'array' AND jsonb_array_length(mr_closure_evidence) > 0)"
+        indexes:
+          - columns: [repository_id, target_branch, state]
+          - columns: [proposal_id, proposal_sha]
+          - columns: [state, updated_at]
+      merge_operations:
+        purpose: "Durable operational merge attempts с owner/fencing и sanitized transient diagnostics."
+        canonical_source: "Outcome только из GitLab merge commit/parents/trailers; attempt row не доказывает результат."
+        rebuildable: false
+        rebuild_strategy: "Transient attempts/errors не восстанавливаются точно; Git-derived outcome создаётся после reconciliation."
+        classification: operational
+        retention: {policy: merge_attempt_owner_decision, rule: "Unresolved rows не удаляются; transient history не является canonical audit."}
+        security: "No credentials, request payload или raw response; stale owner не может update без fencing."
+        columns:
+          merge_operation_id: {type: uuid, nullable: false}
+          decision_id: {type: uuid, nullable: false}
+          decision_action: {type: text, nullable: false}
+          decision_merge_allowed: {type: boolean, nullable: false}
+          attempt_no: {type: integer, nullable: false}
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          target_branch: {type: text, nullable: false}
+          base_sha: {type: text, nullable: false}
+          proposal_sha: {type: text, nullable: false}
+          owner_id: {type: text, nullable: false}
+          fencing_token: {type: bigint, nullable: false}
+          state: {type: text, nullable: false}
+          request_fingerprint: {type: text, nullable: false}
+          request_completed: {type: boolean, nullable: false}
+          request_completion_evidence: {type: jsonb, nullable: false}
+          git_outcome_evidence: {type: jsonb, nullable: false}
+          merge_commit_sha: {type: text, nullable: true}
+          requested_at: {type: timestamptz, nullable: true}
+          response_at: {type: timestamptz, nullable: true}
+          verified_at: {type: timestamptz, nullable: true}
+          error_code: {type: text, nullable: true}
+          error_detail: {type: text, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [merge_operation_id]
+        foreign_keys:
+          - columns: [decision_id, space_id, repository_id, target_branch, decision_action, base_sha, proposal_sha, decision_merge_allowed]
+            references: {schema: kb_ops, table: decisions, columns: [decision_id, space_id, repository_id, target_branch, action, base_sha, proposal_sha, merge_operation_allowed]}
+            on_delete: restrict
+          - columns: [repository_id, target_branch, space_id]
+            references: {schema: kb_ops, table: target_barriers, columns: [repository_id, target_branch, space_id]}
+            on_delete: restrict
+        uniques:
+          - columns: [decision_id, attempt_no]
+          - columns: [repository_id, target_branch, proposal_sha]
+            predicate: "state = 'verified_merged'"
+        checks:
+          - macro: git_sha
+            columns: [base_sha, proposal_sha, merge_commit_sha]
+          - macro: sha256
+            columns: [request_fingerprint]
+          - macro: nonempty
+            columns: [owner_id]
+          - expression: "attempt_no > 0 AND fencing_token > 0"
+          - expression: "decision_action = 'accept' AND decision_merge_allowed"
+          - expression: "state IN ('prepared','call_inflight','unknown','verified_merged','verified_not_merged','conflicted','invalid')"
+          - expression: "state <> 'verified_merged' OR (merge_commit_sha IS NOT NULL AND request_completed AND verified_at IS NOT NULL)"
+          - expression: "state <> 'verified_not_merged' OR (merge_commit_sha IS NULL AND request_completed AND verified_at IS NOT NULL)"
+          - expression: "state <> 'conflicted' OR (merge_commit_sha IS NULL AND request_completed AND verified_at IS NOT NULL)"
+          - expression: "state = 'verified_merged' OR merge_commit_sha IS NULL"
+        indexes:
+          - columns: [repository_id, target_branch, state]
+          - columns: [owner_id, fencing_token]
+          - columns: [merge_commit_sha]
+      target_barriers:
+        purpose: "Durable per-repository/target recovery_required и advisory-lock owner/fencing metadata."
+        canonical_source: "Merge outcome в GitLab; barrier является durable operational safety state."
+        rebuildable: true
+        rebuild_strategy: "Conservative rebuild: bootstrap freeze + recovery_required для unresolved/недоказанных targets; никогда не очищать молча."
+        classification: operational
+        retention: {policy: durable_until_conclusive_reconciliation, rule: "Active barrier нельзя удалять по TTL или считать отсутствие row отрицательным доказательством."}
+        security: "Только GO writer; timeout/lock expiry не снимает recovery; private payload отсутствует."
+        columns:
+          repository_id: {type: text, nullable: false}
+          target_branch: {type: text, nullable: false}
+          space_id: {type: text, nullable: false}
+          recovery_required: {type: boolean, nullable: false}
+          recovery_reason: {type: text, nullable: true}
+          active_decision_id: {type: uuid, nullable: true}
+          active_decision_action: {type: text, nullable: true}
+          lock_owner_id: {type: text, nullable: true}
+          fencing_token: {type: bigint, nullable: false}
+          lock_acquired_at: {type: timestamptz, nullable: true}
+          lock_expires_at: {type: timestamptz, nullable: true}
+          bootstrap_frozen: {type: boolean, nullable: false}
+          last_reconciliation_run_id: {type: uuid, nullable: true}
+          last_reconciled_at: {type: timestamptz, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [repository_id, target_branch]
+        foreign_keys:
+          - columns: [active_decision_id, space_id, repository_id, target_branch, active_decision_action]
+            references: {schema: kb_ops, table: decisions, columns: [decision_id, space_id, repository_id, target_branch, action]}
+            on_delete: restrict
+          - columns: [last_reconciliation_run_id, space_id, repository_id, target_branch]
+            references: {schema: kb_ops, table: reconciliation_runs, columns: [reconciliation_run_id, space_id, repository_id, target_branch]}
+            on_delete: restrict
+        uniques:
+          - columns: [repository_id, target_branch, space_id]
+        checks:
+          - macro: nonempty
+            columns: [space_id, repository_id, target_branch]
+          - expression: "fencing_token > 0"
+          - expression: "NOT recovery_required OR recovery_reason IS NOT NULL"
+          - expression: "recovery_required OR active_decision_id IS NULL"
+          - expression: "(active_decision_id IS NULL AND active_decision_action IS NULL) OR (active_decision_id IS NOT NULL AND active_decision_action = 'accept')"
+        indexes:
+          - columns: [recovery_required]
+            predicate: "recovery_required"
+          - columns: [active_decision_id]
+          - columns: [lock_owner_id, fencing_token]
+      target_barrier_decisions:
+        purpose: "Полный набор unresolved/resolved accept decisions, связанных с одним durable per-target barrier."
+        canonical_source: "Canonical accept DecisionRecords + Git-derived target ancestry/request-completion evidence."
+        rebuildable: true
+        rebuild_strategy: "Conservative rebuild связывает каждый accept без доказанного outcome как unresolved/unknown; отсутствие row не является no-merge proof."
+        classification: operational
+        retention: {policy: durable_until_target_outcome_proven, rule: "Unresolved/unknown/quarantined links нельзя удалять или resolving по TTL; resolved evidence сохраняется по owner audit policy."}
+        security: "Только GO; same-Space/repository/target composite FK; sanitized evidence без request/response payload."
+        columns:
+          repository_id: {type: text, nullable: false}
+          target_branch: {type: text, nullable: false}
+          space_id: {type: text, nullable: false}
+          decision_id: {type: uuid, nullable: false}
+          decision_action: {type: text, nullable: false}
+          link_state: {type: text, nullable: false}
+          merge_outcome: {type: text, nullable: false}
+          classification: {type: text, nullable: false}
+          request_completed: {type: boolean, nullable: false}
+          outcome_evidence: {type: jsonb, nullable: false}
+          linked_at: {type: timestamptz, nullable: false}
+          resolved_at: {type: timestamptz, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [repository_id, target_branch, decision_id]
+        foreign_keys:
+          - columns: [repository_id, target_branch, space_id]
+            references: {schema: kb_ops, table: target_barriers, columns: [repository_id, target_branch, space_id]}
+            on_delete: restrict
+          - columns: [decision_id, space_id, repository_id, target_branch, decision_action]
+            references: {schema: kb_ops, table: decisions, columns: [decision_id, space_id, repository_id, target_branch, action]}
+            on_delete: restrict
+        uniques:
+          - columns: [decision_id, repository_id, target_branch, space_id]
+        checks:
+          - expression: "decision_action = 'accept'"
+          - expression: "link_state IN ('unresolved','resolved')"
+          - expression: "merge_outcome IN ('unknown','verified_merged','verified_not_merged')"
+          - expression: "classification IN ('pending','merged','failed','conflicted','invalid','quarantined')"
+          - expression: "link_state <> 'unresolved' OR (merge_outcome = 'unknown' AND resolved_at IS NULL)"
+          - expression: "link_state <> 'resolved' OR (merge_outcome <> 'unknown' AND request_completed AND resolved_at IS NOT NULL)"
+          - expression: "classification NOT IN ('pending','quarantined') OR (link_state = 'unresolved' AND merge_outcome = 'unknown')"
+          - expression: "classification <> 'merged' OR merge_outcome = 'verified_merged'"
+          - expression: "classification NOT IN ('failed','conflicted') OR (merge_outcome = 'verified_not_merged' AND request_completed)"
+        indexes:
+          - columns: [repository_id, target_branch, link_state]
+          - columns: [decision_id, link_state]
+      idempotency_records:
+        purpose: "Глобальный idempotency-key registry с actor+route+payload binding."
+        canonical_source: "GitLab decision_id и (repository_id,target_branch,proposal_sha) являются durable backstop."
+        rebuildable: false
+        rebuild_strategy: "Точный HTTP replay journal не гарантирован; Git-derived dedupe сохраняется."
+        classification: operational
+        retention: {policy: idempotency_replay_owner_decision_unknown, rule: "Истечение replay record не разрешает blind retry uncertain merge."}
+        security: "Тот же key с другим actor, route или payload -> IDEMPOTENCY_KEY_REUSED до insert; raw request/response не хранится."
+        columns:
+          actor_stable_id: {type: text, nullable: false}
+          route: {type: text, nullable: false, note: "Normalized operation/route плюс concrete path parameters, не только route template."}
+          idempotency_key: {type: text, nullable: false}
+          payload_hash: {type: text, nullable: false}
+          operation_type: {type: text, nullable: false}
+          request_id: {type: text, nullable: false}
+          run_id: {type: text, nullable: true}
+          decision_id: {type: uuid, nullable: true}
+          result_state: {type: text, nullable: false}
+          result_reference: {type: jsonb, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+          expires_at: {type: timestamptz, nullable: true}
+          last_replayed_at: {type: timestamptz, nullable: true}
+        primary_key: [idempotency_key]
+        foreign_keys:
+          - columns: [decision_id]
+            references: {schema: kb_ops, table: decisions, columns: [decision_id]}
+            on_delete: restrict
+        uniques: []
+        checks:
+          - macro: sha256
+            columns: [payload_hash]
+          - macro: nonempty
+            columns: [actor_stable_id, route, idempotency_key, request_id]
+          - expression: "expires_at IS NULL OR expires_at > created_at"
+        indexes:
+          - columns: [actor_stable_id, route]
+          - columns: [expires_at]
+          - columns: [decision_id]
+          - columns: [request_id]
+      webhook_inbox:
+        purpose: "Authenticated at-least-once webhook intake, dedupe, retry и DLQ."
+        canonical_source: "GitLab/AuthZ/object/source state; webhook только подсказка, не доказательство результата."
+        rebuildable: false
+        rebuild_strategy: "Точный inbox history не гарантирован; periodic HEAD/source reconciliation создаёт работу заново."
+        classification: operational
+        retention: {policy: webhook_owner_decision, rule: "Active retry/DLQ не удалять до resolution; history по owner policy."}
+        security: "No signature secrets, raw private payload или evidence; metadata строго allowlisted."
+        columns:
+          source: {type: text, nullable: false}
+          event_id: {type: text, nullable: false}
+          space_id: {type: text, nullable: true}
+          repository_id: {type: text, nullable: true}
+          event_type: {type: text, nullable: false}
+          event_sha256: {type: text, nullable: false}
+          authenticity_state: {type: text, nullable: false}
+          received_at: {type: timestamptz, nullable: false}
+          observed_main_sha: {type: text, nullable: true}
+          metadata: {type: jsonb, nullable: false}
+          processing_state: {type: text, nullable: false}
+          attempt_count: {type: integer, nullable: false}
+          next_attempt_at: {type: timestamptz, nullable: true}
+          last_error_code: {type: text, nullable: true}
+          dead_lettered_at: {type: timestamptz, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [source, event_id]
+        foreign_keys: []
+        uniques:
+          - columns: [source, event_sha256]
+        checks:
+          - macro: sha256
+            columns: [event_sha256]
+          - macro: git_sha
+            columns: [observed_main_sha]
+          - expression: "authenticity_state IN ('verified','rejected')"
+          - expression: "processing_state IN ('received','processing','dispatched','retry','dead_letter','ignored')"
+          - expression: "attempt_count >= 0"
+          - expression: "authenticity_state <> 'rejected' OR processing_state = 'ignored'"
+        indexes:
+          - columns: [processing_state, next_attempt_at]
+          - columns: [repository_id, received_at]
+      index_requests:
+        purpose: "GO outbox/dispatch projection exact-SHA IndexRequested для CI."
+        canonical_source: "GitLab exact HEAD/CutoverRecord; CI/index worker владеет index run."
+        rebuildable: false
+        rebuild_strategy: "Request history disposable; HEAD reconciliation создаёт новый exact request."
+        classification: operational
+        retention: {policy: index_queue_owner_decision, rule: "Queue/DLQ history по owner policy; active DLQ до resolution."}
+        security: "GO не пишет kb_index или active pointer; preflight не является serving request."
+        columns:
+          index_request_id: {type: uuid, nullable: false}
+          dedupe_key: {type: text, nullable: false}
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          target_branch: {type: text, nullable: false}
+          main_sha: {type: text, nullable: false}
+          main_generation_key: {type: text, nullable: false}
+          requested_profile_version: {type: text, nullable: true}
+          reason: {type: text, nullable: false}
+          preflight: {type: boolean, nullable: false}
+          state: {type: text, nullable: false}
+          attempt_count: {type: integer, nullable: false}
+          external_run_ref: {type: text, nullable: true, reference_kind: logical_ci_api_only}
+          requested_at: {type: timestamptz, nullable: false}
+          dispatched_at: {type: timestamptz, nullable: true}
+          last_observed_at: {type: timestamptz, nullable: true}
+          next_attempt_at: {type: timestamptz, nullable: true}
+          last_error_code: {type: text, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [index_request_id]
+        foreign_keys: []
+        uniques:
+          - columns: [dedupe_key]
+          - columns: [index_request_id, space_id, repository_id, target_branch, main_sha, preflight]
+        checks:
+          - macro: git_sha
+            columns: [main_sha]
+          - macro: nonempty
+            columns: [dedupe_key, main_generation_key, reason]
+          - expression: "state IN ('pending','dispatched','retry','dead_letter','superseded','observed')"
+          - expression: "attempt_count >= 0"
+        indexes:
+          - columns: [repository_id, target_branch, main_sha]
+          - columns: [state, next_attempt_at]
+          - columns: [preflight, state]
+      source_sync_states:
+        purpose: "Per-source-object seen/proposed/merged cursors и one-outstanding proposal projection."
+        canonical_source: "Versioned source registry/config + immutable source versions + Git proposals/merges."
+        rebuildable: true
+        rebuild_strategy: "Current mapping/cursors из registry/MR/main/source observations; proposed никогда не становится merged без verified merge."
+        classification: operational_private
+        retention: {policy: source_provenance_owner_decision, rule: "Tombstone не удаляет curated content; source/provenance history по owner policy."}
+        security: "No source credentials/raw payloads; source ACL hints не становятся grants."
+        columns:
+          source_binding_id: {type: text, nullable: false}
+          source_object_id: {type: text, nullable: false}
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          document_id: {type: uuid, nullable: true, reference_kind: logical_document_id_only}
+          ownership_mode: {type: text, nullable: false}
+          data_profile: {type: text, nullable: false}
+          owner_stable_id: {type: text, nullable: false}
+          source_type: {type: text, nullable: false}
+          source_account_ref: {type: text, nullable: false}
+          source_config_hash: {type: text, nullable: false}
+          previous_imported_base_sha: {type: text, nullable: true}
+          seen_version: {type: text, nullable: true}
+          seen_hash: {type: text, nullable: true}
+          proposed_version: {type: text, nullable: true}
+          proposed_hash: {type: text, nullable: true}
+          outstanding_proposal_id: {type: text, nullable: true}
+          outstanding_proposal_sha: {type: text, nullable: true}
+          outcome_proposal_id: {type: text, nullable: true}
+          outcome_proposal_sha: {type: text, nullable: true}
+          merged_version: {type: text, nullable: true}
+          merged_hash: {type: text, nullable: true}
+          merged_commit_sha: {type: text, nullable: true}
+          sync_state: {type: text, nullable: false}
+          last_error_code: {type: text, nullable: true}
+          last_observed_at: {type: timestamptz, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [source_binding_id, source_object_id]
+        foreign_keys:
+          - columns: [outstanding_proposal_id, outstanding_proposal_sha, space_id, repository_id]
+            references: {schema: kb_ops, table: proposal_versions, columns: [proposal_id, proposal_sha, space_id, repository_id]}
+            on_delete: restrict
+          - columns: [outcome_proposal_id, outcome_proposal_sha, space_id, repository_id]
+            references: {schema: kb_ops, table: proposal_versions, columns: [proposal_id, proposal_sha, space_id, repository_id]}
+            on_delete: restrict
+        uniques: []
+        checks:
+          - macro: git_sha
+            columns: [previous_imported_base_sha, outstanding_proposal_sha, outcome_proposal_sha, merged_commit_sha]
+          - macro: sha256
+            columns: [source_config_hash, seen_hash, proposed_hash, merged_hash]
+          - macro: nonempty
+            columns: [owner_stable_id, source_account_ref]
+          - expression: "ownership_mode IN ('migrated','source_managed','curated')"
+          - expression: "data_profile IN ('strict','pii_permitted')"
+          - expression: "sync_state IN ('observed','seen_durable','no_op','proposal_pending','merged','rejected','conflicted','tombstone','retry','dead_letter')"
+          - expression: "(seen_version IS NULL) = (seen_hash IS NULL)"
+          - expression: "(proposed_version IS NULL) = (proposed_hash IS NULL)"
+          - expression: "(merged_version IS NULL) = (merged_hash IS NULL)"
+          - expression: "(outstanding_proposal_id IS NULL) = (outstanding_proposal_sha IS NULL)"
+          - expression: "(outcome_proposal_id IS NULL) = (outcome_proposal_sha IS NULL)"
+          - expression: "sync_state <> 'proposal_pending' OR (outstanding_proposal_id IS NOT NULL AND outstanding_proposal_sha IS NOT NULL AND proposed_version IS NOT NULL AND proposed_hash IS NOT NULL AND outcome_proposal_id IS NULL AND outcome_proposal_sha IS NULL)"
+          - expression: "sync_state = 'proposal_pending' OR (outstanding_proposal_id IS NULL AND outstanding_proposal_sha IS NULL)"
+          - expression: "sync_state <> 'merged' OR (merged_version IS NOT NULL AND merged_hash IS NOT NULL AND merged_commit_sha IS NOT NULL AND outcome_proposal_id IS NOT NULL AND outcome_proposal_sha IS NOT NULL)"
+        indexes:
+          - columns: [outstanding_proposal_id]
+            predicate: "outstanding_proposal_id IS NOT NULL"
+          - columns: [outcome_proposal_id]
+            predicate: "outcome_proposal_id IS NOT NULL"
+          - columns: [space_id, sync_state]
+          - columns: [document_id]
+          - columns: [seen_hash]
+      document_review_states:
+        purpose: "Versioned docops-review-metadata-v1 projection canonical valid_until/provenance, exact Git revision и approver review queue."
+        canonical_source: "document-front-matter-v2 valid_until/provenance в exact Git document revision; DocOps registry хранит только versioned projection/queue, не второй канон."
+        rebuildable: true
+        rebuild_strategy: "Rebuild из exact canonical revision; expiry/queue вычисляются заново без изменения canonical document bytes."
+        classification: operational_private
+        retention: {policy: docops_review_owner_decision, rule: "Review history по owner DocOps policy; active due/in_review rows нельзя удалять до resolution."}
+        security: "Document path/provenance доступны только после Space AuthZ; no private document text или registry secrets."
+        columns:
+          review_metadata_id: {type: uuid, nullable: false}
+          schema_version: {type: text, nullable: false}
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          target_branch: {type: text, nullable: false}
+          document_id: {type: uuid, nullable: false, reference_kind: logical_same_space_git_document_only}
+          document_path: {type: text, nullable: false}
+          document_revision_sha: {type: text, nullable: false}
+          registry_revision: {type: text, nullable: false}
+          valid_until: {type: date, nullable: true}
+          review_required: {type: boolean, nullable: false}
+          review_state: {type: text, nullable: false}
+          provenance: {type: jsonb, nullable: false}
+          metadata_sha256: {type: text, nullable: false}
+          review_proposal_id: {type: text, nullable: true}
+          review_proposal_sha: {type: text, nullable: true}
+          queued_at: {type: timestamptz, nullable: true}
+          evaluated_at: {type: timestamptz, nullable: false}
+          resolved_at: {type: timestamptz, nullable: true}
+          observed_at: {type: timestamptz, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [review_metadata_id]
+        foreign_keys:
+          - columns: [review_proposal_id, review_proposal_sha, repository_id, space_id, target_branch]
+            references: {schema: kb_ops, table: proposal_versions, columns: [proposal_id, proposal_sha, repository_id, space_id, target_branch]}
+            on_delete: restrict
+        uniques:
+          - columns: [space_id, document_id, document_revision_sha, registry_revision]
+          - columns: [space_id, document_id]
+            predicate: "review_state IN ('due','in_review')"
+        checks:
+          - macro: git_sha
+            columns: [document_revision_sha, review_proposal_sha]
+          - macro: normalized_path
+            columns: [document_path]
+          - macro: sha256
+            columns: [metadata_sha256]
+          - macro: nonempty
+            columns: [registry_revision]
+          - expression: "schema_version = 'docops-review-metadata-v1'"
+          - expression: "review_state IN ('scheduled','due','in_review','resolved','removed')"
+          - expression: "(review_proposal_id IS NULL) = (review_proposal_sha IS NULL)"
+          - expression: "review_required = (valid_until IS NOT NULL)"
+          - expression: "review_state <> 'scheduled' OR (review_required AND valid_until >= evaluated_at::date)"
+          - expression: "review_state <> 'due' OR (review_required AND valid_until < evaluated_at::date AND queued_at IS NOT NULL)"
+          - expression: "review_state <> 'in_review' OR (review_required AND valid_until IS NOT NULL AND queued_at IS NOT NULL)"
+          - expression: "review_state <> 'resolved' OR resolved_at IS NOT NULL"
+          - expression: "review_state <> 'removed' OR (NOT review_required AND valid_until IS NULL)"
+        indexes:
+          - columns: [space_id, review_state, valid_until]
+          - columns: [document_id, document_revision_sha]
+          - columns: [review_proposal_id]
+      reconciliation_runs:
+        purpose: "Git-derived target/HEAD/source/bootstrap reconciliation run metadata."
+        canonical_source: "GitLab/source registry observations; run сам не является outcome evidence."
+        rebuildable: false
+        rebuild_strategy: "Run history не восстанавливается; новый run обязателен после restore/rebuild."
+        classification: operational
+        retention: {policy: reconciliation_owner_decision, rule: "Running/quarantined runs не удалять; history по owner operational audit."}
+        security: "Evidence без document text/provider payload; только sanitized refs/counts/results."
+        columns:
+          reconciliation_run_id: {type: uuid, nullable: false}
+          kind: {type: text, nullable: false}
+          space_id: {type: text, nullable: true}
+          repository_id: {type: text, nullable: true}
+          target_branch: {type: text, nullable: true}
+          source_binding_id: {type: text, nullable: true}
+          trigger: {type: text, nullable: false}
+          state: {type: text, nullable: false}
+          started_by_stable_id: {type: text, nullable: false}
+          started_at: {type: timestamptz, nullable: false}
+          completed_at: {type: timestamptz, nullable: true}
+          observed_head_sha: {type: text, nullable: true}
+          evidence: {type: jsonb, nullable: false}
+          error_code: {type: text, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [reconciliation_run_id]
+        foreign_keys: []
+        uniques:
+          - columns: [reconciliation_run_id, space_id, repository_id, target_branch]
+        checks:
+          - macro: git_sha
+            columns: [observed_head_sha]
+          - expression: "kind IN ('bootstrap_merge','target_merge','head_index','source_sync','restore')"
+          - expression: "trigger IN ('manual','startup','scheduled','timeout','webhook_loss','rebuild')"
+          - expression: "state IN ('running','conclusive','quarantined','failed')"
+          - expression: "kind <> 'target_merge' OR (space_id IS NOT NULL AND repository_id IS NOT NULL AND target_branch IS NOT NULL)"
+        indexes:
+          - columns: [repository_id, target_branch, state, started_at]
+          - columns: [kind, state]
+          - columns: [observed_head_sha]
+      reconciliation_findings:
+        purpose: "Атомарные Git-derived findings и quarantine evidence."
+        canonical_source: "Вывод подтверждён Git/source evidence, не самой finding row."
+        rebuildable: false
+        rebuild_strategy: "History disposable; unresolved evidence вызывает новый target-wide run."
+        classification: operational
+        retention: {policy: reconciliation_finding_owner_decision, rule: "Active quarantine findings нельзя удалять; history по owner policy."}
+        security: "No mismatch snippets/raw notes; только sanitized evidence refs."
+        columns:
+          finding_id: {type: uuid, nullable: false}
+          reconciliation_run_id: {type: uuid, nullable: false}
+          decision_id: {type: uuid, nullable: true}
+          space_id: {type: text, nullable: true}
+          repository_id: {type: text, nullable: true}
+          target_branch: {type: text, nullable: true}
+          finding_type: {type: text, nullable: false}
+          subject_key: {type: text, nullable: false}
+          outcome: {type: text, nullable: false}
+          merge_outcome: {type: text, nullable: false}
+          request_completed: {type: boolean, nullable: false}
+          quarantine_required: {type: boolean, nullable: false}
+          details: {type: jsonb, nullable: false}
+          resolved_at: {type: timestamptz, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [finding_id]
+        foreign_keys:
+          - columns: [reconciliation_run_id, space_id, repository_id, target_branch]
+            references: {schema: kb_ops, table: reconciliation_runs, columns: [reconciliation_run_id, space_id, repository_id, target_branch]}
+            on_delete: restrict
+          - columns: [decision_id, space_id, repository_id, target_branch]
+            references: {schema: kb_ops, table: decisions, columns: [decision_id, space_id, repository_id, target_branch]}
+            on_delete: restrict
+        uniques:
+          - columns: [reconciliation_run_id, finding_type, subject_key]
+        checks:
+          - macro: nonempty
+            columns: [finding_type, subject_key]
+          - expression: "outcome IN ('unknown','merged','failed','conflicted','invalid','quarantined','resolved')"
+          - expression: "merge_outcome IN ('unknown','verified_merged','verified_not_merged','not_applicable')"
+          - expression: "decision_id IS NULL OR (space_id IS NOT NULL AND repository_id IS NOT NULL AND target_branch IS NOT NULL)"
+          - expression: "outcome NOT IN ('unknown','quarantined') OR quarantine_required"
+          - expression: "outcome <> 'unknown' OR merge_outcome = 'unknown'"
+          - expression: "outcome <> 'merged' OR (merge_outcome = 'verified_merged' AND request_completed)"
+          - expression: "outcome NOT IN ('failed','conflicted') OR (merge_outcome = 'verified_not_merged' AND request_completed)"
+          - expression: "NOT (outcome = 'invalid' AND merge_outcome = 'unknown') OR quarantine_required"
+          - expression: "outcome <> 'resolved' OR (resolved_at IS NOT NULL AND merge_outcome <> 'unknown' AND (merge_outcome = 'not_applicable' OR request_completed))"
+        indexes:
+          - columns: [decision_id]
+          - columns: [quarantine_required, outcome]
+          - columns: [repository_id, target_branch]
+      space_cutovers:
+        purpose: "GO projection canonical CutoverRecord и последовательности freeze/protection/preflight/activation."
+        canonical_source: "CutoverRecord + protected validation/cutover tag + GitLab rules + CI/GO observations."
+        rebuildable: true
+        rebuild_strategy: "Exact record/observations; replay только Space+same SHA и HEAD == cutover_sha; HEAD mismatch требует новый record/preflight."
+        classification: operational_private
+        retention: {policy: cutover_git_lifecycle_owner_decision, rule: "Git tag/record являются canonical evidence; projection history по owner policy."}
+        security: "Evidence refs без raw corpus/secrets; preflight не открывает user/retrieval access."
+        columns:
+          cutover_id: {type: uuid, nullable: false}
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          target_branch: {type: text, nullable: false}
+          cutover_sha: {type: text, nullable: false}
+          main_sha: {type: text, nullable: false}
+          cutover_record_sha256: {type: text, nullable: false}
+          validation_evidence: {type: jsonb, nullable: false}
+          signoff_actor_stable_id: {type: text, nullable: false}
+          signoff_at: {type: timestamptz, nullable: false}
+          write_freeze_observed: {type: boolean, nullable: false}
+          state: {type: text, nullable: false}
+          protected_at: {type: timestamptz, nullable: true}
+          protected_tag_ref: {type: text, nullable: true}
+          preflight_request_marker: {type: boolean, nullable: false}
+          preflight_index_request_id: {type: uuid, nullable: true}
+          preflight_run_id: {type: uuid, nullable: true, reference_kind: logical_ci_activation_evidence_only}
+          preflight_snapshot_id: {type: uuid, nullable: true, reference_kind: logical_ci_activation_evidence_only}
+          preflight_snapshot_sha: {type: text, nullable: true}
+          preflight_purpose: {type: text, nullable: true}
+          preflight_is_preflight: {type: boolean, nullable: true}
+          preflight_serving_allowed: {type: boolean, nullable: true}
+          preflight_snapshot_state: {type: text, nullable: true}
+          preflight_validated_at: {type: timestamptz, nullable: true}
+          preflight_dependency_closure_hash: {type: text, nullable: true}
+          preflight_exact_projection_hash: {type: text, nullable: true}
+          preflight_semantic_projection_hash: {type: text, nullable: true}
+          published_index_request_id: {type: uuid, nullable: true}
+          published_request_marker: {type: boolean, nullable: true}
+          published_run_id: {type: uuid, nullable: true, reference_kind: logical_ci_activation_evidence_only}
+          published_snapshot_id: {type: uuid, nullable: true, reference_kind: logical_ci_activation_evidence_only}
+          published_snapshot_sha: {type: text, nullable: true}
+          publication_fence: {type: text, nullable: true}
+          published_run_type: {type: text, nullable: true}
+          published_purpose: {type: text, nullable: true}
+          published_is_preflight: {type: boolean, nullable: true}
+          published_serving_allowed: {type: boolean, nullable: true}
+          published_snapshot_state: {type: text, nullable: true}
+          published_validated_at: {type: timestamptz, nullable: true}
+          published_dependency_closure_hash: {type: text, nullable: true}
+          published_full_snapshot_equivalence: {type: text, nullable: true}
+          published_history_rewrite_detected: {type: boolean, nullable: true}
+          published_exact_projection_hash: {type: text, nullable: true}
+          published_semantic_projection_hash: {type: text, nullable: true}
+          published_policy_bundle_id: {type: text, nullable: true}
+          published_access_policy_revision: {type: text, nullable: true}
+          published_approval_policy_revision: {type: text, nullable: true}
+          index_activation_observed_at: {type: timestamptz, nullable: true}
+          space_activated_at: {type: timestamptz, nullable: true}
+          failure_code: {type: text, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [cutover_id]
+        foreign_keys:
+          - columns: [preflight_index_request_id, space_id, repository_id, target_branch, cutover_sha, preflight_request_marker]
+            references: {schema: kb_ops, table: index_requests, columns: [index_request_id, space_id, repository_id, target_branch, main_sha, preflight]}
+            on_delete: restrict
+          - columns: [published_index_request_id, space_id, repository_id, target_branch, main_sha, published_request_marker]
+            references: {schema: kb_ops, table: index_requests, columns: [index_request_id, space_id, repository_id, target_branch, main_sha, preflight]}
+            on_delete: restrict
+        uniques:
+          - columns: [space_id, cutover_sha]
+          - columns: [repository_id, target_branch, cutover_sha]
+          - columns: [space_id]
+            predicate: "state = 'active'"
+        checks:
+          - macro: git_sha
+            columns: [cutover_sha, main_sha, preflight_snapshot_sha, published_snapshot_sha, published_access_policy_revision, published_approval_policy_revision]
+          - macro: sha256
+            columns: [cutover_record_sha256, preflight_dependency_closure_hash, preflight_exact_projection_hash, preflight_semantic_projection_hash, published_dependency_closure_hash, published_exact_projection_hash, published_semantic_projection_hash]
+          - expression: "state IN ('prepared','frozen','protecting','preflight','activating','active','failed','conflicted')"
+          - expression: "preflight_request_marker"
+          - expression: "main_sha = cutover_sha"
+          - expression: "(published_index_request_id IS NULL AND published_request_marker IS NULL) OR (published_index_request_id IS NOT NULL AND published_request_marker IS FALSE)"
+          - expression: "published_index_request_id IS NULL OR preflight_index_request_id IS NULL OR published_index_request_id <> preflight_index_request_id"
+          - expression: "preflight_purpose IS NULL OR preflight_purpose = 'cutover_preflight'"
+          - expression: "preflight_is_preflight IS NULL OR preflight_is_preflight"
+          - expression: "preflight_serving_allowed IS NULL OR NOT preflight_serving_allowed"
+          - expression: "preflight_snapshot_sha IS NULL OR preflight_snapshot_sha = cutover_sha"
+          - expression: "published_snapshot_sha IS NULL OR published_snapshot_sha = cutover_sha"
+          - expression: "published_is_preflight IS NULL OR published_is_preflight = false"
+          - expression: "state NOT IN ('preflight','activating','active') OR (preflight_index_request_id IS NOT NULL AND preflight_run_id IS NOT NULL AND preflight_snapshot_id IS NOT NULL)"
+          - expression: "state NOT IN ('preflight','activating','active') OR preflight_validated_at IS NOT NULL"
+          - expression: "state NOT IN ('activating','active') OR (preflight_purpose IS NOT NULL AND preflight_snapshot_state IS NOT NULL AND preflight_snapshot_sha IS NOT NULL AND published_run_type IS NOT NULL AND published_purpose IS NOT NULL AND published_snapshot_state IS NOT NULL AND published_snapshot_sha IS NOT NULL AND published_full_snapshot_equivalence IS NOT NULL)"
+          - expression: "state NOT IN ('activating','active') OR (published_validated_at IS NOT NULL AND preflight_validated_at IS NOT NULL AND preflight_validated_at <= published_validated_at AND published_validated_at <= index_activation_observed_at)"
+          - expression: "state <> 'activating' OR (preflight_index_request_id IS NOT NULL AND published_index_request_id IS NOT NULL AND published_request_marker IS FALSE AND preflight_index_request_id <> published_index_request_id AND preflight_run_id IS NOT NULL AND published_run_id IS NOT NULL AND preflight_run_id <> published_run_id AND preflight_snapshot_id IS NOT NULL AND published_snapshot_id IS NOT NULL AND preflight_snapshot_id <> published_snapshot_id AND preflight_purpose = 'cutover_preflight' AND preflight_is_preflight IS TRUE AND preflight_serving_allowed IS FALSE AND preflight_snapshot_state = 'ready' AND preflight_snapshot_sha = cutover_sha AND published_snapshot_sha = cutover_sha AND published_run_type = 'full' AND published_purpose = 'published' AND published_is_preflight IS FALSE AND published_serving_allowed IS TRUE AND published_snapshot_state = 'active' AND preflight_dependency_closure_hash IS NOT NULL AND published_dependency_closure_hash = preflight_dependency_closure_hash AND published_full_snapshot_equivalence = 'not_applicable' AND published_history_rewrite_detected IS FALSE AND preflight_exact_projection_hash IS NOT NULL AND preflight_semantic_projection_hash IS NOT NULL AND published_exact_projection_hash = preflight_exact_projection_hash AND published_semantic_projection_hash = preflight_semantic_projection_hash AND published_policy_bundle_id IS NOT NULL AND published_access_policy_revision IS NOT NULL AND published_approval_policy_revision IS NOT NULL AND publication_fence IS NOT NULL AND index_activation_observed_at IS NOT NULL AND space_activated_at IS NULL)"
+          - expression: "state <> 'active' OR (published_index_request_id IS NOT NULL AND published_request_marker IS FALSE AND preflight_index_request_id <> published_index_request_id AND publication_fence IS NOT NULL)"
+          - expression: "state <> 'active' OR (write_freeze_observed AND protected_at IS NOT NULL AND protected_tag_ref IS NOT NULL AND preflight_index_request_id IS NOT NULL AND preflight_run_id IS NOT NULL AND preflight_snapshot_id IS NOT NULL AND published_run_id IS NOT NULL AND published_snapshot_id IS NOT NULL AND preflight_run_id <> published_run_id AND preflight_snapshot_id <> published_snapshot_id AND preflight_purpose = 'cutover_preflight' AND preflight_is_preflight IS TRUE AND preflight_serving_allowed IS FALSE AND preflight_snapshot_state = 'ready' AND preflight_snapshot_sha = cutover_sha AND published_snapshot_sha = cutover_sha AND published_run_type = 'full' AND published_purpose = 'published' AND published_is_preflight IS FALSE AND published_serving_allowed IS TRUE AND published_snapshot_state = 'active' AND preflight_dependency_closure_hash IS NOT NULL AND published_dependency_closure_hash = preflight_dependency_closure_hash AND published_full_snapshot_equivalence = 'not_applicable' AND published_history_rewrite_detected IS FALSE AND preflight_exact_projection_hash IS NOT NULL AND preflight_semantic_projection_hash IS NOT NULL AND published_exact_projection_hash = preflight_exact_projection_hash AND published_semantic_projection_hash = preflight_semantic_projection_hash AND published_policy_bundle_id IS NOT NULL AND published_access_policy_revision IS NOT NULL AND published_approval_policy_revision IS NOT NULL AND index_activation_observed_at IS NOT NULL AND space_activated_at IS NOT NULL AND index_activation_observed_at <= space_activated_at)"
+        indexes:
+          - columns: [state]
+      operation_events:
+        purpose: "Sanitized append-only operational audit для correlation, не canonical DecisionRecord."
+        canonical_source: "Canonical decisions в GitLab note/tag/merge + GitLab audit; журнал не единственный audit."
+        rebuildable: false
+        rebuild_strategy: "Journal history не гарантирован; отсутствие журнала не используется как merge evidence."
+        classification: audit_restricted
+        retention: {policy: audit_owner_decision, rule: "Runtime INSERT/SELECT only; controlled maintenance отдельно; canonical decisions хранятся в Git."}
+        security: "Запрещены raw secrets, tokens, passwords, document/chunk/query text, rationale/evidence text, source/provider payloads и необязательный private content."
+        columns:
+          operation_event_id: {type: uuid, nullable: false}
+          occurred_at: {type: timestamptz, nullable: false}
+          actor_stable_id: {type: text, nullable: true}
+          actor_type: {type: text, nullable: false}
+          request_id: {type: text, nullable: true}
+          run_id: {type: text, nullable: true}
+          operation: {type: text, nullable: false}
+          space_id: {type: text, nullable: true}
+          repository_id: {type: text, nullable: true}
+          target_type: {type: text, nullable: false}
+          target_id: {type: text, nullable: false}
+          result_code: {type: text, nullable: false}
+          policy_bundle_id: {type: text, nullable: true}
+          access_policy_revision: {type: text, nullable: true}
+          approval_policy_revision: {type: text, nullable: true}
+          correlation_ids: {type: jsonb, nullable: false}
+          details: {type: jsonb, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+        primary_key: [operation_event_id]
+        foreign_keys: []
+        uniques: []
+        checks:
+          - macro: git_sha
+            columns: [access_policy_revision, approval_policy_revision]
+          - macro: nonempty
+            columns: [operation, target_type, target_id, result_code]
+        indexes:
+          - columns: [space_id, occurred_at]
+          - columns: [request_id]
+          - columns: [run_id]
+          - columns: [result_code, occurred_at]
+          - columns: [target_type, target_id]
+  kb_index:
+    owner:
+      component: ci_index_workers
+      writer_role: kb_index_writer
+      migration_owner: ci_index_workers
+      active_pointer_writer: dedicated_single_pointer_publisher_same_owner_role
+    readers:
+      - role: kb_index_reader
+        components: [retrieval_adapter]
+        access: read_only_scoped_candidates_and_status
+      - role: kb_index_status_reader
+        components: [ci_index_workers]
+        access: read_only_internal_status
+    direct_database_consumers_forbidden: [identity_authz_adapter, git_orchestrator, open_webui_browser, agent, connector]
+    tables:
+      generations:
+        purpose: "Git ancestry generation, независимая от index profile; SHA sorting запрещена."
+        canonical_source: "Git ancestry и exact target HEAD."
+        rebuildable: true
+        rebuild_strategy: "Ancestry scan; UUID может измениться, generation_key восстанавливается по versioned T01 algorithm; history rewrite -> new generation + full run."
+        classification: operational
+        retention: {policy: index_generation_owner_decision, rule: "Old generations по owner index/audit retention; rebuild не выполняет Git history rewrite."}
+        security: "No content/secrets; только ancestry evidence и exact revisions."
+        columns:
+          generation_id: {type: uuid, nullable: false}
+          generation_key: {type: text, nullable: false}
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          target_branch: {type: text, nullable: false}
+          previous_generation_id: {type: uuid, nullable: true}
+          origin_snapshot_sha: {type: text, nullable: false}
+          latest_observed_sha: {type: text, nullable: false}
+          change_reason: {type: text, nullable: false}
+          history_rewrite_detected: {type: boolean, nullable: false}
+          ancestry_evidence: {type: jsonb, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+          last_observed_at: {type: timestamptz, nullable: false}
+        primary_key: [generation_id]
+        foreign_keys:
+          - columns: [previous_generation_id, space_id, repository_id, target_branch]
+            references: {schema: kb_index, table: generations, columns: [generation_id, space_id, repository_id, target_branch]}
+            on_delete: restrict
+        uniques:
+          - columns: [repository_id, target_branch, generation_key]
+          - columns: [space_id, repository_id, target_branch, generation_key]
+          - columns: [generation_id, space_id, repository_id, target_branch]
+          - columns: [generation_id, space_id, repository_id, target_branch, history_rewrite_detected]
+        checks:
+          - macro: git_sha
+            columns: [origin_snapshot_sha, latest_observed_sha]
+          - macro: nonempty
+            columns: [generation_key]
+          - expression: "change_reason IN ('initial','history_rewrite','restore_rebuild')"
+          - expression: "history_rewrite_detected = (change_reason = 'history_rewrite')"
+          - expression: "previous_generation_id IS NULL OR previous_generation_id <> generation_id"
+        indexes:
+          - columns: [space_id, target_branch, last_observed_at]
+          - columns: [previous_generation_id]
+      index_profiles:
+        purpose: "Независимая versioned chunking/embedding/extraction/index semantics."
+        canonical_source: "Versioned approved deployment/index configuration и provider inventory."
+        rebuildable: true
+        rebuild_strategy: "Загрузить config по version/hash; model/dimensions не выводятся из старой vector row как истина."
+        classification: operational
+        retention: {policy: index_profile_owner_decision, rule: "Старый live profile не удаляется во время shadow build; далее owner retention."}
+        security: "No provider credentials/offline asset secrets; unplanned fallback запрещён."
+        columns:
+          profile_id: {type: uuid, nullable: false}
+          index_profile_version: {type: text, nullable: false}
+          engine: {type: text, nullable: false}
+          chunking_config: {type: jsonb, nullable: false}
+          embedding_model_id: {type: text, nullable: true}
+          embedding_dimensions: {type: integer, nullable: true, status: unknown_t00}
+          extraction_config: {type: jsonb, nullable: false}
+          config_hash: {type: text, nullable: false}
+          status: {type: text, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+          validated_at: {type: timestamptz, nullable: true}
+        primary_key: [profile_id]
+        foreign_keys: []
+        uniques:
+          - columns: [index_profile_version]
+          - columns: [profile_id, index_profile_version]
+          - columns: [config_hash]
+        checks:
+          - macro: sha256
+            columns: [config_hash]
+          - macro: nonempty
+            columns: [index_profile_version, engine]
+          - expression: "embedding_dimensions IS NULL OR embedding_dimensions > 0"
+          - expression: "status IN ('candidate','validated','retired')"
+          - expression: "status <> 'validated' OR validated_at IS NOT NULL"
+        indexes:
+          - columns: [status]
+      index_runs:
+        purpose: "Immutable exact-SHA input, independent full-closure equivalence evidence и full/incremental/preflight/published lifecycle."
+        canonical_source: "Exact eligible Git snapshot + immutable assets + approved config + independently computed closure evidence."
+        rebuildable: true
+        rebuild_strategy: "Runs пересоздаются; incremental equivalence доказывается заново независимым full run на том же SHA; history rewrite только full."
+        classification: operational
+        retention: {policy: index_run_owner_decision, rule: "Active/unresolved inputs и equivalence evidence не удалять до terminal handling; history по owner policy."}
+        security: "Run/error fields без document payload; preflight immutable non-serving; published cutover имеет новый run ID."
+        columns:
+          run_id: {type: uuid, nullable: false}
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          target_branch: {type: text, nullable: false}
+          snapshot_sha: {type: text, nullable: false}
+          generation_id: {type: uuid, nullable: false}
+          history_rewrite_detected: {type: boolean, nullable: false}
+          profile_id: {type: uuid, nullable: false}
+          run_type: {type: text, nullable: false}
+          base_run_id: {type: uuid, nullable: true}
+          incremental_base_snapshot_sha: {type: text, nullable: true}
+          equivalence_full_run_id: {type: uuid, nullable: true}
+          equivalence_full_run_type: {type: text, nullable: true}
+          equivalence_full_run_validated: {type: boolean, nullable: true}
+          equivalence_full_run_state: {type: text, nullable: true}
+          equivalence_full_snapshot_id: {type: uuid, nullable: true}
+          equivalence_full_snapshot_ready: {type: boolean, nullable: true}
+          equivalence_full_snapshot_state: {type: text, nullable: true}
+          equivalence_full_exact_projection_hash: {type: text, nullable: true}
+          equivalence_full_semantic_projection_hash: {type: text, nullable: true}
+          equivalence_verified_at: {type: timestamptz, nullable: true}
+          equivalence_evidence_sha256: {type: text, nullable: true}
+          idempotency_key: {type: text, nullable: false}
+          requested_by_ref: {type: text, nullable: true, reference_kind: logical_go_index_request_api_only}
+          cutover_ref: {type: uuid, nullable: true, reference_kind: logical_go_cutover_api_only}
+          space_activation_state: {type: text, nullable: false}
+          space_activation_observed_at: {type: timestamptz, nullable: true}
+          space_activation_evidence: {type: jsonb, nullable: false}
+          preflight_run_id: {type: uuid, nullable: true}
+          preflight_source_marker: {type: boolean, nullable: true}
+          preflight_source_validated: {type: boolean, nullable: true}
+          preflight_source_state: {type: text, nullable: true}
+          preflight_source_validated_at: {type: timestamptz, nullable: true}
+          purpose: {type: text, nullable: false}
+          preflight: {type: boolean, nullable: false}
+          state: {type: text, nullable: false}
+          attempt_count: {type: integer, nullable: false}
+          dependency_closure_hash: {type: text, nullable: true}
+          closure_complete: {type: boolean, nullable: false}
+          closure_validated: {type: boolean, nullable: false}
+          full_snapshot_equivalence: {type: text, nullable: false}
+          missing_inputs: {type: jsonb, nullable: false}
+          equivalence_evidence: {type: jsonb, nullable: false}
+          policy_bundle_id: {type: text, nullable: false}
+          access_policy_revision: {type: text, nullable: false}
+          approval_policy_revision: {type: text, nullable: false}
+          config_hash: {type: text, nullable: false}
+          error_code: {type: text, nullable: true}
+          requested_at: {type: timestamptz, nullable: false}
+          started_at: {type: timestamptz, nullable: true}
+          validated_at: {type: timestamptz, nullable: true}
+          completed_at: {type: timestamptz, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [run_id]
+        foreign_keys:
+          - columns: [generation_id, space_id, repository_id, target_branch, history_rewrite_detected]
+            references: {schema: kb_index, table: generations, columns: [generation_id, space_id, repository_id, target_branch, history_rewrite_detected]}
+            on_delete: restrict
+          - columns: [profile_id]
+            references: {schema: kb_index, table: index_profiles, columns: [profile_id]}
+            on_delete: restrict
+          - columns: [base_run_id, space_id, repository_id, target_branch, generation_id, profile_id]
+            references: {schema: kb_index, table: index_runs, columns: [run_id, space_id, repository_id, target_branch, generation_id, profile_id]}
+            on_delete: restrict
+          - columns: [equivalence_full_run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, equivalence_full_run_type, dependency_closure_hash, equivalence_full_run_validated, equivalence_full_run_state, equivalence_verified_at]
+            references: {schema: kb_index, table: index_runs, columns: [run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, run_type, dependency_closure_hash, closure_validated, state, validated_at]}
+            on_delete: restrict
+          - columns: [equivalence_full_snapshot_id, equivalence_full_run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, dependency_closure_hash, equivalence_full_snapshot_ready, equivalence_full_snapshot_state, equivalence_full_exact_projection_hash, equivalence_full_semantic_projection_hash]
+            references: {schema: kb_index, table: snapshots, columns: [snapshot_id, run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, dependency_closure_hash, validation_evidence_ready, state, exact_projection_hash, semantic_projection_hash]}
+            on_delete: restrict
+          - columns: [preflight_run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, preflight_source_marker, dependency_closure_hash, preflight_source_validated, preflight_source_state, preflight_source_validated_at]
+            references: {schema: kb_index, table: index_runs, columns: [run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, preflight, dependency_closure_hash, closure_validated, state, validated_at]}
+            on_delete: restrict
+        uniques:
+          - columns: [idempotency_key]
+          - columns: [space_id, snapshot_sha, generation_id, profile_id, run_type, config_hash, purpose]
+          - columns: [run_id, space_id, repository_id, target_branch]
+          - columns: [run_id, space_id, repository_id, target_branch, generation_id, profile_id]
+          - columns: [run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, run_type]
+          - columns: [run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, run_type, dependency_closure_hash, closure_validated, state, validated_at]
+          - columns: [run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, preflight, dependency_closure_hash, closure_validated, state, validated_at]
+          - columns: [run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, policy_bundle_id, access_policy_revision, approval_policy_revision, purpose, preflight]
+          - columns: [run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, run_type, history_rewrite_detected, policy_bundle_id, access_policy_revision, approval_policy_revision, purpose, preflight, dependency_closure_hash, closure_complete, full_snapshot_equivalence, incremental_base_snapshot_sha, state, closure_validated, preflight_run_id]
+        checks:
+          - macro: git_sha
+            columns: [snapshot_sha, incremental_base_snapshot_sha, access_policy_revision, approval_policy_revision]
+          - macro: sha256
+            columns: [dependency_closure_hash, equivalence_full_exact_projection_hash, equivalence_full_semantic_projection_hash, equivalence_evidence_sha256, config_hash]
+          - macro: nonempty
+            columns: [idempotency_key, policy_bundle_id]
+          - expression: "run_type IN ('full','incremental')"
+          - expression: "state IN ('requested','resolving','building','validating','ready_to_publish','active','failed','dead_letter','superseded')"
+          - expression: "purpose IN ('published','cutover_preflight')"
+          - expression: "space_activation_state IN ('active','cutover_pending')"
+          - expression: "space_activation_state <> 'active' OR space_activation_observed_at IS NOT NULL"
+          - expression: "NOT preflight OR space_activation_state = 'cutover_pending'"
+          - expression: "state <> 'active' OR cutover_ref IS NOT NULL OR (space_activation_state = 'active' AND space_activation_observed_at IS NOT NULL)"
+          - expression: "preflight = (purpose = 'cutover_preflight')"
+          - expression: "full_snapshot_equivalence IN ('not_applicable','pending','equivalent','non_equivalent')"
+          - expression: "NOT preflight OR (run_type = 'full' AND state <> 'active')"
+          - expression: "state <> 'active' OR (purpose = 'published' AND NOT preflight)"
+          - expression: "attempt_count >= 0"
+          - expression: "state NOT IN ('ready_to_publish','active') OR (validated_at IS NOT NULL AND dependency_closure_hash IS NOT NULL AND closure_complete AND jsonb_array_length(missing_inputs) = 0)"
+          - expression: "closure_validated = (state IN ('ready_to_publish','active') AND validated_at IS NOT NULL AND dependency_closure_hash IS NOT NULL AND closure_complete AND jsonb_array_length(missing_inputs) = 0 AND ((run_type = 'full' AND full_snapshot_equivalence = 'not_applicable') OR (run_type = 'incremental' AND full_snapshot_equivalence = 'equivalent')))"
+          - expression: "run_type <> 'full' OR (base_run_id IS NULL AND incremental_base_snapshot_sha IS NULL AND equivalence_full_run_id IS NULL AND equivalence_full_run_type IS NULL AND equivalence_full_run_validated IS NULL AND equivalence_full_run_state IS NULL AND equivalence_full_snapshot_id IS NULL AND equivalence_full_snapshot_ready IS NULL AND equivalence_full_snapshot_state IS NULL AND equivalence_full_exact_projection_hash IS NULL AND equivalence_full_semantic_projection_hash IS NULL AND equivalence_verified_at IS NULL AND equivalence_evidence_sha256 IS NULL AND full_snapshot_equivalence = 'not_applicable')"
+          - expression: "run_type <> 'incremental' OR (base_run_id IS NOT NULL AND incremental_base_snapshot_sha IS NOT NULL AND full_snapshot_equivalence <> 'not_applicable')"
+          - expression: "run_type <> 'incremental' OR state NOT IN ('ready_to_publish','active') OR (full_snapshot_equivalence = 'equivalent' AND equivalence_full_run_id IS NOT NULL AND equivalence_full_run_type IS NOT NULL AND equivalence_full_run_type = 'full' AND equivalence_full_run_validated IS TRUE AND equivalence_full_run_state IN ('ready_to_publish','active') AND equivalence_full_snapshot_id IS NOT NULL AND equivalence_full_snapshot_ready IS TRUE AND equivalence_full_snapshot_state IN ('validated','active') AND equivalence_full_exact_projection_hash IS NOT NULL AND equivalence_full_semantic_projection_hash IS NOT NULL AND equivalence_verified_at IS NOT NULL AND equivalence_evidence_sha256 IS NOT NULL AND jsonb_typeof(equivalence_evidence) = 'object' AND equivalence_evidence <> '{}'::jsonb AND (equivalence_evidence ? 'full_run_id') AND (equivalence_evidence ? 'full_snapshot_id') AND (equivalence_evidence ? 'full_run_state') AND (equivalence_evidence ? 'full_snapshot_state') AND (equivalence_evidence ? 'validated_at') AND (equivalence_evidence ? 'space_id') AND (equivalence_evidence ? 'repository_id') AND (equivalence_evidence ? 'target_branch') AND (equivalence_evidence ? 'main_snapshot_sha') AND (equivalence_evidence ? 'main_generation_id') AND (equivalence_evidence ? 'index_profile_version') AND (equivalence_evidence ? 'closure_complete') AND (equivalence_evidence ? 'missing_inputs') AND (equivalence_evidence ? 'closure_sha256') AND (equivalence_evidence ? 'exact_projection_sha256') AND (equivalence_evidence ? 'semantic_projection_sha256') AND (equivalence_evidence ? 'evidence_sha256'))"
+          - expression: "run_type <> 'incremental' OR state NOT IN ('ready_to_publish','active') OR (equivalence_evidence = jsonb_strip_nulls(equivalence_evidence) AND equivalence_evidence->>'full_run_id' = equivalence_full_run_id::text AND equivalence_evidence->>'full_snapshot_id' = equivalence_full_snapshot_id::text AND ((equivalence_full_run_state = 'ready_to_publish' AND equivalence_evidence->>'full_run_state' = 'ready') OR (equivalence_full_run_state = 'active' AND equivalence_evidence->>'full_run_state' = 'active')) AND ((equivalence_full_snapshot_state = 'validated' AND equivalence_evidence->>'full_snapshot_state' = 'ready') OR (equivalence_full_snapshot_state = 'active' AND equivalence_evidence->>'full_snapshot_state' = 'active')) AND (equivalence_evidence->>'validated_at')::timestamptz = equivalence_verified_at AND equivalence_evidence->>'space_id' = space_id AND equivalence_evidence->>'repository_id' = repository_id AND equivalence_evidence->>'target_branch' = target_branch AND equivalence_evidence->>'main_snapshot_sha' = snapshot_sha AND equivalence_evidence->>'closure_sha256' = dependency_closure_hash AND equivalence_evidence->>'exact_projection_sha256' = equivalence_full_exact_projection_hash AND equivalence_evidence->>'semantic_projection_sha256' = equivalence_full_semantic_projection_hash AND equivalence_evidence->>'evidence_sha256' = equivalence_evidence_sha256 AND equivalence_evidence->'closure_complete' = 'true'::jsonb AND jsonb_array_length(equivalence_evidence->'missing_inputs') = 0)"
+          - expression: "NOT history_rewrite_detected OR (run_type = 'full' AND base_run_id IS NULL AND incremental_base_snapshot_sha IS NULL)"
+          - expression: "base_run_id IS NULL OR base_run_id <> run_id"
+          - expression: "equivalence_full_run_id IS NULL OR equivalence_full_run_id <> run_id"
+          - expression: "preflight_run_id IS NULL OR preflight_run_id <> run_id"
+          - expression: "(preflight_run_id IS NULL AND preflight_source_marker IS NULL AND preflight_source_validated IS NULL AND preflight_source_state IS NULL AND preflight_source_validated_at IS NULL) OR (preflight_run_id IS NOT NULL AND preflight_source_marker IS TRUE AND preflight_source_validated IS TRUE AND preflight_source_state IS NOT NULL AND preflight_source_state = 'ready_to_publish' AND preflight_source_validated_at IS NOT NULL AND NOT preflight AND purpose = 'published' AND run_type = 'full' AND cutover_ref IS NOT NULL)"
+        indexes:
+          - columns: [space_id, state, requested_at]
+          - columns: [generation_id, profile_id, state]
+          - columns: [preflight, state]
+          - columns: [equivalence_full_run_id]
+      snapshots:
+        purpose: "index-snapshot-v1 descriptor с exact SHA, policy revisions, closure/equivalence и explicit serving eligibility."
+        canonical_source: "Exact Git snapshot + policy/immutable asset/config inputs + independently validated run; descriptor rebuildable."
+        rebuildable: true
+        rebuild_strategy: "Ready/active descriptor требует полный closure и ready hashes; incremental только equivalent; preflight immutable non-serving."
+        classification: operational
+        retention: {policy: index_snapshot_owner_decision, rule: "Inactive/superseded по owner; preflight никогда не serving и не заменяет published descriptor."}
+        security: "Stored ACL metadata не заменяет fresh delivery AuthZ; serving_allowed только eligible active published non-preflight."
+        columns:
+          snapshot_id: {type: uuid, nullable: false}
+          run_id: {type: uuid, nullable: false}
+          run_state: {type: text, nullable: false}
+          run_closure_validated: {type: boolean, nullable: false}
+          run_preflight_run_id: {type: uuid, nullable: true}
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          target_branch: {type: text, nullable: false}
+          snapshot_sha: {type: text, nullable: false}
+          generation_id: {type: uuid, nullable: false}
+          history_rewrite_detected: {type: boolean, nullable: false}
+          profile_id: {type: uuid, nullable: false}
+          run_type: {type: text, nullable: false}
+          dependency_closure_hash: {type: text, nullable: false}
+          closure_complete: {type: boolean, nullable: false}
+          full_snapshot_equivalence: {type: text, nullable: false}
+          incremental_base_snapshot_sha: {type: text, nullable: true}
+          eligibility_config_hash: {type: text, nullable: false}
+          policy_bundle_id: {type: text, nullable: false}
+          access_policy_revision: {type: text, nullable: false}
+          approval_policy_revision: {type: text, nullable: false}
+          purpose: {type: text, nullable: false}
+          is_preflight: {type: boolean, nullable: false}
+          preflight_snapshot_id: {type: uuid, nullable: true}
+          preflight_source_purpose: {type: text, nullable: true}
+          preflight_source_is_preflight: {type: boolean, nullable: true}
+          preflight_source_ready: {type: boolean, nullable: true}
+          serving_allowed: {type: boolean, nullable: false}
+          cutover_sha: {type: text, nullable: true}
+          exact_projection_status: {type: text, nullable: false}
+          exact_projection_hash: {type: text, nullable: true}
+          semantic_projection_status: {type: text, nullable: false}
+          semantic_projection_hash: {type: text, nullable: true}
+          document_count: {type: integer, nullable: false}
+          state: {type: text, nullable: false}
+          validation_evidence_ready: {type: boolean, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+          validated_at: {type: timestamptz, nullable: true}
+          activated_at: {type: timestamptz, nullable: true}
+        primary_key: [snapshot_id]
+        foreign_keys:
+          - columns: [run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, run_type, history_rewrite_detected, policy_bundle_id, access_policy_revision, approval_policy_revision, purpose, is_preflight, dependency_closure_hash, closure_complete, full_snapshot_equivalence, incremental_base_snapshot_sha, run_state, run_closure_validated, run_preflight_run_id]
+            references: {schema: kb_index, table: index_runs, columns: [run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, run_type, history_rewrite_detected, policy_bundle_id, access_policy_revision, approval_policy_revision, purpose, preflight, dependency_closure_hash, closure_complete, full_snapshot_equivalence, incremental_base_snapshot_sha, state, closure_validated, preflight_run_id]}
+            on_delete: restrict
+          - columns: [preflight_snapshot_id, run_preflight_run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, dependency_closure_hash, exact_projection_hash, semantic_projection_hash, preflight_source_purpose, preflight_source_is_preflight, preflight_source_ready]
+            references: {schema: kb_index, table: snapshots, columns: [snapshot_id, run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, dependency_closure_hash, exact_projection_hash, semantic_projection_hash, purpose, is_preflight, validation_evidence_ready]}
+            on_delete: restrict
+        uniques:
+          - columns: [run_id]
+          - columns: [snapshot_id, run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, dependency_closure_hash, validation_evidence_ready, state, exact_projection_hash, semantic_projection_hash]
+          - columns: [snapshot_id, run_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, dependency_closure_hash, exact_projection_hash, semantic_projection_hash, purpose, is_preflight, validation_evidence_ready]
+          - columns: [snapshot_id, snapshot_sha]
+          - columns: [snapshot_id, space_id, repository_id, target_branch]
+          - columns: [snapshot_id, run_id, space_id, repository_id, target_branch]
+          - columns: [snapshot_id, space_id, repository_id, target_branch, snapshot_sha, policy_bundle_id, access_policy_revision, approval_policy_revision]
+          - columns: [snapshot_id, space_id, profile_id]
+          - columns: [snapshot_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, purpose, is_preflight, serving_allowed, state]
+        checks:
+          - macro: git_sha
+            columns: [snapshot_sha, cutover_sha, incremental_base_snapshot_sha, access_policy_revision, approval_policy_revision]
+          - macro: sha256
+            columns: [dependency_closure_hash, eligibility_config_hash, exact_projection_hash, semantic_projection_hash]
+          - expression: "document_count >= 0"
+          - expression: "run_type IN ('full','incremental')"
+          - expression: "purpose IN ('published','cutover_preflight')"
+          - expression: "state IN ('building','validating','validated','active','superseded','failed','dead_letter')"
+          - expression: "run_state IN ('requested','resolving','building','validating','ready_to_publish','active','failed','dead_letter','superseded')"
+          - expression: "state <> 'validated' OR (run_state = 'ready_to_publish' AND run_closure_validated)"
+          - expression: "state <> 'active' OR (run_state = 'active' AND run_closure_validated)"
+          - expression: "exact_projection_status IN ('pending','building','validating','ready','failed')"
+          - expression: "semantic_projection_status IN ('pending','building','validating','ready','failed')"
+          - expression: "full_snapshot_equivalence IN ('not_applicable','pending','equivalent','non_equivalent')"
+          - expression: "validation_evidence_ready = (state IN ('validated','active') AND validated_at IS NOT NULL AND closure_complete AND exact_projection_status = 'ready' AND semantic_projection_status = 'ready' AND exact_projection_hash IS NOT NULL AND semantic_projection_hash IS NOT NULL AND ((run_type = 'full' AND full_snapshot_equivalence = 'not_applicable') OR (run_type = 'incremental' AND full_snapshot_equivalence = 'equivalent' AND incremental_base_snapshot_sha IS NOT NULL)))"
+          - expression: "is_preflight = (purpose = 'cutover_preflight')"
+          - expression: "preflight_snapshot_id IS NULL OR (preflight_source_purpose IS NOT NULL AND preflight_source_is_preflight IS NOT NULL AND preflight_source_ready IS NOT NULL)"
+          - expression: "(preflight_snapshot_id IS NULL AND run_preflight_run_id IS NULL AND preflight_source_purpose IS NULL AND preflight_source_is_preflight IS NULL AND preflight_source_ready IS NULL) OR (preflight_snapshot_id IS NOT NULL AND run_preflight_run_id IS NOT NULL AND preflight_snapshot_id <> snapshot_id AND purpose = 'published' AND NOT is_preflight AND run_type = 'full' AND preflight_source_purpose = 'cutover_preflight' AND preflight_source_is_preflight IS TRUE AND preflight_source_ready IS TRUE)"
+          - expression: "NOT is_preflight OR (run_type = 'full' AND state <> 'active' AND NOT serving_allowed AND cutover_sha = snapshot_sha)"
+          - expression: "cutover_sha IS NULL OR cutover_sha = snapshot_sha"
+          - expression: "purpose <> 'published' OR cutover_sha IS NULL"
+          - expression: "serving_allowed = (state = 'active' AND purpose = 'published' AND NOT is_preflight)"
+          - expression: "state NOT IN ('validated','active') OR (validated_at IS NOT NULL AND closure_complete AND exact_projection_status = 'ready' AND semantic_projection_status = 'ready' AND exact_projection_hash IS NOT NULL AND semantic_projection_hash IS NOT NULL)"
+          - expression: "state NOT IN ('validated','active') OR ((run_type = 'full' AND full_snapshot_equivalence = 'not_applicable') OR (run_type = 'incremental' AND full_snapshot_equivalence = 'equivalent' AND incremental_base_snapshot_sha IS NOT NULL))"
+          - expression: "NOT history_rewrite_detected OR run_type = 'full'"
+          - expression: "state <> 'active' OR (activated_at IS NOT NULL AND purpose = 'published' AND NOT is_preflight AND serving_allowed)"
+        indexes:
+          - columns: [space_id, profile_id, state]
+          - columns: [snapshot_sha]
+          - columns: [access_policy_revision, approval_policy_revision]
+      documents:
+        purpose: "Per-snapshot stable document ID и отдельная document_revision_sha projection."
+        canonical_source: "Markdown + front matter на exact Git revisions."
+        rebuildable: true
+        rebuild_strategy: "Parse каждого eligible snapshot; stable ID не зависит от path; canonical whole text здесь не хранится."
+        classification: private_projection
+        retention: {policy: inherit_index_snapshot, rule: "Archive/delete в новом Git snapshot удаляет из serving projection; history/mirrors отдельно."}
+        security: "Title/path только после Space authorization; pending/rejected/live_operational не индексируются."
+        columns:
+          document_projection_id: {type: uuid, nullable: false}
+          snapshot_id: {type: uuid, nullable: false}
+          space_id: {type: text, nullable: false}
+          repository_id: {type: text, nullable: false}
+          target_branch: {type: text, nullable: false}
+          document_id: {type: uuid, nullable: false}
+          path: {type: text, nullable: false}
+          parent_path: {type: text, nullable: true}
+          title: {type: text, nullable: false}
+          document_revision_sha: {type: text, nullable: false}
+          snapshot_sha: {type: text, nullable: false}
+          blob_sha: {type: text, nullable: false}
+          content_hash: {type: text, nullable: false}
+          dependency_hash: {type: text, nullable: false}
+          front_matter_hash: {type: text, nullable: false}
+          ownership_mode: {type: text, nullable: false}
+          archived: {type: boolean, nullable: false}
+          eligible: {type: boolean, nullable: false}
+          exclusion_reason: {type: text, nullable: true}
+          policy_bundle_id: {type: text, nullable: false}
+          access_policy_revision: {type: text, nullable: false}
+          approval_policy_revision: {type: text, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+        primary_key: [document_projection_id]
+        foreign_keys:
+          - columns: [snapshot_id, space_id, repository_id, target_branch, snapshot_sha, policy_bundle_id, access_policy_revision, approval_policy_revision]
+            references: {schema: kb_index, table: snapshots, columns: [snapshot_id, space_id, repository_id, target_branch, snapshot_sha, policy_bundle_id, access_policy_revision, approval_policy_revision]}
+            on_delete: restrict
+        uniques:
+          - columns: [snapshot_id, document_id]
+          - columns: [snapshot_id, path]
+          - columns: [document_projection_id, snapshot_id, space_id]
+          - columns: [document_projection_id, snapshot_id, space_id, document_id]
+        checks:
+          - macro: git_sha
+            columns: [document_revision_sha, snapshot_sha, blob_sha, access_policy_revision, approval_policy_revision]
+          - macro: sha256
+            columns: [content_hash, dependency_hash, front_matter_hash]
+          - macro: normalized_path
+            columns: [path, parent_path]
+          - expression: "ownership_mode IN ('migrated','source_managed','curated')"
+          - expression: "NOT archived OR NOT eligible"
+          - expression: "eligible OR exclusion_reason IS NOT NULL"
+        indexes:
+          - columns: [space_id, document_id, snapshot_sha]
+          - columns: [dependency_hash]
+          - columns: [eligible]
+          - columns: [document_revision_sha]
+      document_links:
+        purpose: "Direct stable-ID link/dependency graph projection с orphan/cycle states."
+        canonical_source: "Git Markdown/front matter links."
+        rebuildable: true
+        rebuild_strategy: "Stable-ID resolution каждого snapshot; cycles/orphans/duplicates явны."
+        classification: private_projection
+        retention: {policy: inherit_index_snapshot, rule: "Удаляется/пересоздаётся с projection snapshot; канонические links остаются в Git."}
+        security: "Link metadata не раскрывает чужой Space; external refs без credentials/query secrets."
+        columns:
+          link_id: {type: uuid, nullable: false}
+          snapshot_id: {type: uuid, nullable: false}
+          space_id: {type: text, nullable: false}
+          source_document_projection_id: {type: uuid, nullable: false}
+          target_document_projection_id: {type: uuid, nullable: true}
+          target_document_id: {type: uuid, nullable: true}
+          target_path: {type: text, nullable: true}
+          link_kind: {type: text, nullable: false}
+          anchor: {type: text, nullable: true}
+          link_hash: {type: text, nullable: false}
+          resolution_state: {type: text, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+        primary_key: [link_id]
+        foreign_keys:
+          - columns: [source_document_projection_id, snapshot_id, space_id]
+            references: {schema: kb_index, table: documents, columns: [document_projection_id, snapshot_id, space_id]}
+            on_delete: restrict
+          - columns: [target_document_projection_id, snapshot_id, space_id, target_document_id]
+            references: {schema: kb_index, table: documents, columns: [document_projection_id, snapshot_id, space_id, document_id]}
+            on_delete: restrict
+        uniques:
+          - columns: [source_document_projection_id, link_hash]
+        checks:
+          - macro: sha256
+            columns: [link_hash]
+          - macro: normalized_path
+            columns: [target_path]
+          - expression: "link_kind IN ('document','anchor','attachment','external')"
+          - expression: "resolution_state IN ('resolved','orphan','cycle','external','invalid')"
+          - expression: "resolution_state <> 'resolved' OR (target_document_projection_id IS NOT NULL AND target_document_id IS NOT NULL)"
+          - expression: "target_document_projection_id IS NULL OR target_document_id IS NOT NULL"
+          - expression: "resolution_state <> 'external' OR (target_document_projection_id IS NULL AND target_document_id IS NULL)"
+        indexes:
+          - columns: [target_document_projection_id]
+          - columns: [resolution_state]
+          - columns: [source_document_projection_id]
+      attachments:
+        purpose: "Immutable object_id/version/sha256 attachment revision binding к document revision и Space."
+        canonical_source: "Immutable object storage version/hash или reviewed Git blob + canonical document binding."
+        rebuildable: true
+        rebuild_strategy: "Metadata/hash/admission rebuild; bytes остаются в object storage; mutable URL запрещён."
+        classification: private_projection
+        retention: {policy: attachment_object_owner_decision, rule: "Object versions/mirrors/Git history retention отдельно; очистка index не privacy purge."}
+        security: "ACL равен Space/page revision; no signed URLs/secrets; critical media требует human verification."
+        columns:
+          attachment_projection_id: {type: uuid, nullable: false}
+          snapshot_id: {type: uuid, nullable: false}
+          space_id: {type: text, nullable: false}
+          document_projection_id: {type: uuid, nullable: false}
+          object_id: {type: text, nullable: false}
+          object_version: {type: text, nullable: false}
+          sha256: {type: text, nullable: false}
+          size_bytes: {type: bigint, nullable: false}
+          media_type: {type: text, nullable: false}
+          source_ref: {type: text, nullable: false}
+          git_blob_sha: {type: text, nullable: true}
+          media_class: {type: text, nullable: false}
+          verification_state: {type: text, nullable: false}
+          description_kind: {type: text, nullable: false}
+          eligible: {type: boolean, nullable: false}
+          exclusion_reason: {type: text, nullable: true}
+          content_hash: {type: text, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+        primary_key: [attachment_projection_id]
+        foreign_keys:
+          - columns: [document_projection_id, snapshot_id, space_id]
+            references: {schema: kb_index, table: documents, columns: [document_projection_id, snapshot_id, space_id]}
+            on_delete: restrict
+        uniques:
+          - columns: [document_projection_id, object_id, object_version, sha256]
+          - columns: [attachment_projection_id, snapshot_id, space_id]
+        checks:
+          - macro: sha256
+            columns: [sha256, content_hash]
+          - macro: git_sha
+            columns: [git_blob_sha]
+          - macro: nonempty
+            columns: [object_id, object_version, source_ref]
+          - expression: "size_bytes >= 0"
+          - expression: "media_class IN ('decorative','illustrative','substantive','critical','handwritten','other')"
+          - expression: "verification_state IN ('not_required','pending','verified','rejected')"
+          - expression: "description_kind IN ('none','auto_marked','human_transcribed')"
+          - expression: "media_class <> 'decorative' OR NOT eligible"
+          - expression: "NOT eligible OR media_class NOT IN ('critical','handwritten') OR (verification_state = 'verified' AND description_kind = 'human_transcribed')"
+          - expression: "eligible OR exclusion_reason IS NOT NULL"
+        indexes:
+          - columns: [snapshot_id, object_id]
+          - columns: [sha256]
+          - columns: [verification_state, eligible]
+      document_dependencies:
+        purpose: "Direct/transitive document/attachment/shared-input dependency closure."
+        canonical_source: "Git links/front matter + immutable attachments + versioned shared inputs."
+        rebuildable: true
+        rebuild_strategy: "Детерминированный direct/transitive closure; incremental/full mismatch запрещает publication."
+        classification: operational
+        retention: {policy: inherit_index_snapshot, rule: "Пересоздаётся с каждым snapshot; closure evidence по owner index retention."}
+        security: "No raw linked content; cross-Space targets запрещены same-snapshot composite FK и contracts."
+        columns:
+          dependency_id: {type: uuid, nullable: false}
+          snapshot_id: {type: uuid, nullable: false}
+          space_id: {type: text, nullable: false}
+          dependent_document_projection_id: {type: uuid, nullable: false}
+          dependency_key: {type: text, nullable: false}
+          dependency_kind: {type: text, nullable: false}
+          target_document_projection_id: {type: uuid, nullable: true}
+          target_attachment_projection_id: {type: uuid, nullable: true}
+          target_hash: {type: text, nullable: false}
+          transitive: {type: boolean, nullable: false}
+          closure_hash: {type: text, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+        primary_key: [dependency_id]
+        foreign_keys:
+          - columns: [dependent_document_projection_id, snapshot_id, space_id]
+            references: {schema: kb_index, table: documents, columns: [document_projection_id, snapshot_id, space_id]}
+            on_delete: restrict
+          - columns: [target_document_projection_id, snapshot_id, space_id]
+            references: {schema: kb_index, table: documents, columns: [document_projection_id, snapshot_id, space_id]}
+            on_delete: restrict
+          - columns: [target_attachment_projection_id, snapshot_id, space_id]
+            references: {schema: kb_index, table: attachments, columns: [attachment_projection_id, snapshot_id, space_id]}
+            on_delete: restrict
+        uniques:
+          - columns: [dependent_document_projection_id, dependency_key]
+        checks:
+          - macro: sha256
+            columns: [target_hash, closure_hash]
+          - macro: nonempty
+            columns: [dependency_key]
+          - expression: "dependency_kind IN ('document','attachment','shared_policy','shared_metadata')"
+          - expression: "(dependency_kind = 'document' AND target_document_projection_id IS NOT NULL AND target_attachment_projection_id IS NULL) OR (dependency_kind = 'attachment' AND target_attachment_projection_id IS NOT NULL AND target_document_projection_id IS NULL) OR (dependency_kind IN ('shared_policy','shared_metadata') AND target_document_projection_id IS NULL AND target_attachment_projection_id IS NULL)"
+        indexes:
+          - columns: [target_document_projection_id]
+          - columns: [target_attachment_projection_id]
+          - columns: [closure_hash]
+          - columns: [dependency_kind]
+      chunks:
+        purpose: "Eligible published section/chunk и exact-search projection с citation bounds."
+        canonical_source: "Eligible Git document + dependencies; chunk text производный, не canonical original."
+        rebuildable: true
+        rebuild_strategy: "Deterministic chunking profile; stale candidates отклоняются по active snapshot/document revision."
+        classification: private_projection
+        retention: {policy: inherit_index_snapshot_profile, rule: "Revocation действует до reindex; old chunks по owner snapshot/profile retention."}
+        security: "Retrieval read-only + fresh AuthZ до exposure; raw chunks не пишутся в logs/audit/eval export."
+        columns:
+          chunk_id: {type: uuid, nullable: false}
+          snapshot_id: {type: uuid, nullable: false}
+          space_id: {type: text, nullable: false}
+          document_projection_id: {type: uuid, nullable: false}
+          profile_id: {type: uuid, nullable: false}
+          chunk_ordinal: {type: integer, nullable: false}
+          section_path: {type: text, nullable: false}
+          heading_path: {type: jsonb, nullable: false}
+          start_offset: {type: integer, nullable: false}
+          end_offset: {type: integer, nullable: false}
+          content_text: {type: text, nullable: false}
+          content_hash: {type: text, nullable: false}
+          dependency_hash: {type: text, nullable: false}
+          token_count: {type: integer, nullable: true}
+          search_vector: {type: tsvector, nullable: true, status: candidate_t00}
+          created_at: {type: timestamptz, nullable: false}
+        primary_key: [chunk_id]
+        foreign_keys:
+          - columns: [document_projection_id, snapshot_id, space_id]
+            references: {schema: kb_index, table: documents, columns: [document_projection_id, snapshot_id, space_id]}
+            on_delete: restrict
+          - columns: [profile_id]
+            references: {schema: kb_index, table: index_profiles, columns: [profile_id]}
+            on_delete: restrict
+          - columns: [snapshot_id, space_id, profile_id]
+            references: {schema: kb_index, table: snapshots, columns: [snapshot_id, space_id, profile_id]}
+            on_delete: restrict
+        uniques:
+          - columns: [document_projection_id, profile_id, chunk_ordinal]
+          - columns: [chunk_id, snapshot_id, space_id, profile_id]
+        checks:
+          - macro: sha256
+            columns: [content_hash, dependency_hash]
+          - expression: "chunk_ordinal >= 0"
+          - expression: "start_offset >= 0 AND end_offset >= start_offset"
+          - expression: "token_count IS NULL OR token_count >= 0"
+        indexes:
+          - columns: [space_id, snapshot_id, profile_id]
+          - columns: [content_hash]
+          - columns: [search_vector]
+            method: gin
+            status: candidate_t00
+      embeddings:
+        purpose: "Semantic projection metadata; pgvector/vector candidate без фиксированной dimension до T00."
+        canonical_source: "Chunk + approved model/profile/config; embedding rebuildable."
+        rebuildable: true
+        rebuild_strategy: "Approved inference/offline assets без unplanned fallback или проверенный immutable backend snapshot; paid calls отдельно авторизуются."
+        classification: private_projection
+        retention: {policy: inherit_index_snapshot_profile, rule: "Shadow profile не заменяет live до validation; old vectors по owner retention."}
+        security: "Vectors защищаются как private chunks; no provider credentials; external_ref не cross-schema FK."
+        columns:
+          embedding_id: {type: uuid, nullable: false}
+          chunk_id: {type: uuid, nullable: false}
+          snapshot_id: {type: uuid, nullable: false}
+          space_id: {type: text, nullable: false}
+          profile_id: {type: uuid, nullable: false}
+          provider_model_id: {type: text, nullable: false}
+          dimensions: {type: integer, nullable: false, status: value_unknown_t00}
+          storage_backend: {type: text, nullable: false}
+          vector_value: {type: vector, nullable: true, status: candidate_t00, dimensions: not_fixed_t00}
+          external_ref: {type: text, nullable: true, reference_kind: supported_backend_locator_not_fk}
+          vector_hash: {type: text, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+        primary_key: [embedding_id]
+        foreign_keys:
+          - columns: [chunk_id, snapshot_id, space_id, profile_id]
+            references: {schema: kb_index, table: chunks, columns: [chunk_id, snapshot_id, space_id, profile_id]}
+            on_delete: restrict
+        uniques:
+          - columns: [chunk_id, profile_id, provider_model_id, dimensions]
+        checks:
+          - macro: sha256
+            columns: [vector_hash]
+          - macro: nonempty
+            columns: [provider_model_id, storage_backend]
+          - expression: "dimensions > 0"
+          - expression: "num_nonnulls(vector_value, external_ref) = 1"
+        indexes:
+          - columns: [space_id, snapshot_id, profile_id]
+          - columns: [storage_backend, external_ref]
+          - columns: [vector_value]
+            method: ann_t00
+            candidate_methods: [hnsw, ivfflat]
+            status: proposed_until_acl_aware_recall_benchmark
+      publication_fences:
+        purpose: "Durable publication lock/fence register per Space/profile для CAS всех generations этого pointer."
+        canonical_source: "CI publication journal + Git ancestry; fence является operational safety state, не canonical content."
+        rebuildable: false
+        rebuild_strategy: "После потери БД создаётся fresh fence под global publication freeze; pointer пересоздаётся только после full validation."
+        classification: operational
+        retention: {policy: space_profile_pointer_lifecycle, rule: "Fence сохраняется на lifecycle Space/profile; lock expiry не разрешает stale publication."}
+        security: "Только dedicated pointer publisher; generation отсутствует в lock key, поэтому old/new generations сериализуются вместе."
+        columns:
+          space_id: {type: text, nullable: false}
+          profile_id: {type: uuid, nullable: false}
+          repository_id: {type: text, nullable: false}
+          fencing_token: {type: bigint, nullable: false}
+          lock_owner_id: {type: text, nullable: true}
+          lock_acquired_at: {type: timestamptz, nullable: true}
+          lock_expires_at: {type: timestamptz, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [space_id, profile_id]
+        foreign_keys:
+          - columns: [profile_id]
+            references: {schema: kb_index, table: index_profiles, columns: [profile_id]}
+            on_delete: restrict
+        uniques:
+          - columns: [space_id, profile_id, repository_id]
+        checks:
+          - macro: nonempty
+            columns: [space_id, repository_id]
+          - expression: "fencing_token > 0"
+        indexes:
+          - columns: [repository_id, fencing_token]
+      active_pointers:
+        purpose: "Единственный active published non-preflight pointer per Space/profile с full-perimeter FK и CAS fencing."
+        canonical_source: "Git ancestry + fully validated published run; pointer не canonical content source."
+        rebuildable: true
+        rebuild_strategy: "Не восстанавливать из непроверенного backup как истину; создать заново после full validated run и fresh fence."
+        classification: operational
+        retention: {policy: active_pointer_lifecycle, rule: "History в runs/snapshots; старый pointer атомарно superseded; late generation не публикуется."}
+        security: "Один writer; retrieval read-only; preflight snapshot/run никогда не имеет active pointer."
+        columns:
+          space_id: {type: text, nullable: false}
+          profile_id: {type: uuid, nullable: false}
+          snapshot_id: {type: uuid, nullable: false}
+          generation_id: {type: uuid, nullable: false}
+          repository_id: {type: text, nullable: false}
+          target_branch: {type: text, nullable: false}
+          snapshot_sha: {type: text, nullable: false}
+          purpose: {type: text, nullable: false}
+          is_preflight: {type: boolean, nullable: false}
+          serving_allowed: {type: boolean, nullable: false}
+          snapshot_state: {type: text, nullable: false}
+          pointer_state: {type: text, nullable: false}
+          publication_owner_id: {type: text, nullable: false}
+          fencing_token: {type: bigint, nullable: false}
+          activated_at: {type: timestamptz, nullable: false}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [space_id, profile_id]
+        foreign_keys:
+          - columns: [space_id, profile_id, repository_id]
+            references: {schema: kb_index, table: publication_fences, columns: [space_id, profile_id, repository_id]}
+            on_delete: restrict
+          - columns: [snapshot_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, purpose, is_preflight, serving_allowed, snapshot_state]
+            references: {schema: kb_index, table: snapshots, columns: [snapshot_id, space_id, repository_id, target_branch, snapshot_sha, generation_id, profile_id, purpose, is_preflight, serving_allowed, state]}
+            on_delete: restrict
+        uniques:
+          - columns: [snapshot_id]
+        checks:
+          - macro: git_sha
+            columns: [snapshot_sha]
+          - macro: nonempty
+            columns: [publication_owner_id]
+          - expression: "purpose = 'published' AND NOT is_preflight AND serving_allowed AND snapshot_state = 'active'"
+          - expression: "pointer_state = 'active'"
+          - expression: "fencing_token > 0"
+        indexes:
+          - columns: [pointer_state]
+          - columns: [generation_id, profile_id]
+          - columns: [snapshot_sha]
+      index_errors:
+        purpose: "Bounded retry и DLQ для index runs без private payload."
+        canonical_source: "Exact Git/assets/config failure input; CI run владеет retry semantics."
+        rebuildable: false
+        rebuild_strategy: "Error history disposable; full rebuild и HEAD reconciliation создают новые errors/DLQ; poison input не активируется."
+        classification: operational
+        retention: {policy: index_error_owner_decision, rule: "DLQ сохраняется до resolution, затем owner retention."}
+        security: "No raw documents, query text, model response, secrets или PII snippets."
+        columns:
+          error_id: {type: uuid, nullable: false}
+          run_id: {type: uuid, nullable: true}
+          snapshot_id: {type: uuid, nullable: true}
+          space_id: {type: text, nullable: true}
+          repository_id: {type: text, nullable: true}
+          target_branch: {type: text, nullable: true}
+          stage: {type: text, nullable: false}
+          subject_type: {type: text, nullable: false}
+          subject_key_hash: {type: text, nullable: false}
+          dedupe_key: {type: text, nullable: false}
+          error_code: {type: text, nullable: false}
+          sanitized_message: {type: text, nullable: false}
+          details: {type: jsonb, nullable: false}
+          retryable: {type: boolean, nullable: false}
+          attempt_count: {type: integer, nullable: false}
+          state: {type: text, nullable: false}
+          first_seen_at: {type: timestamptz, nullable: false}
+          last_seen_at: {type: timestamptz, nullable: false}
+          next_attempt_at: {type: timestamptz, nullable: true}
+          dead_lettered_at: {type: timestamptz, nullable: true}
+          resolved_at: {type: timestamptz, nullable: true}
+          created_at: {type: timestamptz, nullable: false}
+          updated_at: {type: timestamptz, nullable: false}
+        primary_key: [error_id]
+        foreign_keys:
+          - columns: [run_id, space_id, repository_id, target_branch]
+            references: {schema: kb_index, table: index_runs, columns: [run_id, space_id, repository_id, target_branch]}
+            on_delete: restrict
+          - columns: [snapshot_id, run_id, space_id, repository_id, target_branch]
+            references: {schema: kb_index, table: snapshots, columns: [snapshot_id, run_id, space_id, repository_id, target_branch]}
+            on_delete: restrict
+        uniques:
+          - columns: [dedupe_key]
+        checks:
+          - macro: sha256
+            columns: [subject_key_hash]
+          - macro: nonempty
+            columns: [stage, subject_type, dedupe_key, error_code, sanitized_message]
+          - expression: "attempt_count >= 0"
+          - expression: "state IN ('open','retry_scheduled','dead_letter','resolved')"
+          - expression: "(run_id IS NULL AND snapshot_id IS NULL) OR (space_id IS NOT NULL AND repository_id IS NOT NULL AND target_branch IS NOT NULL)"
+          - expression: "snapshot_id IS NULL OR run_id IS NOT NULL"
+          - expression: "state <> 'dead_letter' OR dead_lettered_at IS NOT NULL"
+          - expression: "state <> 'resolved' OR resolved_at IS NOT NULL"
+        indexes:
+          - columns: [state, next_attempt_at]
+          - columns: [run_id, stage]
+          - columns: [space_id, state]
+canonical_projection_mappings:
+  version: canonical-projection-mapping-v1
+  authz_context:
+    contract: authz-context-v2
+    envelope: "authz_contexts хранит context_id/issuer/stable_id/actor_type/actor revocation_epoch/evaluated_at/expires_at; top-level policy/groups не восстанавливаются."
+    per_space: "Каждый space_scopes[] entry ↔ authz_context_spaces(context_id,space_id) со своими repository/policy revisions/group_snapshot/membership_sha256/groups/path_scopes/revocation_epoch."
+    validated_inputs: "Composite FK требует policy_validation_state=valid и group_snapshot_status=ready; issuer+context_evaluated_at совпадают с parent, group snapshot ID/captured_at/membership_hash/revocation_epoch совпадают с parent snapshot. Pending/invalid/building/failed/superseded inputs запрещены."
+    principals: "Membership/grant registry mode использует composite FK identity+issuer+stable_id; external_only до JIT хранит canonical issuer+stable_id с NULL identity_id. Personal exception только subject_type=identity+reason; group_policy только group+ready same-issuer snapshot, без GitLab users."
+    fanout: "Search/tool/export fan-out обязан выбрать binding того же Space; parent context не содержит reusable bundle для чужого Space."
+  decision_record:
+    contract: decision-record-v1
+    fields:
+      action: "accepted→accept; rejected→reject; cancelled→cancel; обратный mapping только по таблице, без substring normalization."
+      actor_type: "human→actor_type='human'; service/agent/connector DecisionRecord запрещены."
+      timestamp: decided_at
+      request_id: request_id
+      payload_hash: payload_hash
+      rationale_and_evidence: "rationale/evidence сохраняются одноимёнными columns; schema_version=decision-record-v1 constant, record_sha256 вычисляется по JCS без hash field."
+      proposal_version: "(proposal_id,proposal_sha,base_sha,space_id,repository_id,target_branch) связывает DecisionRecord с immutable ProposalVersion и его proposal_version_id."
+      anchors: "note_id/tag_name/tag_object_sha/tag_target_sha являются GitLab anchors; tag_target_sha=proposal_sha. record_sha256 исключает hash field, canonical_json_sha256 хеширует полный JSON, note_body_sha256 и tag_message_sha256 не подменяют друг друга."
+    result_states:
+      recorded: "Accept/reject/cancel recorded имеют attempts=[] и не получают synthetic merge_operation. Accept crash после note/tag до DB восстанавливается recorded+unresolved barrier+recovery flags=true; у всех recorded no_merge_proven отсутствует. Note/tag не доказывает no-call/no-merge. Reject/cancel используют mr_closure_evidence и не создают merge operation."
+      merge_attempted: "Accept merge_attempted имеет nonempty attempts[] из реальных merge_operations in_flight/completed/unknown, без merge proof: recovery_required=true, target_quarantined=true, retryable=false."
+      quarantined: "Derived UI по recovery flags, не новый canonical state: обычно merge_attempted+barrier, но crash-reconstructed recorded также может иметь recovery_required=true+target_quarantined=true."
+      merged: "Decision merged + полный merge proof + target-wide barrier cleared: recovery_required=false, target_quarantined=false; чужой unresolved accept запрещает terminal response до target-wide clear."
+      failed: "Decision failed + attempt verified_not_merged + request_completed + no-merge evidence + target-wide barrier cleared: recovery_required=false, target_quarantined=false; guarded retry возможен."
+      conflicted: "Terminal Git-derived conflict + verified_not_merged + request_completed + target-wide barrier cleared; retryable=false, новый reviewed ProposalVersion обязателен."
+      invalid: "Terminal evidence classification; при merge_outcome=unknown barrier/link и оба recovery flags остаются true, retryable=false; только proven outcome позволяет clear."
+    barrier_flags: "recovery_required=target_barriers.recovery_required; target_quarantined=true для merge_attempted или unresolved/unknown/quarantined link, включая crash-reconstructed recorded. Merged/failed/conflicted возвращаются как terminal только после target-wide clear; recorded с unresolved link не утверждает false recovery."
+    retryable: "Computed, не stored: только failed + доказанные no-merge/request completion + fresh preconditions + same decision/target; guarded retry создаёт новый attempt и атомарно восстанавливает barrier, identical HTTP replay создаёт zero attempts; conflicted/invalid всегда false."
+    attempt_fields: "attempts[] — упорядоченные по attempt_no реальные merge_operations; recorded accepted/rejected/cancelled → attempts=[], без synthetic UUID. merge_attempted/failed/conflicted требуют реальные attempts. prepared→prepared, call_inflight→in_flight, unknown+request_completed=false→unknown, unknown+request_completed=true→completed, verified_* / conflicted→completed."
+    no_merge_proven: "Не выводится из note/tag или attempts=[]: у recorded accepted/rejected/cancelled и crash reconstruction поле отсутствует. Оно появляется только в реальных attempts: failed/conflicted требуют verified_not_merged+request_completed; reject/cancel используют decision-level closure evidence."
+    integrity: "recorded/merge_attempted/merged/failed/conflicted требуют полный note/tag/object/target+three hashes; failed/conflicted без них → invalid+missing_integrity; mismatch → invalid+mismatched_integrity, unknown outcome сохраняет quarantine."
+    export_outcomes: "rejected/cancelled+recorded+verified close→rejected/cancelled с attempts=[]; accepted recorded/merge_attempted/failed/conflicted/invalid экспортируется с attempts[]+recovery evidence и без merge proof; merged только с полным merge proof."
+  cutover_record:
+    fields:
+      cutover_sha: cutover_sha
+      main_sha: "main_sha; CHECK main_sha=cutover_sha и оба snapshot SHAs равны им."
+      sign_off_actor_stable_id: signoff_actor_stable_id
+      timestamp: signoff_at
+      validation_evidence: "validation_evidence JSON array сохраняет sanitized canonical evidence items; record hash связывает полное представление."
+      write_frozen: write_freeze_observed
+      protected_tag_ref: protected_tag_ref
+      preflight_snapshot_id: preflight_snapshot_id
+      published_snapshot_id: published_snapshot_id
+      validation_times: "preflight_validated_at/published_validated_at обязательны по state; preflight≤published≤index_activation_observed_at для activating/activated."
+      publication_fence: "publication_fences/active_pointers fencing_token, сериализованный как decimal string; обязателен для activating/activated."
+      user_access_enabled: "state='active' AND space_activated_at IS NOT NULL; иначе false."
+    states:
+      freeze_pending: prepared
+      frozen: frozen
+      protected: protecting
+      preflight: preflight
+      activating: activating
+      activated: active
+      failed: failed
+      conflicted: conflicted
+    activation: "Preflight request совпадает по Space/repository/target/SHA и preflight=true. Separate published request связан preflight=false теми же perimeter/SHA; request/run/snapshot IDs отличаются от preflight. Оба SHA=cutover_sha=main_sha, closure и projection hashes совпадают, published full/purpose=published/is_preflight=false/ready→active. Activating допустим только с active published pointer, nonnull activation timestamp/fence и space_activated_at=NULL."
+    ordering: "CI сначала активирует validated published pointer, GO затем активирует Space; index_activation_observed_at<=space_activated_at. Preflight никогда не active/serving."
+  proposal_view:
+    record: "ProposalRecord ↔ proposal_versions, включая durable proposal_version_id, rationale/evidence, optional origin и supersedes_proposal_version_id; actor_type только human/agent/connector."
+    states: "draft/in_review/conflicted/rejected/cancelled/published/superseded ↔ одноимённые proposals.state; superseded никогда не переводится как archived."
+    archived: "ProposalView.archived является производным canonical document archived=true + archive, не proposals.state=superseded, rejected или deleted."
+    service_actor: "service допустим только internal AuthZ/audit contexts, не ProposalRecord.actor_type."
+  index_snapshot_and_events:
+    contract: index-snapshot-v1
+    ids:
+      main_generation_id: "generations.generation_key (durable ancestry-derived), не disposable generations.generation_id UUID."
+      parent_generation_id: "previous generation.generation_key, не previous UUID."
+      index_profile_version: "index_profiles.index_profile_version, не disposable profile_id UUID."
+      run_id: "index_runs.run_id после materialization immutable run; IndexRequested.external_run_ref является только logical correlation."
+      snapshot_id: "snapshots.snapshot_id; preflight и published IDs различны."
+      request_generation: "index_requests.main_generation_key и IndexRequested.main_generation_id обязаны разрешиться в тот же generation_key через CI contract, без cross-schema FK."
+    fields:
+      ancestry_root_sha: generations.origin_snapshot_sha
+      history_rewrite_detected: "generations/history flag, связанный composite FK с run/snapshot; true запрещает incremental."
+      closure: "complete/closure_sha256/incremental_base_snapshot_sha/full_snapshot_equivalence/missing_inputs восстанавливаются из index_runs и сверяются со snapshots composite FK."
+      validated_prerequisites: "Incremental equivalence требует full parent closure_validated=true + validation_evidence_ready descriptor+nonempty hashed independent evidence. Cutover published требует preflight parent closure_validated=true и preflight descriptor validation_evidence_ready=true с теми же SHA/closure/hashes; run_state/IDs различны."
+      equivalence_evidence: "closure.equivalence_evidence ↔ index_runs.equivalence_evidence: full_run_id/full_snapshot_id, canonical ready/active states, validated_at, perimeter, main_snapshot_sha, main_generation_id, index_profile_version, complete/missing_inputs, closure+projection hashes, evidence_sha256. Internal ready_to_publish↔ready и validated↔ready; evidence hash=JCS без evidence_sha256."
+      policy: "policy_bundle_id/access_policy_revision/approval_policy_revision хранятся в run и snapshot; document projection ссылается на ту же тройку."
+      projections: "exact_projection/semantic_projection statuses и hashes ↔ snapshots exact_/semantic_ fields; ready требует nonnull 64-hex hashes."
+      documents: "documents[] сериализует только eligible=true rows: document_id/path/document_revision_sha/content_sha256/blob_sha/dependency_sha256 и dependency_closure из document_dependencies+hash links; archived/excluded internal rows не публикуются."
+      preflight: "purpose=cutover_preflight/is_preflight=true/serving_allowed=false/cutover_sha=snapshot_sha; state=active запрещён."
+    states:
+      ready: "index_runs.ready_to_publish→IndexRunStatus.ready и snapshots.validated→IndexSnapshot.ready; validating не считается ready."
+      passthrough: "requested/resolving/building/validating/active/superseded/failed/dead_letter сохраняются в run без rename; descriptor отсутствует/строится либо snapshots.validated маппируется в canonical ready."
+      serving: "serving_allowed=true только snapshots.active + run_state=active + run_closure_validated=true + purpose=published + is_preflight=false + validation_evidence_ready=true + ready projections + full not_applicable или independently proven incremental equivalent."
+    publication: "publication_fences(space_id,profile_id) сериализует все generations данного pointer; CAS проверяет expected fence/current pointer/latest Git ancestry/validated run, stale owner получает zero rows. Ordinary active run требует GO space_activation_state=active+timestamp/evidence; cutover_ref — единственное pre-activation exception."
+  docops_review_metadata:
+    contract: docops-review-metadata-v1
+    fields: "document_review_states ↔ document_id/space_id/repository_id/document_revision_sha/valid_until/review_required/review_state/provenance/metadata_sha256; registry_revision/path/target/review proposal — additional projection bindings."
+    queue: "scheduled=not expired; due=expired по server UTC+queued_at; in_review требует queue; resolved требует timestamp; removed=review_required=false+valid_until=null. review_required эквивалентно наличию даты."
+    import: "Projection не второй канон: valid_until/provenance точно совпадают с document-front-matter-v2 в exact Git revision; review proposal FK запрещает чужой Space/repository/target/SHA."
+    fixtures: "T01 обязан включить scheduled future, due expired, in_review, no-date/removed-date, wrong revision/Space и roundtrip canonical front matter→DB→review queue/event."
+  source_sync_events:
+    external_states: "observed/seen_durable/no_op/proposal_pending/merged/rejected/conflicted/tombstone/retry/dead_letter ↔ одноимённые source_sync_states.sync_state и SourceSyncChanged v1 states; никакого coerce в rejected/conflicted."
+    proposal_mapping: "Event/API proposal_id и outstanding_proposal_id сохраняют stable proposal ID; DB outstanding_proposal_sha является дополнительным exact-version guard. все non-pending states очищают outstanding ID+SHA; merged сохраняет outcome_proposal_id+SHA отдельно."
+    cursor_pairs: "seen_version+seen_hash, proposed_version+proposed_hash и merged_version+merged_hash null/not-null вместе и hashes=64-hex SHA256; merged также требует merge_commit_sha+outcome proposal. Proposal_pending требует proposed pair и пустой outcome."
+    live_operational: "Не представлен в cursor table/events: typed read-only observation содержит snapshot_time и не создаёт document/proposal/merged cursor, MR, wiki или index lifecycle."
+    outstanding: "outstanding_proposal_id+outstanding_proposal_sha+space_id+repository_id ссылаются на ту же immutable ProposalVersion; document_id остаётся logical same-Space binding через GO contract, не cross-schema FK."
+  revocation_events:
+    fields: "AccessRevoked.stable_id/revocation_epoch/reason ↔ revocation_events stable_id/revocation_epoch/canonical_reason; authz_context_spaces хранит epoch каждого Space."
+    dedupe_order: "event_dedupe_hash связывает stable identity+epoch+reason+scopes; issuance применяет монотонный epoch per identity и идемпотентный event ID."
+    internal_only: "sync_failed без canonical_reason не порождает AccessRevoked и не присваивает выдуманный canonical reason."
+  paths:
+    documents: "PATH repository-relative NFC; никакого leading slash."
+    policies_and_scopes: "POLICY_PATH/PATH_SCOPE repository-relative NFC: canonical '/' ↔ пустой scope prefix, '/pricing' ↔ 'pricing', '/approval-policy.yaml' ↔ 'approval-policy.yaml'; reverse добавляет ровно один '/', NFC/traversal проверяются до mapping."
+    normalization: "Silent lowercase/NFD normalization запрещены; document paths не пустые/absolute, policy paths nonempty relative, пустой prefix разрешён только для scope root."
+  t01_verification_notes:
+    - "Roundtrip Decision accepted/rejected/cancelled, recorded/merge_attempted/merged/failed/conflicted/invalid/quarantined, recovery flags и same-ID retry до/после нового attempt."
+    - "Crash valid note/tag с отсутствующими DB row/barrier восстанавливает recorded+unresolved recovery+attempts=[] и отсутствующим no_merge_proven; reject/cancel не создают merge operation; failed/conflicted без каждого note/tag/hash → invalid+missing_integrity."
+    - "Два Spaces с разными repositories/policies/groups/snapshots/epochs: wrong bundle, revisions, membership и path scope отклоняются; fan-out не использует parent global policy."
+    - "AuthZ negative matrix: pending/invalid/superseded policy, building/failed/superseded group snapshot, mismatched issuer/captured_at/membership hash/epoch, wrong member/subject stable ID и external_only с nonnull identity отклоняются."
+    - "Corrupted rows для wrong Space/repository/target/base/proposal/SHA/action в policy/cutover/grant/source/document/pointer/merge/recovery associations отклоняются composite FK/CHECK."
+    - "Unknown/invalid/quarantined без доказанного outcome не очищает barrier; failed retry только request_completed+verified_not_merged; conflicted/invalid retry запрещён."
+    - "Preflight wrong SHA, active preflight, active requested, null ready hashes, rewrite+incremental, non-equivalent incremental, ordinary publication без active-Space evidence и reused preflight run/snapshot IDs отклоняются."
+    - "Incremental/published prerequisites requested/failed/unvalidated, без ready descriptor, с пустым/missing-key/null-value equivalence evidence, wrong evidence hash/state/validated_at или mismatched parent SHA/closure/projection hashes отклоняются; activating без active pointer/fence/validated timestamps или с user access enabled отклоняется."
+    - "Source negative matrix: missing/mismatched seen/proposed/merged version+hash, merged без merged_hash/commit/outcome proposal и любой non-pending state с outstanding ID или SHA отклоняется."
+    - "Одновременная публикация old/new generations для одного Space/profile выполняется через один fence/CAS; stale owner обновляет zero rows."
+    - "Cutover roundtrip проверяет разные preflight/published run+snapshot IDs, один SHA/closure/projection hashes и pointer→Space activation order."
+    - "ProposalView archived/superseded distinctions, index ready mappings, полный source state enum, generation_key/profile version и actor/per-Space revocation epochs roundtrip имеют positive/negative fixtures."
+    - "Resolved link с swapped target UUID/projection, live_operational cursor и cross-actor/cross-route idempotency-key reuse отклоняются."
+contract_test_assertions:
+  - id: DB-OWN-001
+    assert: "Каждая product table наследует единственного schema owner/writer/migration owner; другие components не имеют writer role."
+  - id: DB-BOUND-002
+    assert: "Каждый foreign_keys[].references.schema равен содержащей схеме; cross-schema FK и table writes отсутствуют."
+  - id: DB-CANON-003
+    assert: "Каждая table имеет nonempty canonical_source, boolean rebuildable, rebuild_strategy, classification, retention и security."
+  - id: DB-SPACE-004
+    assert: "Space-scoped queries и fixtures применяют space_id; cross-Space documents/links/dependencies/chunks/embeddings/pointers отклоняются."
+  - id: DB-DEC-005
+    assert: "decision_id уникален; recorded accepted/rejected/cancelled имеют attempts=[] и no synthetic merge_operation; crash note/tag→DB восстанавливает recorded+recovery без no_merge_proven. Merge attempts real-only; failed/conflicted сохраняют полный note/tag/hash evidence, иначе invalid+reason."
+  - id: DB-REC-006
+    assert: "merge_attempted + barrier + unresolved target_barrier_decisions фиксируются до external call; unknown/invalid/quarantined без proven outcome не очищает barrier."
+  - id: DB-FENCE-007
+    assert: "Merge result и barrier clear проверяют owner+fencing и отсутствие unresolved links по всему target; stale owner update затрагивает ноль rows."
+  - id: DB-IDEM-008
+    assert: "idempotency_key globally unique; actor+route+payload сохранены для equality; другой actor/route/payload -> IDEMPOTENCY_KEY_REUSED до writes."
+  - id: DB-AUTHZ-009
+    assert: "Каждый authz-context-v2 Space использует valid policy+ready group snapshot; issuer/context_evaluated_at и snapshot ID/captured_at/membership hash/revocation epoch совпадают через composite FK; pending/invalid/building/failed/superseded inputs запрещены."
+  - id: DB-PRINC-022
+    assert: "Membership/personal grants registry mode связывает identity+issuer+stable_id; external_only до JIT имеет NULL identity_id. Personal exception требует identity subject+reason, group policy — ready same-issuer group snapshot без GitLab users."
+  - id: DB-IDX-010
+    assert: "Incremental ready/active и cutover published ссылаются на distinct parent run с closure_validated=true и descriptor validation_evidence_ready=true; perimeter/SHA/closure/projection hashes совпадают, canonical evidence содержит все required keys без nulls и связывает parent IDs/states/validated_at/perimeter/closure+projection/evidence hashes; requested/failed/empty/mismatched parents отклоняются."
+  - id: DB-PTR-011
+    assert: "Fence/CAS per Space/profile сериализует все generations; full-perimeter FK допускает только active published non-preflight ready snapshot; stale update zero rows."
+  - id: DB-SCOPE-014
+    assert: "Spaces UNIQUE(space_id,repository_id) используется policy snapshots/cutovers/grants; current/previous/grant из другого Space/repository отклоняются."
+  - id: DB-REC-015
+    assert: "target_barriers.active_decision_id и last_reconciliation_run_id, findings и merge attempts связаны same Space/repository/target; active hint имеет unresolved link; любой unresolved link требует recovery=true, а NOT recovery запрещает active hint/unresolved links."
+  - id: DB-CUT-016
+    assert: "Cutover activating требует distinct request/run/snapshot IDs, active published non-preflight pointer+serving, same SHA/closure/hashes, preflight/published validated_at, fence+activation timestamp и space_activated_at=NULL; active добавляет Space activation+ordering; preflight никогда не active."
+  - id: DB-SRC-017
+    assert: "Seen/proposed/merged version+hash pairs согласованы и SHA256; proposal_pending требует proposed pair+outstanding, merged требует merged pair+commit+outcome proposal и очищает outstanding; все non-pending states очищают outstanding ID+SHA; live_operational запрещён."
+  - id: DB-LINK-018
+    assert: "Resolved target projection и stable target_document_id указывают на один document в том же snapshot/Space; swapped IDs отклоняются."
+  - id: DB-ERR-019
+    assert: "Index errors связывают run/snapshot/perimeter и run родительского snapshot; mixed run/snapshot/Space/repository/target отклоняются."
+  - id: DB-MAP-020
+    assert: "T01 выполняет canonical↔projection roundtrip всех mappings, включая reject/cancel/recovery/quarantine/Cutover/ProposalView/source/index/generation/profile/path/epoch."
+  - id: DB-DOCOPS-021
+    assert: "docops-review-metadata-v1 точно проецирует canonical front-matter-v2 valid_until/provenance, хранит review_required/metadata hash и same-perimeter proposal; scheduled/due/in_review/removed fixtures проходят queue roundtrip."
+  - id: DB-SEC-012
+    assert: "Fixtures не содержат raw secrets; audit/details не содержат raw private content; retrieval vectors/chunks остаются private per-Space data."
+  - id: DB-T00-013
+    assert: "Catalog не содержит vector(N), выбранного ANN method/parameters, numeric retention/RPO/RTO или unverified upstream physical schema."
+open_items:
+  t00:
+    - "Pinned Open WebUI/GitLab/PostgreSQL baselines, upstream physical schemas/roles/migrations и single-instance compatibility."
+    - "GitLab note/tag/trailer/parent/export/merge-only-GO/webhook capabilities на target version/edition."
+    - "Existing retrieval backend; pgvector+FTS, Russian tsvector config, HNSW/IVFFlat, iterative/exact fallback, partitioning и ACL-aware recall benchmark."
+    - "Embedding model/dimensions, chunking, reranker/OCR/extraction config, hoster model IDs, offline assets и external backend mapping."
+    - "Target Git SHA algorithm, document_revision_sha mapping, object-store layout и CI pointer/advisory-lock/fencing conventions."
+  t01:
+    - "DecisionRecord/ProposalRecord canonical serialization и record_sha256; index-snapshot-v1 dependency schema и generation_key algorithm."
+    - "Synthetic ownership, cross-Space, crash/fencing, rebuild/restore, secret/audit и full/incremental equivalence contract tests."
+    - "Candidate tsvector/vector representation может быть заменено audited existing backend representation с обновлением catalog."
+  owner_decisions:
+    - "RPO/RTO, freshness/latency/quality/budgets и backup snapshot consistency procedure."
+    - "Branches/MR/audit/chats/files/object versions/mirrors/backups retention."
+    - "Group snapshots/contexts/grant sync/webhook/index request/reconciliation/error DLQ history retention."
+    - "Idempotency replay retention; old index runs/generations/profiles/chunks/embeddings/source operation history retention."
+    - "Strict/pii_permitted legal/access/retention policy; hard purge/filtered export/break-glass/stale reads требуют отдельных ADR."
+  fixed_time_requirements:
+    group_refresh: "≤15 минут; не retention"
+    revocation_slo: "≤30 минут; sensitive operations при ближайшей recheck; не retention"

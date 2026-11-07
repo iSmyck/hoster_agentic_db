@@ -1,0 +1,528 @@
+contract_version: kb-events-v2
+status: PROPOSED
+json_schema_dialect: https://json-schema.org/draft/2020-12/schema
+description: >-
+  Логический event catalog между GitLab/Identity/ingestion, GO и CI/index workers. Broker, GitLab webhook headers, CI transport, versions и concrete routes — UNKNOWN до T00. Events являются at-least-once подсказками, а не canonical proof merge, ACL или attachment state.
+delivery:
+  mode: at_least_once
+  deduplication: producer.component + event_id, with an additional immutable event-specific dedupe key.
+  mutation_idempotency: Every event intake mutation binds idempotency_key to verified actor/producer + consumer route + normalized payload_hash. Reuse with another tuple returns IDEMPOTENCY_KEY_REUSED.
+  ordering: No arrival ordering guarantee. Git ancestry and observed exact HEAD determine freshness; SHA lexical ordering is forbidden.
+  retries: Bounded retry and dead-letter are required. Numeric retry/backoff budgets are UNKNOWN until owner/T00 configuration.
+  reconciliation: Periodic HEAD/index and Git-derived reconciliation is mandatory for lost, duplicate, invalid, and late events.
+  authorization: Every payload and subscription delivery is reauthorized. Revocation closes live subscriptions without waiting for reindexing.
+  payload_policy: Events carry IDs, full SHAs, hashes, and bounded metadata, not secrets, credentials, raw document text, source payloads, or unredacted personal data.
+envelope_schema:
+  $ref: '#/$defs/eventEnvelope'
+events:
+  - event_type: kb.gitlab.webhook.received.v1
+    producer: gitlab_adapter
+    consumers: [go]
+    payload_schema:
+      $ref: '#/$defs/gitlabWebhookPayload'
+    dedupe_key: verified_event_id + repository_id + provider_payload_sha256
+    required_action: Verify authenticity/replay, persist inbox idempotently, read current GitLab state, then emit kb.index.requested.v1 for the observed eligible main SHA when applicable.
+  - event_type: kb.index.requested.v1
+    producer: go
+    consumers: [internal_ci]
+    payload_schema:
+      $ref: '#/$defs/indexRequestedPayload'
+    dedupe_key: repository_id + target_branch + main_sha + main_generation_id + index_profile_version + preflight.is_preflight
+    required_action: Read exact main/cutover snapshot with read-only CI credential, build and validate exact+semantic inactive run, and never treat webhook payload as active-pointer proof.
+  - event_type: kb.access_policy.changed.v1
+    producer: identity
+    consumers: [go, internal_ci, retrieval]
+    payload_schema:
+      $ref: '#/$defs/accessPolicyChangedPayload'
+    dedupe_key: change_set_sha256
+    required_action: Apply fresh deny immediately, close revoked subscriptions, invalidate cursors/contexts, and schedule ACL metadata reindex without waiting for it to enforce revocation.
+  - event_type: kb.attachment.changed.v1
+    producer: ingestion
+    consumers: [go, internal_ci]
+    payload_schema:
+      $ref: '#/$defs/attachmentChangedPayload'
+    dedupe_key: space_id + document_id + document_revision_sha + attachment.object_id + attachment.version + change
+    required_action: Validate immutable object/version/hash and Space ACL, expand dependency closure, and use the same index/reconciliation path as document events.
+  - event_type: kb.index.run_status.changed.v1
+    producer: internal_ci
+    consumers: [go, open_webui]
+    payload_schema:
+      $ref: '#/$defs/indexRunStatusPayload'
+    dedupe_key: run_id + state + snapshot_sha + main_generation_id + index_profile_version
+    required_action: Update read-only status projections. Only the single CI/index pointer writer may activate a fully validated snapshot.
+  - event_type: kb.access.revoked.v1
+    producer: identity
+    consumers: [go, retrieval, open_webui]
+    payload_schema:
+      $ref: '#/$defs/accessRevokedPayload'
+    dedupe_key: stable_id + revocation_epoch
+    required_action: Invalidate AuthzContext/cursors, close live subscriptions, and deny new retrieval/tool/file/history/export/merge payloads at the next barrier.
+  - event_type: kb.source.sync.changed.v1
+    producer: go
+    consumers: [ingestion, open_webui]
+    payload_schema:
+      $ref: '#/$defs/sourceSyncChangedPayload'
+    dedupe_key: source_binding_id + source_object_id + state + seen_version + proposed_version + merged_version
+    required_action: Resume from durable seen/proposed/merged state without creating a second outstanding proposal or claiming merged after MR creation, timeout, or indexing.
+  - event_type: kb.docops.review_requested.v1
+    producer: go
+    consumers: [open_webui]
+    payload_schema:
+      $ref: '#/$defs/docopsReviewRequestedPayload'
+    dedupe_key: document_id + document_revision_sha + review_metadata.valid_until + reason
+    required_action: Reauthorize the exact document revision, project canonical valid_until/provenance into the group-assigned DocOps queue, and never archive or grant access from the event.
+$defs:
+  eventEnvelope:
+    type: object
+    additionalProperties: false
+    required: [schema_version, event_id, event_type, occurred_at, producer, actor, idempotency_key, payload_hash, payload]
+    properties:
+      schema_version:
+        const: kb-event-envelope-v1
+      event_id:
+        type: string
+        format: uuid
+      event_type:
+        type: string
+        enum: [kb.gitlab.webhook.received.v1, kb.index.requested.v1, kb.access_policy.changed.v1, kb.attachment.changed.v1, kb.index.run_status.changed.v1, kb.access.revoked.v1, kb.source.sync.changed.v1, kb.docops.review_requested.v1]
+      occurred_at:
+        type: string
+        format: date-time
+      producer:
+        type: object
+        additionalProperties: false
+        required: [component, instance_id]
+        properties:
+          component:
+            type: string
+            enum: [go, identity, ingestion, internal_ci, gitlab_adapter]
+          instance_id:
+            type: string
+            minLength: 1
+            maxLength: 128
+      actor:
+        type: object
+        additionalProperties: false
+        required: [actor_type]
+        properties:
+          actor_type:
+            type: string
+            enum: [human, agent, connector, internal_ci, service, webhook]
+          stable_id:
+            type: string
+            minLength: 1
+            maxLength: 512
+          service_id:
+            type: string
+            minLength: 1
+            maxLength: 128
+      space_id:
+        type: string
+        minLength: 1
+        maxLength: 63
+        pattern: '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$'
+      repository_id:
+        type: string
+        minLength: 1
+        maxLength: 128
+      correlation_id:
+        type: string
+        minLength: 1
+        maxLength: 128
+      causation_id:
+        type: string
+        format: uuid
+      idempotency_key:
+        type: string
+        minLength: 1
+        maxLength: 255
+      payload_hash:
+        $ref: '#/$defs/sha256'
+      payload:
+        type: object
+        description: Validate against the payload_schema selected by event_type; the generic envelope does not relax the event-specific additionalProperties=false rule.
+  gitlabWebhookPayload:
+    type: object
+    additionalProperties: false
+    required: [verified_event_id, provider_event_type, repository_id, provider_payload_sha256, authenticity_verified]
+    properties:
+      verified_event_id:
+        type: string
+        minLength: 1
+        maxLength: 256
+      provider_event_type:
+        type: string
+        minLength: 1
+        maxLength: 128
+      repository_id:
+        type: string
+        minLength: 1
+        maxLength: 128
+      provider_payload_sha256:
+        $ref: '#/$defs/sha256'
+      authenticity_verified:
+        const: true
+      observed_main_sha_hint:
+        $ref: '#/$defs/gitSha'
+  indexRequestedPayload:
+    type: object
+    additionalProperties: false
+    required: [request_id, space_id, repository_id, target_branch, main_sha, main_generation_id, index_profile_version, reason, preflight, exact_main_read_required, requested_at]
+    properties:
+      request_id:
+        type: string
+        format: uuid
+      space_id:
+        type: string
+        minLength: 1
+        maxLength: 63
+      repository_id:
+        type: string
+        minLength: 1
+        maxLength: 128
+      target_branch:
+        $ref: './proposal-record.schema.json#/$defs/branchName'
+      main_sha:
+        $ref: '#/$defs/gitSha'
+      main_generation_id:
+        type: string
+        minLength: 1
+        maxLength: 128
+      index_profile_version:
+        type: string
+        minLength: 1
+        maxLength: 128
+      reason:
+        type: string
+        enum: [merge, cutover, access_policy, attachment, reconciliation, archive, delete]
+      preflight:
+        type: object
+        additionalProperties: false
+        required: [is_preflight, cutover_sha]
+        properties:
+          is_preflight:
+            type: boolean
+          cutover_sha:
+            type: [string, 'null']
+            pattern: '^(?:[0-9a-f]{40}|[0-9a-f]{64})$'
+        allOf:
+          - if:
+              properties:
+                is_preflight:
+                  const: true
+              required: [is_preflight]
+            then:
+              properties:
+                cutover_sha:
+                  type: string
+      exact_main_read_required:
+        const: true
+      requested_at:
+        type: string
+        format: date-time
+    x-contract-invariants:
+      - id: INDEX_REQUEST_PREFLIGHT_SHA
+        rule: preflight.is_preflight=true requires reason=cutover, main_sha=preflight.cutover_sha, and a full non-serving run. A published activation uses a separate request/run and non-preflight descriptor on the same SHA; an active event never refers to the preflight run.
+        error: INDEX_NOT_READY
+    allOf:
+      - if:
+          properties:
+            preflight:
+              properties:
+                is_preflight:
+                  const: true
+              required: [is_preflight]
+          required: [preflight]
+        then:
+          properties:
+            reason:
+              const: cutover
+  accessPolicyChangedPayload:
+    type: object
+    additionalProperties: false
+    required: [changes, change_set_sha256, effective_at, fresh_authorization_required, close_revoked_subscriptions]
+    properties:
+      changes:
+        type: array
+        minItems: 1
+        maxItems: 64
+        items:
+          $ref: '#/$defs/policySpaceChange'
+      change_set_sha256:
+        $ref: '#/$defs/sha256'
+        description: SHA-256 of deterministic JCS changes sorted by space_id; every entry retains an independent repository/bundle/revisions/group snapshot.
+      effective_at:
+        type: string
+        format: date-time
+      fresh_authorization_required:
+        const: true
+      close_revoked_subscriptions:
+        type: boolean
+    x-contract-invariants:
+      - id: POLICY_EVENT_UNIQUE_PER_SPACE
+        rule: changes contains no duplicate space_id or repository_id. Consumers resolve policy and group evidence only inside each entry; a bundle or snapshot from another entry is never reused. Each entry increments or matches that Space revocation_epoch independently.
+        error: POLICY_REVISION_MISMATCH
+  policySpaceChange:
+    type: object
+    additionalProperties: false
+    required: [space_id, repository_id, policy_bundle_id, access_policy_revision, approval_policy_revision, group_snapshot, revocation_epoch]
+    properties:
+      space_id:
+        type: string
+        minLength: 1
+        maxLength: 63
+      repository_id:
+        type: string
+        minLength: 1
+        maxLength: 128
+      policy_bundle_id:
+        type: string
+        minLength: 1
+        maxLength: 256
+      access_policy_revision:
+        $ref: '#/$defs/gitSha'
+      approval_policy_revision:
+        $ref: '#/$defs/gitSha'
+      group_snapshot:
+        type: object
+        additionalProperties: false
+        required: [snapshot_id, captured_at, membership_sha256]
+        properties:
+          snapshot_id:
+            type: string
+            format: uuid
+          captured_at:
+            type: string
+            format: date-time
+          membership_sha256:
+            $ref: '#/$defs/sha256'
+      revocation_epoch:
+        type: integer
+        minimum: 0
+        maximum: 9007199254740991
+  attachmentChangedPayload:
+    type: object
+    additionalProperties: false
+    required: [space_id, document_id, document_revision_sha, change, attachment, fresh_authorization_required]
+    properties:
+      space_id:
+        type: string
+        minLength: 1
+        maxLength: 63
+      document_id:
+        type: string
+        format: uuid
+      document_revision_sha:
+        $ref: '#/$defs/gitSha'
+      change:
+        type: string
+        enum: [added, updated, removed, verification_changed]
+      attachment:
+        $ref: './front-matter.schema.json#/$defs/attachment'
+      observed_main_sha_hint:
+        $ref: '#/$defs/gitSha'
+      fresh_authorization_required:
+        const: true
+  indexRunStatusPayload:
+    type: object
+    additionalProperties: false
+    required: [run_id, space_id, repository_id, snapshot_sha, main_generation_id, index_profile_version, purpose, is_preflight, serving_allowed, state]
+    properties:
+      run_id:
+        type: string
+        format: uuid
+      space_id:
+        type: string
+        minLength: 1
+        maxLength: 63
+      repository_id:
+        type: string
+        minLength: 1
+        maxLength: 128
+      snapshot_id:
+        type: string
+        format: uuid
+      snapshot_sha:
+        $ref: '#/$defs/gitSha'
+      main_generation_id:
+        type: string
+        minLength: 1
+        maxLength: 128
+      index_profile_version:
+        type: string
+        minLength: 1
+        maxLength: 128
+      purpose:
+        type: string
+        enum: [published, cutover_preflight]
+      is_preflight:
+        type: boolean
+      serving_allowed:
+        type: boolean
+      state:
+        type: string
+        enum: [requested, resolving, building, validating, ready, active, superseded, failed, dead_letter]
+      error:
+        $ref: './openapi.yaml#/components/schemas/Error'
+    allOf:
+      - if:
+          properties:
+            state:
+              enum: [ready, active]
+          required: [state]
+        then:
+          required: [snapshot_id]
+      - if:
+          properties:
+            state:
+              const: active
+          required: [state]
+        then:
+          properties:
+            purpose:
+              const: published
+            is_preflight:
+              const: false
+            serving_allowed:
+              const: true
+      - if:
+          properties:
+            state:
+              not:
+                const: active
+          required: [state]
+        then:
+          properties:
+            serving_allowed:
+              const: false
+      - if:
+          properties:
+            is_preflight:
+              const: true
+          required: [is_preflight]
+        then:
+          properties:
+            purpose:
+              const: cutover_preflight
+            state:
+              enum: [requested, resolving, building, validating, ready, superseded, failed, dead_letter]
+            serving_allowed:
+              const: false
+  accessRevokedPayload:
+    type: object
+    additionalProperties: false
+    required: [stable_id, revocation_epoch, reason, effective_at, close_subscriptions]
+    properties:
+      stable_id:
+        $ref: './proposal-record.schema.json#/$defs/stableId'
+      revocation_epoch:
+        type: integer
+        minimum: 0
+        maximum: 9007199254740991
+      reason:
+        type: string
+        enum: [group_removed, policy_changed, session_revoked, mover, leaver]
+      effective_at:
+        type: string
+        format: date-time
+      close_subscriptions:
+        const: true
+  sourceSyncChangedPayload:
+    type: object
+    additionalProperties: false
+    required: [source_binding_id, source_object_id, space_id, ownership_mode, state, seen_version, proposed_version, merged_version, source_content_sha256]
+    properties:
+      source_binding_id:
+        type: string
+        minLength: 1
+        maxLength: 128
+      source_object_id:
+        type: string
+        minLength: 1
+        maxLength: 512
+      space_id:
+        type: string
+        minLength: 1
+        maxLength: 63
+      ownership_mode:
+        type: string
+        enum: [migrated, source_managed, curated]
+      state:
+        type: string
+        enum: [observed, seen_durable, no_op, proposal_pending, merged, rejected, conflicted, tombstone, retry, dead_letter]
+      seen_version:
+        type: [string, 'null']
+        minLength: 1
+        maxLength: 512
+      proposed_version:
+        type: [string, 'null']
+        minLength: 1
+        maxLength: 512
+      merged_version:
+        type: [string, 'null']
+        minLength: 1
+        maxLength: 512
+      proposal_id:
+        type: string
+        minLength: 1
+        maxLength: 128
+      merge_commit_sha:
+        $ref: '#/$defs/gitSha'
+      source_content_sha256:
+        $ref: '#/$defs/sha256'
+    allOf:
+      - if:
+          properties:
+            state:
+              const: proposal_pending
+          required: [state]
+        then:
+          required: [proposal_id]
+          properties:
+            proposed_version:
+              type: string
+      - if:
+          properties:
+            state:
+              const: merged
+          required: [state]
+        then:
+          required: [proposal_id, merge_commit_sha]
+          properties:
+            merged_version:
+              type: string
+  docopsReviewRequestedPayload:
+    type: object
+    additionalProperties: false
+    required: [review_metadata, reason, requested_at]
+    properties:
+      review_metadata:
+        $ref: './docops-review-metadata.schema.json'
+      reason:
+        type: string
+        enum: [expired, source_changed, manual]
+      requested_at:
+        type: string
+        format: date-time
+    allOf:
+      - if:
+          properties:
+            reason:
+              const: expired
+          required: [reason]
+        then:
+          properties:
+            review_metadata:
+              properties:
+                review_required:
+                  const: true
+                review_state:
+                  const: due
+                valid_until:
+                  type: string
+  gitSha:
+    type: string
+    pattern: '^(?:[0-9a-f]{40}|[0-9a-f]{64})$'
+  sha256:
+    type: string
+    pattern: '^[0-9a-f]{64}$'

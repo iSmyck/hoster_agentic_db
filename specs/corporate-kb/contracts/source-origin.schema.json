@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "source-origin.schema.json",
+  "title": "Canonical source provenance",
+  "description": "PROPOSED immutable provenance for imported or source-linked content. Operational seen/proposed/merged cursors belong to GO kb_ops and are deliberately not stored in this canonical record.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source_id",
+    "source_binding_id",
+    "source_object_id",
+    "source_version",
+    "source_content_sha256",
+    "source_ref",
+    "observed_at",
+    "ownership_mode"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "source-origin-v1"
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(?:[a-z0-9][a-z0-9._:-]*|DOC-[0-9]{4})$",
+      "description": "Stable source identity, separate from document_id. DOC-0001 format from content-standard v2.3 is preserved without lowercase normalization."
+    },
+    "source_binding_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9][a-z0-9._:-]*$"
+    },
+    "source_object_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "source_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "Immutable source version or provider revision token."
+    },
+    "source_content_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "Opaque immutable source reference; never a credential or mutable current-content URL."
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ownership_mode": {
+      "type": "string",
+      "enum": ["migrated", "source_managed", "curated", "live_operational"]
+    },
+    "previous_imported_base": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_version", "source_content_sha256", "document_revision_sha"],
+      "properties": {
+        "source_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "source_content_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "document_revision_sha": {
+          "$ref": "#/$defs/gitSha"
+        }
+      }
+    },
+    "original": {
+      "$ref": "#/$defs/immutableObject"
+    },
+    "extraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["route_id", "config_sha256", "output_sha256", "loss_report_ref"],
+      "properties": {
+        "route_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Approved extraction route identifier. Concrete library and version remain UNKNOWN until T00."
+        },
+        "converter_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "converter_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "config_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "output_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "loss_report_ref": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 2048
+        }
+      }
+    }
+  },
+  "x-contract-invariants": [
+    {
+      "id": "SOURCE_LIVE_OPERATIONAL_READ_ONLY",
+      "rule": "ownership_mode=live_operational is valid only for a registered typed read-only source binding. It cannot appear in canonical front matter or ProposalRecord and cannot create a document_id, proposal, merge, wiki/index entry, or seen/proposed/merged cursor.",
+      "error": "INVALID_STATE"
+    },
+    {
+      "id": "SOURCE_IMPORTED_PROVENANCE",
+      "rule": "migrated and source_managed canonical documents retain immutable source/version/hash/ref provenance. curated retains origin when source-linked and uses previous_imported_base for three-way updates.",
+      "error": "VALIDATION_ERROR"
+    }
+  ],
+  "$defs": {
+    "gitSha": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "immutableObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["object_id", "version", "sha256", "size", "media_type", "source_ref"],
+      "properties": {
+        "object_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1099511627776
+        },
+        "media_type": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 127
+        },
+        "source_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        }
+      }
+    }
+  }
+}

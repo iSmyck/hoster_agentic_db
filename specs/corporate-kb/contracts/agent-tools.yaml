@@ -1,0 +1,120 @@
+contract_version: agent-tools-v2
+status: PROPOSED
+json_schema_dialect: https://json-schema.org/draft/2020-12/schema
+description: >-
+  Логический typed tool catalog для bounded agent. Это не подтверждённая регистрация Open WebUI native tools: commit, seams, streaming/deferred/channel/OpenAPI registration и versions — UNKNOWN до T00. Каждый вызов выполняется сервером с отдельным boundedAgentCredential и server-issued AuthzContext.
+execution_boundary:
+  credential_scheme: boundedAgentCredential
+  trusted_server_fields:
+    - stable_id
+    - actor_type
+    - requester_stable_id
+    - space_scopes
+    - path_scopes
+    - space_scopes[].repository_id
+    - space_scopes[].policy_bundle_id
+    - space_scopes[].access_policy_revision
+    - space_scopes[].approval_policy_revision
+    - space_scopes[].group_snapshot
+    - space_scopes[].revocation_epoch
+    - tenant
+    - run_id
+  untrusted_inputs:
+    - document_text
+    - source_text
+    - rationale
+    - evidence
+    - model_supplied_scope
+    - model_supplied_idempotency_key
+  scope_rule: Model-supplied scope may only narrow the server effective scope. Actor, requester, groups, tenant, policy revisions, and run_id are attached by trusted orchestration and are never accepted as authority from model arguments.
+  idempotency_rule: For propose tools the same idempotency_key is placed in the body and Idempotency-Key header, then bound by GO to trusted actor + normalized operationId/route + normalized payload SHA-256. A changed payload under the same key returns IDEMPOTENCY_KEY_REUSED.
+  prohibited_capabilities:
+    - merge
+    - accept_reject_cancel
+    - grants
+    - shell
+    - terminal
+    - generic_sql
+    - arbitrary_git_push
+    - arbitrary_filesystem
+    - tool_creation
+    - arbitrary_python_tools
+    - export
+    - bulk_operations
+    - subtree_moves
+    - attachment_management
+    - edit_proposal_version
+    - whole_document_replacement
+    - archive
+    - restore
+    - import_commit
+    - cutover
+    - unapproved_custom_tools
+  enforcement: Absence from this catalog is not the security boundary. GO, Identity/AuthZ, and GitLab must independently deny every bypass across direct, deferred, note, ordinary/native/temporary chat, automation, channel, OpenAPI, and call_tool paths.
+  first_vertical_slice: Only single-page create/edit proposals. Apply never performs LLM regeneration, rebase, squash, fast-forward, or automatic conflict merge.
+common_result_rules:
+  errors:
+    $ref: './openapi.yaml#/components/schemas/Error'
+  pagination: Cursor is opaque, bounded, and tied to query + effective scope + the complete per-Space snapshot/profile + policy bundle/revisions + group snapshot + revocation epoch set. A cursor never preserves revoked access or substitutes another Space context.
+  truncation: Long reads and result pages return explicit truncation and next_cursor. Silent omission is forbidden.
+  revisions: Every returned revision is a full lowercase Git SHA. A stale candidate is rejected; historical content is never silently substituted.
+  disclosure: Tree, titles, snippets, chunks, files, links, evidence, and history are authorized before browser/model payload construction.
+tools:
+  - name: list_documents
+    operation_id: listDocuments
+    capability: read
+    description: List authorized documents in one Space with bounded pagination.
+    input_schema:
+      $ref: './openapi.yaml#/components/schemas/ListDocumentsInput'
+    output_schema:
+      $ref: './openapi.yaml#/components/schemas/DocumentList'
+  - name: search_documents
+    operation_id: searchDocuments
+    capability: search
+    description: Exact or semantic per-Space fan-out over eligible published main in each authorized active snapshot; preflight and pending/rejected content are excluded and full per-Space policy/snapshot context is preserved.
+    input_schema:
+      $ref: './openapi.yaml#/components/schemas/SearchDocumentsInput'
+    output_schema:
+      $ref: './openapi.yaml#/components/schemas/SearchPage'
+  - name: read_document
+    operation_id: readDocument
+    capability: read
+    description: Canonical whole/section read through GO with bounds, cursor, full revision, and explicit truncation.
+    input_schema:
+      $ref: './openapi.yaml#/components/schemas/ReadDocumentInput'
+    output_schema:
+      $ref: './openapi.yaml#/components/schemas/DocumentRead'
+  - name: get_document_links
+    operation_id: getDocumentLinks
+    capability: read
+    description: Read authorized stable-ID links for an exact document revision.
+    input_schema:
+      $ref: './openapi.yaml#/components/schemas/GetDocumentLinksInput'
+    output_schema:
+      $ref: './openapi.yaml#/components/schemas/DocumentLinks'
+  - name: propose_create_document
+    operation_id: proposeCreateDocument
+    capability: propose
+    mutation: true
+    description: Create one curated single-page body-only branch+MR+ProposalRecord from exact base; no origin/attachment/archive/access fields, main write, or merge capability.
+    input_schema:
+      $ref: './openapi.yaml#/components/schemas/ProposeCreateDocumentInput'
+    output_schema:
+      $ref: './openapi.yaml#/components/schemas/ProposalView'
+  - name: propose_edit_document
+    operation_id: proposeEditDocument
+    capability: propose
+    mutation: true
+    description: Propose one single-page edit from exact base through AgentAnchoredPatchChange only, with required body section, rationale, and evidence. Whole-document/front matter/attachment/archive changes, editProposalVersion, ambiguous patches, and stale bases are rejected.
+    input_schema:
+      $ref: './openapi.yaml#/components/schemas/ProposeEditDocumentInput'
+    output_schema:
+      $ref: './openapi.yaml#/components/schemas/ProposalView'
+  - name: get_proposal
+    operation_id: getProposal
+    capability: read
+    description: Read an authorized exact ProposalVersion, principals, rationale, evidence, diff, and preview reliability. It cannot apply a decision.
+    input_schema:
+      $ref: './openapi.yaml#/components/schemas/GetProposalInput'
+    output_schema:
+      $ref: './openapi.yaml#/components/schemas/ProposalView'

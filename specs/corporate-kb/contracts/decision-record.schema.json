@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "decision-record.schema.json",
+  "title": "Canonical DecisionRecord",
+  "description": "PROPOSED append-only accept/reject/cancel record. PROPOSED hashing rule: remove record_sha256, serialize the remaining object with JCS (RFC 8785), UTF-8 encode it, and compute SHA-256. The resulting complete JSON, including record_sha256, must be byte-equivalent in MR note and protected annotated tag. JCS support is a proposed implementation contract, not a verified GitLab capability.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "decision_id",
+    "proposal_id",
+    "repository_id",
+    "space_id",
+    "target_branch",
+    "proposal_sha",
+    "base_sha",
+    "action",
+    "actor_stable_id",
+    "actor_type",
+    "timestamp",
+    "rationale",
+    "evidence",
+    "policy_bundle_id",
+    "access_policy_revision",
+    "approval_policy_revision",
+    "payload_hash",
+    "record_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "decision-record-v1"
+    },
+    "decision_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID and decision idempotency key. The HTTP Idempotency-Key for a decision command must equal this value."
+    },
+    "proposal_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "repository_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "space_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 63,
+      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$"
+    },
+    "target_branch": {
+      "$ref": "./proposal-record.schema.json#/$defs/branchName"
+    },
+    "proposal_sha": {
+      "$ref": "#/$defs/gitSha"
+    },
+    "base_sha": {
+      "$ref": "#/$defs/gitSha"
+    },
+    "action": {
+      "type": "string",
+      "enum": ["accepted", "rejected", "cancelled"]
+    },
+    "actor_stable_id": {
+      "$ref": "./proposal-record.schema.json#/$defs/stableId"
+    },
+    "actor_type": {
+      "const": "human"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10000
+    },
+    "evidence": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "$ref": "./proposal-record.schema.json#/$defs/evidence"
+      }
+    },
+    "policy_bundle_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[a-z0-9][a-z0-9._:-]*$"
+    },
+    "access_policy_revision": {
+      "$ref": "#/$defs/gitSha"
+    },
+    "approval_policy_revision": {
+      "$ref": "#/$defs/gitSha"
+    },
+    "payload_hash": {
+      "$ref": "#/$defs/sha256",
+      "description": "SHA-256 of the normalized decision command payload used by actor+route+payload idempotency binding."
+    },
+    "record_sha256": {
+      "$ref": "#/$defs/sha256",
+      "description": "SHA-256 of canonical JCS bytes for this object with record_sha256 omitted."
+    },
+    "supersedes_decision_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Correction creates a new decision_id and never edits the superseded JSON."
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    }
+  },
+  "x-contract-invariants": [
+    {
+      "id": "DECISION_CANONICAL_ACTION_MAPPING",
+      "rule": "accepted/rejected/cancelled are canonical actions. Operational command mapping is accept/reject/cancel respectively; rejected and cancelled close the MR without merge and remain recorded outcomes, never aliases of merged, failed, conflicted, or invalid.",
+      "error": "INVALID_STATE"
+    },
+    {
+      "id": "DECISION_EXACT_PROPOSAL_BASE",
+      "rule": "decision_record.base_sha and proposal_sha equal the reviewed ProposalVersion base_sha and proposal_sha for the same proposal_id, repository_id, space_id, and target_branch.",
+      "error": "DECISION_INVALID"
+    },
+    {
+      "id": "DECISION_REPLAY_SINGLE_OUTCOME",
+      "rule": "A replay of the same decision_id and identical command returns the single current Git-derived outcome without creating an attempt or other side effect. Only the guarded recovery coordinator may create a new attempt under the same decision after conclusive failed, completed request, and proven no-merge evidence.",
+      "error": "IDEMPOTENCY_KEY_REUSED"
+    }
+  ],
+  "$defs": {
+    "gitSha": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

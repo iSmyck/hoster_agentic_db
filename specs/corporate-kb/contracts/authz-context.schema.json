@@ -1,0 +1,296 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "authz-context.schema.json",
+  "title": "Server-issued AuthzContext",
+  "description": "PROPOSED trusted internal representation. context_id is correlation metadata, not a bearer credential. Browser, model, connector, and document payloads cannot self-issue this object. Every Space carries its own repository, policy bundle, revisions, group snapshot, and revocation epoch.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "context_id",
+    "issuer",
+    "stable_id",
+    "actor_type",
+    "space_scopes",
+    "path_scopes",
+    "evaluated_at",
+    "expires_at",
+    "revocation_epoch"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "authz-context-v2"
+    },
+    "context_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "issuer": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "Configured Identity/AuthZ adapter identifier, not a public endpoint."
+    },
+    "stable_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "actor_type": {
+      "type": "string",
+      "enum": ["human", "agent", "connector", "internal_ci", "service"]
+    },
+    "space_scopes": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "$ref": "#/$defs/spaceScope"
+      }
+    },
+    "path_scopes": {
+      "type": "array",
+      "maxItems": 1024,
+      "items": {
+        "$ref": "#/$defs/pathScope"
+      }
+    },
+    "evaluated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revocation_epoch": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991,
+      "description": "Actor/session revocation epoch. Each Space additionally has an independent epoch in space_scopes[]."
+    }
+  },
+  "x-contract-invariants": [
+    {
+      "id": "AUTHZ_UNIQUE_SPACE_BINDINGS",
+      "rule": "space_scopes[].space_id and repository_id are unique per Space; no two entries share a Space or repository. Every path_scopes[].space_id has exactly one matching space_scopes entry.",
+      "error": "POLICY_REVISION_MISMATCH"
+    },
+    {
+      "id": "AUTHZ_PER_SPACE_POLICY_GROUP",
+      "rule": "Authorization for a Space uses only that entry's repository_id, policy_bundle_id, both revisions, group_snapshot, and revocation_epoch. A bundle, revision, or group snapshot from another Space is never substituted.",
+      "error": "POLICY_REVISION_MISMATCH"
+    },
+    {
+      "id": "AUTHZ_GROUP_SNAPSHOT_FRESHNESS",
+      "rule": "For every Space, group_snapshot.captured_at <= evaluated_at < expires_at; sensitive operations additionally require the configured fresh recheck and current actor and Space revocation epochs.",
+      "error": "GROUP_SNAPSHOT_STALE"
+    }
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "actor_type": {
+            "enum": ["agent", "connector"]
+          }
+        },
+        "required": ["actor_type"]
+      },
+      "then": {
+        "properties": {
+          "space_scopes": {
+            "items": {
+              "properties": {
+                "capabilities": {
+                  "items": {
+                    "enum": ["read", "search", "propose", "source_read"]
+                  }
+                }
+              }
+            }
+          },
+          "path_scopes": {
+            "items": {
+              "properties": {
+                "capabilities": {
+                  "items": {
+                    "const": "propose"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "actor_type": {
+            "const": "internal_ci"
+          }
+        },
+        "required": ["actor_type"]
+      },
+      "then": {
+        "properties": {
+          "space_scopes": {
+            "items": {
+              "properties": {
+                "capabilities": {
+                  "items": {
+                    "enum": ["read", "index_write"]
+                  }
+                }
+              }
+            }
+          },
+          "path_scopes": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "gitSha": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "groupMembership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["group_id", "membership_source"],
+      "properties": {
+        "group_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "membership_source": {
+          "type": "string",
+          "enum": ["direct", "nested"]
+        }
+      }
+    },
+    "groupSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshot_id", "captured_at", "membership_sha256", "groups"],
+      "properties": {
+        "snapshot_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "captured_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "membership_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "SHA-256 of the deterministic sorted group membership snapshot used for this Space evaluation."
+        },
+        "groups": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/groupMembership"
+          }
+        }
+      }
+    },
+    "capability": {
+      "type": "string",
+      "enum": ["read", "search", "propose", "review", "merge", "export", "manage_grants", "source_read", "index_write"]
+    },
+    "spaceScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "space_id",
+        "repository_id",
+        "capabilities",
+        "policy_bundle_id",
+        "access_policy_revision",
+        "approval_policy_revision",
+        "group_snapshot",
+        "revocation_epoch"
+      ],
+      "properties": {
+        "space_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 63,
+          "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$"
+        },
+        "repository_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "capabilities": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/capability"
+          }
+        },
+        "policy_bundle_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[a-z0-9][a-z0-9._:-]*$"
+        },
+        "access_policy_revision": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "approval_policy_revision": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "group_snapshot": {
+          "$ref": "#/$defs/groupSnapshot"
+        },
+        "revocation_epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "pathScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["space_id", "path_prefix", "capabilities"],
+      "properties": {
+        "space_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 63,
+          "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$"
+        },
+        "path_prefix": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 513,
+          "pattern": "^/[^\\u0000-\\u001F\\\\]*$",
+          "not": {
+            "pattern": "(?:^|/)\\.\\.(?:/|$)"
+          }
+        },
+        "capabilities": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["propose", "review", "merge"]
+          }
+        }
+      }
+    }
+  }
+}

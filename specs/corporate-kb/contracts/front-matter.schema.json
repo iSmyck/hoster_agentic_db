@@ -1,0 +1,311 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "front-matter.schema.json",
+  "title": "Canonical document front matter",
+  "description": "PROPOSED document-front-matter-v2 contract. It adds stable ID links and valid_until through an explicit versioned schema change and retains origin as canonical provenance. Authorization is never derived from front matter; access is forbidden and one repository is one Space. live_operational sources do not become canonical Markdown documents automatically.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "title",
+    "parent_id",
+    "ownership_mode",
+    "links",
+    "valid_until",
+    "archived",
+    "attachments"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "document-front-matter-v2"
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Opaque stable document ID; it never changes on rename or move."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "parent_id": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "Stable parent document ID, or null for a tree root. Cycles and orphans are validation errors."
+    },
+    "ownership_mode": {
+      "type": "string",
+      "enum": ["migrated", "source_managed", "curated"],
+      "description": "live_operational is intentionally absent because it is exposed only through a typed read-only source contract."
+    },
+    "origin": {
+      "$ref": "./source-origin.schema.json",
+      "description": "Canonical immutable provenance. It is required for migrated and source_managed documents and must have the same ownership_mode as the outer document."
+    },
+    "links": {
+      "type": "array",
+      "maxItems": 1024,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/documentLink"
+      },
+      "description": "Stable links by target document UUID, projected from and to Markdown body links. Paths are presentation only and never replace IDs."
+    },
+    "valid_until": {
+      "type": ["string", "null"],
+      "format": "date",
+      "description": "Canonical DocOps review date, or null when no expiry is declared. Expiry creates a review obligation, not an authorization grant or automatic archival."
+    },
+    "archived": {
+      "type": "boolean",
+      "default": false
+    },
+    "archive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["archived_at", "reason", "replacement_document_id"],
+      "properties": {
+        "archived_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "replacement_document_id": {
+          "type": ["string", "null"],
+          "format": "uuid"
+        }
+      }
+    },
+    "attachments": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "$ref": "#/$defs/attachment"
+      }
+    }
+  },
+  "x-contract-invariants": [
+    {
+      "id": "FRONT_MATTER_ORIGIN_MODE_EQUALITY",
+      "rule": "Whenever origin is present, origin.ownership_mode == ownership_mode. migrated and source_managed require origin; live_operational is forbidden in both outer and inner modes.",
+      "error": "VALIDATION_ERROR"
+    },
+    {
+      "id": "FRONT_MATTER_ARCHIVE_BIDIRECTIONAL",
+      "rule": "archived=true if and only if archive is present. Restore creates a reviewed revision with archived=false and archive omitted. A non-null replacement_document_id resolves in the same Space, differs from id, and is not archived at the target snapshot. Descendants are never archived or deleted implicitly: the same reviewed MR explicitly archives each descendant or repairs its parent/link relationship.",
+      "error": "INVALID_STRUCTURE"
+    },
+    {
+      "id": "FRONT_MATTER_STABLE_LINK_RESOLUTION",
+      "rule": "Every links[] entry resolves target_document_id in the same Space and exact snapshot; a resolved projection must carry the identical UUID, not merely a projection ID. Duplicate IDs, self-parent cycles, orphans, and swapped target/projection IDs are validation errors.",
+      "error": "INVALID_STRUCTURE"
+    },
+    {
+      "id": "FRONT_MATTER_VALID_UNTIL_PROJECTION",
+      "rule": "DocOps review metadata is a projection of this canonical value bound to document_id and document_revision_sha. Registry or projected valid_until values must equal this value; neither valid_until nor links grants access.",
+      "error": "VALIDATION_ERROR"
+    }
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "ownership_mode": {
+            "const": "migrated"
+          }
+        },
+        "required": ["ownership_mode"]
+      },
+      "then": {
+        "required": ["origin"],
+        "properties": {
+          "origin": {
+            "properties": {
+              "ownership_mode": {
+                "const": "migrated"
+              }
+            },
+            "required": ["ownership_mode"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "ownership_mode": {
+            "const": "source_managed"
+          }
+        },
+        "required": ["ownership_mode"]
+      },
+      "then": {
+        "required": ["origin"],
+        "properties": {
+          "origin": {
+            "properties": {
+              "ownership_mode": {
+                "const": "source_managed"
+              }
+            },
+            "required": ["ownership_mode"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "ownership_mode": {
+            "const": "curated"
+          }
+        },
+        "required": ["ownership_mode"]
+      },
+      "then": {
+        "properties": {
+          "origin": {
+            "properties": {
+              "ownership_mode": {
+                "const": "curated"
+              }
+            },
+            "required": ["ownership_mode"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "archived": {
+            "const": true
+          }
+        },
+        "required": ["archived"]
+      },
+      "then": {
+        "required": ["archive"]
+      }
+    },
+    {
+      "if": {
+        "required": ["archive"]
+      },
+      "then": {
+        "properties": {
+          "archived": {
+            "const": true
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "gitSha": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+      "description": "Full lowercase Git object ID. The repository object-format selection is UNKNOWN until T00."
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "attachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "object_id",
+        "version",
+        "sha256",
+        "size",
+        "media_type",
+        "source_ref",
+        "media_class",
+        "verification_status"
+      ],
+      "properties": {
+        "object_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1099511627776
+        },
+        "media_type": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 127,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]*/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]*$"
+        },
+        "source_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "description": "Opaque immutable source reference, not a mutable URL and not a credential."
+        },
+        "media_class": {
+          "type": "string",
+          "enum": ["decorative", "illustrative", "substantive", "critical", "handwritten"]
+        },
+        "verification_status": {
+          "type": "string",
+          "enum": ["not_required", "pending", "verified", "rejected"]
+        },
+        "description": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["automatic", "text"],
+          "properties": {
+            "automatic": {
+              "type": "boolean"
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            }
+          }
+        }
+      }
+    },
+    "documentLink": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_document_id", "relation"],
+      "properties": {
+        "target_document_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "relation": {
+          "type": "string",
+          "enum": ["references", "supersedes", "replaces"]
+        },
+        "section_anchor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      }
+    }
+  }
+}

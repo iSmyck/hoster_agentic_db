@@ -1,0 +1,1290 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "export-manifest.schema.json",
+  "title": "Full repository clone and portability manifest",
+  "description": "PROPOSED export-manifest-v2 full-Space export. Accepted, rejected, and cancelled DecisionRecords are exported with explicit outcomes and note/tag/merge/recovery linkage. Complete export requires decisions, assets, and per-batch authorization closure. Secrets and private chats are excluded. Filtered history export is a separate deferred privileged workflow.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "export_id",
+    "format",
+    "space_id",
+    "repository_id",
+    "created_at",
+    "created_by",
+    "includes_secrets",
+    "includes_private_chats",
+    "snapshot",
+    "refs",
+    "documents",
+    "decisions",
+    "assets",
+    "policies",
+    "closure"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "export-manifest-v2"
+    },
+    "export_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "format": {
+      "const": "git_clone_with_manifests"
+    },
+    "space_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 63,
+      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$"
+    },
+    "repository_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_by": {
+      "$ref": "./proposal-record.schema.json#/$defs/stableId"
+    },
+    "includes_secrets": {
+      "const": false
+    },
+    "includes_private_chats": {
+      "const": false
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshot_sha", "target_branch", "main_generation_id", "repository_tree_sha256"],
+      "properties": {
+        "snapshot_sha": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "target_branch": {
+          "$ref": "./proposal-record.schema.json#/$defs/branchName"
+        },
+        "main_generation_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "cutover_sha": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "repository_tree_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/explicitRef"
+      }
+    },
+    "documents": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/documentEntry"
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/decisionExport"
+      }
+    },
+    "assets": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/assetExport"
+      }
+    },
+    "policies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_bundle_id",
+        "access_policy_revision",
+        "approval_policy_revision",
+        "access_policy_content_sha256",
+        "approval_policy_content_sha256",
+        "grants_mapping_sha256"
+      ],
+      "properties": {
+        "policy_bundle_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "access_policy_revision": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "approval_policy_revision": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "access_policy_content_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "approval_policy_content_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "grants_mapping_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "closure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "complete",
+        "decisions_complete",
+        "assets_complete",
+        "authorization_complete",
+        "missing",
+        "refs_manifest_sha256",
+        "decisions_manifest_sha256",
+        "assets_manifest_sha256",
+        "documents_manifest_sha256",
+        "policies_manifest_sha256",
+        "repository_tree_sha256"
+      ],
+      "properties": {
+        "complete": {
+          "type": "boolean"
+        },
+        "decisions_complete": {
+          "type": "boolean",
+          "description": "True only when every canonical DecisionRecord at the export snapshot is present exactly once with note/tag and applicable merge or recovery evidence."
+        },
+        "assets_complete": {
+          "type": "boolean",
+          "description": "True only when every referenced immutable attachment object is exported exactly once with matching bytes and hash."
+        },
+        "authorization_complete": {
+          "type": "boolean",
+          "description": "True only when every export batch passed fresh Space+history authorization and no batch was omitted or denied."
+        },
+        "missing": {
+          "type": "array",
+          "maxItems": 10000,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          }
+        },
+        "refs_manifest_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "decisions_manifest_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "assets_manifest_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "documents_manifest_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "policies_manifest_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "repository_tree_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "complete": {
+                "const": true
+              }
+            },
+            "required": ["complete"]
+          },
+          "then": {
+            "properties": {
+              "decisions_complete": {
+                "const": true
+              },
+              "assets_complete": {
+                "const": true
+              },
+              "authorization_complete": {
+                "const": true
+              },
+              "missing": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "closure": {
+            "properties": {
+              "complete": {
+                "const": true
+              }
+            },
+            "required": ["complete"]
+          }
+        },
+        "required": ["closure"]
+      },
+      "then": {
+        "properties": {
+          "assets": {
+            "items": {
+              "properties": {
+                "export_status": {
+                  "const": "exported"
+                }
+              },
+              "required": ["exported_object_sha256"]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "assets": {
+            "contains": {
+              "properties": {
+                "export_status": {
+                  "enum": ["missing", "rejected"]
+                }
+              },
+              "required": ["export_status"]
+            }
+          }
+        },
+        "required": ["assets"]
+      },
+      "then": {
+        "properties": {
+          "closure": {
+            "properties": {
+              "complete": {
+                "const": false
+              },
+              "assets_complete": {
+                "const": false
+              },
+              "missing": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "x-contract-invariants": [
+    {
+      "id": "EXPORT_COMPLETE_DECISIONS_ASSETS_CLOSURE",
+      "rule": "closure.complete=true requires decisions_complete=assets_complete=authorization_complete=true, missing=[], every snapshot DecisionRecord and attachment exactly once, all assets export_status=exported, every exported_object_sha256 equal to attachment.sha256 and exported bytes, and successful fresh authorization for every batch. Any missing/rejected asset or decision makes complete=false and contributes a stable missing[] entry.",
+      "error": "INVALID_STATE"
+    },
+    {
+      "id": "EXPORT_DECISION_NOTE_TAG_RECORD_LINKAGE",
+      "rule": "For every decision: note.proposal_id=decision_record.proposal_id; note.record_sha256=decision_record.record_sha256; tag.ref_name='refs/tags/kb-decisions/'+decision_id; tag.target_proposal_sha=decision_record.proposal_sha; note.canonical_json_sha256=tag.canonical_json_sha256=SHA-256(JCS UTF-8 of the complete decision_record including record_sha256); record_sha256 is computed with record_sha256 omitted. The matching explicitRef has the same tag object SHA, peeled proposal SHA, raw object content hash, and protected=true.",
+      "error": "DECISION_INVALID"
+    },
+    {
+      "id": "EXPORT_MERGE_LINKAGE",
+      "rule": "outcome=merged requires decision_record.action=accepted and merge evidence. merge.first_parent_sha=decision_record.base_sha; merge.second_parent_sha=decision_record.proposal_sha. merge.merge_commit_sha is verified in decision_record.repository_id/decision_record.target_branch first-parent ancestry and its exported raw bytes match commit_content_sha256. trailers Decision-ID=decision_record.decision_id, Decision-Note-ID=note.note_id, Decision-Hash=decision_record.record_sha256=note.record_sha256, Approved-by=decision_record.actor_stable_id. note.proposal_id=decision_record.proposal_id; tag.ref_name='refs/tags/kb-decisions/'+decision_record.decision_id; tag.target_proposal_sha=decision_record.proposal_sha; note.canonical_json_sha256=tag.canonical_json_sha256=SHA-256(JCS UTF-8 of complete decision_record including record_sha256). target_ancestry_verified=note_tag_hash_verified=true is backed by Git verification, not caller assertion. No other outcome contains merge evidence.",
+      "error": "DECISION_INVALID"
+    },
+    {
+      "id": "EXPORT_DECISION_OUTCOME_MAPPING",
+      "rule": "accepted maps to recorded/merge_attempted/merged/failed/conflicted/invalid. Integrity-valid rejected/cancelled map only to rejected/cancelled with verified MR closure and no merge; integrity-invalid records of any action map to invalid instead of claiming normal closure. Quarantine is represented by merge_attempted plus recovery flags, not a replacement canonical action or state.",
+      "error": "INVALID_STATE"
+    },
+    {
+      "id": "EXPORT_REAL_ATTEMPTS_ONLY",
+      "rule": "publication.attempts[] maps one-to-one to real durable merge_operations for accepted actions and is ordered oldest to newest with unique attempt_id; the last attempt drives outcome and optional derived no_merge_proven. recorded accepted and every rejected/cancelled have attempts=[] and no no_merge_proven claim. A recorded accepted crash window may carry recovery_required/target_quarantined=true without inventing an attempt. Normal rejected/cancelled closure uses decision-level reconciliation_evidence.",
+      "error": "INVALID_STATE"
+    },
+    {
+      "id": "EXPORT_FAILED_RETRY_EVIDENCE",
+      "rule": "failed.retryable=true is permitted only when the last real attempt has request_state=completed, no_merge_proven=true, and per-attempt reconciliation_evidence proves both completion and absence from target ancestry. conflicted and invalid are terminal and retryable=false. A same-decision command replay returns the same current outcome and never creates an attempt.",
+      "error": "RECOVERY_REQUIRED"
+    },
+    {
+      "id": "EXPORT_DOCUMENT_LINK_IDENTITY",
+      "rule": "Every resolved document link targets the identical target_document_id in this Space and export snapshot; projection identity, orphan, cycle, and swapped UUID checks are part of closure validation.",
+      "error": "INVALID_STRUCTURE"
+    }
+  ],
+  "$defs": {
+    "gitSha": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "explicitRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref_name", "object_type", "object_sha", "peeled_sha", "object_content_sha256", "protected"],
+      "properties": {
+        "ref_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^refs/[A-Za-z0-9._/-]+$"
+        },
+        "object_type": {
+          "type": "string",
+          "enum": ["commit", "tag"]
+        },
+        "object_sha": {
+          "$ref": "#/$defs/gitSha",
+          "description": "Full Git object ID stored by the ref; for an annotated tag this is the tag object, not its target commit."
+        },
+        "peeled_sha": {
+          "type": ["string", "null"],
+          "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+          "description": "For an annotated decision tag, the exact proposal_sha. Null for a direct commit ref."
+        },
+        "object_content_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 of exported raw object bytes for independent package integrity verification."
+        },
+        "protected": {
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "object_type": {
+                "const": "tag"
+              }
+            },
+            "required": ["object_type"]
+          },
+          "then": {
+            "properties": {
+              "peeled_sha": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "ref_name": {
+                "pattern": "^refs/tags/kb-decisions/"
+              }
+            },
+            "required": ["ref_name"]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "tag"
+              },
+              "protected": {
+                "const": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    "documentEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document_id", "path", "parent_id", "document_revision_sha", "content_sha256", "links", "valid_until"],
+      "properties": {
+        "document_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^(?!/)[^\\u0000-\\u001F\\\\]+$",
+          "not": {
+            "pattern": "(?:^|/)\\.\\.(?:/|$)"
+          }
+        },
+        "parent_id": {
+          "type": ["string", "null"],
+          "format": "uuid"
+        },
+        "document_revision_sha": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "content_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "origin": {
+          "$ref": "./source-origin.schema.json"
+        },
+        "links": {
+          "type": "array",
+          "maxItems": 1024,
+          "items": {
+            "$ref": "./front-matter.schema.json#/$defs/documentLink"
+          }
+        },
+        "valid_until": {
+          "type": ["string", "null"],
+          "format": "date",
+          "description": "Required export projection of canonical document-front-matter-v2 valid_until at document_revision_sha; null has the same canonical meaning as front matter."
+        }
+      },
+      "x-contract-invariants": [
+        {
+          "id": "EXPORT_DOCUMENT_CANONICAL_VALID_UNTIL",
+          "rule": "valid_until exactly equals canonical front-matter-v2 valid_until at document_id+document_revision_sha and is included in documents_manifest_sha256/restore roundtrip. Registry or DocOps metadata is a projection, never an independent second source or an authorization field.",
+          "error": "VALIDATION_ERROR"
+        }
+      ]
+    },
+    "noteExport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["note_id", "proposal_id", "body_sha256", "canonical_json_sha256", "record_sha256", "created_at", "metadata_ref"],
+      "properties": {
+        "note_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "proposal_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "body_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 of the complete exported MR note body bytes."
+        },
+        "canonical_json_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 of the exact complete canonical DecisionRecord JSON bytes, including record_sha256, embedded in this note. It is distinct from body_sha256 and record_sha256."
+        },
+        "record_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "Must match the DecisionRecord record_sha256 and Decision-Hash trailer; that hash is computed with record_sha256 omitted."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "metadata_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "description": "Opaque exported GitLab metadata reference, not a live endpoint or credential."
+        }
+      }
+    },
+    "decisionTagExport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref_name", "tag_object_sha", "target_proposal_sha", "tag_content_sha256", "canonical_json_sha256"],
+      "properties": {
+        "ref_name": {
+          "type": "string",
+          "pattern": "^refs/tags/kb-decisions/[0-9a-f-]{36}$"
+        },
+        "tag_object_sha": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "target_proposal_sha": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "tag_content_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 of the complete exported raw annotated tag object bytes."
+        },
+        "canonical_json_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 of the exact complete canonical DecisionRecord JSON bytes, including record_sha256, carried by the annotated tag message; must equal note.canonical_json_sha256."
+        }
+      }
+    },
+    "mergeExport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["merge_commit_sha", "first_parent_sha", "second_parent_sha", "commit_content_sha256", "trailers", "target_ancestry_verified", "note_tag_hash_verified"],
+      "properties": {
+        "merge_commit_sha": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "first_parent_sha": {
+          "$ref": "#/$defs/gitSha",
+          "description": "Must equal DecisionRecord base_sha."
+        },
+        "second_parent_sha": {
+          "$ref": "#/$defs/gitSha",
+          "description": "Must equal DecisionRecord proposal_sha."
+        },
+        "commit_content_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "target_ancestry_verified": {
+          "const": true
+        },
+        "note_tag_hash_verified": {
+          "const": true
+        },
+        "trailers": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["Decision-ID", "Decision-Note-ID", "Decision-Hash", "Approved-by"],
+          "properties": {
+            "Decision-ID": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "Decision-Note-ID": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "Decision-Hash": {
+              "$ref": "#/$defs/sha256"
+            },
+            "Approved-by": {
+              "$ref": "./proposal-record.schema.json#/$defs/stableId"
+            }
+          }
+        }
+      }
+    },
+    "decisionAttempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempt_id", "request_state", "no_merge_proven", "reconciliation_evidence"],
+      "properties": {
+        "attempt_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "request_state": {
+          "type": "string",
+          "enum": ["prepared", "in_flight", "completed", "unknown"]
+        },
+        "no_merge_proven": {
+          "type": "boolean"
+        },
+        "reconciliation_evidence": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "./proposal-record.schema.json#/$defs/evidence"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "no_merge_proven": {
+                "const": true
+              }
+            },
+            "required": ["no_merge_proven"]
+          },
+          "then": {
+            "properties": {
+              "request_state": {
+                "const": "completed"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "request_state": {
+                "enum": ["prepared", "in_flight", "unknown"]
+              }
+            },
+            "required": ["request_state"]
+          },
+          "then": {
+            "properties": {
+              "no_merge_proven": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "decisionPublication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome", "attempts", "recovery_required", "target_quarantined", "retryable", "reconciliation_evidence"],
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "enum": ["recorded", "merge_attempted", "merged", "failed", "conflicted", "invalid", "rejected", "cancelled"]
+        },
+        "attempts": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "$ref": "#/$defs/decisionAttempt"
+          },
+          "description": "Only real durable merge_operations ordered oldest to newest. Empty before the first accepted merge transaction and for rejected/cancelled; no synthetic not_started attempt."
+        },
+        "recovery_required": {
+          "type": "boolean"
+        },
+        "target_quarantined": {
+          "type": "boolean"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "no_merge_proven": {
+          "type": "boolean",
+          "description": "Optional projection of the last real attempt only. It is forbidden when attempts=[] and therefore absent for recorded accepted and rejected/cancelled."
+        },
+        "reconciliation_evidence": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "./proposal-record.schema.json#/$defs/evidence"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "attempts": {
+                "minItems": 1
+              }
+            },
+            "required": ["attempts"]
+          },
+          "then": {
+            "required": ["no_merge_proven"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "attempts": {
+                "maxItems": 0
+              }
+            },
+            "required": ["attempts"]
+          },
+          "then": {
+            "not": {
+              "required": ["no_merge_proven"]
+            }
+          }
+        }
+      ]
+    },
+    "decisionExport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision_record", "publication", "note", "tag"],
+      "properties": {
+        "decision_record": {
+          "$ref": "./decision-record.schema.json"
+        },
+        "publication": {
+          "$ref": "#/$defs/decisionPublication"
+        },
+        "note": {
+          "$ref": "#/$defs/noteExport"
+        },
+        "tag": {
+          "$ref": "#/$defs/decisionTagExport"
+        },
+        "merge": {
+          "$ref": "#/$defs/mergeExport"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "decision_record": {
+                "properties": {
+                  "action": {
+                    "const": "accepted"
+                  }
+                },
+                "required": ["action"]
+              }
+            },
+            "required": ["decision_record"]
+          },
+          "then": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "outcome": {
+                    "enum": ["recorded", "merge_attempted", "merged", "failed", "conflicted", "invalid"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "decision_record": {
+                "properties": {
+                  "action": {
+                    "const": "rejected"
+                  }
+                },
+                "required": ["action"]
+              }
+            },
+            "required": ["decision_record"]
+          },
+          "then": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "outcome": {
+                    "enum": ["rejected", "invalid"]
+                  },
+                  "attempts": {
+                    "maxItems": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "outcome": {
+                    "const": "rejected"
+                  }
+                },
+                "required": ["outcome"]
+              }
+            },
+            "required": ["publication"]
+          },
+          "then": {
+            "not": {
+              "required": ["merge"]
+            },
+            "properties": {
+              "decision_record": {
+                "properties": {
+                  "action": {
+                    "const": "rejected"
+                  }
+                }
+              },
+              "publication": {
+                "properties": {
+                  "recovery_required": {
+                    "const": false
+                  },
+                  "target_quarantined": {
+                    "const": false
+                  },
+                  "retryable": {
+                    "const": false
+                  },
+                  "attempts": {
+                    "maxItems": 0
+                  },
+                  "reconciliation_evidence": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "decision_record": {
+                "properties": {
+                  "action": {
+                    "const": "cancelled"
+                  }
+                },
+                "required": ["action"]
+              }
+            },
+            "required": ["decision_record"]
+          },
+          "then": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "outcome": {
+                    "enum": ["cancelled", "invalid"]
+                  },
+                  "attempts": {
+                    "maxItems": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "outcome": {
+                    "const": "cancelled"
+                  }
+                },
+                "required": ["outcome"]
+              }
+            },
+            "required": ["publication"]
+          },
+          "then": {
+            "not": {
+              "required": ["merge"]
+            },
+            "properties": {
+              "decision_record": {
+                "properties": {
+                  "action": {
+                    "const": "cancelled"
+                  }
+                }
+              },
+              "publication": {
+                "properties": {
+                  "recovery_required": {
+                    "const": false
+                  },
+                  "target_quarantined": {
+                    "const": false
+                  },
+                  "retryable": {
+                    "const": false
+                  },
+                  "attempts": {
+                    "maxItems": 0
+                  },
+                  "reconciliation_evidence": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "outcome": {
+                    "const": "merged"
+                  }
+                },
+                "required": ["outcome"]
+              }
+            },
+            "required": ["publication"]
+          },
+          "then": {
+            "required": ["merge"],
+            "properties": {
+              "publication": {
+                "properties": {
+                  "recovery_required": {
+                    "const": false
+                  },
+                  "target_quarantined": {
+                    "const": false
+                  },
+                  "retryable": {
+                    "const": false
+                  },
+                  "no_merge_proven": {
+                    "const": false
+                  },
+                  "attempts": {
+                    "minItems": 1,
+                    "contains": {
+                      "properties": {
+                        "request_state": {
+                          "const": "completed"
+                        },
+                        "no_merge_proven": {
+                          "const": false
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "outcome": {
+                    "not": {
+                      "const": "merged"
+                    }
+                  }
+                },
+                "required": ["outcome"]
+              }
+            },
+            "required": ["publication"]
+          },
+          "then": {
+            "not": {
+              "required": ["merge"]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "outcome": {
+                    "const": "recorded"
+                  }
+                },
+                "required": ["outcome"]
+              }
+            },
+            "required": ["publication"]
+          },
+          "then": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "retryable": {
+                    "const": false
+                  },
+                  "attempts": {
+                    "maxItems": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "outcome": {
+                    "const": "merge_attempted"
+                  }
+                },
+                "required": ["outcome"]
+              }
+            },
+            "required": ["publication"]
+          },
+          "then": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "recovery_required": {
+                    "const": true
+                  },
+                  "target_quarantined": {
+                    "const": true
+                  },
+                  "retryable": {
+                    "const": false
+                  },
+                  "no_merge_proven": {
+                    "const": false
+                  },
+                  "attempts": {
+                    "minItems": 1,
+                    "contains": {
+                      "properties": {
+                        "request_state": {
+                          "enum": ["prepared", "in_flight", "completed", "unknown"]
+                        },
+                        "no_merge_proven": {
+                          "const": false
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "outcome": {
+                    "const": "failed"
+                  }
+                },
+                "required": ["outcome"]
+              }
+            },
+            "required": ["publication"]
+          },
+          "then": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "recovery_required": {
+                    "const": false
+                  },
+                  "target_quarantined": {
+                    "const": false
+                  },
+                  "no_merge_proven": {
+                    "const": true
+                  },
+                  "attempts": {
+                    "minItems": 1,
+                    "contains": {
+                      "properties": {
+                        "request_state": {
+                          "const": "completed"
+                        },
+                        "no_merge_proven": {
+                          "const": true
+                        },
+                        "reconciliation_evidence": {
+                          "minItems": 1
+                        }
+                      }
+                    }
+                  },
+                  "reconciliation_evidence": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "outcome": {
+                    "enum": ["conflicted", "invalid"]
+                  }
+                },
+                "required": ["outcome"]
+              }
+            },
+            "required": ["publication"]
+          },
+          "then": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "retryable": {
+                    "const": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "outcome": {
+                    "const": "conflicted"
+                  }
+                },
+                "required": ["outcome"]
+              }
+            },
+            "required": ["publication"]
+          },
+          "then": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "recovery_required": {
+                    "const": false
+                  },
+                  "target_quarantined": {
+                    "const": false
+                  },
+                  "no_merge_proven": {
+                    "const": true
+                  },
+                  "attempts": {
+                    "minItems": 1,
+                    "contains": {
+                      "properties": {
+                        "request_state": {
+                          "const": "completed"
+                        },
+                        "no_merge_proven": {
+                          "const": true
+                        },
+                        "reconciliation_evidence": {
+                          "minItems": 1
+                        }
+                      }
+                    }
+                  },
+                  "reconciliation_evidence": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "outcome": {
+                    "const": "invalid"
+                  },
+                  "attempts": {
+                    "minItems": 1,
+                    "contains": {
+                      "properties": {
+                        "no_merge_proven": {
+                          "const": false
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": ["outcome", "attempts"]
+              }
+            },
+            "required": ["publication"]
+          },
+          "then": {
+            "properties": {
+              "publication": {
+                "properties": {
+                  "recovery_required": {
+                    "const": true
+                  },
+                  "target_quarantined": {
+                    "const": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "assetExport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attachment", "storage_ref", "export_status"],
+      "properties": {
+        "attachment": {
+          "$ref": "./front-matter.schema.json#/$defs/attachment"
+        },
+        "storage_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "description": "Opaque immutable storage reference, not a mutable URL or credential."
+        },
+        "exported_object_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "Must equal attachment.sha256 for a complete asset export."
+        },
+        "export_status": {
+          "type": "string",
+          "enum": ["exported", "missing", "rejected"]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "export_status": {
+                "const": "exported"
+              }
+            },
+            "required": ["export_status"]
+          },
+          "then": {
+            "required": ["exported_object_sha256"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "export_status": {
+                "enum": ["missing", "rejected"]
+              }
+            },
+            "required": ["export_status"]
+          },
+          "then": {
+            "not": {
+              "required": ["exported_object_sha256"]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

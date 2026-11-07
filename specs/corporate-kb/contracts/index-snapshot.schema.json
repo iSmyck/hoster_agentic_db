@@ -1,0 +1,766 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "index-snapshot.schema.json",
+  "title": "index-snapshot-v1",
+  "description": "PROPOSED immutable index descriptor. snapshot_sha, document_revision_sha, content hashes, dependency closure, Git ancestry generation, index profile, and cutover preflight are distinct and are not interchangeable. Only a fully validated published non-preflight descriptor may serve retrieval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "snapshot_id",
+    "space_id",
+    "repository_id",
+    "target_branch",
+    "snapshot_sha",
+    "main_generation",
+    "index_profile_version",
+    "run_type",
+    "purpose",
+    "state",
+    "preflight",
+    "exact_projection",
+    "semantic_projection",
+    "documents",
+    "closure",
+    "policy_bundle_id",
+    "access_policy_revision",
+    "approval_policy_revision",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "index-snapshot-v1"
+    },
+    "snapshot_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "space_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 63,
+      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$"
+    },
+    "repository_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "target_branch": {
+      "$ref": "./proposal-record.schema.json#/$defs/branchName"
+    },
+    "snapshot_sha": {
+      "$ref": "#/$defs/gitSha",
+      "description": "Exact target main commit for the complete logical snapshot."
+    },
+    "main_generation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generation_id", "ancestry_root_sha", "parent_generation_id", "history_rewrite_detected"],
+      "properties": {
+        "generation_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Opaque ancestry-derived generation identity; SHA lexicographic ordering is forbidden."
+        },
+        "ancestry_root_sha": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "parent_generation_id": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "history_rewrite_detected": {
+          "type": "boolean",
+          "description": "True requires a new generation and full rebuild."
+        }
+      }
+    },
+    "index_profile_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$",
+      "description": "Independent chunking/embedding/extraction semantics version; model IDs and dimensions remain configuration."
+    },
+    "run_type": {
+      "type": "string",
+      "enum": ["full", "incremental"]
+    },
+    "purpose": {
+      "type": "string",
+      "enum": ["published", "cutover_preflight"]
+    },
+    "state": {
+      "type": "string",
+      "enum": ["requested", "resolving", "building", "validating", "ready", "active", "superseded", "failed", "dead_letter"]
+    },
+    "preflight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["is_preflight", "serving_allowed", "cutover_sha"],
+      "properties": {
+        "is_preflight": {
+          "type": "boolean"
+        },
+        "serving_allowed": {
+          "type": "boolean"
+        },
+        "cutover_sha": {
+          "type": ["string", "null"],
+          "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+        }
+      }
+    },
+    "exact_projection": {
+      "$ref": "#/$defs/projection"
+    },
+    "semantic_projection": {
+      "$ref": "#/$defs/projection"
+    },
+    "documents": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/documentProjection"
+      }
+    },
+    "closure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["complete", "closure_sha256", "incremental_base_snapshot_sha", "full_snapshot_equivalence", "missing_inputs"],
+      "properties": {
+        "complete": {
+          "type": "boolean"
+        },
+        "closure_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "Deterministic hash of the complete transitive document/link/attachment/policy/extraction/media inputs."
+        },
+        "incremental_base_snapshot_sha": {
+          "type": ["string", "null"],
+          "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+        },
+        "full_snapshot_equivalence": {
+          "type": "string",
+          "enum": ["not_applicable", "pending", "equivalent", "non_equivalent"]
+        },
+        "equivalence_evidence": {
+          "$ref": "#/$defs/equivalenceEvidence"
+        },
+        "missing_inputs": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "complete": {
+                "const": true
+              }
+            },
+            "required": ["complete"]
+          },
+          "then": {
+            "properties": {
+              "missing_inputs": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "policy_bundle_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[a-z0-9][a-z0-9._:-]*$"
+    },
+    "access_policy_revision": {
+      "$ref": "#/$defs/gitSha"
+    },
+    "approval_policy_revision": {
+      "$ref": "#/$defs/gitSha"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "x-contract-invariants": [
+    {
+      "id": "INDEX_PREFLIGHT_EXACT_CUTOVER",
+      "rule": "If preflight.is_preflight=true then snapshot_sha == preflight.cutover_sha, run_type=full, purpose=cutover_preflight, state!=active, and serving_allowed=false. JSON Schema conditionals enforce all except the cross-field SHA equality, which is a required semantic assertion.",
+      "error": "INVALID_STATE"
+    },
+    {
+      "id": "INDEX_CUTOVER_PUBLICATION_PAIR",
+      "rule": "Cutover activation dereferences two immutable descriptors and two runs: preflight purpose=cutover_preflight/is_preflight=true/state=ready/serving_allowed=false and published purpose=published/is_preflight=false/state=active/serving_allowed=true. snapshot_id and run_id differ, while cutover_sha == preflight.cutover_sha == preflight.snapshot_sha == published.snapshot_sha == main_sha. The preflight remains immutable and never serves.",
+      "error": "INDEX_NOT_READY"
+    },
+    {
+      "id": "INDEX_REWRITE_FULL_NEW_GENERATION",
+      "rule": "history_rewrite_detected=true requires a new main_generation.generation_id different from parent_generation_id, run_type=full, and a complete rebuild. No incremental descriptor from the rewritten ancestry may become ready or active.",
+      "error": "INDEX_GENERATION_CONFLICT"
+    },
+    {
+      "id": "INDEX_READY_HASHES_REQUIRED",
+      "rule": "Every ready exact_projection and semantic_projection has a non-null 64-hex projection_sha256. Every active descriptor additionally has all required document/content/dependency/closure hashes and complete closure with missing_inputs=[].",
+      "error": "INDEX_NOT_READY"
+    },
+    {
+      "id": "INDEX_VALIDATED_PREREQUISITE_EVIDENCE",
+      "rule": "Every ready/active incremental has nonempty equivalence_evidence referencing a different full run and full snapshot with conclusive canonical ready/active outcome, validated_at, complete closure, missing_inputs=[], and non-null exact+semantic hashes. The prerequisite and child have identical Space/repository/target/main_sha/generation/profile/closure_sha256; evidence_sha256 covers the complete evidence object excluding that field. Cutover published activation similarly dereferences a distinct validated ready preflight run+descriptor, never requested/failed/empty evidence.",
+      "error": "INDEX_NOT_READY"
+    },
+    {
+      "id": "INDEX_PUBLICATION_CAS",
+      "rule": "Publication is serialized per Space+index_profile_version, not merely per generation. The single writer atomically compares the expected current pointer/publication fence, latest Git ancestry, and the exact validated run+snapshot. A stale owner or old generation updates zero rows and cannot overwrite a newer pointer.",
+      "error": "INDEX_GENERATION_CONFLICT"
+    }
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "preflight": {
+            "properties": {
+              "is_preflight": {
+                "const": true
+              }
+            },
+            "required": ["is_preflight"]
+          }
+        },
+        "required": ["preflight"]
+      },
+      "then": {
+        "properties": {
+          "purpose": {
+            "const": "cutover_preflight"
+          },
+          "run_type": {
+            "const": "full"
+          },
+          "state": {
+            "enum": ["requested", "resolving", "building", "validating", "ready", "superseded", "failed", "dead_letter"]
+          },
+          "preflight": {
+            "properties": {
+              "serving_allowed": {
+                "const": false
+              },
+              "cutover_sha": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "purpose": {
+            "const": "cutover_preflight"
+          }
+        },
+        "required": ["purpose"]
+      },
+      "then": {
+        "properties": {
+          "preflight": {
+            "properties": {
+              "is_preflight": {
+                "const": true
+              },
+              "serving_allowed": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "active"
+          }
+        },
+        "required": ["state"]
+      },
+      "then": {
+        "properties": {
+          "purpose": {
+            "const": "published"
+          },
+          "preflight": {
+            "properties": {
+              "is_preflight": {
+                "const": false
+              },
+              "serving_allowed": {
+                "const": true
+              }
+            }
+          },
+          "exact_projection": {
+            "properties": {
+              "status": {
+                "const": "ready"
+              }
+            }
+          },
+          "semantic_projection": {
+            "properties": {
+              "status": {
+                "const": "ready"
+              }
+            }
+          },
+          "closure": {
+            "properties": {
+              "complete": {
+                "const": true
+              },
+              "full_snapshot_equivalence": {
+                "enum": ["not_applicable", "equivalent"]
+              },
+              "missing_inputs": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "run_type": {
+            "const": "incremental"
+          },
+          "state": {
+            "enum": ["ready", "active"]
+          }
+        },
+        "required": ["run_type", "state"]
+      },
+      "then": {
+        "properties": {
+          "closure": {
+            "required": ["equivalence_evidence"],
+            "properties": {
+              "complete": {
+                "const": true
+              },
+              "full_snapshot_equivalence": {
+                "const": "equivalent"
+              },
+              "incremental_base_snapshot_sha": {
+                "type": "string"
+              },
+              "missing_inputs": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "purpose": {
+            "const": "published"
+          }
+        },
+        "required": ["purpose"]
+      },
+      "then": {
+        "properties": {
+          "preflight": {
+            "properties": {
+              "is_preflight": {
+                "const": false
+              },
+              "cutover_sha": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "preflight": {
+            "properties": {
+              "serving_allowed": {
+                "const": true
+              }
+            },
+            "required": ["serving_allowed"]
+          }
+        },
+        "required": ["preflight"]
+      },
+      "then": {
+        "properties": {
+          "purpose": {
+            "const": "published"
+          },
+          "state": {
+            "const": "active"
+          },
+          "preflight": {
+            "properties": {
+              "is_preflight": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "not": {
+              "const": "active"
+            }
+          }
+        },
+        "required": ["state"]
+      },
+      "then": {
+        "properties": {
+          "preflight": {
+            "properties": {
+              "serving_allowed": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "main_generation": {
+            "properties": {
+              "history_rewrite_detected": {
+                "const": true
+              }
+            },
+            "required": ["history_rewrite_detected"]
+          }
+        },
+        "required": ["main_generation"]
+      },
+      "then": {
+        "properties": {
+          "run_type": {
+            "const": "full"
+          },
+          "main_generation": {
+            "properties": {
+              "parent_generation_id": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "run_type": {
+            "const": "full"
+          },
+          "state": {
+            "const": "active"
+          }
+        },
+        "required": ["run_type", "state"]
+      },
+      "then": {
+        "properties": {
+          "closure": {
+            "properties": {
+              "full_snapshot_equivalence": {
+                "const": "not_applicable"
+              },
+              "incremental_base_snapshot_sha": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "run_type": {
+            "const": "full"
+          }
+        },
+        "required": ["run_type"]
+      },
+      "then": {
+        "properties": {
+          "closure": {
+            "not": {
+              "required": ["equivalence_evidence"]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "gitSha": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "projection_sha256"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["pending", "building", "validating", "ready", "failed"]
+        },
+        "projection_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "ready"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "projection_sha256": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "dependencyInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_type", "ref", "content_sha256"],
+      "properties": {
+        "input_type": {
+          "type": "string",
+          "enum": ["document", "attachment", "link", "policy", "extraction", "media"]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "revision_sha": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "content_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "equivalenceEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "full_run_id",
+        "full_snapshot_id",
+        "full_run_state",
+        "full_snapshot_state",
+        "validated_at",
+        "space_id",
+        "repository_id",
+        "target_branch",
+        "main_snapshot_sha",
+        "main_generation_id",
+        "index_profile_version",
+        "closure_complete",
+        "missing_inputs",
+        "closure_sha256",
+        "exact_projection_sha256",
+        "semantic_projection_sha256",
+        "evidence_sha256"
+      ],
+      "properties": {
+        "full_run_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "full_snapshot_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "full_run_state": {
+          "type": "string",
+          "enum": ["ready", "active"]
+        },
+        "full_snapshot_state": {
+          "type": "string",
+          "enum": ["ready", "active"]
+        },
+        "validated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "space_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 63
+        },
+        "repository_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "target_branch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "main_snapshot_sha": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "main_generation_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "index_profile_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "closure_complete": {
+          "const": true
+        },
+        "missing_inputs": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "closure_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "exact_projection_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "semantic_projection_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "evidence_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 of JCS UTF-8 for this complete evidence object with evidence_sha256 omitted; empty evidence objects are impossible."
+        }
+      }
+    },
+    "dependencyClosure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["closure_sha256", "inputs"],
+      "properties": {
+        "closure_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10000,
+          "items": {
+            "$ref": "#/$defs/dependencyInput"
+          }
+        }
+      }
+    },
+    "documentProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_id",
+        "path",
+        "document_revision_sha",
+        "content_sha256",
+        "dependency_sha256",
+        "dependency_closure",
+        "eligible"
+      ],
+      "properties": {
+        "document_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^(?!/)[^\\u0000-\\u001F\\\\]+$",
+          "not": {
+            "pattern": "(?:^|/)\\.\\.(?:/|$)"
+          }
+        },
+        "document_revision_sha": {
+          "$ref": "#/$defs/gitSha",
+          "description": "Full commit SHA of this document version; never replaced by snapshot_sha or a blob/content hash."
+        },
+        "blob_sha": {
+          "$ref": "#/$defs/gitSha",
+          "description": "Optional Git blob identity, distinct from commit revision."
+        },
+        "content_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "Canonical document bytes hash for no-op/integrity checks, not a published revision proof."
+        },
+        "dependency_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "Hash of all inputs affecting this document's index representation."
+        },
+        "dependency_closure": {
+          "$ref": "#/$defs/dependencyClosure"
+        },
+        "eligible": {
+          "const": true,
+          "description": "Only eligible published content is represented; drafts, rejected MRs, inbox/templates/service paths, and unverified critical media are excluded."
+        }
+      }
+    }
+  }
+}

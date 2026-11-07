@@ -1,0 +1,369 @@
+contract_version: t01-contract-tests-v1
+status: DESIGN_NOT_EXECUTED
+execution_gate: T00_and_owner_G0
+purpose: Required synthetic contract, semantic, API, event, and consumer-projection vectors for CF-01..CF-30. This catalog is not an executed product test or integration PASS.
+toolchain_rule: Use only the pinned T00 toolchain. Real GitLab/IdP/CI/hoster.ai checks remain BLOCKED until their sandboxes and credentials exist; mocks are limited to unit state machines.
+fixtures:
+  two_spaces:
+    spaces: [sales, sales-pricing]
+    requirement: Different repository_id, policy_bundle_id, access/approval revisions, group_snapshot, revocation_epoch, active snapshot/profile, readers, authors, and approvers. No shared ACL/history/export perimeter.
+  stable_ids:
+    document: 11111111-1111-4111-8111-111111111111
+    other_document: 22222222-2222-4222-8222-222222222222
+    decision: 33333333-3333-4333-8333-333333333333
+    source: DOC-0001
+  synthetic_hashes:
+    git_sha_a: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    git_sha_b: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    sha256_a: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    sha256_b: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+invariant_catalog:
+  openapi: ./openapi.yaml#/x-contract-invariants
+  authz: ./authz-context.schema.json#/x-contract-invariants
+  approval: ./approval-policy.schema.json#/x-contract-invariants
+  front_matter: ./front-matter.schema.json#/x-contract-invariants
+  index: ./index-snapshot.schema.json#/x-contract-invariants
+  export: ./export-manifest.schema.json#/x-contract-invariants
+  projection_mapping: ./projection-mapping.md
+tests:
+  - id: T01-CF-01
+    findings: [CF-01]
+    targets: [authz-context.schema.json, openapi.yaml#/components/schemas/SearchPage, events.yaml#/$defs/accessPolicyChangedPayload]
+    vectors:
+      - given: sales and sales-pricing with different repositories/bundles/revisions/group snapshots/epochs
+        mutate: reuse the sales bundle or group snapshot for pricing
+        expect: {result: POLICY_REVISION_MISMATCH, payload_exposure: 0}
+      - given: search scope [sales, sales-pricing]
+        expect: {result: per_space_fanout, snapshots: complete_ordered_set, cursor_context_lost: false}
+      - given: cursor replay with one Space snapshot/revision/epoch replaced or removed
+        expect: {result: AUTHZ_CONTEXT_STALE, payload_exposure: 0}
+      - given: AccessPolicyChanged with duplicate Space or borrowed bundle
+        expect: {result: rejected, side_effects: 0}
+  - id: T01-CF-02
+    findings: [CF-02]
+    targets: [approval-policy.schema.json]
+    vectors:
+      - given: rules / and /pricing with disjoint groups; document /pricing/current.md
+        expect: {selected_prefix: /pricing, less_specific_groups_unioned: false}
+      - given: duplicate rule_id or identical normalized prefixes, including /pricing and /pricing/
+        expect: {result: INVALID_POLICY, previous_bundle_active: true}
+      - given: Cyrillic NFC and NFD duplicate prefixes, disjoint groups, .. segment
+        expect: {result: INVALID_POLICY, previous_bundle_active: true}
+  - id: T01-CF-03
+    findings: [CF-03]
+    targets: [front-matter.schema.json]
+    vectors:
+      - given: archived=true without archive
+        expect: {schema_valid: false}
+      - given: archived=false with archive
+        expect: {schema_valid: false}
+      - given: archived=true with complete archive, then reviewed restore archived=false without archive
+        expect: {schema_valid: true, archive_object_present_after_restore: false}
+      - given: replacement=self/other-Space/archived target or implicit descendant archive
+        expect: {semantic_valid: false, side_effects: 0}
+  - id: T01-CF-04
+    findings: [CF-04]
+    targets: [front-matter.schema.json, source-origin.schema.json]
+    vectors:
+      - given: migrated without origin
+        expect: {schema_valid: false}
+      - given: source_managed without origin
+        expect: {schema_valid: false}
+      - given: every outer/inner mismatch and origin.ownership_mode=live_operational
+        expect: {schema_valid: false}
+      - given: live_operational in canonical front matter or ProposalRecord
+        expect: {schema_valid: false, wiki_or_cursor_writes: 0}
+  - id: T01-CF-05
+    findings: [CF-05]
+    targets: [source-origin.schema.json#/properties/source_id]
+    vectors:
+      - given: source_id=DOC-0001
+        expect: {schema_valid: true, normalized_id: DOC-0001}
+      - given: stable DOC ID rewritten to lowercase
+        expect: {semantic_valid: false}
+  - id: T01-CF-06
+    findings: [CF-06]
+    targets: [front-matter.schema.json, docops-review-metadata.schema.json, export-manifest.schema.json#/$defs/documentEntry, openapi.yaml#/components/schemas/DocOpsReviewQueuePage, events.yaml#/$defs/docopsReviewRequestedPayload]
+    vectors:
+      - given: valid_until in document-front-matter-v2 with future UTC date and matching metadata/provenance
+        expect: {schema_valid: true, review_state: scheduled, access_effect: false}
+      - given: expired valid_until at server evaluation
+        expect: {review_state: due, queue_event: kb.docops.review_requested.v1, automatic_archive: false}
+      - given: removed date in a reviewed revision
+        expect: {review_state: removed, review_required: false, valid_until: null}
+      - given: registry/metadata date or revision differs from canonical
+        expect: {semantic_valid: false, side_effects: 0}
+      - given: export documentEntry without valid_until or with value different from front-matter-v2 at the same document revision
+        expect: {schema_or_semantic_valid: false, export_roundtrip_valid_until_equal: false}
+  - id: T01-CF-07
+    findings: [CF-07]
+    targets: [openapi.yaml, agent-tools.yaml]
+    vectors:
+      - given: boundedAgentCredential direct/OpenAPI/call_tool editProposalVersion, whole replacement, merge, grants, archive, attachment mutation
+        expect: {result: FORBIDDEN, writes: 0}
+      - given: agent proposeEditDocument with WholeDocumentChange, raw front matter, missing section, archive or attachment diff
+        expect: {schema_or_GO_rejected: true, writes: 0}
+      - given: agent-tools operationIds versus bounded-agent OpenAPI operations
+        expect: {catalog_matches_exactly: true}
+  - id: T01-CF-08
+    findings: [CF-08]
+    targets: [openapi.yaml#/components/securitySchemes/connectorCredential]
+    vectors:
+      - given: connector dry-run on authorized immutable binding
+        expect: {canonical_writes: false, staging_only: true}
+      - given: connector post-cutover commit
+        expect: {mode: post_cutover_proposal, human_review_required: true, merge_by_connector: false}
+      - given: connector pre-cutover controlled commit, other Space/binding, browser or agent credential substitution
+        expect: {result: FORBIDDEN, writes: 0}
+      - given: cursor read for non-live binding and typed live read
+        expect: {cursor_binding_exact: true, live_cursor_created: false}
+  - id: T01-CF-09
+    findings: [CF-09]
+    targets: [openapi.yaml#/x-contract-invariants]
+    invariant_ids: [PATH_BODY_SPACE_ID, PATH_BODY_DOCUMENT_ID, PATH_BODY_PROPOSAL_ID, PATH_BODY_IMPORT_ID, PATH_BODY_RUN_ID, BODY_HEADER_IDEMPOTENCY, DECISION_KEY_AND_PROPOSAL_EQUALITY]
+    vectors:
+      - given: each duplicated path/body/header ID changed independently, including cross-Space values
+        expect: {result: rejected, error_in_Error_code_enum: true, writes: 0}
+      - given: every x-contract-invariants error and alternative_denials branch
+        expect: {error_in_Error_code_enum: true, prose_alternatives_in_error_field: false}
+      - given: tool adapter invocation
+        expect: {route_generated_from_single_canonical_input: true, independent_route_arguments: false}
+  - id: T01-CF-10
+    findings: [CF-10]
+    targets:
+      - 'openapi.yaml#/paths/~1documents~1{document_id}~1history'
+      - 'openapi.yaml#/paths/~1spaces~1{space_id}~1review-proposals'
+    vectors:
+      - given: business history list then restore selected exact revision through revert-MR
+        expect: {exact_revision: true, history_rewrite: false, truncation_explicit: true}
+      - given: approver queue with two groups and overlapping prefixes
+        expect: {longest_prefix_assignment: true, exact_base_proposal: true, gitlab_user_required: false}
+      - given: protected history/queue object outside group or Space
+        expect: {result: NOT_FOUND, existence_disclosed: false}
+      - given: verified root commit with root=true and parent_shas=[]
+        expect: {schema_valid: true}
+      - given: non-root with empty parents, root with nonempty parents, or unverified root claim
+        expect: {schema_or_semantic_valid: false, error: REVISION_CONFLICT}
+  - id: T01-CF-11
+    findings: [CF-11]
+    targets: [index-snapshot.schema.json]
+    vectors:
+      - given: preflight cutover_sha != snapshot_sha
+        expect: {semantic_valid: false}
+      - given: state=requested with serving_allowed=true
+        expect: {schema_valid: false}
+      - given: active exact/semantic status=ready with null projection hash
+        expect: {schema_valid: false}
+      - given: active incremental with history_rewrite_detected=true
+        expect: {schema_valid: false}
+      - given: active incremental without equivalent complete closure or with missing_inputs
+        expect: {schema_valid: false, pointer_writes: 0}
+  - id: T01-CF-12
+    findings: [CF-12]
+    targets: [index-snapshot.schema.json, openapi.yaml#/components/schemas/CutoverRecord]
+    vectors:
+      - given: successful cutover
+        expect: {preflight_published_run_ids_differ: true, snapshot_ids_differ: true, all_snapshot_shas_equal: true, preflight_serving: false, published_purpose: published, validated_timestamps_present: true}
+      - given: activate the preflight descriptor itself or change SHA between preflight and published
+        expect: {result: INDEX_NOT_READY, user_access_enabled: false}
+      - given: requested/failed/unvalidated preflight or missing validation timestamps
+        expect: {result: INDEX_NOT_READY, published_pointer: false, user_access_enabled: false}
+  - id: T01-CF-13
+    findings: [CF-13]
+    targets: [index-snapshot.schema.json#/x-contract-invariants, openapi.yaml#/components/schemas/IndexPublicationInput]
+    vectors:
+      - given: concurrent old/new generation publishers on one Space/profile with different generation locks
+        expect: {per_space_profile_serialization: true, stale_pointer_writes: 0}
+      - given: stale publication fence, latest ancestry, or validated run
+        expect: {publication_state: rejected_stale, pointer_rows_updated: 0}
+  - id: T01-CF-14
+    findings: [CF-14]
+    targets: [export-manifest.schema.json]
+    vectors:
+      - given: closure.complete=true with a missing/rejected asset and missing=[]
+        expect: {schema_valid: false}
+      - given: missing/rejected asset with fabricated exported_object_sha256
+        expect: {schema_valid: false}
+      - given: missing/rejected asset without hash, closure.complete=false and nonempty missing
+        expect: {schema_valid: true, ready_allowed: false}
+      - given: complete exported asset whose hash differs from attachment or bytes
+        expect: {semantic_valid: false}
+  - id: T01-CF-15
+    findings: [CF-15]
+    targets: [export-manifest.schema.json#/$defs/decisionExport]
+    vectors:
+      - given: durable accepted note+tag before the first merge DB transaction with publication.outcome=recorded, attempts=[], and no merge
+        expect: {schema_valid: true, no_merge_proven_required: false, recovery_quarantine_flags_allowed: true}
+      - given: recorded accepted with synthetic not_started attempt or no_merge_proven=true
+        expect: {schema_valid: false}
+      - given: accepted merge_attempted/failed/conflicted/quarantine recovery state without merge
+        expect: {explicit_outcome: true, real_attempts_nonempty: true, merge_required: false, recovery_evidence_required: true}
+      - given: rejected/cancelled with verified MR closure
+        expect: {outcome_matches_action: true, attempts_empty: true, no_merge_proven_required: false, merge_present: false}
+      - given: export-manifest-v2 documentEntry valid_until and decision outcome roundtrip
+        expect: {canonical_export_restore_equal: true}
+  - id: T01-CF-16
+    findings: [CF-16]
+    targets: [openapi.yaml#/components/schemas/ExportInput, openapi.yaml#/components/schemas/ExportJob, export-manifest.schema.json]
+    vectors:
+      - given: request and manifest formats
+        expect: {both: git_clone_with_manifests}
+      - given: '{export_id: synthetic, state: ready} without manifest'
+        expect: {schema_valid: false}
+      - given: ready with incomplete decisions/assets/authorization closure or missing asset
+        expect: {schema_valid: false}
+      - given: incomplete terminal package
+        expect: {complete: false, ready_claim: false, error_required: true}
+  - id: T01-CF-17
+    findings: [CF-17]
+    targets: [export-manifest.schema.json#/x-contract-invariants]
+    vectors:
+      - given: note/tag/record/merge from different proposal or decision IDs
+        expect: {semantic_valid: false}
+      - given: wrong tag target, unprotected decision ref, parent order, or any of four trailers
+        expect: {semantic_valid: false}
+      - given: body_sha256, record_sha256, canonical_json_sha256
+        expect: {inputs_distinct: true, note_and_tag_canonical_json_hashes_equal: true, record_hash_excludes_record_sha256: true}
+  - id: T01-CF-18
+    findings: [CF-18]
+    targets: [openapi.yaml#/components/schemas/DecisionResult, export-manifest.schema.json#/x-contract-invariants]
+    invariant_ids: [DECISION_RESULT_MERGE_LINKAGE, EXPORT_MERGE_LINKAGE, EXPORT_DECISION_NOTE_TAG_RECORD_LINKAGE]
+    vectors:
+      - given: state=merged without merge_proof or with rejected/cancelled action
+        expect: {schema_valid: false}
+      - given: merged with wrong repository/target/base/proposal parent/trailer/note/tag/canonical JSON hash or recovery_required=true
+        expect: {semantic_valid: false, merge_claim_accepted: false}
+      - given: merge_attempted with unknown outcome
+        expect: {target_quarantined: true, retryable: false, merge_proof_present: false}
+      - given: rejected/cancelled recorded closure
+        expect: {merge_proof_present: false, main_writes: 0}
+      - given: note/tag mismatch for accepted/rejected/cancelled with unknown external outcome
+        expect: {state: invalid, normal_reject_cancel_closure: false, target_quarantined: true, retryable: false}
+  - id: T01-CF-19
+    findings: [CF-19]
+    targets: [openapi.yaml, proposal-record.schema.json#/$defs/lineRange]
+    vectors:
+      - given: post_cutover_proposal + staged_pre_cutover, pre_cutover_controlled + proposal_created, or proposal_created without proposal
+        expect: {schema_valid: false}
+      - given: ImportManifest validated with errors or blocked without errors
+        expect: {schema_valid: false}
+      - given: truncated=false with non-none reason/cursor or truncated=true with reason=none/null cursor
+        expect: {schema_valid: false}
+      - given: evidence end_line < start_line
+        expect: {semantic_valid: false}
+  - id: T01-CF-20
+    findings: [CF-20]
+    targets: [integration.md#4-общий-api-contract, database-catalog.yaml#/schemas/kb_ops/tables/idempotency_records]
+    vectors:
+      - given: same key under another actor, route, concrete path, or payload
+        expect: {result: IDEMPOTENCY_KEY_REUSED, writes: 0}
+      - given: same actor/route/payload/key concurrently and same payload with different key
+        expect: {one_replay_result_for_same_key: true, independent_operation_for_different_key: true}
+      - given: two idempotency inserts race
+        expect: {global_key_registry_guard: true, duplicate_side_effects: 0}
+  - id: T01-CF-21
+    findings: [CF-21, R-01]
+    targets: [openapi.yaml#/components/schemas/DecisionResult, projection-mapping.md]
+    vectors:
+      - given: timeout/unknown request
+        expect: {decision_state: merge_attempted, retryable: false, blind_retry: false}
+      - given: recorded accepted after durable note/tag but before the first merge DB transaction with recovery/quarantine flags
+        expect: {decision_state: recorded, attempts_empty: true, no_merge_proven_required: false, recovery_quarantine_allowed: true}
+      - given: recorded accepted with a synthetic attempt or top-level no_merge_proven
+        expect: {schema_valid: false}
+      - given: rejected/cancelled
+        expect: {attempts_empty: true, merge_operation_created: false, decision_level_closure_evidence: true}
+      - given: completed request plus verified_not_merged evidence in the last real attempt
+        expect: {decision_state: failed, real_attempts_nonempty: true, no_merge_proven: true, retryable_allowed: true}
+      - given: guarded recovery retry after fresh preconditions
+        expect: {same_decision_id: true, new_attempt_id: true, exact_base_proposal: true}
+      - given: replay of identical decision command during any state
+        expect: {same_current_outcome: true, new_attempts: 0}
+      - given: conflicted or invalid
+        expect: {terminal: true, retryable: false}
+  - id: T01-CF-22
+    findings: [CF-22]
+    targets: [database-catalog.yaml]
+    vectors:
+      - given: policy/cutover/grant from another Space, document/snapshot mismatch, pointer wrong repository/target/SHA, cross-Space outstanding proposal, wrong preflight perimeter, errors from another run
+        expect: {composite_FK_or_transaction_reject: true, corrupted_rows: 0}
+      - given: cutover activation with main_sha != cutover_sha or preflight instead of separate published descriptor
+        expect: {activation_rejected: true, user_access: false}
+  - id: T01-CF-23
+    findings: [CF-23]
+    targets: [database-catalog.yaml, decision-record.schema.json#/x-contract-invariants]
+    vectors:
+      - given: decision/merge operation with wrong base/proposal SHA or cross-target recovery run/finding
+        expect: {composite_reference_reject: true, merge_or_barrier_release: false}
+      - given: recovery_required=false with active_decision_id or unresolved attempts
+        expect: {transaction_reject: true}
+  - id: T01-CF-24
+    findings: [CF-24]
+    targets: [index-snapshot.schema.json, openapi.yaml#/components/schemas/IndexRunStatusInput, openapi.yaml#/components/schemas/CutoverRecord, database-catalog.yaml]
+    vectors:
+      - given: canonical snapshot to DB roundtrip
+        expect: {approval_revision_preserved: true, bundle_consistent: true, run_snapshot_ids_exact: true}
+      - given: incremental without full equivalence/missing-input proof or chunk profile different from snapshot
+        expect: {activation_rejected: true, mixed_profiles: false}
+      - given: ready/active incremental with requested/failed/empty prerequisite evidence or nonempty missing_inputs
+        expect: {schema_valid: false, ready_or_pointer_claim: false}
+      - given: incremental evidence whose full run/snapshot is the child itself or has different SHA/profile/closure hash
+        expect: {semantic_valid: false, ready_or_pointer_claim: false}
+      - given: cutover with requested/failed/unvalidated preflight or missing preflight/published validation timestamp
+        expect: {activation_rejected: true, user_access: false}
+  - id: T01-CF-25
+    findings: [CF-25]
+    targets: [projection-mapping.md]
+    vectors:
+      - given: every canonical/API/event/DB enum row in the mapping tables
+        expect: {explicit_mapping: true, silent_enum_substitution: false}
+      - given: quarantined, archived versus superseded, accept/reject/cancel, Cutover, index ready, source retry/tombstone/dead_letter
+        expect: {derived_mapping_exact: true}
+      - given: proposal_version_id and actor/per-Space revocation_epoch rebuild
+        expect: {stable_uuid_preserved: true, epochs_preserved: true}
+      - given: recorded accepted/rejected/cancelled projection
+        expect: {attempts_empty: true, no_merge_proven_required: false, no_synthetic_merge_operation: true}
+      - given: seen/proposed/merged version without matching hash or hash without version
+        expect: {schema_valid: false}
+      - given: proposal_pending without proposed pair or outstanding ID/SHA
+        expect: {schema_valid: false}
+      - given: merged without merged_hash or with non-null outstanding ID/SHA, and any non-pending state with outstanding fields
+        expect: {schema_valid: false}
+  - id: T01-CF-26
+    findings: [CF-26]
+    targets: [source-origin.schema.json, openapi.yaml#/components/schemas/LiveOperationalReadResult, database-catalog.yaml#/schemas/kb_ops/tables/source_sync_states]
+    vectors:
+      - given: live_operational with document_id, proposed/outstanding/merged cursor, proposal_pending or merged
+        expect: {contract_or_DB_reject: true}
+      - given: registered typed read
+        expect: {snapshot_time_required: true, canonical_writes: false, proposal_cursor_effects: false, index_writes: false}
+  - id: T01-CF-27
+    findings: [CF-27]
+    targets: [front-matter.schema.json, openapi.yaml#/x-contract-invariants, database-catalog.yaml#/schemas/kb_index/tables/document_links]
+    vectors:
+      - given: resolved target projection for document A with target_document_id B
+        expect: {composite_reference_reject: true, resolution_state: invalid}
+      - given: swapped ID, orphan, cycle, cross-Space target
+        expect: {resolved: false, citation_or_dependency_exposure: 0}
+  - id: T01-CF-28
+    findings: [CF-28]
+    targets: [access-policy.schema.json, approval-policy.schema.json, projection-mapping.md]
+    vectors:
+      - given: /, /pricing, /approval-policy.yaml roundtrips
+        expect: {absolute_relative_lossless: true}
+      - given: Cyrillic NFC/NFD, duplicate separators, trailing slash, backslash, ..
+        expect: {NFC_canonical_or_explicit_reject: true, ambiguous_mapping: false}
+  - id: T01-CF-29
+    findings: [CF-29]
+    targets: [integration.md, gitlab-integration.md]
+    vectors:
+      - given: crash recovery headings and local Markdown links
+        expect: {spec_reference: 7.1_and_7.3_not_7.7, broken_links: 0}
+  - id: T01-CF-30
+    findings: [CF-30]
+    targets: [all contracts]
+    vectors:
+      - given: all negative vectors in this catalog and all schemas/OpenAPI/events
+        expect: {JSON_YAML_parse: pass, refs_resolve: pass, regex_compile: pass, operationIds_unique: true, mutation_headers_complete: true, semantic_consumer_assertions: pass}
+      - given: unavailable real sandbox or hoster.ai credentials
+        expect: {integration_status: BLOCKED, mock_marked_as_PASS: false}
