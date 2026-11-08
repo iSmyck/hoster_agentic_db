@@ -1,0 +1,610 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "scenarios.yaml loaded",
+      "details": {
+        "fixture": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml"
+      },
+      "expected": "synthetic fixtures load",
+      "fixture_path": null,
+      "id": "harness.fixture_loaded",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "harness",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "error": null,
+        "snapshot_id": "00000000-0000-0000-0000-000000000001"
+      },
+      "expected": "sample preflight snapshot is schema valid",
+      "fixture_path": null,
+      "id": "schema.preflight.valid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "error": null,
+        "snapshot_id": "00000000-0000-0000-0000-000000000002"
+      },
+      "expected": "sample published active snapshot is schema valid",
+      "fixture_path": null,
+      "id": "schema.published.valid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "61 patterns compiled",
+      "details": {
+        "bad_regex_count": 0
+      },
+      "expected": "all schema regex patterns compile",
+      "fixture_path": null,
+      "id": "schema.regex_compile",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "143 refs resolved",
+      "details": {
+        "unresolved_count": 0
+      },
+      "expected": "all schema $ref resolve",
+      "fixture_path": null,
+      "id": "schema.refs_resolve",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "publication pair valid",
+      "details": {
+        "full_validation_repeated": true,
+        "ids_differ": true,
+        "preflight_stays_inactive": true,
+        "published_active": true,
+        "same_closure": true,
+        "same_hashes": true,
+        "same_policy": true,
+        "same_sha": true
+      },
+      "expected": "published lifecycle creates new IDs with same SHA/closure/policy/hashes and repeats validation",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "publication_lifecycle.preflight_to_published_new_ids_same_sha.valid",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "publication_lifecycle",
+      "status": "PASS"
+    },
+    {
+      "actual": "rejected",
+      "details": {
+        "expected_negative": true,
+        "full_validation_repeated": true,
+        "ids_differ": false,
+        "preflight_stays_inactive": true,
+        "published_active": true,
+        "same_closure": true,
+        "same_hashes": true,
+        "same_policy": true,
+        "same_sha": true
+      },
+      "expected": "invalid publication pair rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "publication_lifecycle.reused_snapshot_id_rejected.rejected",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "publication_lifecycle",
+      "status": "FAIL"
+    },
+    {
+      "actual": "rejected",
+      "details": {
+        "expected_negative": true,
+        "full_validation_repeated": true,
+        "ids_differ": true,
+        "preflight_stays_inactive": false,
+        "published_active": true,
+        "same_closure": true,
+        "same_hashes": true,
+        "same_policy": true,
+        "same_sha": true
+      },
+      "expected": "invalid publication pair rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "publication_lifecycle.preflight_activated_rejected.rejected",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "publication_lifecycle",
+      "status": "FAIL"
+    },
+    {
+      "actual": "rejected",
+      "details": {
+        "expected_negative": true,
+        "full_validation_repeated": false,
+        "ids_differ": true,
+        "preflight_stays_inactive": true,
+        "published_active": true,
+        "same_closure": true,
+        "same_hashes": true,
+        "same_policy": true,
+        "same_sha": true
+      },
+      "expected": "invalid publication pair rejected with INDEX_NOT_READY",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "publication_lifecycle.validation_not_repeated_rejected.rejected",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "publication_lifecycle",
+      "status": "FAIL"
+    },
+    {
+      "actual": "CAS succeeded",
+      "details": {
+        "latest_ancestry": true,
+        "pointer_rows_updated": 1,
+        "same_fence": true,
+        "single_writer": true,
+        "stale_job_marked_superseded": false,
+        "validated_snapshot": true
+      },
+      "expected": "CAS/fencing pointer publication updates exactly one row for the single writer",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "pointer_cas_fencing.single_writer_cas_succeeds.valid",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "pointer_cas_fencing",
+      "status": "PASS"
+    },
+    {
+      "actual": "CAS succeeded",
+      "details": {
+        "latest_ancestry": true,
+        "pointer_rows_updated": 0,
+        "same_fence": false,
+        "single_writer": true,
+        "stale_job_marked_superseded": true,
+        "validated_snapshot": true
+      },
+      "expected": "CAS/fencing pointer publication updates exactly one row for the single writer",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "pointer_cas_fencing.stale_fence_rejected.valid",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "pointer_cas_fencing",
+      "status": "PASS"
+    },
+    {
+      "actual": "CAS succeeded",
+      "details": {
+        "latest_ancestry": false,
+        "pointer_rows_updated": 0,
+        "same_fence": true,
+        "single_writer": true,
+        "stale_job_marked_superseded": true,
+        "validated_snapshot": true
+      },
+      "expected": "CAS/fencing pointer publication updates exactly one row for the single writer",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "pointer_cas_fencing.old_generation_overwrite_rejected.valid",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "pointer_cas_fencing",
+      "status": "PASS"
+    },
+    {
+      "actual": "CAS succeeded",
+      "details": {
+        "latest_ancestry": true,
+        "pointer_rows_updated": 0,
+        "same_fence": true,
+        "single_writer": false,
+        "stale_job_marked_superseded": false,
+        "validated_snapshot": true
+      },
+      "expected": "CAS/fencing pointer publication updates exactly one row for the single writer",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "pointer_cas_fencing.non_writer_publisher_rejected.valid",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "pointer_cas_fencing",
+      "status": "PASS"
+    },
+    {
+      "actual": "stale writer rejected",
+      "details": {
+        "expected_negative": true,
+        "latest_ancestry": true,
+        "pointer_rows_updated": 0,
+        "same_fence": true,
+        "single_writer": true,
+        "stale_job_marked_superseded": false,
+        "validated_snapshot": true
+      },
+      "expected": "stale publisher rejected with INDEX_GENERATION_CONFLICT",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "pointer_cas_fencing.cas_succeeds_but_rows_zero_rejected.rejected",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "pointer_cas_fencing",
+      "status": "FAIL"
+    },
+    {
+      "actual": "retrieval valid",
+      "details": {
+        "active_only": true,
+        "all_reauthorized": true,
+        "citation_ok": true,
+        "cross_space_leak": false,
+        "excluded_present": false
+      },
+      "expected": "search fans out only over active published snapshots with reauthorized candidates and exact citations",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "per_space_retrieval.active_published_snapshot_returns_citations.valid",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "per_space_retrieval",
+      "status": "PASS"
+    },
+    {
+      "actual": "retrieval valid",
+      "details": {
+        "active_only": false,
+        "all_reauthorized": true,
+        "citation_ok": true,
+        "cross_space_leak": false,
+        "excluded_present": true
+      },
+      "expected": "search fans out only over active published snapshots with reauthorized candidates and exact citations",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "per_space_retrieval.inactive_preflight_no_results.valid",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "per_space_retrieval",
+      "status": "PASS"
+    },
+    {
+      "actual": "stale/unauthorized content detected",
+      "details": {
+        "active_only": false,
+        "all_reauthorized": true,
+        "citation_ok": true,
+        "cross_space_leak": false,
+        "excluded_present": false,
+        "expected_negative": true
+      },
+      "expected": "unauthorized or stale content rejected with STALE_INDEX_CANDIDATE",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "per_space_retrieval.stale_snapshot_rejected.rejected",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "per_space_retrieval",
+      "status": "FAIL"
+    },
+    {
+      "actual": "stale/unauthorized content detected",
+      "details": {
+        "active_only": true,
+        "all_reauthorized": false,
+        "citation_ok": true,
+        "cross_space_leak": false,
+        "excluded_present": false,
+        "expected_negative": true
+      },
+      "expected": "unauthorized or stale content rejected with AUTHZ_GROUP_STALE",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "per_space_retrieval.unauthorized_candidate_rejected.rejected",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "per_space_retrieval",
+      "status": "FAIL"
+    },
+    {
+      "actual": "stale/unauthorized content detected",
+      "details": {
+        "active_only": true,
+        "all_reauthorized": true,
+        "citation_ok": true,
+        "cross_space_leak": true,
+        "excluded_present": false,
+        "expected_negative": true
+      },
+      "expected": "unauthorized or stale content rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "per_space_retrieval.cross_space_leak_rejected.rejected",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "per_space_retrieval",
+      "status": "FAIL"
+    },
+    {
+      "actual": "stale/unauthorized content detected",
+      "details": {
+        "active_only": true,
+        "all_reauthorized": true,
+        "citation_ok": false,
+        "cross_space_leak": false,
+        "excluded_present": false,
+        "expected_negative": true
+      },
+      "expected": "unauthorized or stale content rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "per_space_retrieval.missing_citation_fields_rejected.rejected",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "per_space_retrieval",
+      "status": "FAIL"
+    },
+    {
+      "actual": "cursor binding valid",
+      "details": {
+        "binding_complete": true,
+        "has_next": true,
+        "limit_exceeded": true,
+        "next_cursor_present": true,
+        "ordered_snapshots": true,
+        "stale_binding": false
+      },
+      "expected": "cursor binds complete ordered per-Space snapshot/profile/policy/group/revocation/actor-epoch set",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "cursor_binding.complete_binding_continuation.valid",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "cursor_binding",
+      "status": "PASS"
+    },
+    {
+      "actual": "stale/incomplete cursor rejected",
+      "details": {
+        "binding_complete": false,
+        "expected_negative": true,
+        "has_next": false,
+        "limit_exceeded": false,
+        "next_cursor_present": false,
+        "ordered_snapshots": true,
+        "stale_binding": false
+      },
+      "expected": "stale or incomplete cursor rejected with STALE_INDEX_CANDIDATE",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "cursor_binding.missing_actor_epoch_rejected.rejected",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "cursor_binding",
+      "status": "FAIL"
+    },
+    {
+      "actual": "stale/incomplete cursor rejected",
+      "details": {
+        "binding_complete": true,
+        "expected_negative": true,
+        "has_next": false,
+        "limit_exceeded": false,
+        "next_cursor_present": false,
+        "ordered_snapshots": true,
+        "stale_binding": true
+      },
+      "expected": "stale or incomplete cursor rejected with STALE_INDEX_CANDIDATE",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "cursor_binding.stale_policy_revision_rejected.rejected",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "cursor_binding",
+      "status": "FAIL"
+    },
+    {
+      "actual": "stale/incomplete cursor rejected",
+      "details": {
+        "binding_complete": true,
+        "expected_negative": true,
+        "has_next": true,
+        "limit_exceeded": true,
+        "next_cursor_present": false,
+        "ordered_snapshots": true,
+        "stale_binding": false
+      },
+      "expected": "stale or incomplete cursor rejected with LIMIT_EXCEEDED",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "cursor_binding.limit_exceeded_without_next_cursor_rejected.rejected",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "cursor_binding",
+      "status": "FAIL"
+    },
+    {
+      "actual": "error handling explicit",
+      "details": {
+        "code": "INDEX_NOT_READY",
+        "has_bounds": false,
+        "next_cursor_present": false,
+        "retryable": true,
+        "silent_truncation": false,
+        "space_state": "no_active_snapshot"
+      },
+      "expected": "missing/stale index or limit returns explicit error with retryable/bounds/next_cursor; no silent truncation",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "index_not_ready.no_active_snapshot_index_not_ready.explicit",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "index_not_ready",
+      "status": "PASS"
+    },
+    {
+      "actual": "error handling explicit",
+      "details": {
+        "code": "INDEX_NOT_READY",
+        "has_bounds": false,
+        "next_cursor_present": false,
+        "retryable": true,
+        "silent_truncation": false,
+        "space_state": "inactive_preflight"
+      },
+      "expected": "missing/stale index or limit returns explicit error with retryable/bounds/next_cursor; no silent truncation",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "index_not_ready.inactive_preflight_index_not_ready.explicit",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "index_not_ready",
+      "status": "PASS"
+    },
+    {
+      "actual": "error handling explicit",
+      "details": {
+        "code": "INDEX_NOT_READY",
+        "has_bounds": false,
+        "next_cursor_present": false,
+        "retryable": true,
+        "silent_truncation": false,
+        "space_state": "upstream_failure"
+      },
+      "expected": "missing/stale index or limit returns explicit error with retryable/bounds/next_cursor; no silent truncation",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "index_not_ready.upstream_failure_index_not_ready.explicit",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "index_not_ready",
+      "status": "PASS"
+    },
+    {
+      "actual": "error handling explicit",
+      "details": {
+        "code": "LIMIT_EXCEEDED",
+        "has_bounds": true,
+        "next_cursor_present": true,
+        "retryable": true,
+        "silent_truncation": false,
+        "space_state": "limit_exceeded"
+      },
+      "expected": "missing/stale index or limit returns explicit error with retryable/bounds/next_cursor; no silent truncation",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "index_not_ready.limit_exceeded_with_cursor.explicit",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "index_not_ready",
+      "status": "PASS"
+    },
+    {
+      "actual": "bad outcome detected",
+      "details": {
+        "code": "none",
+        "expected_negative": true,
+        "has_bounds": false,
+        "next_cursor_present": false,
+        "retryable": false,
+        "silent_truncation": false,
+        "space_state": "no_active_snapshot"
+      },
+      "expected": "optimistic success or silent truncation rejected with INDEX_NOT_READY",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "index_not_ready.optimistic_success_rejected.rejected",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "index_not_ready",
+      "status": "FAIL"
+    },
+    {
+      "actual": "bad outcome detected",
+      "details": {
+        "code": "none",
+        "expected_negative": true,
+        "has_bounds": false,
+        "next_cursor_present": false,
+        "retryable": false,
+        "silent_truncation": true,
+        "space_state": "limit_exceeded"
+      },
+      "expected": "optimistic success or silent truncation rejected with LIMIT_EXCEEDED",
+      "fixture_path": "_bmad-output/test-artifacts/t10b/fixtures/scenarios.yaml",
+      "id": "index_not_ready.silent_truncation_rejected.rejected",
+      "input_sha256": "17f5d2948eea56746e62df870ffa9745b2d742597fafc2e25828f7cadb273e93",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "index_not_ready",
+      "status": "FAIL"
+    },
+    {
+      "actual": "requires live sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_postgres_active_pointer",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_retrieval_exact_semantic",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_cursor_revocation_stream",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_hoster_ai_inference",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+  "contracts_version": "index-snapshot-v1",
+  "counts": {
+    "BLOCKED": 4,
+    "FAIL": 13,
+    "FAIL_EXPECTED": 13,
+    "FAIL_UNEXPECTED": 0,
+    "PASS": 17
+  },
+  "environment": {
+    "ad_available": false,
+    "ci_available": false,
+    "gitlab_available": false,
+    "hoster_available": false,
+    "idp_available": false,
+    "ldap_available": false,
+    "pinned_toolchain": {
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_local_no_gitlab"
+  },
+  "generated_at": "2026-11-08T23:17:00.557760+00:00",
+  "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
+  "schema_version": "t10b-retrieval-results-v1",
+  "sensitive_data_included": false,
+  "spec_baseline_commit": "d2c0d072a757808ea891fbf6414f00147679f7a7"
+}

@@ -66,10 +66,10 @@ development_status:
   4-7-t07b-docops-review-projections-correction-tasks-and-ux-telem: done
   epic-4-retrospective: done
 
-  epic-5: backlog
-  5-1-t10a-exact-sha-ci-index-build-and-validated-preflight-artifa: backlog
-  5-2-t10b-published-retrieval-search-cursors-and-monotonic-public: backlog
-  epic-5-retrospective: optional
+  epic-5: done
+  5-1-t10a-exact-sha-ci-index-build-and-validated-preflight-artifa: done
+  5-2-t10b-published-retrieval-search-cursors-and-monotonic-public: done
+  epic-5-retrospective: done
 
   epic-6: backlog
   6-1-t12a-deterministic-dry-run-import-and-admission-gates: backlog
