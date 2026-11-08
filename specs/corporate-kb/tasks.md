@@ -180,3 +180,14 @@ Owner decisions без выдуманных значений: business groups/pa
 - **PASS по scope/status (на 2026-11-06):** историческая проверка до появления baseline, snapshot не переписывается. Актуальное состояние: [baseline.md](baseline.md) **DONE**, T00 DONE/G0 APPROVED; [test-plan.md](test-plan.md) и [operations.md](operations.md) остаются `design_not_executed`, A/CF/product execution не заявлены.
 
 Это только документная валидация разрешённого пакета, **не product test, не contract test, не acceptance/integration evidence и не G0 approval**. Она не меняет состояния T00–T20.
+
+## 9. Tech-debt baseline tests
+
+- **Status:** DONE 2026-11-08.
+- **Scope:** pytest baseline in project root and unit tests for T01–T04b harness reporters/sanitize and key validators.
+- **Artifacts:** `pyproject.toml`, `tests/test_reporters.py`, `tests/test_t02_validators.py`, `tests/test_t03a_validators.py`, `tests/test_t03b_validators.py`, `tests/test_t04a_validators.py`, `tests/test_t04b_validators.py`.
+- **Verification:**
+  - `uv run pytest -q` — all tests pass;
+  - `uv run ruff check tests --select=F` — clean;
+  - `uv run ruff format --check tests` — clean.
+- **Constraints respected:** no product code changes, no pinned version changes, synthetic fixtures only, no real credentials/endpoints.

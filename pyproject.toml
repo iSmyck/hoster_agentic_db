@@ -1,0 +1,18 @@
+[project]
+name = "corp-ai-db"
+version = "0.1.0"
+description = "Corporate Agentic Knowledge Base — implementation tracking and harness unit tests"
+requires-python = "==3.12.*"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pyyaml",
+    "jsonschema",
+    "referencing",
+    "ruff",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
