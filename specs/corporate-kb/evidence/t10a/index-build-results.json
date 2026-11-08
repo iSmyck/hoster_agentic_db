@@ -43,6 +43,34 @@
       "status": "PASS"
     },
     {
+      "actual": "schema rejected lexicographic ordering",
+      "details": {
+        "error": "Additional properties are not allowed ('ordering' was unexpected) at ['main_generation']",
+        "snapshot_id": "00000000-0000-0000-0000-000000000003"
+      },
+      "expected": "lexicographic generation ordering is rejected by schema",
+      "fixture_path": null,
+      "id": "schema.lexicographic_ordering.invalid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10a/run_t10a_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema rejected incremental without evidence",
+      "details": {
+        "error": "'equivalence_evidence' is a required property at ['closure']",
+        "snapshot_id": "00000000-0000-0000-0000-000000000004"
+      },
+      "expected": "incremental snapshot without equivalence_evidence is rejected by schema",
+      "fixture_path": null,
+      "id": "schema.incremental_no_evidence.invalid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10a/run_t10a_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
       "actual": "61 patterns compiled",
       "details": {
         "bad_regex_count": 0
@@ -573,7 +601,7 @@
     "FAIL": 19,
     "FAIL_EXPECTED": 19,
     "FAIL_UNEXPECTED": 0,
-    "PASS": 12
+    "PASS": 14
   },
   "environment": {
     "ad_available": false,
@@ -590,7 +618,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T23:16:05.587195+00:00",
+  "generated_at": "2026-11-08T23:25:35.087491+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10a/run_t10a_tests.py",
   "schema_version": "t10a-index-build-results-v1",
   "sensitive_data_included": false,

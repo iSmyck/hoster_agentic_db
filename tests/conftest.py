@@ -24,6 +24,8 @@ HARNESS_DIRS = {
     "t03b_validators": ROOT / "_bmad-output" / "test-artifacts" / "t03b" / "validators",
     "t04a_validators": ROOT / "_bmad-output" / "test-artifacts" / "t04a" / "validators",
     "t04b_validators": ROOT / "_bmad-output" / "test-artifacts" / "t04b" / "validators",
+    "t10a_harness": ROOT / "_bmad-output" / "test-artifacts" / "t10a",
+    "t10b_harness": ROOT / "_bmad-output" / "test-artifacts" / "t10b",
 }
 
 
@@ -123,3 +125,23 @@ def t04b_modules() -> Any:
         )
     except Exception as exc:
         pytest.skip(f"t04b validators unavailable: {exc}")
+
+
+@pytest.fixture(scope="session")
+def t10a_modules() -> Any:
+    try:
+        return _load_individual_modules(
+            HARNESS_DIRS["t10a_harness"], ["run_t10a_tests"]
+        )
+    except Exception as exc:
+        pytest.skip(f"t10a harness unavailable: {exc}")
+
+
+@pytest.fixture(scope="session")
+def t10b_modules() -> Any:
+    try:
+        return _load_individual_modules(
+            HARNESS_DIRS["t10b_harness"], ["run_t10b_tests"]
+        )
+    except Exception as exc:
+        pytest.skip(f"t10b harness unavailable: {exc}")

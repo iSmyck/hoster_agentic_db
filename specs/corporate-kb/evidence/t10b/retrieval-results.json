@@ -224,7 +224,7 @@
       "status": "PASS"
     },
     {
-      "actual": "stale writer rejected",
+      "actual": "stale writer rejected (INDEX_GENERATION_CONFLICT)",
       "details": {
         "expected_negative": true,
         "latest_ancestry": true,
@@ -277,7 +277,7 @@
       "status": "PASS"
     },
     {
-      "actual": "stale/unauthorized content detected",
+      "actual": "stale/unauthorized content detected (STALE_INDEX_CANDIDATE)",
       "details": {
         "active_only": false,
         "all_reauthorized": true,
@@ -295,7 +295,7 @@
       "status": "FAIL"
     },
     {
-      "actual": "stale/unauthorized content detected",
+      "actual": "stale/unauthorized content detected (AUTHZ_GROUP_STALE)",
       "details": {
         "active_only": true,
         "all_reauthorized": false,
@@ -313,7 +313,7 @@
       "status": "FAIL"
     },
     {
-      "actual": "stale/unauthorized content detected",
+      "actual": "stale/unauthorized content detected (SECURITY_REJECTED)",
       "details": {
         "active_only": true,
         "all_reauthorized": true,
@@ -331,7 +331,7 @@
       "status": "FAIL"
     },
     {
-      "actual": "stale/unauthorized content detected",
+      "actual": "stale/unauthorized content detected (SECURITY_REJECTED)",
       "details": {
         "active_only": true,
         "all_reauthorized": true,
@@ -602,7 +602,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T23:17:00.557760+00:00",
+  "generated_at": "2026-11-08T23:25:35.089491+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
   "schema_version": "t10b-retrieval-results-v1",
   "sensitive_data_included": false,
