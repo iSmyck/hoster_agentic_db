@@ -1,0 +1,465 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "scenarios.yaml loaded",
+      "details": {
+        "fixture": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml"
+      },
+      "expected": "synthetic fixtures load",
+      "fixture_path": null,
+      "id": "harness.fixture_loaded",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "harness",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "error": null,
+        "export_id": "00000000-0000-0000-0000-000000000001"
+      },
+      "expected": "sample export manifest is schema valid",
+      "fixture_path": null,
+      "id": "schema.export_manifest.valid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "61 patterns compiled",
+      "details": {
+        "bad_regex_count": 0
+      },
+      "expected": "all schema regex patterns compile",
+      "fixture_path": null,
+      "id": "schema.regex_compile",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "143 refs resolved",
+      "details": {
+        "unresolved_count": 0
+      },
+      "expected": "all schema $ref resolve",
+      "fixture_path": null,
+      "id": "schema.refs_resolve",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "all batches authorized",
+      "details": {
+        "all_authorized": true,
+        "batch_count": 2
+      },
+      "expected": "every export batch passes fresh Space+history authorization",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "export_authorization.authorized_batches_proceed.authorized",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "export_authorization",
+      "status": "PASS"
+    },
+    {
+      "actual": "unauthorized batch detected",
+      "details": {
+        "all_authorized": false,
+        "batch_count": 2,
+        "expected_negative": true
+      },
+      "expected": "unauthorized batch rejected with AUTHZ_GROUP_STALE",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "export_authorization.unauthorized_batch_rejected.rejected",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "export_authorization",
+      "status": "FAIL"
+    },
+    {
+      "actual": "unauthorized batch detected",
+      "details": {
+        "all_authorized": false,
+        "batch_count": 1,
+        "expected_negative": true
+      },
+      "expected": "unauthorized batch rejected with AUTHZ_GROUP_STALE",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "export_authorization.all_batches_require_authorization.rejected",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "export_authorization",
+      "status": "FAIL"
+    },
+    {
+      "actual": "refs explicit and complete",
+      "details": {
+        "all_full_sha": true,
+        "missing_refs": [],
+        "protected_decision_tags": true,
+        "ref_count": 2,
+        "tag_peels_ok": true
+      },
+      "expected": "Git clone includes explicit full object SHAs and refs; protected decision tags marked protected",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "git_clone_refs.explicit_full_shas_and_refs.explicit",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "git_clone_refs",
+      "status": "PASS"
+    },
+    {
+      "actual": "ref problem detected",
+      "details": {
+        "all_full_sha": false,
+        "expected_negative": true,
+        "missing_refs": [],
+        "protected_decision_tags": true,
+        "ref_count": 1,
+        "tag_peels_ok": true
+      },
+      "expected": "incomplete or short refs rejected with VALIDATION_ERROR",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "git_clone_refs.short_sha_rejected.rejected",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "git_clone_refs",
+      "status": "FAIL"
+    },
+    {
+      "actual": "ref problem detected",
+      "details": {
+        "all_full_sha": true,
+        "expected_negative": true,
+        "missing_refs": [
+          "refs/tags/kb-cutover/sales"
+        ],
+        "protected_decision_tags": true,
+        "ref_count": 1,
+        "tag_peels_ok": true
+      },
+      "expected": "incomplete or short refs rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "git_clone_refs.missing_ref_rejected.rejected",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "git_clone_refs",
+      "status": "FAIL"
+    },
+    {
+      "actual": "decisions manifest valid",
+      "details": {
+        "all_integrity_checks": true,
+        "decision_count": 1
+      },
+      "expected": "decisions manifest has exact decision_id, proposal_sha, record_sha256, note/tag linkage and correct merge evidence",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "decisions_manifest.accepted_decision_with_exact_refs.valid",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "decisions_manifest",
+      "status": "PASS"
+    },
+    {
+      "actual": "decisions manifest valid",
+      "details": {
+        "all_integrity_checks": true,
+        "decision_count": 1
+      },
+      "expected": "decisions manifest has exact decision_id, proposal_sha, record_sha256, note/tag linkage and correct merge evidence",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "decisions_manifest.rejected_decision_with_closure.valid",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "decisions_manifest",
+      "status": "PASS"
+    },
+    {
+      "actual": "decision integrity problem detected",
+      "details": {
+        "all_integrity_checks": false,
+        "decision_count": 1,
+        "expected_negative": true
+      },
+      "expected": "invalid decision manifest rejected with DECISION_INVALID",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "decisions_manifest.note_record_hash_mismatch_rejected.rejected",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "decisions_manifest",
+      "status": "FAIL"
+    },
+    {
+      "actual": "decision integrity problem detected",
+      "details": {
+        "all_integrity_checks": false,
+        "decision_count": 1,
+        "expected_negative": true
+      },
+      "expected": "invalid decision manifest rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "decisions_manifest.fabricated_merge_rejected.rejected",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "decisions_manifest",
+      "status": "FAIL"
+    },
+    {
+      "actual": "assets manifest valid",
+      "details": {
+        "all_hash_verified": true,
+        "asset_count": 1
+      },
+      "expected": "assets manifest contains immutable attachments with verified hashes",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "assets_manifest.immutable_assets_hash_verified.valid",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "assets_manifest",
+      "status": "PASS"
+    },
+    {
+      "actual": "asset problem detected",
+      "details": {
+        "all_hash_verified": false,
+        "asset_count": 1,
+        "expected_negative": true
+      },
+      "expected": "invalid asset rejected with DECISION_INVALID",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "assets_manifest.hash_mismatch_rejected.rejected",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "assets_manifest",
+      "status": "FAIL"
+    },
+    {
+      "actual": "asset problem detected",
+      "details": {
+        "all_hash_verified": false,
+        "asset_count": 1,
+        "expected_negative": true
+      },
+      "expected": "invalid asset rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "assets_manifest.mutable_url_rejected.rejected",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "assets_manifest",
+      "status": "FAIL"
+    },
+    {
+      "actual": "asset problem detected",
+      "details": {
+        "all_hash_verified": false,
+        "asset_count": 1,
+        "expected_negative": true
+      },
+      "expected": "invalid asset rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "assets_manifest.missing_asset_rejected.rejected",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "assets_manifest",
+      "status": "FAIL"
+    },
+    {
+      "actual": "policy bundle complete",
+      "details": {
+        "access_policy_revision_valid": true,
+        "all_present": true,
+        "approval_policy_revision_valid": true
+      },
+      "expected": "policy bundle includes access/approval revision SHAs and content/grants hashes",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "policy_bundle.complete_policy_closure.complete",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "policy_bundle",
+      "status": "PASS"
+    },
+    {
+      "actual": "policy bundle incomplete",
+      "details": {
+        "access_policy_revision_valid": false,
+        "all_present": false,
+        "approval_policy_revision_valid": true,
+        "expected_negative": true
+      },
+      "expected": "incomplete policy bundle rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "policy_bundle.missing_policy_revision_rejected.rejected",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "policy_bundle",
+      "status": "FAIL"
+    },
+    {
+      "actual": "grants mapping valid",
+      "details": {
+        "grant_count": 1,
+        "has_stable_ids": true,
+        "includes_secrets": false
+      },
+      "expected": "grants mapping uses stable identity/group data and excludes secrets",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "grants_mapping.stable_identity_group_mapping.valid",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "grants_mapping",
+      "status": "PASS"
+    },
+    {
+      "actual": "grants mapping problem detected",
+      "details": {
+        "expected_negative": true,
+        "grant_count": 1,
+        "has_stable_ids": true,
+        "includes_secrets": true
+      },
+      "expected": "grants mapping with secrets rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "grants_mapping.secrets_in_grants_rejected.rejected",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "grants_mapping",
+      "status": "FAIL"
+    },
+    {
+      "actual": "closure complete",
+      "details": {
+        "assets_complete": true,
+        "authorization_complete": true,
+        "complete": true,
+        "decisions_complete": true,
+        "hashes_valid": true,
+        "missing_count": 0
+      },
+      "expected": "closure.complete=true only when decisions, assets, authorization are complete and all manifest hashes are valid",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "closure.complete_closure.complete",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "closure",
+      "status": "PASS"
+    },
+    {
+      "actual": "closure incomplete",
+      "details": {
+        "assets_complete": false,
+        "authorization_complete": true,
+        "complete": true,
+        "decisions_complete": true,
+        "expected_negative": true,
+        "hashes_valid": true,
+        "missing_count": 1
+      },
+      "expected": "incomplete closure rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "closure.incomplete_assets_block_complete.incomplete",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "closure",
+      "status": "FAIL"
+    },
+    {
+      "actual": "closure incomplete",
+      "details": {
+        "assets_complete": true,
+        "authorization_complete": false,
+        "complete": true,
+        "decisions_complete": true,
+        "expected_negative": true,
+        "hashes_valid": true,
+        "missing_count": 1
+      },
+      "expected": "incomplete closure rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t13a/fixtures/scenarios.yaml",
+      "id": "closure.unauthorized_batch_block_complete.incomplete",
+      "input_sha256": "d2e6f707236e88fd7e3211912ab30c6e968db506ca6d04b80a0bee5b61f99c48",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "closure",
+      "status": "FAIL"
+    },
+    {
+      "actual": "requires live sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_gitlab_export",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_object_store_export",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_decision_note_tag_export",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_grants_export",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+  "contracts_version": "export-manifest-v2",
+  "counts": {
+    "BLOCKED": 4,
+    "FAIL": 13,
+    "FAIL_EXPECTED": 13,
+    "FAIL_UNEXPECTED": 0,
+    "PASS": 12
+  },
+  "environment": {
+    "ad_available": false,
+    "ci_available": false,
+    "gitlab_available": false,
+    "hoster_available": false,
+    "idp_available": false,
+    "ldap_available": false,
+    "pinned_toolchain": {
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_local_no_gitlab"
+  },
+  "generated_at": "2026-11-08T23:41:40.497232+00:00",
+  "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13a/run_t13a_tests.py",
+  "schema_version": "t13a-export-results-v1",
+  "sensitive_data_included": false,
+  "spec_baseline_commit": "d2c0d072a757808ea891fbf6414f00147679f7a7"
+}
