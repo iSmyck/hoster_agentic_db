@@ -64,7 +64,7 @@
       "expected": "new ProposalVersion created with exact base/proposal SHA",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "proposal_lifecycle.valid_human_proposal.valid",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "proposal_lifecycle",
       "status": "PASS"
@@ -79,7 +79,7 @@
       "expected": "new ProposalVersion created with exact base/proposal SHA",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "proposal_lifecycle.valid_agent_proposal.valid",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "proposal_lifecycle",
       "status": "PASS"
@@ -94,7 +94,7 @@
       "expected": "new ProposalVersion created with exact base/proposal SHA",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "proposal_lifecycle.version_evolution.valid",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "proposal_lifecycle",
       "status": "PASS"
@@ -102,6 +102,7 @@
     {
       "actual": "rejected: missing ['base_sha']",
       "details": {
+        "expected_negative": true,
         "missing": [
           "base_sha"
         ]
@@ -109,7 +110,7 @@
       "expected": "proposal rejected with MISSING_BASE_SHA",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "proposal_lifecycle.missing_base_sha.rejected",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "proposal_lifecycle",
       "status": "FAIL"
@@ -117,6 +118,7 @@
     {
       "actual": "rejected: missing ['run_id (required for agent actor)']",
       "details": {
+        "expected_negative": true,
         "missing": [
           "run_id (required for agent actor)"
         ]
@@ -124,7 +126,7 @@
       "expected": "proposal rejected with MISSING_RUN_ID",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "proposal_lifecycle.agent_missing_run_id.rejected",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "proposal_lifecycle",
       "status": "FAIL"
@@ -132,6 +134,7 @@
     {
       "actual": "rejected: missing ['base_sha != proposal_sha']",
       "details": {
+        "expected_negative": true,
         "missing": [
           "base_sha != proposal_sha"
         ]
@@ -139,7 +142,7 @@
       "expected": "proposal rejected with PROPOSAL_VERSION_MISMATCH",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "proposal_lifecycle.base_equals_proposal_sha.rejected",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "proposal_lifecycle",
       "status": "FAIL"
@@ -153,7 +156,7 @@
       "expected": "same key + same payload returns existing ProposalVersion, no duplicate",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "idempotency.same_key_same_payload.replay",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "idempotency",
       "status": "PASS"
@@ -161,6 +164,7 @@
     {
       "actual": "key reused with different payload hash 2222222222222222222222222222222222222222222222222222222222222222",
       "details": {
+        "expected_negative": true,
         "first": "1111111111111111111111111111111111111111111111111111111111111111",
         "idempotency_key": "prop-001-v1",
         "second": "2222222222222222222222222222222222222222222222222222222222222222"
@@ -168,7 +172,7 @@
       "expected": "IDEMPOTENCY_KEY_REUSED, zero writes",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "idempotency.same_key_different_payload.collision",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "idempotency",
       "status": "FAIL"
@@ -182,7 +186,7 @@
       "expected": "archived=true iff archive field present; restore creates new reviewed version",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "archive_restore.archived_document.invariant",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "archive_restore",
       "status": "PASS"
@@ -191,12 +195,13 @@
       "actual": "archive flag and archive field mismatch detected",
       "details": {
         "archived": true,
+        "expected_negative": true,
         "has_archive": false
       },
       "expected": "archive invariant violation rejected",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "archive_restore.archive_flag_without_archive.violation",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "archive_restore",
       "status": "FAIL"
@@ -210,7 +215,7 @@
       "expected": "archived=true iff archive field present; restore creates new reviewed version",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "archive_restore.restore_creates_reviewed_version.invariant",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "archive_restore",
       "status": "PASS"
@@ -219,57 +224,64 @@
       "actual": "archive flag and archive field mismatch detected",
       "details": {
         "archived": false,
+        "expected_negative": true,
         "has_archive": true
       },
       "expected": "archive invariant violation rejected",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "archive_restore.active_document_with_archive_object.violation",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "archive_restore",
       "status": "FAIL"
     },
     {
-      "actual": "limit exceeded: ['evidence_count']",
+      "actual": "limit exceeded: ['evidence_count'], writes=0",
       "details": {
+        "expected_negative": true,
         "violations": [
           "evidence_count"
-        ]
+        ],
+        "writes": 0
       },
       "expected": "LIMIT_EXCEEDED with zero writes",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "limits.evidence_count_exceeded.limit_exceeded",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "limits",
       "status": "FAIL"
     },
     {
-      "actual": "limit exceeded: ['rationale_length']",
+      "actual": "limit exceeded: ['rationale_length'], writes=0",
       "details": {
+        "expected_negative": true,
         "violations": [
           "rationale_length"
-        ]
+        ],
+        "writes": 0
       },
       "expected": "LIMIT_EXCEEDED with zero writes",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "limits.rationale_too_long.limit_exceeded",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "limits",
       "status": "FAIL"
     },
     {
-      "actual": "limit exceeded: ['idempotency_key_length']",
+      "actual": "limit exceeded: ['idempotency_key_length'], writes=0",
       "details": {
+        "expected_negative": true,
         "violations": [
           "idempotency_key_length"
-        ]
+        ],
+        "writes": 0
       },
       "expected": "LIMIT_EXCEEDED with zero writes",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "limits.idempotency_key_too_long.limit_exceeded",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "limits",
       "status": "FAIL"
@@ -284,7 +296,7 @@
       "expected": "proposal fields within documented limits",
       "fixture_path": "_bmad-output/test-artifacts/t05a/fixtures/scenarios.yaml",
       "id": "limits.within_bounds.within_bounds",
-      "input_sha256": "06fc9c0f3bd4e2de06db1691bb2ce41a7536ed06bdc4ca8a16ca58dd2352e91b",
+      "input_sha256": "d4d8f3f81c93869baf038e3b9d8187cd74b6470e6cef88766d1697c6da0a5de2",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
       "scenario_id": "limits",
       "status": "PASS"
@@ -339,6 +351,8 @@
   "counts": {
     "BLOCKED": 4,
     "FAIL": 9,
+    "FAIL_EXPECTED": 9,
+    "FAIL_UNEXPECTED": 0,
     "PASS": 11
   },
   "environment": {
@@ -356,7 +370,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T22:50:58.518506+00:00",
+  "generated_at": "2026-11-08T23:06:42.601994+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
   "schema_version": "t05a-proposal-results-v1",
   "sensitive_data_included": false,

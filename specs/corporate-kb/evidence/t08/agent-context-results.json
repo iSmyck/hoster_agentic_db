@@ -64,7 +64,7 @@
       "expected": "model scope narrows server scope; exact revision SHA present",
       "fixture_path": "_bmad-output/test-artifacts/t08/fixtures/scenarios.yaml",
       "id": "scope.page_scope_exact_sha.valid",
-      "input_sha256": "04a61e2e9a6c1c339bb4bbe9b253858e8c411bd231440f184018dfc62b271a00",
+      "input_sha256": "14a1991a9c4a70084bf479a30ed7fad9ca7278491e7dace92434737f2af3e7ca",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t08/run_t08_tests.py",
       "scenario_id": "scope",
       "status": "PASS"
@@ -79,7 +79,7 @@
       "expected": "model scope narrows server scope; exact revision SHA present",
       "fixture_path": "_bmad-output/test-artifacts/t08/fixtures/scenarios.yaml",
       "id": "scope.subtree_scope_narrows.valid",
-      "input_sha256": "04a61e2e9a6c1c339bb4bbe9b253858e8c411bd231440f184018dfc62b271a00",
+      "input_sha256": "14a1991a9c4a70084bf479a30ed7fad9ca7278491e7dace92434737f2af3e7ca",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t08/run_t08_tests.py",
       "scenario_id": "scope",
       "status": "PASS"
@@ -94,7 +94,7 @@
       "expected": "model scope narrows server scope; exact revision SHA present",
       "fixture_path": "_bmad-output/test-artifacts/t08/fixtures/scenarios.yaml",
       "id": "scope.space_scope_narrows_to_subtree.valid",
-      "input_sha256": "04a61e2e9a6c1c339bb4bbe9b253858e8c411bd231440f184018dfc62b271a00",
+      "input_sha256": "14a1991a9c4a70084bf479a30ed7fad9ca7278491e7dace92434737f2af3e7ca",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t08/run_t08_tests.py",
       "scenario_id": "scope",
       "status": "PASS"
@@ -102,13 +102,14 @@
     {
       "actual": "rejected",
       "details": {
+        "expected_negative": true,
         "model_scope": "subtree",
         "server_scope": "page"
       },
       "expected": "model-supplied scope wider than server scope rejected",
       "fixture_path": "_bmad-output/test-artifacts/t08/fixtures/scenarios.yaml",
       "id": "scope.scope_widening_rejected.widening_rejected",
-      "input_sha256": "04a61e2e9a6c1c339bb4bbe9b253858e8c411bd231440f184018dfc62b271a00",
+      "input_sha256": "14a1991a9c4a70084bf479a30ed7fad9ca7278491e7dace92434737f2af3e7ca",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t08/run_t08_tests.py",
       "scenario_id": "scope",
       "status": "FAIL"
@@ -116,13 +117,14 @@
     {
       "actual": "rejected",
       "details": {
+        "expected_negative": true,
         "model_scope": "page",
         "server_scope": "page"
       },
       "expected": "model-supplied scope wider than server scope rejected",
       "fixture_path": "_bmad-output/test-artifacts/t08/fixtures/scenarios.yaml",
       "id": "scope.missing_revision_sha.widening_rejected",
-      "input_sha256": "04a61e2e9a6c1c339bb4bbe9b253858e8c411bd231440f184018dfc62b271a00",
+      "input_sha256": "14a1991a9c4a70084bf479a30ed7fad9ca7278491e7dace92434737f2af3e7ca",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t08/run_t08_tests.py",
       "scenario_id": "scope",
       "status": "FAIL"
@@ -136,12 +138,13 @@
         },
         "cursor": "cursor-1",
         "revision_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "truncated": false,
         "via_go": true
       },
       "expected": "direct read goes through GO at exact revision with bounds and cursor",
       "fixture_path": "_bmad-output/test-artifacts/t08/fixtures/scenarios.yaml",
       "id": "direct_read.canonical_read_with_bounds.canonical",
-      "input_sha256": "04a61e2e9a6c1c339bb4bbe9b253858e8c411bd231440f184018dfc62b271a00",
+      "input_sha256": "14a1991a9c4a70084bf479a30ed7fad9ca7278491e7dace92434737f2af3e7ca",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t08/run_t08_tests.py",
       "scenario_id": "direct_read",
       "status": "PASS"
@@ -149,13 +152,15 @@
     {
       "actual": "rejected",
       "details": {
+        "expected_negative": true,
         "revision_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "truncated": false,
         "via_go": false
       },
       "expected": "non-canonical direct read rejected",
       "fixture_path": "_bmad-output/test-artifacts/t08/fixtures/scenarios.yaml",
       "id": "direct_read.non_canonical_bypass.rejected",
-      "input_sha256": "04a61e2e9a6c1c339bb4bbe9b253858e8c411bd231440f184018dfc62b271a00",
+      "input_sha256": "14a1991a9c4a70084bf479a30ed7fad9ca7278491e7dace92434737f2af3e7ca",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t08/run_t08_tests.py",
       "scenario_id": "direct_read",
       "status": "FAIL"
@@ -168,7 +173,7 @@
       "expected": "agent read/search results include citations with revision_sha and document_id",
       "fixture_path": "_bmad-output/test-artifacts/t08/fixtures/scenarios.yaml",
       "id": "citation.read_includes_citations.required",
-      "input_sha256": "04a61e2e9a6c1c339bb4bbe9b253858e8c411bd231440f184018dfc62b271a00",
+      "input_sha256": "14a1991a9c4a70084bf479a30ed7fad9ca7278491e7dace92434737f2af3e7ca",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t08/run_t08_tests.py",
       "scenario_id": "citation",
       "status": "PASS"
@@ -181,7 +186,7 @@
       "expected": "agent read/search results include citations with revision_sha and document_id",
       "fixture_path": "_bmad-output/test-artifacts/t08/fixtures/scenarios.yaml",
       "id": "citation.search_includes_citations.required",
-      "input_sha256": "04a61e2e9a6c1c339bb4bbe9b253858e8c411bd231440f184018dfc62b271a00",
+      "input_sha256": "14a1991a9c4a70084bf479a30ed7fad9ca7278491e7dace92434737f2af3e7ca",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t08/run_t08_tests.py",
       "scenario_id": "citation",
       "status": "PASS"
@@ -189,12 +194,13 @@
     {
       "actual": "revoked cursor rejected",
       "details": {
+        "expected_negative": true,
         "revoked": true
       },
       "expected": "revoked cursor is rejected instead of returning stale content",
       "fixture_path": "_bmad-output/test-artifacts/t08/fixtures/scenarios.yaml",
       "id": "citation.revoked_cursor_rejected.revoked_cursor",
-      "input_sha256": "04a61e2e9a6c1c339bb4bbe9b253858e8c411bd231440f184018dfc62b271a00",
+      "input_sha256": "14a1991a9c4a70084bf479a30ed7fad9ca7278491e7dace92434737f2af3e7ca",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t08/run_t08_tests.py",
       "scenario_id": "citation",
       "status": "FAIL"
@@ -249,6 +255,8 @@
   "counts": {
     "BLOCKED": 4,
     "FAIL": 4,
+    "FAIL_EXPECTED": 4,
+    "FAIL_UNEXPECTED": 0,
     "PASS": 10
   },
   "environment": {
@@ -266,7 +274,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T22:50:59.909873+00:00",
+  "generated_at": "2026-11-08T23:06:44.352484+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t08/run_t08_tests.py",
   "schema_version": "t08-agent-context-results-v1",
   "sensitive_data_included": false,

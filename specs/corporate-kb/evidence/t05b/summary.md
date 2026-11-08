@@ -1,6 +1,6 @@
 # T05b Canonical DecisionRecord, Exact Merge and Conclusive Recovery Evidence Summary
 
-- **Generated:** 2026-11-08T22:50:58.876641+00:00
+- **Generated:** 2026-11-08T23:06:42.962801+00:00
 - **Contracts version:** decision-record-v1
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Spec baseline commit:** d2c0d072a757808ea891fbf6414f00147679f7a7
@@ -10,17 +10,18 @@
 ## Counts
 
 - PASS: 8
-- FAIL: 9
+- FAIL (expected): 9
+- FAIL (unexpected): 0
 - BLOCKED: 5
 - **Total:** 22
 
 ## Top findings
 
-### FAIL
-- `decision.self_approval_author.rejected` (decision): rejected: self_approval=True, hash_mismatch=False, missing=[]; fixture `_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml`
-- `decision.self_approval_version_author.rejected` (decision): rejected: self_approval=True, hash_mismatch=False, missing=[]; fixture `_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml`
-- `decision.self_approval_requester.rejected` (decision): rejected: self_approval=True, hash_mismatch=False, missing=[]; fixture `_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml`
-- `decision.note_tag_hash_mismatch.rejected` (decision): rejected: self_approval=False, hash_mismatch=True, missing=[]; fixture `_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml`
+### FAIL (expected)
+- `decision.self_approval_author.rejected` (decision): rejected: self_approval=True, hash_mismatch=False, target_ok=True, missing=[]; fixture `_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml`
+- `decision.self_approval_version_author.rejected` (decision): rejected: self_approval=True, hash_mismatch=False, target_ok=True, missing=[]; fixture `_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml`
+- `decision.self_approval_requester.rejected` (decision): rejected: self_approval=True, hash_mismatch=False, target_ok=True, missing=[]; fixture `_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml`
+- `decision.note_tag_hash_mismatch.rejected` (decision): rejected: self_approval=False, hash_mismatch=True, target_ok=True, missing=[]; fixture `_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml`
 - `merge_proof.wrong_first_parent.invalid` (merge_proof): merge proof invalid; fixture `_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml`
 - `merge_proof.missing_trailer.invalid` (merge_proof): merge proof invalid; fixture `_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml`
 - `merge_proof.concurrent_loser_zero_writes.invalid` (merge_proof): merge proof invalid; fixture `_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml`

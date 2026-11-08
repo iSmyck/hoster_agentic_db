@@ -1,6 +1,6 @@
 # T09 Restricted Single-Page Agent Proposal Tools Evidence Summary
 
-- **Generated:** 2026-11-08T22:51:00.260411+00:00
+- **Generated:** 2026-11-08T23:06:44.700623+00:00
 - **Contracts version:** agent-tools-v2
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Spec baseline commit:** d2c0d072a757808ea891fbf6414f00147679f7a7
@@ -10,13 +10,14 @@
 ## Counts
 
 - PASS: 11
-- FAIL: 10
+- FAIL (expected): 10
+- FAIL (unexpected): 0
 - BLOCKED: 4
 - **Total:** 25
 
 ## Top findings
 
-### FAIL
+### FAIL (expected)
 - `propose_create.create_with_origin_rejected.rejected` (propose_create): rejected; fixture `_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml`
 - `propose_create.create_with_archive_rejected.rejected` (propose_create): rejected; fixture `_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml`
 - `propose_edit.whole_document_replacement_rejected.rejected` (propose_edit): rejected; fixture `_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml`
@@ -26,7 +27,7 @@
 - `forbidden.accept_forbidden.accept` (forbidden_capabilities): accept is forbidden; fixture `_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml`
 - `forbidden.bulk_forbidden.bulk` (forbidden_capabilities): bulk is forbidden; fixture `_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml`
 - `forbidden.subtree_forbidden.subtree` (forbidden_capabilities): subtree is forbidden; fixture `_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml`
-- `prompt_injection.injection_attempting_role_change.authority_preserved` (prompt_injection): rejected; fixture `_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml`
+- `prompt_injection.injection_attempting_role_change.rejected` (prompt_injection): request rejected for authority change; fixture `_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml`
 
 ### BLOCKED
 - `runtime.live_agent_propose_create` (runtime): requires live sandbox and credentials

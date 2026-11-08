@@ -64,7 +64,7 @@
       "expected": "single-page body-only create proposal accepted",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "propose_create.valid_single_page_body_create.valid",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "propose_create",
       "status": "PASS"
@@ -73,13 +73,14 @@
       "actual": "rejected",
       "details": {
         "body_only": true,
+        "expected_negative": true,
         "has_archive": false,
         "has_origin": true
       },
       "expected": "forbidden create rejected",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "propose_create.create_with_origin_rejected.rejected",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "propose_create",
       "status": "FAIL"
@@ -88,13 +89,14 @@
       "actual": "rejected",
       "details": {
         "body_only": true,
+        "expected_negative": true,
         "has_archive": true,
         "has_origin": false
       },
       "expected": "forbidden create rejected",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "propose_create.create_with_archive_rejected.rejected",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "propose_create",
       "status": "FAIL"
@@ -110,7 +112,7 @@
       "expected": "AgentAnchoredPatchChange with required body section accepted",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "propose_edit.valid_agent_anchored_patch.valid",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "propose_edit",
       "status": "PASS"
@@ -119,6 +121,7 @@
       "actual": "rejected",
       "details": {
         "ambiguous_patch": false,
+        "expected_negative": true,
         "front_matter_change": false,
         "has_anchor": false,
         "whole_document": true
@@ -126,7 +129,7 @@
       "expected": "forbidden edit rejected with SECURITY_REJECTED",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "propose_edit.whole_document_replacement_rejected.rejected",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "propose_edit",
       "status": "FAIL"
@@ -135,6 +138,7 @@
       "actual": "rejected",
       "details": {
         "ambiguous_patch": false,
+        "expected_negative": true,
         "front_matter_change": true,
         "has_anchor": false,
         "whole_document": false
@@ -142,7 +146,7 @@
       "expected": "forbidden edit rejected with SECURITY_REJECTED",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "propose_edit.front_matter_change_rejected.rejected",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "propose_edit",
       "status": "FAIL"
@@ -151,6 +155,7 @@
       "actual": "rejected",
       "details": {
         "ambiguous_patch": true,
+        "expected_negative": true,
         "front_matter_change": false,
         "has_anchor": true,
         "whole_document": false
@@ -158,7 +163,7 @@
       "expected": "forbidden edit rejected with PATCH_AMBIGUOUS",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "propose_edit.ambiguous_patch_rejected.rejected",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "propose_edit",
       "status": "FAIL"
@@ -166,12 +171,13 @@
     {
       "actual": "merge is forbidden",
       "details": {
-        "capability": "merge"
+        "capability": "merge",
+        "expected_negative": true
       },
       "expected": "capability merge is forbidden for agent",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "forbidden.merge_forbidden.merge",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "forbidden_capabilities",
       "status": "FAIL"
@@ -179,12 +185,13 @@
     {
       "actual": "accept is forbidden",
       "details": {
-        "capability": "accept"
+        "capability": "accept",
+        "expected_negative": true
       },
       "expected": "capability accept is forbidden for agent",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "forbidden.accept_forbidden.accept",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "forbidden_capabilities",
       "status": "FAIL"
@@ -192,12 +199,13 @@
     {
       "actual": "bulk is forbidden",
       "details": {
-        "capability": "bulk"
+        "capability": "bulk",
+        "expected_negative": true
       },
       "expected": "capability bulk is forbidden for agent",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "forbidden.bulk_forbidden.bulk",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "forbidden_capabilities",
       "status": "FAIL"
@@ -205,12 +213,13 @@
     {
       "actual": "subtree is forbidden",
       "details": {
-        "capability": "subtree"
+        "capability": "subtree",
+        "expected_negative": true
       },
       "expected": "capability subtree is forbidden for agent",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "forbidden.subtree_forbidden.subtree",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "forbidden_capabilities",
       "status": "FAIL"
@@ -223,7 +232,7 @@
       "expected": "capability read is allowed",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "forbidden.read_allowed.read",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "forbidden_capabilities",
       "status": "PASS"
@@ -236,7 +245,7 @@
       "expected": "capability search is allowed",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "forbidden.search_allowed.search",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "forbidden_capabilities",
       "status": "PASS"
@@ -249,52 +258,56 @@
       "expected": "capability propose is allowed",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "forbidden.propose_allowed.propose",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "forbidden_capabilities",
       "status": "PASS"
     },
     {
-      "actual": "authority unchanged",
+      "actual": "authority preserved and request accepted",
       "details": {
         "actor_changed": false,
+        "request_rejected": false,
         "scope_changed": false,
         "tools_changed": false
       },
       "expected": "injected rationale/evidence does not change actor, scope, tools, or policy",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "prompt_injection.rationale_injection_no_authority_change.no_authority_change",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "prompt_injection",
       "status": "PASS"
     },
     {
-      "actual": "authority unchanged",
+      "actual": "authority preserved and request accepted",
       "details": {
         "actor_changed": false,
+        "request_rejected": false,
         "scope_changed": false,
         "tools_changed": false
       },
       "expected": "injected rationale/evidence does not change actor, scope, tools, or policy",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
       "id": "prompt_injection.evidence_injection_no_authority_change.no_authority_change",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "prompt_injection",
       "status": "PASS"
     },
     {
-      "actual": "rejected",
+      "actual": "request rejected for authority change",
       "details": {
         "actor_changed": true,
+        "expected_negative": true,
+        "request_rejected": true,
         "scope_changed": false,
         "tools_changed": false
       },
       "expected": "injected data attempting authority change rejected",
       "fixture_path": "_bmad-output/test-artifacts/t09/fixtures/scenarios.yaml",
-      "id": "prompt_injection.injection_attempting_role_change.authority_preserved",
-      "input_sha256": "e3177709a6a98ad69394a822711091d00dd5add6f43dbc682f10b1899f1f8ddf",
+      "id": "prompt_injection.injection_attempting_role_change.rejected",
+      "input_sha256": "bee6ba82053024b1e771f79008355f76cdc7069dad29c497ab341ccf1f17d72f",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
       "scenario_id": "prompt_injection",
       "status": "FAIL"
@@ -349,6 +362,8 @@
   "counts": {
     "BLOCKED": 4,
     "FAIL": 10,
+    "FAIL_EXPECTED": 10,
+    "FAIL_UNEXPECTED": 0,
     "PASS": 11
   },
   "environment": {
@@ -366,7 +381,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T22:51:00.260411+00:00",
+  "generated_at": "2026-11-08T23:06:44.700623+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
   "schema_version": "t09-agent-proposal-results-v1",
   "sensitive_data_included": false,

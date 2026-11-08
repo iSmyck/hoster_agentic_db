@@ -1,6 +1,6 @@
 # T08 Scoped Working Context and Canonical Direct-Read Agent Tools Evidence Summary
 
-- **Generated:** 2026-11-08T22:50:59.909873+00:00
+- **Generated:** 2026-11-08T23:06:44.352484+00:00
 - **Contracts version:** agent-tools-v2
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Spec baseline commit:** d2c0d072a757808ea891fbf6414f00147679f7a7
@@ -10,13 +10,14 @@
 ## Counts
 
 - PASS: 10
-- FAIL: 4
+- FAIL (expected): 4
+- FAIL (unexpected): 0
 - BLOCKED: 4
 - **Total:** 18
 
 ## Top findings
 
-### FAIL
+### FAIL (expected)
 - `scope.scope_widening_rejected.widening_rejected` (scope): rejected; fixture `_bmad-output/test-artifacts/t08/fixtures/scenarios.yaml`
 - `scope.missing_revision_sha.widening_rejected` (scope): rejected; fixture `_bmad-output/test-artifacts/t08/fixtures/scenarios.yaml`
 - `direct_read.non_canonical_bypass.rejected` (direct_read): rejected; fixture `_bmad-output/test-artifacts/t08/fixtures/scenarios.yaml`

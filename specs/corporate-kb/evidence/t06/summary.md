@@ -1,6 +1,6 @@
 # T06 Merge-Only GO Enforcement, Fencing and Quarantine Evidence Summary
 
-- **Generated:** 2026-11-08T22:50:59.221187+00:00
+- **Generated:** 2026-11-08T23:06:43.309842+00:00
 - **Contracts version:** merge-enforcement-v1
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Spec baseline commit:** d2c0d072a757808ea891fbf6414f00147679f7a7
@@ -10,18 +10,19 @@
 ## Counts
 
 - PASS: 5
-- FAIL: 9
+- FAIL (expected): 9
+- FAIL (unexpected): 0
 - BLOCKED: 5
 - **Total:** 19
 
 ## Top findings
 
-### FAIL
-- `enforcement.direct_push_human.security_rejected` (enforcement): denied: user-sales-1 push; fixture `_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml`
-- `enforcement.direct_merge_human.security_rejected` (enforcement): denied: user-sales-1 merge; fixture `_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml`
-- `enforcement.ci_bot_merge.security_rejected` (enforcement): denied: ci-bot merge; fixture `_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml`
-- `enforcement.connector_merge.security_rejected` (enforcement): denied: connector-1 merge; fixture `_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml`
-- `enforcement.go_merge_without_decision.decision_invalid` (enforcement): denied: go-merge-service merge; fixture `_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml`
+### FAIL (expected)
+- `enforcement.direct_push_human.security_rejected` (enforcement): denied: user-sales-1 push, main_writes=0; fixture `_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml`
+- `enforcement.direct_merge_human.security_rejected` (enforcement): denied: user-sales-1 merge, main_writes=0; fixture `_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml`
+- `enforcement.ci_bot_merge.security_rejected` (enforcement): denied: ci-bot merge, main_writes=0; fixture `_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml`
+- `enforcement.connector_merge.security_rejected` (enforcement): denied: connector-1 merge, main_writes=0; fixture `_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml`
+- `enforcement.go_merge_without_decision.decision_invalid` (enforcement): denied: go-merge-service merge, main_writes=0; fixture `_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml`
 - `enforcement.owner_bypass.owner_bypass_quarantine` (enforcement): privileged bypass detected and quarantined; fixture `_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml`
 - `fencing.invalid_fencing_token.blocked` (fencing): blocked; fixture `_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml`
 - `fencing.recovery_required_flag.blocked` (fencing): blocked; fixture `_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml`

@@ -1,6 +1,6 @@
 # T07b DocOps Review Projections, Correction Tasks and UX Telemetry Evidence Summary
 
-- **Generated:** 2026-11-08T22:51:00.607935+00:00
+- **Generated:** 2026-11-08T23:06:44.009891+00:00
 - **Contracts version:** docops-correction-task-v1
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Spec baseline commit:** d2c0d072a757808ea891fbf6414f00147679f7a7
@@ -10,13 +10,14 @@
 ## Counts
 
 - PASS: 13
-- FAIL: 3
+- FAIL (expected): 3
+- FAIL (unexpected): 0
 - BLOCKED: 3
 - **Total:** 19
 
 ## Top findings
 
-### FAIL
+### FAIL (expected)
 - `review_projection.mismatched_canonical.invalid` (review_projection): rejected; fixture `_bmad-output/test-artifacts/t07b/fixtures/scenarios.yaml`
 - `telemetry.raw_document_leak.rejected` (telemetry): rejected; fixture `_bmad-output/test-artifacts/t07b/fixtures/scenarios.yaml`
 - `telemetry.raw_query_leak.rejected` (telemetry): rejected; fixture `_bmad-output/test-artifacts/t07b/fixtures/scenarios.yaml`

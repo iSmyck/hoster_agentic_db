@@ -50,77 +50,87 @@
       "expected": "only GO merge service merges after canonical decision",
       "fixture_path": "_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml",
       "id": "enforcement.go_merge_after_decision.allowed",
-      "input_sha256": "23cccad669c404ea7dffe51f8f8ccd46d525fd57ee6e24abf0f99a2ddbd2e334",
+      "input_sha256": "14817085f861728b3d7e266f73b9d6fb4e8d4cc821c79f75c6dd9f40eb622d7c",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t06/run_t06_tests.py",
       "scenario_id": "enforcement",
       "status": "PASS"
     },
     {
-      "actual": "denied: user-sales-1 push",
+      "actual": "denied: user-sales-1 push, main_writes=0",
       "details": {
         "action": "push",
-        "identity": "user-sales-1"
+        "expected_negative": true,
+        "identity": "user-sales-1",
+        "main_writes": 0
       },
       "expected": "SECURITY_REJECTED, zero main writes",
       "fixture_path": "_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml",
       "id": "enforcement.direct_push_human.security_rejected",
-      "input_sha256": "23cccad669c404ea7dffe51f8f8ccd46d525fd57ee6e24abf0f99a2ddbd2e334",
+      "input_sha256": "14817085f861728b3d7e266f73b9d6fb4e8d4cc821c79f75c6dd9f40eb622d7c",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t06/run_t06_tests.py",
       "scenario_id": "enforcement",
       "status": "FAIL"
     },
     {
-      "actual": "denied: user-sales-1 merge",
+      "actual": "denied: user-sales-1 merge, main_writes=0",
       "details": {
         "action": "merge",
-        "identity": "user-sales-1"
+        "expected_negative": true,
+        "identity": "user-sales-1",
+        "main_writes": 0
       },
       "expected": "SECURITY_REJECTED, zero main writes",
       "fixture_path": "_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml",
       "id": "enforcement.direct_merge_human.security_rejected",
-      "input_sha256": "23cccad669c404ea7dffe51f8f8ccd46d525fd57ee6e24abf0f99a2ddbd2e334",
+      "input_sha256": "14817085f861728b3d7e266f73b9d6fb4e8d4cc821c79f75c6dd9f40eb622d7c",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t06/run_t06_tests.py",
       "scenario_id": "enforcement",
       "status": "FAIL"
     },
     {
-      "actual": "denied: ci-bot merge",
+      "actual": "denied: ci-bot merge, main_writes=0",
       "details": {
         "action": "merge",
-        "identity": "ci-bot"
+        "expected_negative": true,
+        "identity": "ci-bot",
+        "main_writes": 0
       },
       "expected": "SECURITY_REJECTED, zero main writes",
       "fixture_path": "_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml",
       "id": "enforcement.ci_bot_merge.security_rejected",
-      "input_sha256": "23cccad669c404ea7dffe51f8f8ccd46d525fd57ee6e24abf0f99a2ddbd2e334",
+      "input_sha256": "14817085f861728b3d7e266f73b9d6fb4e8d4cc821c79f75c6dd9f40eb622d7c",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t06/run_t06_tests.py",
       "scenario_id": "enforcement",
       "status": "FAIL"
     },
     {
-      "actual": "denied: connector-1 merge",
+      "actual": "denied: connector-1 merge, main_writes=0",
       "details": {
         "action": "merge",
-        "identity": "connector-1"
+        "expected_negative": true,
+        "identity": "connector-1",
+        "main_writes": 0
       },
       "expected": "SECURITY_REJECTED, zero main writes",
       "fixture_path": "_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml",
       "id": "enforcement.connector_merge.security_rejected",
-      "input_sha256": "23cccad669c404ea7dffe51f8f8ccd46d525fd57ee6e24abf0f99a2ddbd2e334",
+      "input_sha256": "14817085f861728b3d7e266f73b9d6fb4e8d4cc821c79f75c6dd9f40eb622d7c",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t06/run_t06_tests.py",
       "scenario_id": "enforcement",
       "status": "FAIL"
     },
     {
-      "actual": "denied: go-merge-service merge",
+      "actual": "denied: go-merge-service merge, main_writes=0",
       "details": {
         "action": "merge",
-        "identity": "go-merge-service"
+        "expected_negative": true,
+        "identity": "go-merge-service",
+        "main_writes": 0
       },
       "expected": "DECISION_INVALID, zero main writes",
       "fixture_path": "_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml",
       "id": "enforcement.go_merge_without_decision.decision_invalid",
-      "input_sha256": "23cccad669c404ea7dffe51f8f8ccd46d525fd57ee6e24abf0f99a2ddbd2e334",
+      "input_sha256": "14817085f861728b3d7e266f73b9d6fb4e8d4cc821c79f75c6dd9f40eb622d7c",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t06/run_t06_tests.py",
       "scenario_id": "enforcement",
       "status": "FAIL"
@@ -129,13 +139,15 @@
       "actual": "privileged bypass detected and quarantined",
       "details": {
         "action": "push",
+        "expected_negative": true,
         "identity": "gitlab-owner",
-        "quarantine": true
+        "integrity_incident": true,
+        "target_quarantined": true
       },
       "expected": "INTEGRITY_INCIDENT; privileged bypass quarantined as integrity incident",
       "fixture_path": "_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml",
       "id": "enforcement.owner_bypass.owner_bypass_quarantine",
-      "input_sha256": "23cccad669c404ea7dffe51f8f8ccd46d525fd57ee6e24abf0f99a2ddbd2e334",
+      "input_sha256": "14817085f861728b3d7e266f73b9d6fb4e8d4cc821c79f75c6dd9f40eb622d7c",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t06/run_t06_tests.py",
       "scenario_id": "enforcement",
       "status": "FAIL"
@@ -150,7 +162,7 @@
       "expected": "valid fencing token, no recovery, no quarantine",
       "fixture_path": "_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml",
       "id": "fencing.valid_fencing_token.ok",
-      "input_sha256": "23cccad669c404ea7dffe51f8f8ccd46d525fd57ee6e24abf0f99a2ddbd2e334",
+      "input_sha256": "14817085f861728b3d7e266f73b9d6fb4e8d4cc821c79f75c6dd9f40eb622d7c",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t06/run_t06_tests.py",
       "scenario_id": "fencing",
       "status": "PASS"
@@ -158,6 +170,7 @@
     {
       "actual": "blocked",
       "details": {
+        "expected_negative": true,
         "quarantine": false,
         "recovery_required": false,
         "token_valid": false
@@ -165,7 +178,7 @@
       "expected": "operation blocked due to invalid token/recovery/quarantine",
       "fixture_path": "_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml",
       "id": "fencing.invalid_fencing_token.blocked",
-      "input_sha256": "23cccad669c404ea7dffe51f8f8ccd46d525fd57ee6e24abf0f99a2ddbd2e334",
+      "input_sha256": "14817085f861728b3d7e266f73b9d6fb4e8d4cc821c79f75c6dd9f40eb622d7c",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t06/run_t06_tests.py",
       "scenario_id": "fencing",
       "status": "FAIL"
@@ -173,6 +186,7 @@
     {
       "actual": "blocked",
       "details": {
+        "expected_negative": true,
         "quarantine": false,
         "recovery_required": true,
         "token_valid": true
@@ -180,7 +194,7 @@
       "expected": "operation blocked due to invalid token/recovery/quarantine",
       "fixture_path": "_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml",
       "id": "fencing.recovery_required_flag.blocked",
-      "input_sha256": "23cccad669c404ea7dffe51f8f8ccd46d525fd57ee6e24abf0f99a2ddbd2e334",
+      "input_sha256": "14817085f861728b3d7e266f73b9d6fb4e8d4cc821c79f75c6dd9f40eb622d7c",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t06/run_t06_tests.py",
       "scenario_id": "fencing",
       "status": "FAIL"
@@ -188,6 +202,7 @@
     {
       "actual": "blocked",
       "details": {
+        "expected_negative": true,
         "quarantine": true,
         "recovery_required": true,
         "token_valid": true
@@ -195,7 +210,7 @@
       "expected": "operation blocked due to invalid token/recovery/quarantine",
       "fixture_path": "_bmad-output/test-artifacts/t06/fixtures/scenarios.yaml",
       "id": "fencing.target_quarantine.blocked",
-      "input_sha256": "23cccad669c404ea7dffe51f8f8ccd46d525fd57ee6e24abf0f99a2ddbd2e334",
+      "input_sha256": "14817085f861728b3d7e266f73b9d6fb4e8d4cc821c79f75c6dd9f40eb622d7c",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t06/run_t06_tests.py",
       "scenario_id": "fencing",
       "status": "FAIL"
@@ -261,6 +276,8 @@
   "counts": {
     "BLOCKED": 5,
     "FAIL": 9,
+    "FAIL_EXPECTED": 9,
+    "FAIL_UNEXPECTED": 0,
     "PASS": 5
   },
   "environment": {
@@ -278,7 +295,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T22:50:59.221187+00:00",
+  "generated_at": "2026-11-08T23:06:43.309842+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t06/run_t06_tests.py",
   "schema_version": "t06-merge-enforcement-results-v1",
   "sensitive_data_included": false,

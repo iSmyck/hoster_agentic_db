@@ -58,13 +58,16 @@
       "actual": "review ok",
       "details": {
         "base_sha": "ffffffffffffffffffffffffffffffffffffffff",
+        "diff_exact_ok": true,
+        "evidence_ok": true,
         "preview_reliable": true,
-        "proposal_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        "proposal_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "rationale_ok": true
       },
       "expected": "review shows exact base/proposal SHA, full diff, reliable preview",
       "fixture_path": "_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml",
       "id": "review.complete_review.exact_and_reliable",
-      "input_sha256": "0d347b3ebc0f5cf9064ec5ee05b19169652a47b77da924b8bd7e52f631a06ad3",
+      "input_sha256": "3f9173c372b6c94c36f37ff2e5fa39b2592cb04ea40457d2c4d192fcd09c60bb",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07/run_t07_tests.py",
       "scenario_id": "review",
       "status": "PASS"
@@ -73,13 +76,15 @@
       "actual": "not blocked",
       "details": {
         "base_sha": "ffffffffffffffffffffffffffffffffffffffff",
+        "diff_exact_ok": true,
+        "expected_negative": true,
         "preview_reliable": true,
         "proposal_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       },
       "expected": "apply/merge blocked due to stale base or unreliable preview",
       "fixture_path": "_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml",
       "id": "review.stale_base_review.blocked",
-      "input_sha256": "0d347b3ebc0f5cf9064ec5ee05b19169652a47b77da924b8bd7e52f631a06ad3",
+      "input_sha256": "3f9173c372b6c94c36f37ff2e5fa39b2592cb04ea40457d2c4d192fcd09c60bb",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07/run_t07_tests.py",
       "scenario_id": "review",
       "status": "PASS"
@@ -88,13 +93,15 @@
       "actual": "blocked",
       "details": {
         "base_sha": "ffffffffffffffffffffffffffffffffffffffff",
+        "diff_exact_ok": true,
+        "expected_negative": true,
         "preview_reliable": false,
         "proposal_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       },
       "expected": "apply/merge blocked due to stale base or unreliable preview",
       "fixture_path": "_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml",
       "id": "review.unreliable_preview_blocks_apply.blocked",
-      "input_sha256": "0d347b3ebc0f5cf9064ec5ee05b19169652a47b77da924b8bd7e52f631a06ad3",
+      "input_sha256": "3f9173c372b6c94c36f37ff2e5fa39b2592cb04ea40457d2c4d192fcd09c60bb",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07/run_t07_tests.py",
       "scenario_id": "review",
       "status": "FAIL"
@@ -103,13 +110,16 @@
       "actual": "review ok",
       "details": {
         "base_sha": "ffffffffffffffffffffffffffffffffffffffff",
+        "diff_exact_ok": true,
+        "evidence_ok": true,
         "preview_reliable": true,
-        "proposal_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        "proposal_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "rationale_ok": true
       },
       "expected": "review shows exact base/proposal SHA, full diff, reliable preview",
       "fixture_path": "_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml",
       "id": "review.independent_decision.exact_and_reliable",
-      "input_sha256": "0d347b3ebc0f5cf9064ec5ee05b19169652a47b77da924b8bd7e52f631a06ad3",
+      "input_sha256": "3f9173c372b6c94c36f37ff2e5fa39b2592cb04ea40457d2c4d192fcd09c60bb",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07/run_t07_tests.py",
       "scenario_id": "review",
       "status": "PASS"
@@ -124,7 +134,7 @@
       "expected": "request has matching Origin and valid CSRF token",
       "fixture_path": "_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml",
       "id": "csrf_origin.valid_origin_and_csrf.valid",
-      "input_sha256": "0d347b3ebc0f5cf9064ec5ee05b19169652a47b77da924b8bd7e52f631a06ad3",
+      "input_sha256": "3f9173c372b6c94c36f37ff2e5fa39b2592cb04ea40457d2c4d192fcd09c60bb",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07/run_t07_tests.py",
       "scenario_id": "csrf_origin",
       "status": "PASS"
@@ -133,13 +143,14 @@
       "actual": "rejected",
       "details": {
         "csrf_valid": true,
+        "expected_negative": true,
         "has_origin": false,
         "origin_matches": false
       },
       "expected": "request rejected for missing/mismatched Origin or CSRF",
       "fixture_path": "_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml",
       "id": "csrf_origin.missing_origin.rejected",
-      "input_sha256": "0d347b3ebc0f5cf9064ec5ee05b19169652a47b77da924b8bd7e52f631a06ad3",
+      "input_sha256": "3f9173c372b6c94c36f37ff2e5fa39b2592cb04ea40457d2c4d192fcd09c60bb",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07/run_t07_tests.py",
       "scenario_id": "csrf_origin",
       "status": "FAIL"
@@ -148,13 +159,14 @@
       "actual": "rejected",
       "details": {
         "csrf_valid": true,
+        "expected_negative": true,
         "has_origin": true,
         "origin_matches": false
       },
       "expected": "request rejected for missing/mismatched Origin or CSRF",
       "fixture_path": "_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml",
       "id": "csrf_origin.origin_mismatch.rejected",
-      "input_sha256": "0d347b3ebc0f5cf9064ec5ee05b19169652a47b77da924b8bd7e52f631a06ad3",
+      "input_sha256": "3f9173c372b6c94c36f37ff2e5fa39b2592cb04ea40457d2c4d192fcd09c60bb",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07/run_t07_tests.py",
       "scenario_id": "csrf_origin",
       "status": "FAIL"
@@ -163,13 +175,14 @@
       "actual": "rejected",
       "details": {
         "csrf_valid": false,
+        "expected_negative": true,
         "has_origin": true,
         "origin_matches": true
       },
       "expected": "request rejected for missing/mismatched Origin or CSRF",
       "fixture_path": "_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml",
       "id": "csrf_origin.missing_csrf.rejected",
-      "input_sha256": "0d347b3ebc0f5cf9064ec5ee05b19169652a47b77da924b8bd7e52f631a06ad3",
+      "input_sha256": "3f9173c372b6c94c36f37ff2e5fa39b2592cb04ea40457d2c4d192fcd09c60bb",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07/run_t07_tests.py",
       "scenario_id": "csrf_origin",
       "status": "FAIL"
@@ -183,7 +196,7 @@
       "expected": "state 'draft' is shown explicitly, not masked",
       "fixture_path": "_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml",
       "id": "lifecycle.draft_state.distinguished",
-      "input_sha256": "0d347b3ebc0f5cf9064ec5ee05b19169652a47b77da924b8bd7e52f631a06ad3",
+      "input_sha256": "3f9173c372b6c94c36f37ff2e5fa39b2592cb04ea40457d2c4d192fcd09c60bb",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07/run_t07_tests.py",
       "scenario_id": "lifecycle",
       "status": "PASS"
@@ -197,7 +210,7 @@
       "expected": "state 'in_review' is shown explicitly, not masked",
       "fixture_path": "_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml",
       "id": "lifecycle.in_review_state.distinguished",
-      "input_sha256": "0d347b3ebc0f5cf9064ec5ee05b19169652a47b77da924b8bd7e52f631a06ad3",
+      "input_sha256": "3f9173c372b6c94c36f37ff2e5fa39b2592cb04ea40457d2c4d192fcd09c60bb",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07/run_t07_tests.py",
       "scenario_id": "lifecycle",
       "status": "PASS"
@@ -211,7 +224,7 @@
       "expected": "state 'published' is shown explicitly, not masked",
       "fixture_path": "_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml",
       "id": "lifecycle.published_state.distinguished",
-      "input_sha256": "0d347b3ebc0f5cf9064ec5ee05b19169652a47b77da924b8bd7e52f631a06ad3",
+      "input_sha256": "3f9173c372b6c94c36f37ff2e5fa39b2592cb04ea40457d2c4d192fcd09c60bb",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07/run_t07_tests.py",
       "scenario_id": "lifecycle",
       "status": "PASS"
@@ -219,13 +232,14 @@
     {
       "actual": "masked",
       "details": {
+        "expected_negative": true,
         "masked_as_published": true,
         "state": "recovery_required"
       },
       "expected": "recovery/conflicted state not masked as published/indexed",
       "fixture_path": "_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml",
       "id": "lifecycle.recovery_required_not_masked.not_masked",
-      "input_sha256": "0d347b3ebc0f5cf9064ec5ee05b19169652a47b77da924b8bd7e52f631a06ad3",
+      "input_sha256": "3f9173c372b6c94c36f37ff2e5fa39b2592cb04ea40457d2c4d192fcd09c60bb",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07/run_t07_tests.py",
       "scenario_id": "lifecycle",
       "status": "FAIL"
@@ -233,13 +247,14 @@
     {
       "actual": "masked",
       "details": {
+        "expected_negative": true,
         "masked_as_published": true,
         "state": "conflicted"
       },
       "expected": "recovery/conflicted state not masked as published/indexed",
       "fixture_path": "_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml",
       "id": "lifecycle.conflicted_not_masked.not_masked",
-      "input_sha256": "0d347b3ebc0f5cf9064ec5ee05b19169652a47b77da924b8bd7e52f631a06ad3",
+      "input_sha256": "3f9173c372b6c94c36f37ff2e5fa39b2592cb04ea40457d2c4d192fcd09c60bb",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07/run_t07_tests.py",
       "scenario_id": "lifecycle",
       "status": "FAIL"
@@ -305,6 +320,8 @@
   "counts": {
     "BLOCKED": 5,
     "FAIL": 6,
+    "FAIL_EXPECTED": 6,
+    "FAIL_UNEXPECTED": 0,
     "PASS": 11
   },
   "environment": {
@@ -322,7 +339,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T22:50:59.565532+00:00",
+  "generated_at": "2026-11-08T23:06:43.663021+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07/run_t07_tests.py",
   "schema_version": "t07-review-ui-results-v1",
   "sensitive_data_included": false,

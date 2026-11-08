@@ -1,6 +1,6 @@
 # T07 Exact Business Review and Independent Decisions Evidence Summary
 
-- **Generated:** 2026-11-08T22:50:59.565532+00:00
+- **Generated:** 2026-11-08T23:06:43.663021+00:00
 - **Contracts version:** decision-record-v1
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Spec baseline commit:** d2c0d072a757808ea891fbf6414f00147679f7a7
@@ -10,13 +10,14 @@
 ## Counts
 
 - PASS: 11
-- FAIL: 6
+- FAIL (expected): 6
+- FAIL (unexpected): 0
 - BLOCKED: 5
 - **Total:** 22
 
 ## Top findings
 
-### FAIL
+### FAIL (expected)
 - `review.unreliable_preview_blocks_apply.blocked` (review): blocked; fixture `_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml`
 - `csrf_origin.missing_origin.rejected` (csrf_origin): rejected; fixture `_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml`
 - `csrf_origin.origin_mismatch.rejected` (csrf_origin): rejected; fixture `_bmad-output/test-artifacts/t07/fixtures/scenarios.yaml`

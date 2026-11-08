@@ -103,6 +103,7 @@
     {
       "actual": "rejected",
       "details": {
+        "expected_negative": true,
         "review_required": true,
         "review_state": "due",
         "valid_until": "2026-11-01"
@@ -174,6 +175,7 @@
     {
       "actual": "not rejected",
       "details": {
+        "expected_negative": true,
         "linked_mr": null,
         "previous_state": "open",
         "state": "resolved"
@@ -220,6 +222,7 @@
     {
       "actual": "rejected",
       "details": {
+        "expected_negative": true,
         "raw_document": true,
         "raw_query": false,
         "token": false
@@ -235,6 +238,7 @@
     {
       "actual": "rejected",
       "details": {
+        "expected_negative": true,
         "raw_document": false,
         "raw_query": true,
         "token": false
@@ -286,6 +290,8 @@
   "counts": {
     "BLOCKED": 3,
     "FAIL": 3,
+    "FAIL_EXPECTED": 3,
+    "FAIL_UNEXPECTED": 0,
     "PASS": 13
   },
   "environment": {
@@ -303,7 +309,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T22:51:00.607935+00:00",
+  "generated_at": "2026-11-08T23:06:44.009891+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07b/run_t07b_tests.py",
   "schema_version": "t07b-docops-results-v1",
   "sensitive_data_included": false,
