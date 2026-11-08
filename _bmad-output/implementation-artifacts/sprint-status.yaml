@@ -1,0 +1,92 @@
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when its first story starts (via build's sprint sync)
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates the next story after the previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Retrospective appends its action items to action_items; the status view surfaces open ones
+generated: 11-08-2026 18:17
+last_updated: 11-08-2026 18:18
+project: corp_ai_db
+project_key: NOKEY
+tracking_system: file-system
+story_location: 
+  /Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/implementation-artifacts
+development_status:
+  epic-0: done
+  0-1-t00-baseline-audit-and-owner-g0-approval: done
+  epic-0-retrospective: optional
+
+  epic-1: backlog
+  1-1-t01-reproducible-two-space-sandbox-and-executable-defect-evi: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-t02-git-backed-document-tree-and-canonical-direct-read: backlog
+  2-2-t03a-stable-identity-core-and-nested-group-snapshots: backlog
+  2-3-t03b-per-space-policy-enforcement-and-revocation: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-t04a-durable-drafts-guarded-navigation-and-cursor-based-git: backlog
+  3-2-t04b-lossless-tiptap-adapter-and-browser-editor-gate: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-t05a-exact-proposalrecord-and-proposalversion-lifecycle: backlog
+  4-2-t05b-canonical-decisionrecord-exact-merge-and-conclusive-rec: backlog
+  4-3-t06-merge-only-go-enforcement-fencing-and-quarantine: backlog
+  4-4-t07-exact-business-review-and-independent-decisions: backlog
+  4-5-t08-scoped-working-context-and-canonical-direct-read-agent-t: backlog
+  4-6-t09-restricted-single-page-agent-proposal-tools: backlog
+  4-7-t07b-docops-review-projections-correction-tasks-and-ux-telem: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-t10a-exact-sha-ci-index-build-and-validated-preflight-artifa: backlog
+  5-2-t10b-published-retrieval-search-cursors-and-monotonic-public: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-t12a-deterministic-dry-run-import-and-admission-gates: backlog
+  6-2-t12b-controlled-cutover-and-activation-using-the-e05-preflig: backlog
+  6-3-t13a-complete-portable-export-with-exact-refs-and-closure: backlog
+  6-4-t13b-mirror-metadata-backup-rebuild-and-conservative-clean-r: backlog
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-t11-approved-hoster-ai-studio-inference-lifecycle: backlog
+  7-2-t14-reproducible-quality-safety-and-operational-evaluation: backlog
+  7-3-t18-necessary-pilot-part-pilot-hardening-protected-deploymen: backlog
+  epic-7-retrospective: optional
+
+  epic-8: backlog
+  8-1-t15-safe-source-registry-three-way-updates-and-durable-curso: backlog
+  8-2-t16-one-owner-selected-real-source-connector: backlog
+  8-3-t17-conditional-evidence-gated-extraction-media-and-ocr-qual: backlog
+  8-4-t18a-repeatable-config-only-dedicated-deployment: backlog
+  8-5-t18b-full-g3-backup-restore-upgrade-and-full-operational-acc: backlog
+  epic-8-retrospective: optional

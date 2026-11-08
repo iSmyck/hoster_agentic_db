@@ -1,0 +1,190 @@
+{
+  "schema_version": "t00-evidence-manifest-v1",
+  "generated_at": "2026-11-08T01:08:09.207467+00:00",
+  "review_status": "T00_DONE_G0_APPROVED",
+  "reviewer": "ses_e4749ad33fferbIxpE5yKZDn1L and ses_e473e62f2ffevFdH7Cfo5RABJr",
+  "checks": [
+    {
+      "id": "environment",
+      "command": "environment manifest and version checks",
+      "environment": "synthetic_local_sandbox",
+      "status": "Collected",
+      "raw_artifact": "_bmad-output/test-artifacts/t00/environment.json",
+      "raw_sha256": "04942b06f8da466cb5d6141d2160e987db05b1bc732059dcbdabcbbc9bc1731f",
+      "sanitized_evidence": "environment.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "gitlab-42-probes",
+      "command": "GITLAB_TOKEN=<redacted> python3 capability_checks.py --full",
+      "environment": "synthetic_local_sandbox",
+      "status": "COMPLETED_WITH_NONCONFORMING_RACE",
+      "raw_artifact": "_bmad-output/test-artifacts/t00/gitlab/capability-results.json",
+      "raw_sha256": "dc05904040a84f7e2024860961418c385555889e9ef5f98d947e2484ca8336a7",
+      "sanitized_evidence": "gitlab-capabilities.md",
+      "contains_secrets": false,
+      "aggregate_interpretation": "harness_completed_with_nonconforming_evidence_not_universal_pass"
+    },
+    {
+      "id": "ci-exact-sha",
+      "command": "GitLab Runner 19.5.3 shell executor; pipeline 3 / job 2 on protected main",
+      "environment": "synthetic_local_sandbox",
+      "status": "PASS",
+      "raw_artifact": "_bmad-output/test-artifacts/t00/runner/capability-results.json",
+      "raw_sha256": "3670b1bb4d8bd39085cff0920b110aee41ed5b03ce3a48a9f9b3bc1801d483c3",
+      "sanitized_evidence": "ci-runner.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "identity-keycloak",
+      "command": "python3 run_capability_checks.py",
+      "environment": "synthetic_local_sandbox",
+      "status": "PASS_ADAPTER_FEASIBILITY",
+      "raw_artifact": "_bmad-output/test-artifacts/t00/identity/capability-results.json",
+      "raw_sha256": "9fec4c4200911639fd87ebb9c17ea04f1f43b1f1e9b39f25be699e1d63f9c664",
+      "sanitized_evidence": "identity-capabilities.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "openwebui-oidc",
+      "command": "python3 prepare_openwebui_oidc.py && python3 openwebui_oidc_flow.py",
+      "environment": "synthetic_local_sandbox",
+      "status": "FAIL / ADAPTER REQUIRED",
+      "raw_artifact": "_bmad-output/test-artifacts/t00/identity/openwebui-oidc-results.json",
+      "raw_sha256": "c64043637e4289aa1da883415c0e71f01a6bb7fade0e8332b475e30ad8353f94",
+      "sanitized_evidence": "openwebui-oidc-runtime.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "retrieval-pgvector",
+      "command": "synthetic Russian/ANN benchmark with fixed BGE-M3 embeddings",
+      "environment": "synthetic_local_sandbox",
+      "status": "PASS_SYNTHETIC",
+      "raw_artifact": "_bmad-output/test-artifacts/t00/retrieval/results/benchmark.json",
+      "raw_sha256": "7efa8df13e17f54bdc84baef597328f0a65e3eeb394b2b7041194fe9ebe4231e",
+      "sanitized_evidence": "retrieval-benchmark.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "notes-chats",
+      "command": "uv run python notes_chats_regression.py",
+      "environment": "synthetic_local_sandbox",
+      "status": "PASS_API_ONLY",
+      "raw_artifact": "_bmad-output/test-artifacts/t00/backend/notes-chats-results.json",
+      "raw_sha256": "713da7e509eb2e0aa874273f3dffdbd751f430c48c1aa66a13767babf926d43d",
+      "sanitized_evidence": "notes-chats-regression.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "postgres-schema",
+      "command": "psql -d kb_t00_v3 -f schema-checks-v3.sql",
+      "environment": "synthetic_local_sandbox",
+      "status": "PARTIAL",
+      "raw_artifact": "_bmad-output/test-artifacts/t00/postgres/schema-results-v3.txt",
+      "raw_sha256": "02ea0791b535972fd93c7471f61fca5de903104ef4d429adf0c5cd0e1eb3c088",
+      "sanitized_evidence": "postgres-schema-probe.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "postgres-recovery",
+      "command": "psql -d kb_t00_recovery -f recovery-probe.sql",
+      "environment": "synthetic_local_sandbox",
+      "status": "PASS_SEMANTIC_PROBE",
+      "raw_artifact": "_bmad-output/test-artifacts/t00/postgres/recovery-results.txt",
+      "raw_sha256": "d34f62a50f4169d708f3f5a3c1bbe3461c19046911dec5491c443f4bde489220",
+      "sanitized_evidence": "postgres-recovery-probe.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "object-store",
+      "command": "uv run --with boto3 python checks.py",
+      "environment": "synthetic_local_sandbox",
+      "status": "PARTIAL_ACL_FAIL",
+      "raw_artifact": "_bmad-output/test-artifacts/t00/objectstore/capability-results.json",
+      "raw_sha256": "7eac2b84434d2e349e1ba946c57bd03954eae6aba43b80fa4d1cad83ca781e0d",
+      "sanitized_evidence": "object-store.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "editor",
+      "command": "UPSTREAM_ROOT=../upstream/open-webui node scripts/run.mjs",
+      "environment": "synthetic_local_sandbox",
+      "status": "PARTIAL_BROWSER_BLOCKED",
+      "raw_artifact": "_bmad-output/test-artifacts/t00/editor/results/summary.json",
+      "raw_sha256": "8b4d7706e9f699fd273a4c88ea788397ab58836e603fe98d6e73e12d66a1977b",
+      "sanitized_evidence": "openwebui-rag-editor-audit.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "openwebui-backend-toolchain",
+      "command": "uv sync --frozen --group dev --extra postgres && ruff && pytest",
+      "environment": "synthetic_local_sandbox",
+      "status": "PARTIAL",
+      "raw_artifact": "_bmad-output/test-artifacts/t00/backend/runtime-results.json",
+      "raw_sha256": "c380e9148eee54b97cb62f2f5f30a2d014647daf9f10890e1252d567cc067145",
+      "sanitized_evidence": "openwebui-toolchain.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "openwebui-frontend-toolchain",
+      "command": "CYPRESS_INSTALL_BINARY=0 npm ci && npm run check && eslint && vitest && vite build",
+      "environment": "synthetic_local_sandbox",
+      "status": "PARTIAL",
+      "raw_artifact": "_bmad-output/test-artifacts/t00/frontend/results.json",
+      "raw_sha256": "0df059b1a2abd1d2111af91fbf307874174bda2a0b0f595406f497e57ae38cff",
+      "sanitized_evidence": "openwebui-toolchain.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "approval-policy",
+      "command": "uv run --with pyyaml --with jsonschema python approval_policy_probe.py",
+      "environment": "synthetic_local_sandbox",
+      "status": "PASS_POLICY_SEMANTICS",
+      "raw_artifact": "_bmad-output/test-artifacts/t00/identity/approval-policy-results.json",
+      "raw_sha256": "f219fae250c0c29a8ac7dcea5805721120f009e42e4b9927dafcfefc2f00967b",
+      "sanitized_evidence": "approval-policy-probe.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "repository-provisioning",
+      "command": "design-only repository-per-Space provisioning proposal",
+      "environment": "design_review",
+      "status": "PROPOSED",
+      "raw_artifact": null,
+      "raw_sha256": null,
+      "sanitized_evidence": "../../repository-provisioning.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "delivery-estimates",
+      "command": "capacity-based scenario estimates, not commitments",
+      "environment": "design_review",
+      "status": "LOW_CONFIDENCE",
+      "raw_artifact": null,
+      "raw_sha256": null,
+      "sanitized_evidence": "../../delivery-estimates.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "license-review",
+      "command": "read-only LICENSE/LICENSE_HISTORY/branding review",
+      "environment": "design_review",
+      "status": "REVIEW_REQUIRED",
+      "raw_artifact": null,
+      "raw_sha256": null,
+      "sanitized_evidence": "openwebui-license-review.md",
+      "contains_secrets": false
+    },
+    {
+      "id": "openldap-runtime",
+      "command": "python3 checks.py",
+      "environment": "synthetic_openldap_tls",
+      "status": "PASS",
+      "raw_artifact": "_bmad-output/test-artifacts/t00/ldap/capability-results.json",
+      "raw_sha256": "23e3826934a1b7ca4e076f8419b88ffbb9c5fde29079bc7309f1e49c9ee1b1ac",
+      "sanitized_evidence": "ldap-capabilities.md",
+      "contains_secrets": false
+    }
+  ],
+  "independent_review": "independent-review.md"
+}

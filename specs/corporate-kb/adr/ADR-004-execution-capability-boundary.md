@@ -1,8 +1,8 @@
 # ADR-04 — Execution capability boundary
 
 **ID/Title:** ADR-04 / Граница исполняемых полномочий человека, агента и сервисов  
-**Status:** **Proposed** для G0 design review; реализация зависит от результатов T00 и не считается production approved. Нормативные запреты R06/R16 и I02–I06/I12 остаются обязательными критериями проектирования.  
-**Date:** 2026-11-06  
+**Status:** **Proposed** для G0 design review; T00 audit подтвердил upstream STOP и обязательность adapter (см. Verification). Не считается production approved. Нормативные запреты R06/R16 и I02–I06/I12 остаются обязательными критериями проектирования.  
+**Date:** 2026-11-06; дополнено T00 evidence 2026-11-08  
 **Requirements/AD links:** R01, R03, R05–R10, R15, R16; I02–I06, I12; [ARCHITECTURE-SPINE.md](../architecture-spine.md): AD-2, AD-3, AD-5, AD-6; [spec.md](../spec.md): T00, T03, T05, T06, T09.
 
 ## Context
@@ -58,7 +58,28 @@ Open WebUI нужно сохранить как продуктовую обол�
 - На sandbox GitLab доказать: agent/connector token не может merge; прямой push в protected `main` отклонён; browser/CI не имеют merge credential; человек не выполняет final apply вне GO.
 - Adversarial tests A04–A06, A17, A18: direct/deferred/note/automation/channel/OpenAPI/call_tool, prompt injection, malformed arguments, попытка подменить actor/tenant/groups и повторная генерация при apply.
 - Проверить, что unsupported bulk/subtree/attachment operations отклоняются сервером, а personal Notes/ordinary chats не регрессируют.
-- Каждый bypass — блокер G1; mock UI или отсутствие кнопки не засчитывается. **Текущее состояние:** реальные интеграционные проверки не выполнялись.
+- Каждый bypass — блокер G1; mock UI или отсутствие кнопки не засчитывается.
+
+### T00 evidence (2026-11-07; Open WebUI `v0.13.0` `c38885a1a737da4968f157092f304f3b5481d0bf`, GitLab CE `19.5.3`)
+
+Upstream STOP findings подтверждены статическим аудитом ([evidence/t00/openwebui-auth-audit.md](../evidence/t00/openwebui-auth-audit.md)):
+
+- arbitrary Python `exec` в server process без sandbox: `backend/open_webui/utils/plugin.py:208-250`;
+- Tool Creation через Workspace API и как built-in: `backend/open_webui/routers/tools.py:500-549`, `backend/open_webui/tools/builtin.py:3870-3908`;
+- default approval mode `full`; automations/channels принудительно обходят per-call approval: `backend/open_webui/main.py:1240-1250`;
+- AccessGrant имеет только `read/write`, не action capabilities: `backend/open_webui/models/access_grants.py:23-42`;
+- раздельные native и legacy execution paths: `backend/open_webui/utils/middleware.py:3092-3184`, `backend/open_webui/utils/middleware.py:1102-1144`.
+
+Обязательные adapter controls (не optional):
+
+1. Единый deny-by-default capability resolver после deferred target resolution и до side effect в обеих точках: `execute_tool_call` и legacy `tool_call_handler`; coverage direct/deferred/note/automation/channel/OpenAPI/MCP/browser и subagents. Exposure filtering в `get_tools` — только дополнительная мера.
+2. Corporate deployment отключает arbitrary Python Tools и Tool Creation; первый slice — только read/search/propose.
+3. Per-call stock approval не считается capability authorization.
+4. Merge service identity GO физически недоступна agent/browser/CI/connector.
+
+GitLab-side enforcement evidence: 42 completed probes на synthetic sandbox ([evidence/t00/gitlab-capabilities.md](../evidence/t00/gitlab-capabilities.md)) — protected `main` (`push_access_level=0`), merge только Maintainer (`merge_access_level=40`), GO — единственный Maintainer, Developer/Reporter direct merge отклонён. GitLab не предоставляет atomic target-branch CAS: GO per-target serialization и durable `recovery_required` barrier по [ADR-13](ADR-013-merge-serialization-recovery.md) обязательны. Instance/project Owner bypass остаётся G0 owner decision (G0-D3) с governance/reconciliation.
+
+**Текущее состояние:** GitLab-side enforcement доказан на synthetic sandbox; product-side deny-by-default adapter не реализован; adversarial A04–A06/A17/A18 не выполнялись. Это не production readiness и не G1 evidence.
 
 ## Related contracts
 

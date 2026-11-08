@@ -1,7 +1,7 @@
 # ADR-09 — Platform review UX
 
 **ID/Title:** ADR-09 / Review UX владельца в платформе  
-**Status:** **Accepted** по spec решением владельца от 2026-11-06; дополнен decision/review semantics во время architecture coaching. Реализация зависит от результатов T00/G0; конкретный editor/component — **Proposed/UNKNOWN** до audit.  
+**Status:** **Accepted** по spec решением владельца от 2026-11-06; дополнен decision/review semantics во время architecture coaching. **T00 DONE/G0 APPROVED; TipTap adapter selected и owner-approved (G0-D8)**; canonical adapter и T04 browser evidence не завершены.  
 **Date:** 2026-11-06  
 **Requirements/AD links:** R01–R03, R05, R07–R10, R13, R16, R18; I03, I05, I06, I09, I14; [ARCHITECTURE-SPINE.md](../architecture-spine.md): AD-2, AD-4, AD-6, AD-7, AD-13; [spec.md](../spec.md): T07–T09, A06–A08, A22–A23.
 
@@ -21,7 +21,7 @@
 6. Конфликт/base mismatch объясняется человеческим языком: страница изменилась, требуется новая proposal от свежего HEAD. UI не предлагает automatic conflict merge и не скрывает ноль/неизвестность результата при timeout.
 7. Review queue назначается внешней группе, а не персональному GitLab user. Mover меняет доступ и очередь после обновления групп; перед merge GO повторно проверяет группу, path scope и policy revisions.
 8. UI явно различает `draft`, `in_review`, `published`, `indexed`, `archived`, `conflicted`; техническое `recovery_required`/quarantine не отображается как успешный merge. Только подтверждённый Git merge commit подтверждает публикацию.
-9. WYSIWYG component выбирается в T00 по front matter fidelity, diff/preview, Cyrillic, attachments, accessibility и license. Самописный редактор без отдельного ADR не создаётся; выбор компонента не меняет canonical model.
+9. Owner-approved **TipTap adapter (G0-D8)** сохраняет WYSIWYG editing и требует canonical serializer, front-matter boundary, immutable attachment metadata, full source diff и T04 browser/IME/accessibility/XSS gate. Realtime collaborative editing/CRDT вне MVP; concurrent authors получают conflict detection, exact/fresh revisions, полный diff и новую ProposalVersion. Самописный редактор без отдельного ADR не создаётся; выбор компонента не меняет canonical model.
 
 ## Alternatives and tradeoffs
 
@@ -55,12 +55,12 @@
 
 ## Verification / T00 evidence
 
-- **T00:** сравнить готовые editor components на synthetic fixtures: front matter round-trip, Cyrillic, links/anchors, attachments, diff/preview, XSS handling, keyboard/accessibility и license. Не указывать выбранный компонент до evidence.
+- **T00 evidence записано:** готовые editor components сравнены на synthetic fixtures по front matter round-trip, Cyrillic, links/anchors, attachments, diff/preview, XSS handling, keyboard/accessibility и license; TipTap adapter selected G0-D8. Headless TipTap normalization/loss требует canonical adapter, browser gate отложен на T04 и не PASS. Realtime CRDT не требуется.
 - A06/A07/A08: новый commit/rebase отклоняет старый approval; accept/reject retry идемпотентен; concurrent merge показывает conflict и не меняет `main`.
 - Владелец без GitLab user/CLI проходит pending queue → diff/rationale/evidence → accept/reject/edit → history/restore. Проверить reload survival и group-assigned queue после mover.
 - Детерминированно показать изменения front matter/structure/links/attachment revisions; невозможность достоверного preview блокирует merge. Проверить XSS rejected, no lost text, evidence ACL и open MR exclusion.
 - Crash/timeout UX: отсутствует ложный `merged` до Git reconciliation; quarantined outcome не предлагается как успех.
-- **Текущее состояние:** UX acceptance и editor audit не выполнялись; принятие ADR не закрывает G0/G1.
+- **Текущее состояние:** T00 editor audit выполнен, G0 APPROVED; UX acceptance и T04 adapter/browser checks не выполнялись и не закрывают G1.
 
 ## Related contracts
 

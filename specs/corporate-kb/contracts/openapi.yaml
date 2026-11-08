@@ -2,14 +2,14 @@ openapi: 3.1.0
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 info:
   title: Corporate KB GO API
-  version: 0.2.0-proposed
+  version: 0.3.0-proposed
   description: >-
-    PROPOSED собственный контракт GO под логическим префиксом /api/kb/v1. Это не Open WebUI upstream API и не описание непроверенных GitLab routes. Open WebUI commit, GitLab version/edition, реальные upstream session/CSRF/service-credential механизмы и object format — UNKNOWN до T00. Серверный trusted AuthzContext обязателен для каждого вызова; ни один request schema не принимает actor, groups или tenant как доказательство.
+    PROPOSED собственный контракт GO под логическим префиксом /api/kb/v1. Это не Open WebUI upstream API и не описание непроверенных GitLab routes. T00 DONE и G0 APPROVED: baseline Git object format SHA-1 и synthetic GitLab webhook delivery с configured secret подтверждены PASS; production webhook allowlist и product adapter mapping, upstream session/CSRF/service-credential mappings, conformance и production integration checks остаются ADAPTER-REQUIRED/UNKNOWN по соответствующему scope, а не blanket T00 UNKNOWN. Серверный trusted AuthzContext обязателен для каждого вызова; ни один request schema не принимает actor, groups или tenant как доказательство.
 x-contract-status: PROPOSED
 x-mutation-idempotency: Every mutating operation requires Idempotency-Key bound to authenticated actor, normalized route, and normalized payload SHA-256. Before insertion GO performs a global key-registry lookup across actors and routes; replay with a different actor, route, concrete path, or payload returns IDEMPOTENCY_KEY_REUSED with zero writes.
 x-contract-invariants:
   - id: PATH_BODY_SPACE_ID
-    operations: [proposeCreateDocument, createImportDryRun, commitImport, createSpaceExport, applySpaceCutover, readLiveOperational]
+    operations: [proposeCreateDocument, createImportDryRun, commitImport, createSpaceExport, applySpaceCutover, readLiveOperational, createDocOpsCorrectionTask, resolveDocOpsCorrectionTask, cancelDocOpsCorrectionTask]
     rule: path.space_id == body.space_id and the trusted per-Space AuthzContext repository/policy binding; validate before any side effect.
     error: VALIDATION_ERROR
     alternative_denials:
@@ -49,13 +49,34 @@ x-contract-invariants:
     rule: path.run_id == body.run_id and the callback belongs to the same run, Space, repository, generation, profile, and snapshot; validate before status writes.
     error: VALIDATION_ERROR
   - id: BODY_HEADER_IDEMPOTENCY
-    operations: [saveDocumentDraft, proposeCreateDocument, proposeEditDocument, proposeWholeDocumentEdit, editProposalVersion, applyProposalDecision, proposeDocumentRestore, createImportDryRun, commitImport, createSpaceExport, applySpaceCutover, ingestGitLabWebhook, reportIndexRunStatus]
+    operations: [saveDocumentDraft, proposeCreateDocument, proposeEditDocument, proposeWholeDocumentEdit, editProposalVersion, applyProposalDecision, proposeDocumentRestore, createImportDryRun, commitImport, createSpaceExport, applySpaceCutover, ingestGitLabWebhook, reportIndexRunStatus, createDocOpsCorrectionTask, resolveDocOpsCorrectionTask, cancelDocOpsCorrectionTask]
     rule: body.idempotency_key == Idempotency-Key header. The global key registry compares verified actor, normalized operation/route, concrete path parameters, and normalized payload before insert or side effect.
     error: IDEMPOTENCY_KEY_REUSED
   - id: DECISION_KEY_AND_PROPOSAL_EQUALITY
     operations: [applyProposalDecision]
     rule: decision_id == body.idempotency_key == Idempotency-Key header; path.proposal_id == body.proposal_id; expected_proposal_sha/base_sha equal the reviewed immutable version.
     error: VALIDATION_ERROR
+  - id: PATH_BODY_CORRECTION_TASK_ID
+    operations: [resolveDocOpsCorrectionTask, cancelDocOpsCorrectionTask]
+    rule: path.task_id == body.task_id and path.space_id == body.space_id == task.space_id; validate against the authorized task before any event or projection write.
+    error: VALIDATION_ERROR
+    alternative_denials:
+      - condition: mismatch is confirmed inside an already authorized object scope
+        error: VALIDATION_ERROR
+      - condition: returning object existence or mismatch details would violate anti-enumeration policy
+        error: NOT_FOUND
+  - id: CORRECTION_TASK_LIFECYCLE_AND_CAS
+    operations: [createDocOpsCorrectionTask, resolveDocOpsCorrectionTask, cancelDocOpsCorrectionTask]
+    rule: Only open/in_review/resolved/cancelled states and contracted transitions are allowed. Create returns open, or in_review only with a durable valid linked MR. Resolve/cancel require the current task_version; resolved/cancelled are terminal and reopen is forbidden. Identical replay returns the existing record with zero new events.
+    error: INVALID_STATE
+  - id: CORRECTION_TASK_EVIDENCE_HASH
+    operations: [createDocOpsCorrectionTask, resolveDocOpsCorrectionTask, cancelDocOpsCorrectionTask]
+    rule: evidence_sha256 equals SHA-256 of JCS UTF-8 for the closed sanitized evidence object. Create always requires it; no-MR resolve and every cancel require reason plus new evidence. Raw evidence is never returned or logged as ordinary telemetry.
+    error: VALIDATION_ERROR
+  - id: CORRECTION_TASK_GOVERNED_MR_OUTCOME
+    operations: [createDocOpsCorrectionTask, resolveDocOpsCorrectionTask]
+    rule: linked_mr belongs to the same Space/repository and exact ProposalVersion. MR-based resolution requires merge_commit_sha plus verified ProposalRecord/canonical human DecisionRecord/GO merge evidence. No-MR resolution records disposition only and never claims canonical correction. Task operations never edit or archive canonical content.
+    error: REVISION_CONFLICT
   - id: AGENT_RESTRICTED_WRITE_SCHEMA
     operations: [proposeCreateDocument, proposeEditDocument]
     rule: boundedAgentCredential may use only the closed body-only create/patch schemas. It cannot invoke editProposalVersion, whole-document replacement, merge, decisions, grants, archive, restore, import commit, export, cutover, or attachment management. GO independently rejects forbidden diffs and credentials on every channel.
@@ -499,6 +520,111 @@ paths:
                 $ref: '#/components/schemas/DocOpsReviewQueuePage'
         default:
           $ref: '#/components/responses/Error'
+  /spaces/{space_id}/docops/correction-tasks:
+    post:
+      operationId: createDocOpsCorrectionTask
+      tags: [docops]
+      description: Create a GO-owned docops-correction-task-v1 on an exact reported document revision. Requester/repository/owner are server-derived. The task never edits canonical content. Initial state is open, or in_review with a durable valid linked MR.
+      security:
+        - browserSession: []
+          csrfToken: []
+      parameters:
+        - $ref: '#/components/parameters/SpaceId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocOpsCorrectionTaskCreateInput'
+      responses:
+        '201':
+          description: New exact-revision correction task with policy-derived owner.
+          content:
+            application/json:
+              schema:
+                $ref: './docops-correction-task.schema.json'
+        '200':
+          description: Existing result returned for an identical idempotent replay without a second side effect.
+          content:
+            application/json:
+              schema:
+                $ref: './docops-correction-task.schema.json'
+        default:
+          $ref: '#/components/responses/Error'
+  /spaces/{space_id}/docops/correction-tasks/{task_id}:
+    get:
+      operationId: getDocOpsCorrectionTask
+      tags: [docops]
+      description: Freshly authorized task/state/owner/exact-revision/evidence-hash/linked-MR view. Raw evidence payload is not returned; another Space receives safe NOT_FOUND/FORBIDDEN according to policy.
+      security:
+        - browserSession: []
+      parameters:
+        - $ref: '#/components/parameters/SpaceId'
+        - $ref: '#/components/parameters/CorrectionTaskId'
+      responses:
+        '200':
+          description: Current closed correction-task record.
+          content:
+            application/json:
+              schema:
+                $ref: './docops-correction-task.schema.json'
+        default:
+          $ref: '#/components/responses/Error'
+  /spaces/{space_id}/docops/correction-tasks/{task_id}/resolve:
+    post:
+      operationId: resolveDocOpsCorrectionTask
+      tags: [docops]
+      description: Owner-only CAS resolution. MR-based resolution requires verified governed ProposalRecord/canonical human DecisionRecord/GO merge evidence. No-MR resolution requires reason plus evidence hash and does not claim canonical correction.
+      security:
+        - browserSession: []
+          csrfToken: []
+      parameters:
+        - $ref: '#/components/parameters/SpaceId'
+        - $ref: '#/components/parameters/CorrectionTaskId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocOpsCorrectionTaskResolveInput'
+      responses:
+        '200':
+          description: Terminal resolved task or existing result for identical replay.
+          content:
+            application/json:
+              schema:
+                $ref: './docops-correction-task.schema.json'
+        default:
+          $ref: '#/components/responses/Error'
+  /spaces/{space_id}/docops/correction-tasks/{task_id}/cancel:
+    post:
+      operationId: cancelDocOpsCorrectionTask
+      tags: [docops]
+      description: Policy-authorized requester/owner cancellation with task_version CAS, reason and evidence hash. Canonical content is unchanged; cancelled is terminal.
+      security:
+        - browserSession: []
+          csrfToken: []
+      parameters:
+        - $ref: '#/components/parameters/SpaceId'
+        - $ref: '#/components/parameters/CorrectionTaskId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocOpsCorrectionTaskCancelInput'
+      responses:
+        '200':
+          description: Terminal cancelled task or existing result for identical replay.
+          content:
+            application/json:
+              schema:
+                $ref: './docops-correction-task.schema.json'
+        default:
+          $ref: '#/components/responses/Error'
   /spaces/{space_id}/sources/{source_binding_id}/cursor:
     get:
       operationId: getSourceSyncCursor
@@ -749,7 +875,7 @@ paths:
     post:
       operationId: ingestGitLabWebhook
       tags: [integrations]
-      description: PROPOSED normalized GO intake boundary, not an asserted upstream GitLab route/header contract. The adapter must verify authenticity and replay before trusting actor/event identity. Provider mapping is UNKNOWN T00.
+      description: PROPOSED normalized GO intake boundary, not an asserted upstream GitLab route/header contract. T00 synthetic webhook delivery with configured secret is PASS; production reachable allowlist and the product authenticity/replay/field adapter mapping remain ADAPTER-REQUIRED/UNKNOWN as applicable. The adapter must verify authenticity and replay before trusting actor/event identity.
       security:
         - webhookCredential: []
       parameters:
@@ -805,12 +931,12 @@ components:
       type: apiKey
       in: cookie
       name: kb_browser_session
-      description: PROPOSED logical placeholder for the upstream authenticated session. Actual Open WebUI cookie/session mechanism is UNKNOWN T00; anonymous managed access is forbidden.
+      description: PROPOSED logical placeholder for the upstream authenticated session. T00 static session seams are confirmed; the actual Open WebUI cookie/session mapping is ADAPTER-REQUIRED and production integration is not claimed. Anonymous managed access is forbidden.
     csrfToken:
       type: apiKey
       in: header
       name: X-CSRF-Token
-      description: PROPOSED own-GO CSRF contract for browser mutations. Actual upstream CSRF header/token issuance and validation are UNKNOWN T00 and must be mapped without weakening server checks.
+      description: PROPOSED own-GO CSRF contract for browser mutations. T00 static audit found no sufficient app-level CSRF/Origin control in the stock auth/approval path, so the adapter is ADAPTER-REQUIRED; concrete header/token issuance remains UNKNOWN until that adapter is implemented and must not weaken server checks.
     boundedAgentCredential:
       type: http
       scheme: bearer
@@ -830,7 +956,7 @@ components:
       type: apiKey
       in: header
       name: X-KB-Webhook-Credential
-      description: PROPOSED logical webhook credential header. Actual GitLab secret/signature/replay fields are UNKNOWN T00. Secrets exist only in deployment secret storage and are never represented in schemas/examples.
+      description: PROPOSED logical webhook credential header. T00 synthetic webhook delivery with configured secret is PASS; exact production secret/signature/replay field mapping is ADAPTER-REQUIRED and production allowlist/network details remain UNKNOWN. Secrets exist only in deployment secret storage and are never represented in schemas/examples.
   parameters:
     SpaceId:
       name: space_id
@@ -856,6 +982,13 @@ components:
         type: string
         minLength: 1
         maxLength: 128
+    CorrectionTaskId:
+      name: task_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     IdempotencyKey:
       name: Idempotency-Key
       in: header
@@ -893,7 +1026,7 @@ components:
     GitSha:
       type: string
       pattern: '^(?:[0-9a-f]{40}|[0-9a-f]{64})$'
-      description: Full lowercase Git object ID; no short SHA. Repository object format is UNKNOWN T00.
+      description: Full lowercase Git object ID; no short SHA. T00 baseline repository object format is SHA-1 (40 hex), confirmed; the optional 64-hex form is forward compatibility only and is not a selected alternate baseline.
     Sha256:
       type: string
       pattern: '^[0-9a-f]{64}$'
@@ -1524,6 +1657,113 @@ components:
         - id: DOCOPS_QUEUE_CANONICAL_BINDING
           rule: Every item is freshly authorized in authorization.space_id and exactly matches its canonical document_id/revision/valid_until/provenance. due is recomputed using server UTC at evaluation; future/current dates remain scheduled and removed dates do not enter the active queue. Cursor binds Space, policy/group evidence, filter, and revision set.
           error: AUTHZ_CONTEXT_STALE
+    DocOpsCorrectionTaskCreateInput:
+      type: object
+      additionalProperties: false
+      required: [space_id, document_id, document_revision_sha, evidence, evidence_sha256, idempotency_key]
+      properties:
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+          pattern: '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$'
+        document_id:
+          type: string
+          format: uuid
+        document_revision_sha:
+          $ref: '#/components/schemas/GitSha'
+        evidence:
+          $ref: './docops-correction-task.schema.json#/$defs/evidencePayload'
+        evidence_sha256:
+          $ref: '#/components/schemas/Sha256'
+        linked_mr:
+          $ref: './docops-correction-task.schema.json#/$defs/linkedMR'
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+      x-contract-invariants:
+        - id: CORRECTION_CREATE_SERVER_ACTOR_OWNER
+          rule: requester_stable_id, repository_id and owner are server-derived from trusted context, repository=Space binding and active approval policy. Client/LLM actor or owner fields are not accepted. document_revision_sha remains the exact reported revision.
+          error: FORBIDDEN
+    DocOpsCorrectionTaskResolveInput:
+      type: object
+      additionalProperties: false
+      required: [space_id, task_id, task_version, reason, idempotency_key]
+      properties:
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+          pattern: '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$'
+        task_id:
+          type: string
+          format: uuid
+        task_version:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        linked_mr:
+          allOf:
+            - $ref: './docops-correction-task.schema.json#/$defs/linkedMR'
+            - type: object
+              properties:
+                merge_commit_sha:
+                  $ref: '#/components/schemas/GitSha'
+        evidence:
+          $ref: './docops-correction-task.schema.json#/$defs/evidencePayload'
+        evidence_sha256:
+          $ref: '#/components/schemas/Sha256'
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+      allOf:
+        - if:
+            not:
+              required: [linked_mr]
+          then:
+            required: [evidence, evidence_sha256]
+            description: No-MR resolution requires reason and evidence; it records disposition only, not canonical correction.
+      x-contract-invariants:
+        - id: CORRECTION_RESOLVE_OWNER_AND_OUTCOME
+          rule: Only the current policy owner may resolve from open/in_review with the current task_version. Linked-MR resolution requires a verified governed merge; no-MR resolution requires reason plus evidence. resolved is terminal.
+          error: INVALID_STATE
+    DocOpsCorrectionTaskCancelInput:
+      type: object
+      additionalProperties: false
+      required: [space_id, task_id, task_version, reason, evidence, evidence_sha256, idempotency_key]
+      properties:
+        space_id:
+          type: string
+          minLength: 1
+          maxLength: 63
+          pattern: '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$'
+        task_id:
+          type: string
+          format: uuid
+        task_version:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        evidence:
+          $ref: './docops-correction-task.schema.json#/$defs/evidencePayload'
+        evidence_sha256:
+          $ref: '#/components/schemas/Sha256'
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+      x-contract-invariants:
+        - id: CORRECTION_CANCEL_AUTHORIZED_ACTOR
+          rule: Only the policy-authorized requester or current owner may cancel from open/in_review with the current task_version. cancelled is terminal and canonical content is unchanged.
+          error: FORBIDDEN
     SourceSyncCursor:
       type: object
       additionalProperties: false

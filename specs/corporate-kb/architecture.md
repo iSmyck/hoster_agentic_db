@@ -1,9 +1,9 @@
 ---
 name: Corporate Agentic Knowledge Platform
 type: component-solution-design
-status: draft_for_g0
+status: baseline_verified_g0_approved
 created: '2026-11-06'
-updated: '2026-11-06'
+updated: '2026-11-08'
 audience: Команда разработки для G0 и последующей декомпозиции
 ---
 
@@ -13,7 +13,7 @@ audience: Команда разработки для G0 и последующе�
 
 Документ переводит обязательные инварианты Architecture Spine в компонентный engineering design: границы ответственности, контракты, владение состоянием, сквозные протоколы, recovery и критерии проверки. Он предназначен для G0 и последующей декомпозиции в stories, но не разрешает реализацию, production rollout, миграции или выбор непроверенных upstream-возможностей.
 
-**Статус:** DESIGN DRAFT для G0. AD-1–AD-16 приняты и не переоткрываются. Точные Open WebUI commit/tag, GitLab version/edition, upstream code paths, редактор, retrieval backend и его параметры — **UNKNOWN до T00**. Отсутствие code references здесь осознанно: они добавляются только после аудита выбранных исходников.
+**Статус:** T00 DONE, G0 APPROVED, дополнен T00 evidence 2026-11-08. AD-1–AD-16 приняты и не переоткрываются. Pinned baseline выбран и runtime-проверен на synthetic sandboxes: Open WebUI `v0.13.0` (`c38885a1a737da4968f157092f304f3b5481d0bf`), GitLab CE `19.5.3-ce.0`, PostgreSQL `18.6` + pgvector `0.8.7`, Keycloak `26.8.2` (sandbox IdP) — [baseline.md](baseline.md), [evidence/t00](evidence/t00/README.md). Это **не production readiness**: deferred gates T04 browser editor, T13/T16 object-store ACL, T11 hoster inputs, production AD/live-SLO и legal clearance перед managed distribution остаются обязательными. Owner decision record — [g0-review.md](g0-review.md) (APPROVED).
 
 Используемые обозначения:
 
@@ -34,7 +34,7 @@ audience: Команда разработки для G0 и последующе�
 
 - в MVP **один GitLab repository = один Space**; корневая папка не является альтернативным ACL-периметром;
 - `access` во front matter не является самостоятельным источником прав; единый ACL Space задаётся versioned Git policy и IdP-группами;
-- после cutover **все** business/engineering/source-managed merges выполняет GO с human review; auto-merge не допускается;
+- после cutover **все обычные managed** business/engineering/source-managed merges выполняет GO с human review; auto-merge не допускается. Routine/self-service admin break-glass product capability отсутствует. Привилегированный GitLab Owner может технически обойти protected rules вне GO: это out-of-band integrity incident, обнаруживаемый reconciliation, с immediate affected-target `recovery_required`/quarantine, managed-write freeze и G0-D3 runbook, а не approved managed path или абсолютное merge-only-GO для admins;
 - CODEOWNERS остаётся инженерным ownership/review контуром, а business approval задаёт `approval-policy.yaml` по внешним группам;
 - controlled engineering bulk push допустим только до cutover, в unpublished `main`, без пользовательского доступа и published index.
 
@@ -104,7 +104,7 @@ flowchart LR
 | Container | Ответственность | Явно не отвечает |
 | --- | --- | --- |
 | Open WebUI fork | Дерево, чтение, WYSIWYG seam, review UX, chat, bounded tools, managed model connections, upstream users/sessions/grants | Canonical writes, merge credential, решение доступа только в UI, arbitrary shell/SQL/Python Tools, изменение personal Notes |
-| Git Orchestrator (GO) | Canonical Git reads/writes, drafts, ProposalRecords, все merges, DecisionRecords, cutover, webhooks, source-sync projection, reconciliation, export coordination | Аутентификация, canonical group membership, index writes, LLM-генерация при apply, ручное редактирование проекций |
+| Git Orchestrator (GO) | Canonical Git reads/writes, drafts, ProposalRecords, все managed merges, DecisionRecords, cutover, webhooks, source-sync projection, reconciliation, export coordination; единственный owner correction-task current projections/events/evidence/idempotency в `kb_ops` | Аутентификация, canonical group membership, index writes, LLM-генерация при apply, ручное редактирование проекций, canonical content/DecisionRecord через correction task |
 | Identity/AuthZ adapter | Stable identity, group snapshots, policy evaluation, `AuthzContext`, managed upstream grants, review queues, revocation barrier | Merge, документы, GitLab business accounts, самостоятельный LDAP/OIDC client, запись в `kb_ops`/`kb_index` |
 | Retrieval adapter + CI/index workers | Exact+semantic projections, preflight, index runs, dependency closure, single active pointer writer, scoped retrieval и candidate validation | Изменение `main`, активация Space, самостоятельное разрешение прав, индексация pending/rejected content |
 | Ingestion/source adapters | Dry-run, security/data barrier, extraction staging, provenance, ownership modes, source proposals, immutable assets, live operational reads | Direct push/merge, auto-merge, прямые writes в `kb_ops`/`kb_index`, универсальная двусторонняя синхронизация |
@@ -119,7 +119,7 @@ flowchart LR
 | Open WebUI/Agent → GO | Server-issued `AuthzContext` плюс отдельный service capability; actor/run только из trusted context | Agent route допускает read/propose, но не merge/grants/arbitrary Git |
 | GO → Identity/AuthZ | Service identity GO; fresh `authz-context-v2` и group recheck | Для каждого Space независимые repository/bundle/access+approval revisions/group snapshot/revocation epoch; чужой binding не переиспользуется |
 | GO → GitLab proposal/write path | Scoped GO proposal credential | Branch/MR только в разрешённом scope; отсутствие merge permission у agent/connector identities |
-| GO → GitLab merge path | Отдельная merge service identity GO | После cutover единственная identity с merge permission; недоступна agent, connector, CI и UI |
+| GO → GitLab merge path | Отдельная merge service identity GO | После cutover единственная managed identity с merge permission; недоступна agent, connector, CI и UI. Privileged Owner bypass — out-of-band incident, не managed credential/path |
 | Engineering user → GitLab | Инженерная GitLab identity | После cutover только MR через GO final apply; нет direct push в `main` |
 | Identity adapter → LDAP/OIDC | Upstream LDAP/OIDC configuration; read-only LDAP bind | LDAPS/StartTLS, пустой пароль отклоняется, nested AD groups; bind secret только в deployment secrets |
 | CI/index → GitLab/object storage | Отдельный read-only credential на exact `main`/immutable object versions | Нет merge, нет чтения mutable URL без hash |
@@ -131,7 +131,7 @@ flowchart LR
 | Connector → source и GO | Source read credential с минимальным scope; proposal-only GO capability | Нет merge/index/grant credentials; source credential не передаётся модели |
 | Export/backup → GitLab/storage/config | Privileged operational credential вне agent perimeter | Export permission на Space и всю историю; secrets не входят в обычный export |
 
-Точные механизмы service authentication, token types и GitLab rules — **UNKNOWN T00**; выбираются после проверки целевых версий без ослабления этой матрицы.
+Механизмы зафиксированы T00 evidence и не ослабляют эту матрицу: GitLab CE role-based profile (`push_access_level=0`, `merge_access_level=40`, GO — единственный Maintainer, protected decision tags `kb-decisions/*`), external migrator + runtime non-DDL roles (`ENABLE_DB_MIGRATIONS=False`, head `e42c8f710a36`), read-only CI/index credentials — [baseline.md](baseline.md) §3 и [evidence/t00](evidence/t00/README.md). Exact product token types/wiring реализуются после G0 в пределах этой матрицы.
 
 ## 5. Владельцы состояния и контракты
 
@@ -144,6 +144,7 @@ flowchart LR
 | Users, sessions, chats, model connections | Open WebUI upstream | Только upstream-owned paths |
 | Managed Space grants и group snapshots | Git policy + IdP | Только Identity/AuthZ adapter в `kb_authz` и managed upstream grants |
 | Proposal/decision/operation/webhook/source-sync projections | GitLab/source registry | Только GO в `kb_ops` |
+| DocOps correction tasks, task events, restricted evidence, idempotency | GO-owned operational records, не Git-derived canonical state | Только GO в `kb_ops`; durable backup обязателен, Git-only rebuild не воссоздаёт task lifecycle |
 | Documents, chunks, embeddings, attachments, index runs и active pointer | Git + immutable assets | Только CI/index workers в `kb_index` |
 | Originals and large assets | External S3/object storage | Immutable/versioned object writes; metadata/hash projections |
 | Credentials and bind secrets | Deployment secret mechanism | Не хранятся в продуктовых tables, Git, logs или обычном export |
@@ -202,6 +203,13 @@ flowchart LR
 - `export-manifest-v2`: каждый Decision содержит explicit publication outcome, attempt и recovery evidence. Accepted `recorded/merge_attempted/failed/conflicted/invalid` экспортируется без merge; только `merged` имеет merge proof. Integrity-valid rejected/cancelled имеют verified MR closure. Complete/ready требует decisions/assets/authorization closure, пустой `missing[]` и только exported assets с совпадающими hashes.
 - [projection-mapping.md](contracts/projection-mapping.md) фиксирует canonical↔API↔event↔DB actions, derived states, IDs и paths, включая `accepted/rejected/cancelled ↔ accept/reject/cancel`, derived quarantine, ProposalView `archived` из документа, Cutover/index/source states и absolute↔relative policy scopes.
 - [t01-contract-tests.yaml](contracts/t01-contract-tests.yaml) содержит synthetic CF-01–CF-30 positive/negative/concurrency/crash vectors. Это **DESIGN_NOT_EXECUTED**, не выполненные contract, product или sandbox tests.
+- `docops-correction-task-v1`: [closed schema](contracts/docops-correction-task.schema.json), [API/lifecycle/durability contract](contracts/docops-correction-api.md) и OpenAPI create/get/resolve/cancel endpoints. Task — GO-owned `kb_ops` operational record с exact reported revision, stable trusted actor, policy-derived owner, evidence hash, optional linked MR, idempotency и monotonic `task_version`; он не canonical content/ProposalRecord/DecisionRecord и не редактирует канон.
+
+### 5.6. Correction-task ownership и durability
+
+Lifecycle `open/in_review/resolved/cancelled` отделён от DocOps `valid_until` и Proposal states. Create/get/resolve/cancel используют fresh per-Space AuthzContext и anti-enumeration. `open → in_review` требует durable valid linked MR; content `resolved` требует verified governed ProposalRecord/MR/human DecisionRecord/GO merge; no-MR resolution и cancellation требуют reason + evidence hash. Terminal states не reopen через replay; all mutations используют global idempotency tuple и CAS.
+
+Current projection, append-only events, restricted sanitized evidence и idempotency records — **не полностью Git-derived operational state**. Они входят в durable `kb_ops` backup и восстанавливаются под external global managed-write freeze с последующей linked-MR reconciliation. Git/MR rebuild не может воссоздать исходный report, evidence или owner/actor disposition и не должен fabricate/delete/resolve/cancel tasks. Missing/corrupt backup оставляет affected scope unavailable/quarantined и требует incident review. Ordinary Space export и Git mirror не заменяют этот backup; active tasks/evidence не удаляются generic TTL.
 
 ## 6. Сквозной lifecycle: draft → proposal → review → decision → merge → index
 
@@ -267,7 +275,7 @@ sequenceDiagram
 2. Import dry-run возвращает path→ID map, provenance, links/attachments и все ошибки без canonical writes.
 3. Controlled engineering bulk push допустим только в unpublished `main`, при закрытом пользовательском доступе и отсутствующем published index.
 4. Cutover включает write freeze и проверяет `HEAD == cutover_sha`. CutoverRecord связывает Space, exact `main_sha`, validation evidence, sign-off actor и timestamp.
-5. GO создаёт protected cutover tag и применяет MR-only rules: direct push закрыт для людей и ботов, merge permission только у merge service identity GO.
+5. GO создаёт protected cutover tag и применяет MR-only rules: direct push закрыт для non-privileged людей и ботов, normal managed merge permission только у merge service identity GO; privileged Owner bypass остаётся out-of-band incident по G0-D3.
 6. CI строит **inactive full preflight** exact `cutover_sha` с отдельными request/run/snapshot IDs; exact+semantic paths, dependency closure, policy triple включая `approval_policy_revision`, eligibility и ACL tests завершаются успешно. Preflight имеет `purpose=cutover_preflight`, `serving_allowed=false`, никогда не active и не обслуживает retrieval.
 7. GO создаёт отдельный `IndexRequested(preflight=false)`, а CI — отдельные published run и non-preflight descriptor с новыми request/run/snapshot IDs, но тем же `cutover_sha == main_sha == snapshot_sha`, closure и exact/semantic hashes. Published descriptor повторно полностью валидируется; preflight не мутирует в published.
 8. Единственный index writer сериализует publication per `(space_id,profile_id)` для **всех generations** и атомарно выполняет CAS по expected publication fence/current pointer, latest Git ancestry и exact validated run/snapshot. Stale owner обновляет ноль rows. Только published non-preflight descriptor получает active pointer; после наблюдения pointer GO активирует Space. До завершения обоих шагов пользовательский доступ остаётся закрыт.
@@ -314,7 +322,7 @@ Index events обрабатываются at-least-once, с deduplication, bound
 
 Backup включает Git mirror, GitLab metadata, object storage, configuration и secrets policy. `export-manifest-v2` содержит согласованный `git clone + manifest` единого format ID `git_clone_with_manifests`, явные refs, decisions/assets/policies manifests и immutable objects/hashes. Для каждого DecisionRecord сохраняются note/tag/canonical JSON hashes, explicit outcome, attempt и recovery evidence; accepted до merge/unknown/failed/conflicted/invalid не получает выдуманный merge, а rejected/cancelled — verified MR closure. Только `merged` содержит exact parent/trailer/raw-commit proof. `ready` и `closure.complete=true` допустимы только при decisions/assets/authorization complete flags, пустом `missing[]` и всех assets `exported`; missing/rejected asset делает package incomplete и не имеет выдуманного exported hash.
 
-После полной потери `kb_ops` GO первоначально запрещает merges deployment-wide. Пересборка сканирует protected decision tags/notes, MR и target histories; каждый target с unresolved accept или недостаточным evidence получает `recovery_required`. Target открывается только после conclusive target-wide reconciliation. Отсутствие DB row никогда не трактуется как доказательство «merge call не отправлялся».
+После полной потери `kb_ops` GO первоначально запрещает merges deployment-wide. Пересборка сканирует protected decision tags/notes, MR и target histories; каждый target с unresolved accept или недостаточным evidence получает `recovery_required`. Target открывается только после conclusive target-wide reconciliation. Отсутствие DB row никогда не трактуется как доказательство «merge call не отправлялся». Correction tasks/events/evidence/idempotency records восстанавливаются только из согласованного durable backup с последующей linked-MR reconciliation; Git-derived rebuild не фабрикует и не удаляет эти operational records.
 
 Restore drill проверяет snapshot closure, refs/decision/assets manifests, grants mapping, rebuild всех projections и отсутствие cross-client secrets/data. RPO/RTO и retention — owner decisions, не предполагаются.
 
@@ -372,7 +380,7 @@ Incremental run публикуется только если его полный
 
 Provider inventory включает chat, task/title/summarization, extraction, embeddings, reranking и OCR. Offline model assets готовятся заранее; cold offline startup проверяется отдельно. Точные endpoints/model IDs/dimensions не фиксируются в этом документе.
 
-Upgrade сохраняет branding/notices, seam registry, rollback, license/SBOM review и regression evidence. Full-repository clone разрешён только с export permission на Space и всю историю; filtered export/history removal — отдельный privileged workflow. Break-glass и privacy hard purge в MVP отключены.
+Upgrade сохраняет branding/notices, seam registry, rollback, license/SBOM review и regression evidence. Full-repository clone разрешён только с export permission на Space и всю историю; filtered export/history removal — отдельный privileged workflow. Routine/self-service admin break-glass и privacy hard purge в MVP отключены. Emergency out-of-band privileged Owner action — не product path: unexpected history обнаруживается reconciliation, affected target немедленно quarantined, managed writes frozen, audit preserved и G0-D3 incident runbook завершается owner-reviewed remediation.
 
 ## 10. Security и data profiles
 
@@ -446,24 +454,24 @@ LLM judge не является единственным арбитром кач
 
 ### 12.2. ADR map
 
-[ADR index](adr/README.md) и файлы ADR-03–ADR-16 существуют. Их Accepted/Proposed статусы относятся к отдельным решениям и не образуют общий owner G0 approval. UNKNOWN относятся к pinned baseline/upstream capabilities, editor/backend и owner thresholds, а не к существованию ADR-файлов.
+[ADR index](adr/README.md) и файлы ADR-03–ADR-16 существуют. Их Accepted/Proposed статусы относятся к отдельным решениям и не образуют общий owner G0 approval. T00 evidence записано в [baseline.md](baseline.md) и [evidence/t00](evidence/t00/README.md); editor direction resolved как owner-approved TipTap adapter (G0-D8), оставшиеся UNKNOWN относятся к owner thresholds, hoster.ai endpoints и license legal review; CI Runner exact-SHA/no-write — PASS 7/7.
 
-| ADR | Соотношение с этим design | Фактический статус / оставшееся evidence |
+| ADR | Соотношение с этим design | Фактический статус / T00 evidence |
 | --- | --- | --- |
-| [ADR-03](adr/ADR-003-retrieval-adapter.md) Retrieval | Existing backend audit, versioned ACL-aware adapter; AD-9 | **Proposed**; backend и параметры UNKNOWN T00 |
-| [ADR-04](adr/ADR-004-execution-capability-boundary.md) Execution boundary | Human/agent separation, merge-only-GO; AD-2/AD-5/AD-6 | **Proposed**; GitLab enforcement UNKNOWN T00 |
-| [ADR-05](adr/ADR-005-index-delivery.md) Index delivery | Webhooks + CI + reconciliation, separate cutover pair и pointer CAS; AD-9 | **Proposed**; target CI conventions UNKNOWN T00 |
-| [ADR-06](adr/ADR-006-portability-retention.md) Portability/retention | Clone+manifests, mirror/restore; AD-11 | **Proposed**; retention/RPO/RTO — owner decisions |
-| [ADR-07](adr/ADR-007-client-packaging-license.md) Packaging/license | Dedicated deployment, branding/notices, SBOM | **Proposed**; versions/edition/license evidence UNKNOWN T00 |
-| [ADR-08](adr/ADR-008-git-native-canonical-storage.md) Git-native canonical | AD-1, AD-3, AD-7–AD-9, AD-13 | **Accepted** по spec; implementation зависит от результатов T00/G0 |
-| [ADR-09](adr/ADR-009-platform-review-ux.md) Review UX | Минимальный platform review без GitLab accounts; AD-6/AD-13 | **Accepted** по spec; editor UNKNOWN T00 |
-| [ADR-10](adr/ADR-010-ldap-oidc-identity.md) Identity | LDAP/OIDC + per-Space policy/group bindings; AD-4/AD-12 | **Accepted** по spec; upstream capabilities UNKNOWN T00 |
-| [ADR-11](adr/ADR-011-two-phase-publication.md) Two-phase publication | Controlled load, preflight→published pair, pointer→activation; AD-3/AD-9 | **Accepted** during architecture coaching; implementation зависит от результатов T00 |
-| [ADR-12](adr/ADR-012-business-approval-without-gitlab-users.md) Business approval | External groups/path policy и approver separation; AD-6 | **Accepted** during architecture coaching; implementation зависит от результатов T00 |
-| [ADR-13](adr/ADR-013-merge-serialization-recovery.md) Merge recovery | Per-target lock/fencing, durable barrier и Git-derived retry; AD-7 | **Accepted** during architecture coaching; implementation зависит от результатов T00 |
-| [ADR-14](adr/ADR-014-canonical-decision-record.md) DecisionRecord | Note+tag, canonical hashes и merge linkage; AD-1/AD-7 | **Accepted** during architecture coaching; implementation зависит от результатов T00 |
-| [ADR-15](adr/ADR-015-postgresql-schema-ownership.md) Schema ownership | Single-writer schemas и full-perimeter associations; AD-8 | **Accepted** during architecture coaching; physical layout UNKNOWN T00 |
-| [ADR-16](adr/ADR-016-repository-per-space.md) Repository=Space | Единый ACL/history/index/export perimeter; AD-4 | **Accepted** during architecture coaching; repository provisioning UNKNOWN T00 |
+| [ADR-03](adr/ADR-003-retrieval-adapter.md) Retrieval | Existing backend audit, versioned ACL-aware adapter; AD-9 | **Proposed**; backend audit выполнен, pgvector synthetic benchmark 22/22 PASS; production thresholds TBD |
+| [ADR-04](adr/ADR-004-execution-capability-boundary.md) Execution boundary | Human/agent separation, merge-only-GO; AD-2/AD-5/AD-6 | **Proposed**; upstream STOP подтверждён (arbitrary Python, multi-channel bypass), deny-by-default adapter обязателен; GitLab enforcement 42 completed probes |
+| [ADR-05](adr/ADR-005-index-delivery.md) Index delivery | Webhooks + CI + reconciliation, separate cutover pair и pointer CAS; AD-9 | **Proposed**; pointer fencing/late-job/closure gates и CI Runner exact-SHA/no-write PASS synthetic |
+| [ADR-06](adr/ADR-006-portability-retention.md) Portability/retention | Clone+manifests, mirror/restore; AD-11 | **Proposed**; decision-tag/note export в clone подтверждён synthetic; retention/RPO/RTO — owner decisions |
+| [ADR-07](adr/ADR-007-client-packaging-license.md) Packaging/license | Dedicated deployment, branding/notices, SBOM | **Proposed**; license engineering evidence записано (BSD-3-Clause + branding restriction); legal review pending (G0-D10) |
+| [ADR-08](adr/ADR-008-git-native-canonical-storage.md) Git-native canonical | AD-1, AD-3, AD-7–AD-9, AD-13 | **Accepted** по spec; GitLab canonical capabilities 42 completed probes synthetic; implementation после G0 |
+| [ADR-09](adr/ADR-009-platform-review-ux.md) Review UX | Минимальный platform review без GitLab accounts; AD-6/AD-13 | **Accepted** по spec; TipTap adapter selected and owner-approved at G0-D8; canonical adapter и T04 browser gate не завершены |
+| [ADR-10](adr/ADR-010-ldap-oidc-identity.md) Identity | LDAP/OIDC + per-Space policy/group bindings; AD-4/AD-12 | **Accepted** по spec; adapter mandatory: Keycloak 9/9 PASS, stock OIDC 4 PASS/2 FAIL, stock LDAP/OIDC gaps подтверждены |
+| [ADR-11](adr/ADR-011-two-phase-publication.md) Two-phase publication | Controlled load, preflight→published pair, pointer→activation; AD-3/AD-9 | **Accepted** during architecture coaching; cutover GitLab side PASS synthetic; full preflight→activation chain — product implementation после G0 |
+| [ADR-12](adr/ADR-012-business-approval-without-gitlab-users.md) Business approval | External groups/path policy и approver separation; AD-6 | **Accepted** during architecture coaching; stock tool approval NOT ACCEPTABLE подтверждено; merge trailers/parents PASS synthetic |
+| [ADR-13](adr/ADR-013-merge-serialization-recovery.md) Merge recovery | Per-target lock/fencing, durable barrier и Git-derived retry; AD-7 | **Accepted** during architecture coaching; GitLab не даёт target-branch CAS — barrier mandatory подтверждено; race/crash suite не выполнялся |
+| [ADR-14](adr/ADR-014-canonical-decision-record.md) DecisionRecord | Note+tag, canonical hashes и merge linkage; AD-1/AD-7 | **Accepted** during architecture coaching; note+tag/hash/invalid-after-mutation PASS synthetic |
+| [ADR-15](adr/ADR-015-postgresql-schema-ownership.md) Schema ownership | Single-writer schemas и full-perimeter associations; AD-8 | **Accepted** during architecture coaching; external migrator PASS (head `e42c8f710a36`), runtime DDL denial PASS; `kb_*` schemas не созданы |
+| [ADR-16](adr/ADR-016-repository-per-space.md) Repository=Space | Единый ACL/history/index/export perimeter; AD-4 | **Accepted** during architecture coaching; cross-Space isolation PASS synthetic; repository provisioning proposal — owner decision |
 | ADR-01/02 v1.1 | Сняты ADR-08; Notes/DB collab не канон | **Withdrawn**; не реализовывать |
 
 ### 12.3. Document map
@@ -478,7 +486,8 @@ LLM judge не является единственным арбитром кач
 | [Database design](database.md) + [catalog](contracts/database-catalog.yaml) | Logical ownership, full-perimeter associations, transactions и rebuild DESIGN |
 | [Contracts README](contracts/README.md) | Фактическая карта существующих PROPOSED API/tool/event/schema contracts |
 | [Projection mapping](contracts/projection-mapping.md) | Canonical↔API↔event↔DB enum/state/ID/path mapping |
-| [T01 contract vectors](contracts/t01-contract-tests.yaml) | CF-01–CF-30 DESIGN_NOT_EXECUTED; не test evidence |
+| [T01 contract vectors](contracts/t01-contract-tests.yaml) | CF-01–CF-30 DESIGN_NOT_EXECUTED, включая correction-task lifecycle/idempotency/CAS/no-MR/backup negatives; не test evidence |
+| [Correction-task schema](contracts/docops-correction-task.schema.json) + [API](contracts/docops-correction-api.md) | GO-owned `kb_ops` operational record, create/get/resolve/cancel, exact revision, stable actor/owner/evidence/MR/idempotency и backup/rebuild DESIGN |
 | [Open WebUI fork](components/open-webui-fork.md) | UI/agent/component boundaries |
 | [Git Orchestrator](components/git-orchestrator.md) | Canonical writes, decisions, merge/recovery |
 | [Identity and Access](components/identity-access.md) | Identity, AuthzContext, grants, revocation |
@@ -489,19 +498,28 @@ LLM judge не является единственным арбитром кач
 | [Traceability](traceability.md) | Единый R/I/A/T/E и contract coverage index |
 | [AGENTS.md](../../AGENTS.md) | Phase, safety, validation и approval rules |
 
-## 13. Открытые T00 items и stop conditions
+## 13. T00 status: закрыто evidence и открытые items
 
-1. **Pin и reproducibility:** Open WebUI commit/tag, GitLab version/edition, toolchain, test/dev commands и реальные code paths.
-2. **Open WebUI seams:** auth/grants/tools/RAG/chat injection, managed grants, streaming/native tools, exact extension points, personal Notes regression scope.
-3. **Identity:** objectGUID/entryUUID/sub mapping, nested AD groups, read-only bind, LDAPS/StartTLS, group recheck, JIT, live subscriptions, отказ пустого LDAP-пароля включая проверку CVE-2026-44551.
-4. **GitLab capabilities:** exact-SHA reads/merge, conflict/idempotency behavior, real merge commit trailers, note ID/hash/audit, protected annotated decision tags, merge-only-GO rules, scoped tokens без merge, webhooks, metadata export. Append-only note не считается физически immutable без доказательства.
-5. **Repository provisioning:** naming/group layout/creation order и миграция существующих корпусов; правило repository=Space уже не открыто.
-6. **Editor:** готовый WYSIWYG component по front matter fidelity, полному diff/preview, Cyrillic, attachments и license; самописный редактор не выбирается.
-7. **Retrieval:** существующий backend и SHA mapping; pgvector+FTS, ANN type/parameters, partitioning и exact fallback допустимы только после ACL-aware recall benchmark. Версии/параметры здесь не выбраны.
-8. **Models/config:** embedding model/dimensions, chunking, hoster model IDs, extraction/reranker/OCR inventory и offline assets — configuration/benchmark после согласования.
-9. **Sources:** первый connector, source objects/auth/edition constraints, object-store layout и согласованный sanitized sample.
-10. **Owner thresholds:** corpus/concurrency, p95/p99, freshness, queue lag, RPO/RTO, retention, idempotency replay retention, quality thresholds и budgets. Revocation ≤ 30 минут уже зафиксирован.
+### 13.1. Закрыто T00 evidence (2026-11-07; synthetic sandboxes, не production)
+
+1. **Pin и reproducibility:** Open WebUI `v0.13.0` (`c38885a1…`), GitLab CE `19.5.3-ce.0`, PostgreSQL `18.6` + pgvector `0.8.7`, GitLab Runner `19.5.3`, Keycloak `26.8.2`, Python `3.12.13`/uv, Node `22.23.4`; commands и environment — [baseline.md](baseline.md), [evidence/t00/environment.md](evidence/t00/environment.md).
+2. **GitLab capabilities:** 42 completed probes — exact-SHA reads/merge, parents/trailers, notes/tags/export, merge-only-GO CE profile, cutover, webhooks — [evidence/t00/gitlab-capabilities.md](evidence/t00/gitlab-capabilities.md). Подтверждено: нет target-branch CAS (GO barrier обязателен); privileged Owner bypass — G0-D3.
+3. **Open WebUI seams и toolchain:** static seam audit, runtime API/migration/DDL-denial PASS, Vitest/direct build PASS; svelte-check/ESLint/`npm run build` FAIL — [evidence/t00/openwebui-toolchain.md](evidence/t00/openwebui-toolchain.md), [auth audit](evidence/t00/openwebui-auth-audit.md).
+4. **Identity adapter feasibility:** Keycloak 9/9 PASS; stock OIDC 4 PASS/2 FAIL; stock LDAP/OIDC JIT не является ADR-010 implementation — [identity](evidence/t00/identity-capabilities.md), [OIDC runtime](evidence/t00/openwebui-oidc-runtime.md).
+5. **Retrieval candidate:** pgvector synthetic deterministic gates 22/22 PASS — [benchmark](evidence/t00/retrieval-benchmark.md). Production quality thresholds остаются TBD.
+6. **CI exact-SHA/no-write:** GitLab Runner 7/7 PASS — real job, `HEAD == CI_COMMIT_SHA`, protected ref, exact object reads, artifact SHA match, no main writes — [ci-runner.md](evidence/t00/ci-runner.md).
+7. **License engineering evidence:** BSD-3-Clause + branding restriction зафиксированы — [license review](evidence/t00/openwebui-license-review.md); legal clearance отсутствует.
+
+### 13.2. Deferred follow-up после T00 DONE / G0 APPROVED
+
+1. **Browser editor checks:** TipTap adapter selected and owner-approved at G0-D8. WYSIWYG/raw preview, IME, accessibility, XSS и full managed preview — deferred T04 gate, не PASS. Realtime collaboration/CRDT вне MVP и не является BLOCKED MVP check; вместо него обязательны conflict detection, exact/fresh revisions, full diff и новая ProposalVersion.
+2. **Identity runtime остаток:** production AD/LDAP profile и live subscription closure, измеренный revocation SLO.
+3. **Repository provisioning:** [repository-provisioning.md](repository-provisioning.md) предлагает naming/group layout/creation order; owner подтверждает фактические namespaces/corpus mapping.
+4. **Models/config:** embedding model/dimensions/chunking, hoster model IDs/endpoints, extraction/reranker/OCR inventory и offline assets — UNKNOWN/owner.
+5. **Sources:** первый connector, source objects/auth/edition constraints, object-store layout и согласованный sanitized sample — owner decision.
+6. **Owner thresholds:** corpus/concurrency, p95/p99, freshness, queue lag, RPO/RTO, retention, idempotency replay retention, quality thresholds и budgets. Revocation ≤ 30 минут уже зафиксирован.
+7. **Implementation readiness:** [g0-review.md](g0-review.md) APPROVED 2026-11-08 не закрывает dependencies/readiness PASS, deferred implementation, browser, integration, legal или production gates.
 
 **G0 stop:** отсутствие required GitLab enforcement/durability capabilities, невозможность stable identity/group recheck, незакрытый merge bypass или невозможность ACL/SHA-safe retrieval. Нужный adapter или другое решение проходит design review/ADR; инвариант молча не ослабляется.
 
-**DEFERRED:** realtime collaboration, page-level ACL, multiple approvers/quorum, GraphRAG, OpenSearch, universal two-way sync, agent bulk/subtree/attachment operations, admin break-glass, privacy hard purge и GitLab-outage stale reads. Их включение требует новых требований и ADR.
+**DEFERRED:** realtime collaboration, page-level ACL, multiple approvers/quorum, GraphRAG, OpenSearch, universal two-way sync, agent bulk/subtree/attachment operations, routine/self-service admin break-glass product capability, privacy hard purge и GitLab-outage stale reads. Их включение требует новых требований и ADR. Emergency G0-D3 privileged incident runbook не откладывается и не является routine break-glass feature.

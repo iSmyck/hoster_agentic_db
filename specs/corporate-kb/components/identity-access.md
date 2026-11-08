@@ -4,7 +4,7 @@
 **Authority:** [Architecture Spine](../architecture-spine.md), AD-2, AD-4–AD-6, AD-8, AD-11–AD-14, AD-16.  
 **Связанные документы:** [platform design](../architecture.md), [integration specification](../integration.md), [authz-context-v2](../contracts/authz-context.schema.json), [projection mapping](../contracts/projection-mapping.md), [T01 vectors](../contracts/t01-contract-tests.yaml), [specification](../spec.md), [GO](git-orchestrator.md), [Open WebUI](open-webui-fork.md), [Retrieval](retrieval-indexing.md), [Ingestion](ingestion-connectors.md).
 
-Точные upstream identity seams, LDAP/OIDC attributes, token/session mechanics и code paths — **UNKNOWN T00**. Компонент переиспользует Open WebUI LDAP/OIDC и не создаёт собственный authentication protocol или LDAP/OIDC client.
+Upstream identity seams зафиксированы статически на pinned Open WebUI `v0.13.0` ([auth audit](../evidence/t00/openwebui-auth-audit.md)); adapter feasibility доказана на synthetic Keycloak `26.8.2` 9/9 ([identity evidence](../evidence/t00/identity-capabilities.md)); stock OIDC runtime 4 PASS / 2 security FAIL ([OIDC runtime](../evidence/t00/openwebui-oidc-runtime.md)). Компонент переиспользует upstream LDAP/OIDC как authentication/session seam; stable identity, nested groups и revocation обеспечивает этот adapter. Собственный authentication protocol или LDAP/OIDC client не создаётся.
 
 ## 1. Назначение и границы
 
@@ -266,13 +266,14 @@ Telemetry использует stable IDs, policy revisions, request IDs и resu
 
 Evidence содержит real sandbox results где требуется IdP/GitLab; mocks не помечаются как проверка реальной LDAP/OIDC интеграции.
 
-## 12. T00 dependencies
+## 12. T00 status и оставшиеся зависимости
 
-- Pin Open WebUI commit и найти реальные LDAP/OIDC/JIT/session/grants/live subscription seams с code references.
-- Подтвердить исправление CVE-2026-44551 и negative test пустого пароля на выбранном baseline.
-- Проверить доступность objectGUID/entryUUID/sub, nested AD group resolution, read-only bind, LDAPS/StartTLS и fresh group recheck без нового самописного auth protocol.
-- Определить фактическую additive upstream grants semantics и минимальный managed-grants adapter; не выдумывать deny precedence.
-- Проверить способ получения exact Git policy snapshots и одинакового bundle IAM/GO, включая activation и revision mismatch behavior.
-- Подтвердить механизм invalidation/closure live subscriptions и измеримость revocation SLO.
-- Определить конкретные клиентские groups/roles/owners как owner configuration; технические defaults не заменяют этот список.
-- GitLab LDAP group sync не использовать как зависимость; GitLab identity остаётся инженерным контуром.
+Зафиксировано (2026-11-07):
+
+- Pinned Open WebUI `v0.13.0`; LDAP/OIDC/JIT/session/grants seams с code references — [auth audit](../evidence/t00/openwebui-auth-audit.md). Пустой LDAP password отклоняется до bind (static mitigation риска CVE-2026-44551, не runtime certification); implicit LDAPS и read-only bind/search поддержаны; StartTLS отсутствует.
+- Stock gaps подтверждены: email linking, provider alias + `sub` без persisted issuer, нет nested AD closure, пустой group set не отзывает memberships, нет DB uniqueness по identity.
+- Adapter profile 9/9 PASS на synthetic Keycloak: stable issuer+sub при rename, duplicate/ambiguous/cross-issuer rejection, nested closure, empty-claim fail-closed, revocation после последней группы, personal grant сохраняется отдельно — [identity evidence](../evidence/t00/identity-capabilities.md).
+- Stock OIDC login runtime: 4 PASS / 2 FAIL (issuer+sub persistence; revocation после missing `groups` claim) — stock годится только как session seam — [OIDC runtime](../evidence/t00/openwebui-oidc-runtime.md).
+- Upstream grants additive (`True > False`), без deny/veto; AccessGrant — только read/write. Managed mapping обязан учитывать эту фактическую semantics, не выдумывая deny precedence.
+
+Остаются: LDAPS/OpenLDAP и production AD runtime (не выполнялись), live subscription closure и измеренный revocation SLO (≤15 минут refresh / ≤30 минут revocation — утверждённые требования, не измеренные SLA), exact Git policy snapshot seam IAM/GO, конкретные клиентские groups/roles/owners — owner configuration. GitLab LDAP group sync не использовать; GitLab identity остаётся инженерным контуром.

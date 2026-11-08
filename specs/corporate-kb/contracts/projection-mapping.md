@@ -82,3 +82,19 @@ Projection state graph сохраняет `recorded → merge_attempted → merg
 - API `ExportInput.format` и manifest `format` оба равны `git_clone_with_manifests`. `ExportJob.ready` допустим только при `closure.complete=decisions_complete=assets_complete=authorization_complete=true`, `missing=[]` и все assets `exported`. `incomplete/failed` не выдают complete claim.
 - Export `documentEntry.valid_until` обязателен и равен canonical front-matter-v2 значению на exact document revision; он входит в documents manifest hash/restore roundtrip.
 - Accepted recorded/merge_attempted/failed/conflicted/invalid экспортируются без merge, но с explicit publication+real attempts+recovery evidence. `recorded accepted` и rejected/cancelled имеют `attempts=[]` и не получают synthetic no-merge claim. Только `merged` содержит merge proof. Missing/rejected assets не имеют выдуманного `exported_object_sha256` и делают export incomplete.
+
+## 6. DocOps correction tasks
+
+Нормативные machine/API semantics: [docops-correction-task-v1](docops-correction-task.schema.json), [correction API](docops-correction-api.md), [OpenAPI endpoints](openapi.yaml). Correction task — GO-owned operational record в `kb_ops`, не canonical content, ProposalRecord, DecisionRecord или DocOps `valid_until` projection.
+
+| API/current projection | Append-only event / operational semantics | Запрещённая подмена |
+| --- | --- | --- |
+| `open` | `created` с exact `document_revision_sha`, trusted requester, policy-derived owner, original evidence hash; `linked_mr=null` | Не `scheduled`/`due`, не draft Proposal и не canonical status. |
+| `in_review` | `created` с durable valid linked MR либо internal `linked` event с CAS/version increment | Не corrected/published/merged; linked MR не заменяет ProposalRecord/DecisionRecord. |
+| `resolved` | `resolved` с terminal actor, reason, version increment; linked-MR path требует verified governed merge, no-MR path — resolution evidence hash | Не canonical correction без verified GO merge; no-MR disposition не утверждает изменение content. |
+| `cancelled` | `cancelled` с authorized requester/owner actor, reason, cancellation evidence hash, version increment | Не rejected Proposal/DecisionRecord и не archive/delete document. |
+
+- `resolved` и `cancelled` terminal; replay возвращает existing record только через exact idempotency tuple и не создаёт reopen/event/version increment. `task_version` — monotonic CAS, stale mutation создаёт ноль writes.
+- `document_revision_sha` остаётся исходной exact reported revision. Correction MR создаётся от fresh HEAD с full diff/conflict review и новой ProposalVersion, но не делает silent task rebind.
+- `requester/resolved_by/cancelled_by` берутся из trusted context; owner — из active approval policy. Get/queue/events используют fresh per-Space AuthzContext и anti-enumeration; evidence payload не входит в обычный API response, logs или telemetry.
+- Current projection, task events, restricted evidence и idempotency records требуют durable `kb_ops` backup. Они не полностью rebuildable из Git/MR. Restore выполняется под global managed-write freeze с последующей linked-MR reconciliation; Git-only rebuild не fabricate/delete/resolve/cancel tasks.

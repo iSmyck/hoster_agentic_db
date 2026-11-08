@@ -4,7 +4,7 @@
 **Authority:** [Architecture Spine](../architecture-spine.md), прежде всего AD-1–AD-3, AD-5–AD-8, AD-10–AD-13, AD-15–AD-16.  
 **Связанные документы:** [platform design](../architecture.md), [integration specification](../integration.md), [projection mapping](../contracts/projection-mapping.md), [T01 vectors](../contracts/t01-contract-tests.yaml), [specification](../spec.md), [Open WebUI](open-webui-fork.md), [Identity](identity-access.md), [Index](retrieval-indexing.md), [Ingestion](ingestion-connectors.md).
 
-Точные GitLab/Open WebUI versions, edition, API routes, token types и code paths — **UNKNOWN T00**. Ниже описаны логические модули и contracts, а не предполагаемые upstream классы.
+GitLab pinned на CE `19.5.3-ce.0` (revision `0d4c9a9a2fa`), Open WebUI `v0.13.0` ([baseline.md](../baseline.md)); capability evidence — [gitlab-capabilities.md](../evidence/t00/gitlab-capabilities.md), 42 completed probes на synthetic sandbox. Product wiring (конкретные routes/token types в реализации) остаётся DESIGN; ниже описаны логические модули и contracts, а не предполагаемые upstream классы.
 
 ## 1. Назначение и границы
 
@@ -352,14 +352,20 @@ Audit events связывают `request_id`, `run_id`, `proposal_id`, `proposal
 
 Acceptance evidence фиксирует baseline, commands/environment, sanitized Git refs/results, blocked real integrations и upgrade impact. UI success без parent/trailer/recovery tests не закрывает gate.
 
-## 12. T00 dependencies
+## 12. T00 status и оставшиеся зависимости
 
-- Подтвердить GitLab version/edition и API для exact-SHA merge, real merge commits, custom trailers, first/second parent reads, conflict/idempotency semantics.
-- Проверить MR structured notes: stable note ID, append-only/audit limitations, permissions и metadata export; не объявлять физическую неизменяемость без evidence.
-- Проверить protected annotated tags `kb-decisions/*`, tag-on-exact-SHA, clone/mirror/export и защиту от mutation/deletion.
-- Доказать protected branch/MR-only rules: direct push закрыт для всех, только GO merge identity имеет merge, proposal/agent/connector/CI identities merge не имеют.
-- Проверить webhooks authenticity/replay fields, audit events, exact-SHA reads и достаточность target-wide reconciliation для timeout outcomes. Недоказуемый timeout остаётся quarantined, а не получает предполагаемый PASS.
-- Найти реальные seams для attributed commits без GitLab business users, ProposalRecord persistence, CutoverRecord и policy revision reads.
-- Определить repository provisioning/naming/group layout; repository=Space не меняется.
-- Проверить advisory lock/fencing и migration/test conventions выбранного toolchain без выбора новой инфраструктурной зависимости.
-- Зафиксировать idempotency replay retention как owner question; Git-derived recovery не зависит от бессрочной БД-истории.
+Доказано на synthetic sandbox GitLab CE 19.5.3 ([evidence/t00/gitlab-capabilities.md](../evidence/t00/gitlab-capabilities.md), 42 completed probes):
+
+- Exact-SHA reads/merge, real merge commit с first parent `base_sha`/second parent `proposal_sha`, trailers `Decision-ID`/`Decision-Note-ID`/`Decision-Hash`/`Approved-by`; stale source SHA → HTTP 405 без writes.
+- MR structured notes со stable IDs, protected annotated tags `kb-decisions/*`, export после удаления source branch; tags входят в clone/fetch. Append-only note не считается физически immutable: в policy probe canonical note был реально изменён, recomputed hash/tag mismatch привёл к `invalid`, `merge_attempted=false` и `main` unchanged. Это не product implementation proof.
+- Merge-only-GO CE profile: `push_access_level=0`, `merge_access_level=40`, GO — единственный Maintainer; Developer/Reporter direct merge отклонён; per-user protected branch grants недоступны в CE и не используются.
+- Cutover: controlled pre-cutover write, freeze, exact `cutover_sha`, protected tag, post-cutover no-direct-write matrix; signed webhook delivery PASS (local-URL relaxation — sandbox-only).
+
+Обязательные ограничения из evidence:
+
+- GitLab не имеет atomic target-branch CAS: probe показал nonconforming merge против advanced target, first parent не равен reviewed base → GO per-target serialization и durable `recovery_required` barrier (ADR-13) обязательны; недоказуемый timeout остаётся quarantined.
+- Instance/project Owners могут обойти GO → admin governance, reconciliation out-of-band writes и owner acceptance (G0-D3).
+- Protected-branch settle race: активация пользователей/merge только после negative push proof.
+- Production webhooks требуют reachable allowlisted endpoints и secret validation.
+
+Остаются: repository provisioning/naming/group layout proposal (owner decision), idempotency replay retention (owner), product-side webhook replay/audit wiring и fault injection по crash matrix (после G0).

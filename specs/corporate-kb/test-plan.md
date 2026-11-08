@@ -3,7 +3,7 @@ name: Corporate KB test plan
 type: test-strategy-and-acceptance-design
 status: design_not_executed
 created: '2026-11-06'
-updated: '2026-11-06'
+updated: '2026-11-08'
 specification_version: '1.3'
 audience: Команда архитектуры, разработки, QA, security и эксплуатации
 ---
@@ -12,9 +12,9 @@ audience: Команда архитектуры, разработки, QA, secur
 
 ## 1. Статус, границы и правила доказательств
 
-**Все сценарии имеют статус DESIGN NOT EXECUTED.** Этот документ планирует проверки и evidence, но не сообщает о выполненных тестах, интеграциях, restore drills, owner approvals или production readiness. Он не разрешает implementation, migrations, production corpus load, deploy, destructive cleanup, платные внешние вызовы или включение egress.
+**Все сценарии имеют статус DESIGN NOT EXECUTED.** Этот документ планирует проверки и evidence, но не сообщает о выполненных тестах, интеграциях, restore drills, operational owner acceptance или production readiness. Отдельный T00/G0 owner design approval получен и не меняет статус сценариев. Он не разрешает implementation, migrations, production corpus load, deploy, destructive cleanup, платные внешние вызовы или включение egress.
 
-Приоритет: [Architecture Spine](architecture-spine.md) AD-1–AD-16 → [spec.md](spec.md) v1.3, R01–R18 и I01–I14 → [ADR](adr/README.md) → [architecture.md](architecture.md), [integration.md](integration.md), [database.md](database.md), [components](components/) и [contracts](contracts/README.md). Canonical↔projection rules и обязательный DESIGN_NOT_EXECUTED vector catalog: [projection-mapping.md](contracts/projection-mapping.md) и [t01-contract-tests.yaml](contracts/t01-contract-tests.yaml). Дополнительный контекст импорта и медиа: [content-standard.md](content-standard.md). Phase gate и evidence rules: [AGENTS.md](../../AGENTS.md) и [tasks.md](tasks.md).
+Приоритет: [Architecture Spine](architecture-spine.md) AD-1–AD-16 → [spec.md](spec.md) v1.3, R01–R18 и I01–I14 → [ADR](adr/README.md) → [architecture.md](architecture.md), [integration.md](integration.md), [database.md](database.md), [components](components/) и [contracts](contracts/README.md). Canonical↔projection rules и обязательный DESIGN_NOT_EXECUTED vector catalog: [projection-mapping.md](contracts/projection-mapping.md) и [t01-contract-tests.yaml](contracts/t01-contract-tests.yaml). Единственный correction-task contract для E04.7/T07b: [docops-correction-task-v1](contracts/docops-correction-task.schema.json) + [API/lifecycle](contracts/docops-correction-api.md). Дополнительный контекст импорта и медиа: [content-standard.md](content-standard.md). Phase gate и evidence rules: [AGENTS.md](../../AGENTS.md) и [tasks.md](tasks.md).
 
 Обозначения:
 
@@ -24,7 +24,22 @@ audience: Команда архитектуры, разработки, QA, secur
 - **DEFERRED** — возможности вне MVP; отсутствие теста не является разрешением реализовать их без новых требований и ADR.
 - **BLOCKED** — реальная интеграционная проверка невозможна до предоставления соответствующего доступа и pinned baseline. Mock не превращает такую проверку в PASS.
 
-До появления `baseline.md` не задаются команды запуска, test framework, GitLab version/edition, Open WebUI commit, retrieval engine, editor, model IDs/dimensions или production limits. Команды и окружение будущих прогонов выводятся только из pinned upstream repositories и фиксируются в evidence.
+Pinned baseline зафиксирован: [baseline.md](baseline.md) задаёт Open WebUI `v0.13.0` (`c38885a1…`), GitLab CE `19.5.3`, PostgreSQL `18.6` + pgvector `0.8.7`, toolchain и reproducible commands. Команды и окружение будущих прогонов выводятся из этого pinned baseline и фиксируются в evidence. **T00 DONE/G0 APPROVED; TipTap adapter selected (G0-D8)**. Final retrieval parameters, model IDs/dimensions и production limits остаются owner decisions/TBD и здесь не выбираются.
+
+**T00 baseline evidence как вход design review:**
+
+Собрано sanitized audit evidence ([evidence/t00](evidence/t00/README.md)); это **capability/audit результаты на synthetic sandboxes, не выполненные A01–A36 и не PASS сценариев этого плана**:
+
+| Область | Результат | Ограничение |
+| --- | --- | --- |
+| GitLab CE capabilities | 42 completed probes ([gitlab-capabilities](evidence/t00/gitlab-capabilities.md)) | Нет target-branch CAS; privileged Owner bypass — G0-D3 |
+| Identity adapter | Keycloak 9/9 PASS ([identity](evidence/t00/identity-capabilities.md)) | Stock OIDC 4 PASS/2 FAIL ([OIDC runtime](evidence/t00/openwebui-oidc-runtime.md)); LDAP runtime не выполнялся |
+| PostgreSQL/pgvector | External migrator PASS, head `e42c8f710a36`, runtime DDL denial PASS ([toolchain](evidence/t00/openwebui-toolchain.md)) | `kb_*` schemas не созданы |
+| Retrieval | pgvector deterministic gates 22/22 PASS ([benchmark](evidence/t00/retrieval-benchmark.md)) | Production quality/latency thresholds — owner TBD |
+| Frontend toolchain | Vitest 4/4 и direct Vite build PASS ([toolchain](evidence/t00/openwebui-toolchain.md)) | svelte-check FAIL (5722 errors), ESLint crash, `npm run build` OOM — G0-D9 |
+| Editor | TipTap adapter selected и owner-approved (G0-D8); WYSIWYG retained. Headless split: CodeMirror byte fidelity PASS / TipTap normalization-loss ([editor audit](evidence/t00/openwebui-rag-editor-audit.md)) | Browser/IME/accessibility/XSS/full managed preview — deferred T04, не PASS. Realtime collaboration/CRDT вне MVP; conflict/fresh revisions/full diff/new ProposalVersion обязательны |
+| CI Runner exact-SHA | PASS | [ci-runner.md](evidence/t00/ci-runner.md), 7/7 synthetic checks |
+| License | Engineering evidence записано ([license review](evidence/t00/openwebui-license-review.md)) | Legal clearance отсутствует — G0-D10 |
 
 ### 1.1. Правила результата проверки
 
@@ -60,7 +75,7 @@ audience: Команда архитектуры, разработки, QA, secur
 | Уровень | Назначение и обязательный объём | Среда и ограничения | Типовое evidence |
 | --- | --- | --- | --- |
 | Unit | Path/Unicode normalization; stable IDs/tree/cycles/orphans; patch uniqueness; canonical JSON/JCS/hash; Decision/merge state machines; source cursor; dependency closure; idempotency; policy evaluation; generation/profile ordering | Изолированные deterministic tests и mocks только внешних портов. Не утверждать upstream integration | Test report, input/output vectors, sanitized state transitions, coverage по критическим веткам без выдуманного процента |
-| Contract | Все closed JSON Schemas и YAML contracts включая `document-front-matter-v2`, `authz-context-v2`, `export-manifest-v2`, `agent-tools-v2`; local/cross-file `$ref` и `x-contract-invariants`; unknown/malformed fields; exact full SHA; UUID/time/enums; bounded cursor/truncation/errors; Proposal/Decision byte+hash equality; API↔tools↔events↔DB mappings; DB full-perimeter assertions. Обязательный каталог — [T01 CF-01–CF-30](contracts/t01-contract-tests.yaml) | Tooling выбирается после T00. Schema limits — PROPOSED exchange bounds, не production SLA. Catalog и mappings — DESIGN output, не VERIFIED test. Numeric thresholds не добавлять | Schema/semantic/consumer/concurrency vectors, compatibility diff, projection roundtrips, negative matrices, sanitized error codes |
+| Contract | Все closed JSON Schemas и YAML contracts включая `document-front-matter-v2`, `authz-context-v2`, `export-manifest-v2`, `agent-tools-v2`, `docops-correction-task-v1`; local/cross-file `$ref` и `x-contract-invariants`; unknown/malformed fields; exact full SHA; UUID/time/enums; bounded cursor/truncation/errors; Proposal/Decision byte+hash equality; API↔tools↔events↔DB mappings; correction lifecycle/CAS/idempotency/no-MR/backup negatives; DB full-perimeter assertions. Обязательный каталог — [T01 CF-01–CF-30](contracts/t01-contract-tests.yaml) и [correction API](contracts/docops-correction-api.md) | Tooling выбирается из pinned T00 baseline. Schema limits — PROPOSED exchange bounds, не production SLA. Catalog и mappings — DESIGN output, не VERIFIED test. Numeric thresholds не добавлять | Schema/semantic/consumer/concurrency vectors, compatibility diff, projection roundtrips, negative matrices, sanitized error codes |
 | Integration | Real GitLab exact-SHA reads/merge, MR notes/protected annotated tags/protections/webhooks/export; real PostgreSQL roles/migrations/CI; real LDAP/OIDC; object storage; selected source sandbox; real approved hoster.ai | Только после доступа и pinned baseline. Отдельный synthetic sandbox project/group и scoped credentials. Без доступа — BLOCKED | Environment/versions/commands, Git refs/parents/trailers/note IDs/hashes, role denials, event timeline, sanitized API results |
 | Browser | Неинженер проходит tree→read/edit→proposal→review→decision→restore без Git/CLI; full diff; reload/double-click; explicit statuses; accessibility/keyboard; XSS-safe preview; personal Notes/ordinary chats regression | Реальное приложение и server enforcement; browser mock не закрывает G1. Business users не получают GitLab accounts | Role/action trace, screenshots без private data, exact SHA correlation, UI state/recovery observations, accessibility notes |
 | Security | Deterministic negative tests для merge/push/grants, IDOR/cross-Space, all-channel bypass, prompt injection, revocation, front matter/policy tampering, malicious import, provider egress/fallback, secrets/logging | Zero unauthorized disclosures в согласованном adversarial suite. LLM robustness — дополнение, не замена deterministic checks | Attack vector, channel/credential, expected/actual denial, proof нуля `main` writes/no payload, sanitized logs |
@@ -123,7 +138,7 @@ audience: Команда архитектуры, разработки, QA, secur
 | `agent-bot` | Scoped proposal credential | Read/search/propose only; merge/export/grants/shell/SQL запрещены |
 | `connector-bot` | Source read + proposal-only GO capability | Нет merge/index/grant credentials и auto-merge |
 | `go-proposal-service` | Отдельная GO proposal/write identity | Branches/MR/notes/tags в разрешённом scope; merge permission отсутствует |
-| `go-merge-service` | Отдельная merge service identity | После cutover единственная identity с merge permission; недоступна UI/agent/connector/CI |
+| `go-merge-service` | Отдельная merge service identity | После cutover единственная managed identity с normal merge permission; недоступна UI/agent/connector/CI. Privileged Owner bypass — incident с reconciliation/quarantine, не managed path |
 | `ci-index-worker` | Exact-main/object read + `kb_index` writer | Нет merge/canonical push/grants; pointer только после validated run |
 | `retrieval-service` | `kb_index` read-only | Нет mutations, merge или самостоятельного grant decision |
 | `identity-adapter` | Managed upstream grant seam + `kb_authz` writer | Нет `kb_ops`/`kb_index` writes и arbitrary upstream SQL |
@@ -133,6 +148,7 @@ audience: Команда архитектуры, разработки, QA, secur
 Обязательные fixture sets:
 
 - **F-DOCS:** root/child/orphan/cycle/duplicate-ID vectors; valid nested documents; stable rename; Unicode NFC/NFD и запрещённые `..`, separators/control chars; повторяющиеся headings; explicit long-read chunks; front-matter-v2 stable `links[]`/swapped UUID, `valid_until` future/expired/removed + exact DocOps revision, archive inverse/replacement/descendants, outer/inner origin mismatches, `DOC-0001` и attachments.
+- **F-CORRECTION:** exact reported revisions и later HEAD; trusted requester/owner/user/group identities; sanitized evidence objects+hashes; optional linked MR without/with verified governed merge; open/in_review/resolved/cancelled current+event projections; stale task_version; idempotency same-key/same/different actor/route/path/payload; no-MR reason/evidence; missing/corrupt kb_ops backup и restore/reconciliation vectors. Task никогда не canonical content/DecisionRecord.
 - **F-OWNERSHIP:** `curated`, `source_managed`, `migrated`; previous imported base/current curated/incoming versions; no-op hash; same-paragraph conflict; source deletion/tombstone. `live_operational` существует только как typed read-only source fixture со `snapshot_time`, без wiki front matter.
 - **F-POLICIES:** valid access+`approval-policy.yaml` bundle **per Space** с одинаковыми `policy_bundle_id`, repository/Space и full access+approval revisions; independent group snapshots/revocation epochs; unique rule IDs/normalized prefixes и longest-prefix path-scoped approvers; engineering-only CODEOWNERS; audited personal exception. Negative variants: borrowed other-Space bundle/snapshot, mixed bundle/revisions, partial activation, duplicate `/`/parent-vs-`/pricing` rules, NFC/NFD/trailing separators, потерянная group/path role, page-level ACL attempt, `..`, Unicode ambiguity, self-approval и absolute↔relative roundtrip mismatch. Поле `access` встречается только в noncanonical malicious input и не должно влиять на grants.
 - **F-MEDIA:** decorative; illustrative; substantive с marked automatic description и original ref; critical verified/unverified; handwritten transcribed/untranscribed; small Git asset и large immutable external object; second attachment revision; missing object; hash/size/media mismatch; mutable URL; revoked attachment.
@@ -165,11 +181,20 @@ Data profiles:
 ### A01 — Дерево, deep link, WYSIWYG и review без Git/CLI
 
 - **Цель:** подтвердить единый бизнес-интерфейс и stable opaque UUID после rename внутри одного repository=Space.
-- **Предусловия:** activated `fixture-sales`; F-DOCS; `sales-author` и `sales-approver` без GitLab users; выбранный editor прошёл T00 fidelity/security audit.
-- **Ключевые шаги:** открыть tree и stable deep link; изменить страницу в WYSIWYG; сохранить draft и создать MR; approver проверяет text/front-matter-v2/structure/stable links/valid_until/archive/origin/attachments/rationale/evidence и DocOps projection; выполнить rename через reviewed MR и GO merge; повторно открыть прежний ID-link.
+- **Предусловия:** activated `fixture-sales`; F-DOCS; `sales-author` и `sales-approver` без GitLab users; owner-selected TipTap adapter с обязательным T04 fidelity/browser gate, не предполагаемым PASS.
+- **Ключевые шаги:** открыть tree и stable deep link; изменить страницу в WYSIWYG; сохранить draft и создать MR; approver проверяет text/front-matter-v2/structure/stable links/valid_until/archive/origin/attachments/rationale/evidence и DocOps projection; выполнить rename через reviewed MR и GO merge; повторно открыть прежний ID-link. Для concurrent authors проверить conflict detection, exact/fresh revisions, full diff и новую ProposalVersion без realtime CRDT.
 - **Ожидаемый результат:** весь путь выполнен без Git/CLI; UUID/parent/target links и canonical provenance сохранены; `archived ↔ archive` и revision-bound valid_until согласованы; full preview достоверен; `main` меняется только verified GO merge; statuses различают draft/in_review/published/indexed/archived без подмены proposal superseded.
 - **Evidence:** role/action browser trace, exact base/proposal/merge SHAs, before/after tree/ID map, diff checklist, отсутствие business GitLab users.
 - **Требования/компоненты:** R01, R02; Open WebUI navigator/editor/review, GO, Identity/AuthZ, GitLab. Levels: browser, integration, contract. Gate: G1.
+
+#### Correction-task supporting vectors — E04.7/T07b, без нового acceptance ID
+
+Supporting ownership: A01,A07,A22,A26,A27,A36; новые A IDs не создаются. Машинные vectors — [T01-CF-06/10/20/25](contracts/t01-contract-tests.yaml), semantic contract — [correction API](contracts/docops-correction-api.md).
+
+- Выполнить create/get на exact revision с server-derived requester, policy owner, evidence hash и optional linked MR; проверить open/in_review/resolved/cancelled, monotonic task_version, terminal replay и отсутствие canonical status/content writes.
+- Проверить same-key replay, key reuse под other actor/route/path/payload, stale CAS, invalid transition, revoked/non-owner/cross-Space access, linked MR без merge proof и no-MR resolve/cancel без reason/evidence hash: ноль task/event/content side effects.
+- MR-based resolution допускается только после normal ProposalRecord/MR/human DecisionRecord/GO merge; no-MR resolution означает disposition only.
+- В clean synthetic restore проверить durable kb_ops current/events/evidence/idempotency backup и linked-MR reconciliation. Git-only rebuild не fabricate/delete/resolve/cancel tasks; unavailable real check — BLOCKED.
 
 ### A02 — Direct read exact revision, bounds, cursor и stale candidate
 
@@ -308,11 +333,11 @@ Data profiles:
 
 ### A17 — All-channel bypass и direct human/bot merge
 
-- **Цель:** доказать merge-only-GO и отсутствие auto-merge на уровне capabilities и GitLab, не только tool schema.
-- **Предусловия:** protected `main`; human engineering, agent, connector, CI и GO proposal credentials; direct/deferred/note-attached/ordinary/native/temporary chats, automation, channels, external OpenAPI, `call_tool`.
-- **Ключевые шаги:** по матрице каналов вызвать accept/reject/cancel/merge/grants/arbitrary Git/shell/SQL/Tool Creation/bulk/subtree/attachment operations; выполнить direct push/merge каждой non-GO identity; попытаться source_managed auto-merge и CI post-merge `INDEX.md` push.
-- **Ожидаемый результат:** разрешены только bounded read/search/propose; privileged calls denied независимо Identity/GO/GitLab; только GO merge identity может real merge после human decision; auto-merge и direct human/engineering/bot merge невозможны; `INDEX.md` не создаёт bypass commit.
-- **Evidence:** channel×capability×identity matrix, protected rule denial, target refs before/after, tool/provider logs без секретов.
+- **Цель:** доказать normal managed merge-only-GO и отсутствие auto-merge на уровне capabilities и GitLab, не только tool schema, плюс обязательное обнаружение privileged Owner out-of-band bypass.
+- **Предусловия:** protected `main`; human engineering, agent, connector, CI и GO proposal credentials; отдельный synthetic privileged Owner incident fixture; direct/deferred/note-attached/ordinary/native/temporary chats, automation, channels, external OpenAPI, `call_tool`.
+- **Ключевые шаги:** по матрице каналов вызвать accept/reject/cancel/merge/grants/arbitrary Git/shell/SQL/Tool Creation/bulk/subtree/attachment operations; выполнить direct push/merge каждой non-GO non-privileged identity; попытаться source_managed auto-merge и CI post-merge `INDEX.md` push. Отдельно смоделировать unexpected privileged Owner history в synthetic sandbox и проверить reconciliation, incident и affected-target quarantine без history rewrite.
+- **Ожидаемый результат:** разрешены только bounded read/search/propose; privileged calls denied независимо Identity/GO/GitLab; только GO managed identity может normal real merge после human decision; auto-merge и direct non-privileged human/engineering/bot merge невозможны; `INDEX.md` не создаёт bypass commit. Privileged Owner bypass не маркируется GO merge и приводит к incident/quarantine.
+- **Evidence:** channel×capability×identity matrix, protected rule denial, target refs before/after, privileged-Owner unexpected-HEAD detection/quarantine record, tool/provider logs без секретов.
 - **Требования/компоненты:** R06, R16; Open WebUI, GO, Identity/AuthZ, GitLab protections, CI, connectors. Levels: integration, security, browser. Gate: G1 blocker.
 
 ### A18 — Prompt injection и trusted execution context

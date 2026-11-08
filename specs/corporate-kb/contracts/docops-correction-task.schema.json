@@ -1,0 +1,468 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "docops-correction-task.schema.json",
+  "title": "DocOps correction task operational record",
+  "description": "PROPOSED closed GO-owned kb_ops operational record. It is not canonical content, a ProposalRecord, a DecisionRecord, or a canonical document status. The original document revision is immutable; governed content correction requires the normal MR/human-decision/GO-merge path.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "space_id",
+    "repository_id",
+    "document_id",
+    "document_revision_sha",
+    "state",
+    "requester_stable_id",
+    "owner",
+    "evidence_sha256",
+    "linked_mr",
+    "idempotency_key",
+    "payload_hash",
+    "task_version",
+    "created_at",
+    "updated_at",
+    "resolved_at",
+    "cancelled_at",
+    "resolved_by_stable_id",
+    "cancelled_by_stable_id",
+    "resolution_reason",
+    "cancellation_reason",
+    "resolution_evidence_sha256",
+    "cancellation_evidence_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "docops-correction-task-v1"
+    },
+    "task_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Server-generated UUID; never reused."
+    },
+    "space_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 63,
+      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$"
+    },
+    "repository_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "document_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "document_revision_sha": {
+      "$ref": "#/$defs/gitSha",
+      "description": "Exact revision reported by the requester. It is never silently rebound to a later HEAD."
+    },
+    "state": {
+      "type": "string",
+      "enum": ["open", "in_review", "resolved", "cancelled"]
+    },
+    "requester_stable_id": {
+      "$ref": "./proposal-record.schema.json#/$defs/stableId",
+      "description": "Trusted server-derived external actor; never supplied by a client or LLM as proof of identity."
+    },
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "stable_id"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["user", "group"]
+        },
+        "stable_id": {
+          "$ref": "./proposal-record.schema.json#/$defs/stableId"
+        }
+      },
+      "description": "Derived from the active approval policy, not front matter or model arguments."
+    },
+    "evidence_sha256": {
+      "$ref": "#/$defs/sha256",
+      "description": "SHA-256 of JCS UTF-8 for the sanitized create evidence payload."
+    },
+    "linked_mr": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/linkedMR"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Optional governed MR association; does not replace ProposalRecord or DecisionRecord."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "description": "Create-operation key. Resolve/cancel keys are retained in the shared idempotency registry and task events."
+    },
+    "payload_hash": {
+      "$ref": "#/$defs/sha256",
+      "description": "SHA-256 of JCS UTF-8 for the normalized create request payload."
+    },
+    "task_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonic server version used for compare-and-swap and lost-update prevention."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resolved_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "cancelled_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "resolved_by_stable_id": {
+      "anyOf": [
+        {
+          "$ref": "./proposal-record.schema.json#/$defs/stableId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "cancelled_by_stable_id": {
+      "anyOf": [
+        {
+          "$ref": "./proposal-record.schema.json#/$defs/stableId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "resolution_reason": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 10000
+    },
+    "cancellation_reason": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 10000
+    },
+    "resolution_evidence_sha256": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/sha256"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Required for no-MR resolution; optional additional evidence for MR-based resolution."
+    },
+    "cancellation_evidence_sha256": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/sha256"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "open"
+          }
+        },
+        "required": ["state"]
+      },
+      "then": {
+        "properties": {
+          "linked_mr": {
+            "type": "null"
+          },
+          "resolved_at": {
+            "type": "null"
+          },
+          "cancelled_at": {
+            "type": "null"
+          },
+          "resolved_by_stable_id": {
+            "type": "null"
+          },
+          "cancelled_by_stable_id": {
+            "type": "null"
+          },
+          "resolution_reason": {
+            "type": "null"
+          },
+          "cancellation_reason": {
+            "type": "null"
+          },
+          "resolution_evidence_sha256": {
+            "type": "null"
+          },
+          "cancellation_evidence_sha256": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "in_review"
+          }
+        },
+        "required": ["state"]
+      },
+      "then": {
+        "properties": {
+          "linked_mr": {
+            "$ref": "#/$defs/linkedMR"
+          },
+          "resolved_at": {
+            "type": "null"
+          },
+          "cancelled_at": {
+            "type": "null"
+          },
+          "resolved_by_stable_id": {
+            "type": "null"
+          },
+          "cancelled_by_stable_id": {
+            "type": "null"
+          },
+          "resolution_reason": {
+            "type": "null"
+          },
+          "cancellation_reason": {
+            "type": "null"
+          },
+          "resolution_evidence_sha256": {
+            "type": "null"
+          },
+          "cancellation_evidence_sha256": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "resolved"
+          }
+        },
+        "required": ["state"]
+      },
+      "then": {
+        "properties": {
+          "resolved_at": {
+            "type": "string"
+          },
+          "cancelled_at": {
+            "type": "null"
+          },
+          "resolved_by_stable_id": {
+            "$ref": "./proposal-record.schema.json#/$defs/stableId"
+          },
+          "cancelled_by_stable_id": {
+            "type": "null"
+          },
+          "resolution_reason": {
+            "type": "string"
+          },
+          "cancellation_reason": {
+            "type": "null"
+          },
+          "cancellation_evidence_sha256": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "resolved"
+          },
+          "linked_mr": {
+            "type": "null"
+          }
+        },
+        "required": ["state", "linked_mr"]
+      },
+      "then": {
+        "properties": {
+          "resolution_evidence_sha256": {
+            "$ref": "#/$defs/sha256"
+          }
+        },
+        "description": "No-MR resolution requires a reason and a new resolution evidence hash; it never claims canonical correction."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "resolved"
+          },
+          "linked_mr": {
+            "type": "object"
+          }
+        },
+        "required": ["state", "linked_mr"]
+      },
+      "then": {
+        "properties": {
+          "linked_mr": {
+            "properties": {
+              "merge_commit_sha": {
+                "$ref": "#/$defs/gitSha"
+              }
+            }
+          }
+        },
+        "description": "MR-based resolution requires a verified governed merge commit and canonical decision evidence."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "cancelled"
+          }
+        },
+        "required": ["state"]
+      },
+      "then": {
+        "properties": {
+          "resolved_at": {
+            "type": "null"
+          },
+          "cancelled_at": {
+            "type": "string"
+          },
+          "resolved_by_stable_id": {
+            "type": "null"
+          },
+          "cancelled_by_stable_id": {
+            "$ref": "./proposal-record.schema.json#/$defs/stableId"
+          },
+          "resolution_reason": {
+            "type": "null"
+          },
+          "cancellation_reason": {
+            "type": "string"
+          },
+          "resolution_evidence_sha256": {
+            "type": "null"
+          },
+          "cancellation_evidence_sha256": {
+            "$ref": "#/$defs/sha256"
+          }
+        }
+      }
+    }
+  ],
+  "x-contract-invariants": [
+    {
+      "id": "CORRECTION_TASK_IDENTITY_AND_REVISION",
+      "rule": "space_id, repository_id, and document_id resolve through the current repository=Space binding and authorized canonical read. document_revision_sha remains the exact originally reported revision; a newer HEAD never silently rebinds it.",
+      "error": "REVISION_CONFLICT"
+    },
+    {
+      "id": "CORRECTION_TASK_TRUSTED_ACTOR_OWNER",
+      "rule": "requester and terminal actors come only from the trusted server context. owner comes only from the current approval policy. Fresh per-Space AuthzContext, policy revisions, group/path role, and anti-enumeration are mandatory on every read and mutation.",
+      "error": "AUTHZ_CONTEXT_STALE"
+    },
+    {
+      "id": "CORRECTION_TASK_LIFECYCLE",
+      "rule": "open may transition to in_review only after a durable valid linked MR; open/in_review may transition to resolved or cancelled only through authorized conclusive operations. resolved and cancelled are terminal and cannot reopen through replay. task_version increases monotonically on every real mutation and stale CAS creates zero writes.",
+      "error": "INVALID_STATE"
+    },
+    {
+      "id": "CORRECTION_TASK_IDEMPOTENCY",
+      "rule": "Every public mutation binds Idempotency-Key to verified actor, normalized operation/route, concrete path, and normalized payload hash. Identical replay returns the existing result with no second event or side effect; any other tuple under the same key creates zero writes.",
+      "error": "IDEMPOTENCY_KEY_REUSED"
+    },
+    {
+      "id": "CORRECTION_TASK_GOVERNED_CONTENT_BOUNDARY",
+      "rule": "The task and its events never edit, publish, archive, or delete canonical content. A content correction resolves only after verified ProposalRecord/MR/canonical human DecisionRecord/GO merge evidence. A no-MR resolution records disposition only and does not claim content was corrected.",
+      "error": "INVALID_STATE"
+    },
+    {
+      "id": "CORRECTION_TASK_DURABILITY",
+      "rule": "GO is the only kb_ops writer. Current projection, append-only events, restricted sanitized evidence payloads, and shared idempotency records require durable kb_ops backup. Git/MR rebuild alone cannot recreate task reports, actor/owner decisions, evidence, or lifecycle and must not fabricate, delete, resolve, or cancel them.",
+      "error": "UPSTREAM_UNAVAILABLE"
+    }
+  ],
+  "$defs": {
+    "gitSha": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "linkedMR": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proposal_id", "proposal_sha", "merge_commit_sha"],
+      "properties": {
+        "proposal_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "proposal_sha": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "merge_commit_sha": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/gitSha"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Null while the MR is open or its governed outcome is not verified. Required for MR-based resolution."
+        }
+      }
+    },
+    "evidencePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary"],
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10000,
+          "description": "Sanitized synthetic/user report without secrets, unredacted personal data, or unrelated private content."
+        }
+      },
+      "description": "Normalized with JCS UTF-8 for evidence_sha256. Stored only in restricted GO-owned evidence storage, not ordinary logs, telemetry, or Space export."
+    }
+  }
+}

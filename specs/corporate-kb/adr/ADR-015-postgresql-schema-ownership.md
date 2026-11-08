@@ -1,8 +1,8 @@
 # ADR-15 — PostgreSQL schema ownership
 
 **ID/Title:** ADR-15 / Единственный writer каждой PostgreSQL-схемы  
-**Status:** **Accepted during architecture coaching 2026-11-06; реализация зависит от результатов T00**. Один PostgreSQL instance на клиента — DESIGN assumption, подлежащая подтверждению на pinned upstream deployment; не production approval.  
-**Date:** 2026-11-06  
+**Status:** **Accepted during architecture coaching 2026-11-06**. T00 evidence записано (см. Verification): upstream schema/role separation, external migrator и synthetic `kb_*` schema/cross-write probes проверены на synthetic instance; полные product migrations ещё не созданы. Один PostgreSQL instance на клиента — runtime-checked DESIGN, не production approval.  
+**Date:** 2026-11-06; дополнено T00 evidence 2026-11-08  
 **Requirements/AD links:** R04, R05, R07–R11, R14, R17, R18; I07–I11; [ARCHITECTURE-SPINE.md](../architecture-spine.md): AD-2, AD-4, AD-7–AD-9, AD-11, AD-12; [spec.md](../spec.md): T00, T03, T05, T10, T18.
 
 ## Context
@@ -70,7 +70,30 @@ Canonical documents/proposals/decisions находятся в GitLab. Поэто
 - Migration test каждого owner на synthetic instance: повтор/upgrade/rollback по поддерживаемой процедуре, отсутствие скопированных upstream migrations и чужих DDL writers.
 - Rebuild tests: `kb_index` из Git + assets; `kb_ops` Git-derived state из notes/tags/merges; `kb_authz` из Git policy + IdP. Unknown merge recovery остаётся blocked до reconciliation.
 - Restore/upgrade drill подтверждает, что secrets отсутствуют в tables/logs/evidence, а client instances изолированы.
-- **Текущее состояние:** migrations не запускались, baseline и DB integration evidence отсутствуют.
+### T00 evidence (2026-11-07; Open WebUI `v0.13.0`, PostgreSQL `18.6`, pgvector `0.8.7`)
+
+Upstream STOP findings ([evidence/t00/openwebui-auth-audit.md](../evidence/t00/openwebui-auth-audit.md)):
+
+- import-time `alembic upgrade head` при импорте `open_webui.config`: `backend/open_webui/config.py:63-81`; `ENABLE_DB_MIGRATIONS` включён по умолчанию: `backend/open_webui/env.py:149-152`;
+- multi-worker uvicorn без single-runner/advisory lock в online path: `backend/start.sh:94-110`, `backend/open_webui/migrations/env.py:75-108`;
+- offline path не задаёт `search_path`/`version_table_schema`: `backend/open_webui/migrations/env.py:38-48`;
+- ACL migration логирует/пропускает malformed backfill и затем удаляет source `access_control` columns: `f1e2d3c4b5a6_add_access_grant_table.py:132-143`, `:188-223`;
+- duplicate normalized emails останавливают unique-index migration и включают emails в error — evidence обязан быть sanitized: `f0bd01a18a3d_add_unique_normalized_user_email_index.py:59-75`;
+- legacy `oauth_sub` downgrade не полностью обратим: `b10670c03dd5_update_user_table.py:181-236`.
+
+Runtime migration evidence ([evidence/t00/openwebui-toolchain.md](../evidence/t00/openwebui-toolchain.md)):
+
+- external migrator profile (`ENABLE_DB_MIGRATIONS=False`, `DATABASE_SCHEMA=openwebui`, `alembic upgrade head`) — PASS: 51 upstream tables, head `e42c8f710a36`;
+- runtime profile с `VECTOR_DB=pgvector` — `/api/config` вернул `0.13.0`; runtime role читает upstream tables, но не может создавать tables в upstream schema (DDL denial PASS);
+- `document_chunk` принадлежит runtime/index role в dedicated vector schema; upstream `alembic_version` принадлежит migrator role.
+
+Обязательные controls:
+
+1. Runtime workers стартуют только с `ENABLE_DB_MIGRATIONS=False` и non-DDL role; единственный explicitly authorized migrator job выполняет upgrade, сверяет expected head `e42c8f710a36` до включения traffic. Простого отключения migrations недостаточно — нужен external expected-head/readiness check (fail-closed startup).
+2. pgvector extension/schema pre-provisioning выполняет privileged migrator; `kb_authz`/`kb_ops`/`kb_index` получают собственные migrations/roles и не входят в upstream chain.
+3. Pre/post data-copy checks (duplicate identity counts, User/Auth, полный legacy ACL → access_grant diff), lock/duration и rollback assessment; production migrations не разрешаются на основании static audit.
+
+**Текущее состояние:** upstream schema/role separation и external migrator проверены на synthetic instance; synthetic `kb_authz`/`kb_ops`/`kb_index` schemas и четыре cross-write denials проверены ([postgres-schema-probe.md](../evidence/t00/postgres-schema-probe.md)). Полные 39-table migrations, полная denial matrix, rebuild и restore drills не выполнялись.
 
 ## Related contracts
 

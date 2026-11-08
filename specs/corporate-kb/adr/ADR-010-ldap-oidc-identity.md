@@ -1,8 +1,8 @@
 # ADR-10 — LDAP/OIDC identity
 
 **ID/Title:** ADR-10 / Стабильная LDAP/OIDC identity, группы и revocation barrier  
-**Status:** **Accepted** по spec решением владельца от 2026-11-06; дополнен AuthzContext, schema ownership и policy consistency во время architecture coaching. Реализация зависит от результатов T00; upstream capabilities не считаются подтверждёнными.  
-**Date:** 2026-11-06  
+**Status:** **Accepted** по spec решением владельца от 2026-11-06; дополнен AuthzContext, schema ownership и policy consistency во время architecture coaching. T00 evidence записано (см. Verification): stock LDAP/OIDC JIT подтверждённо недостаточен, identity/AuthZ adapter обязателен. Это не production approval.  
+**Date:** 2026-11-06; дополнено T00 evidence 2026-11-08  
 **Requirements/AD links:** R05, R11, R15–R18; I03, I06, I09, I12; [ARCHITECTURE-SPINE.md](../architecture-spine.md): AD-4–AD-6, AD-8, AD-12; [spec.md](../spec.md): раздел 5, T00, T03, A24–A26.
 
 ## Context
@@ -62,7 +62,29 @@ LDAP/OIDC отвечает «кто ты», платформа — «что те
 - A25: удаление из группы прекращает private page/search/tools/history/export не позднее утверждённого barrier; merge/export отклоняются при ближайшей recheck; live subscription закрывается.
 - A26: rename login/email сохраняет stable identity/history/MR; mover меняет Space/path scopes и review queue. Проверить потерю права между review и merge → ноль canonical writes.
 - Cross-Space IDOR и anti-enumeration; IAM и GO используют одинаковый `policy_bundle_id` и revisions; front matter `access` не расширяет права.
-- **Текущее состояние:** реальные IdP/upstream проверки не выполнялись; mocked login не засчитывается как PASS.
+### T00 evidence (2026-11-07; Open WebUI `v0.13.0`, Keycloak `26.8.2`)
+
+Upstream STOP findings подтверждены ([evidence/t00/openwebui-auth-audit.md](../evidence/t00/openwebui-auth-audit.md)):
+
+- LDAP linking по email, не по stable directory identifier: `backend/open_webui/routers/auths.py:586-597`;
+- search attributes без `objectGUID`/`entryUUID`; при multiple matches берётся `entries[0]` без ambiguity reject: `backend/open_webui/routers/auths.py:475-500`;
+- nested AD matching rule и recursive closure отсутствуют; LDAP DN группы сводится к CN: `backend/open_webui/routers/auths.py:391-400`, `:525-568`;
+- пустой LDAP/OIDC group set не отзывает memberships: `backend/open_webui/routers/auths.py:631-639`, `backend/open_webui/utils/oauth.py:1803-1819`;
+- OIDC persistence — provider alias + `sub`, не issuer + `sub`; DB uniqueness отсутствует: `backend/open_webui/models/users.py:450-469`;
+- StartTLS не реализован; только implicit LDAPS.
+- Positive seam: пустой LDAP password отклоняется до bind (static mitigation риска CVE-2026-44551, не runtime certification): `backend/open_webui/routers/auths.py:412-428`.
+
+Adapter feasibility: synthetic Keycloak 9/9 PASS ([evidence/t00/identity-capabilities.md](../evidence/t00/identity-capabilities.md)) — stable issuer+sub при rename, duplicate/ambiguous/cross-issuer rejection, nested closure, empty-claim fail-closed, revocation после удаления из последней группы, personal grant сохраняется отдельно.
+
+Stock OIDC runtime против Keycloak: 4 PASS / 2 security FAIL ([evidence/t00/openwebui-oidc-runtime.md](../evidence/t00/openwebui-oidc-runtime.md)) — login/session/initial groups sync работают, но issuer+sub persistence и revocation после missing `groups` claim — FAIL. Stock OIDC пригоден только как authentication/session seam.
+
+Обязательные adapter controls:
+
+1. Persisted unique `(issuer, sub)` / `(directory, objectGUID|entryUUID)` → internal user mapping в `kb_authz`; reject duplicate/ambiguous/cross-issuer; email linking только по отдельной явной политике.
+2. IdP Admin API — authoritative group source; OIDC claims — hints, не revocation evidence; nested closure; managed-vs-personal membership ownership.
+3. Пустой external group set отзывает managed memberships; AuthzContext fail-closed при неготовых или epoch-mismatched policy/group snapshots.
+
+**Текущее состояние:** adapter feasibility доказана на synthetic IdP; production AD/LDAP и LDAPS/OpenLDAP runtime не выполнялись; live subscription closure и измеренный revocation SLO не подтверждены; A24–A26 не выполнялись. Mocked login не засчитывается как PASS.
 
 ## Related contracts
 

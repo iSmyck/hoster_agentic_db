@@ -3,7 +3,7 @@ name: Corporate KB operations design
 type: deployment-and-operations-runbooks
 status: design_not_executed
 created: '2026-11-06'
-updated: '2026-11-06'
+updated: '2026-11-08'
 specification_version: '1.3'
 audience: Команда архитектуры, эксплуатации, security, QA и владельцы клиентского контура
 ---
@@ -12,14 +12,22 @@ audience: Команда архитектуры, эксплуатации, secur
 
 ## 1. Статус и правила применения
 
-**Документ имеет статус DESIGN NOT EXECUTED.** Он описывает целевую эксплуатационную модель и будущие runbooks, но не подтверждает deployment, startup, migration, cutover, backup, restore, upgrade, outage handling или production readiness.
+**Документ имеет статус DESIGN NOT EXECUTED.** Он описывает целевую эксплуатационную модель и будущие runbooks, но не подтверждает deployment, startup, migration, cutover, backup, restore, upgrade, outage handling, operational owner acceptance или production readiness. Отдельный G0 design approval получен и не заменяет эти rehearsals.
 
-До утверждённого `baseline.md`:
+Pinned baseline записан в [baseline.md](baseline.md) (**DONE — G0 APPROVED**) с synthetic runtime evidence в [evidence/t00](evidence/t00/README.md). Тем не менее:
 
-- не заданы и не выполняются production commands, DDL/migrations, container manifests, GitLab API calls, backup/restore scripts или destructive actions;
-- не выбраны Open WebUI commit, GitLab version/edition, PostgreSQL/CI/index engine, object-store layout, editor, models/dimensions, connector и repository perimeter;
+- production commands, DDL/migrations, container manifests, GitLab API calls, backup/restore scripts и destructive actions не выполняются вне sandbox и не утверждены для production;
+- TipTap adapter selected и owner-approved (G0-D8), но canonical adapter/browser gate не завершены; object-store layout, models/dimensions, connector и фактический repository perimeter — owner decisions;
 - не включать production user access, corpus load, external egress или платные вызовы;
-- любые шаги ниже — **логические операции и control points**, а не готовые команды. Исполняемые процедуры выводятся из pinned upstream baselines, проходят sandbox rehearsal и отдельное owner authorization.
+- любые шаги ниже — **логические операции и control points**, а не готовые команды. Исполняемые процедуры выводятся из pinned baseline, проходят sandbox rehearsal и отдельное owner authorization.
+
+Обязательные controls, подтверждённые T00 evidence как необходимые (не optional):
+
+- **External migrator profile** ([evidence/t00/openwebui-toolchain.md](evidence/t00/openwebui-toolchain.md)): runtime workers только с `ENABLE_DB_MIGRATIONS=False` и non-DDL role; единственный migrator job выполняет `alembic upgrade head`, сверяет expected head `e42c8f710a36` до включения traffic; pre/post data-copy checks и rollback assessment обязательны; migration errors санитизируются (duplicate-email error содержит emails).
+- **GitLab CE normal managed merge-only-GO profile** ([evidence/t00/gitlab-capabilities.md](evidence/t00/gitlab-capabilities.md)): `push_access_level=0`, `merge_access_level=40`, GO — единственный managed Maintainer, unprotect — Administrator-level, protected decision tags `kb-decisions/*` создаёт только GO; per-user protected branch grants в CE отсутствуют и не используются. Для всех non-privileged business/engineering/bot/connector/CI/source identities единственный normal post-cutover final apply — GO/MR/canonical human DecisionRecord/GO merge; routine/self-service admin break-glass product capability отсутствует.
+- **Privileged admin governance (G0-D3 APPROVED):** GitLab instance/project Owners могут обойти GO вне managed path. Такой bypass — out-of-band security/integrity incident: out-of-band reconciliation обнаруживает unexpected HEAD/merge, немедленно устанавливает affected-target `recovery_required`/quarantine и managed-write freeze, сохраняет audit evidence и запускает explicit runbook §7.5. Абсолютный merge-only-GO для privileged admins не заявляется ([g0-review.md](g0-review.md)).
+- **Cutover settle proof:** активация пользователей/merge только после negative push proof (GitLab protection propagation race наблюдался в sandbox).
+- **Webhooks:** local-URL relaxation — sandbox-only; production требует reachable allowlisted endpoints и secret validation.
 
 Нормативный порядок: [Architecture Spine](architecture-spine.md) AD-1–AD-16 → [spec.md](spec.md) R01–R18/I01–I14 → [ADR](adr/README.md) → [architecture.md](architecture.md), [integration.md](integration.md), [database.md](database.md), [components](components/), [contracts](contracts/README.md). Canonical↔projection mappings и DESIGN_NOT_EXECUTED consumer vectors: [projection-mapping.md](contracts/projection-mapping.md), [t01-contract-tests.yaml](contracts/t01-contract-tests.yaml). Контентный контур: [content-standard.md](content-standard.md). Сопутствующие проверки: [test-plan.md](test-plan.md), полный каталог A01–A36. Phase/evidence rules: [AGENTS.md](../../AGENTS.md) и [tasks.md](tasks.md).
 
@@ -128,7 +136,7 @@ audience: Команда архитектуры, эксплуатации, secur
 2. Rotation выполняется по owner-approved procedure с overlap/rollback semantics конкретного upstream; numeric rotation TTL и downtime window — OWNER_TBD. Rotation не меняет business stable IDs или DecisionRecord hashes.
 3. Доступ к secret references и rotation аудируется без значения секрета. Ошибки redact credentials, query/body secrets, signed URLs и provider payloads.
 4. Backup secret material не смешивается с обычным Git mirror/export. Используется отдельная approved secrets backup/recovery policy с controlled access и restore drill; plaintext secrets в package запрещены.
-5. Emergency credential revocation не открывает direct human merge. Break-glass governance — отдельный DEFERRED ADR.
+5. Emergency credential revocation не открывает routine direct human merge. Routine break-glass product capability отсутствует; emergency out-of-band privileged Owner action обрабатывается как incident по approved G0-D3 и §7.5.
 6. При подозрении на утечку: закрыть affected privileged operations, отозвать credential через supported seam, сохранить sanitized evidence, провести Git/provider/DB audit и fresh AuthzContext; не копировать секрет в ticket/report.
 
 ## 4. Startup и readiness runbook
@@ -156,7 +164,7 @@ audience: Команда архитектуры, эксплуатации, secur
 | 6 | Запустить CI/object/index workers с retrieval pointer publication disabled до validation | Exact-main read only; preflight и partial runs не serving |
 | 7 | Выполнить HEAD/index reconciliation; при потере `kb_index` — full rebuild по разделу 8 | No active validated pointer → `INDEX_NOT_READY`; stale mode остаётся выключен |
 | 8 | Включить approved provider connections и выполнить nonsecret inventory/health checks | Нет silent fallback; при отсутствии required model/route соответствующий readiness — BLOCKED |
-| 9 | Проверить GitLab protections/webhook authenticity, no-bypass matrix и freshness barriers | Human/engineering/bot direct merge должен быть denied; CI/connector auto-merge denied |
+| 9 | Проверить GitLab protections/webhook authenticity, no-bypass matrix и freshness barriers | Non-privileged human/engineering/bot direct merge denied; CI/connector auto-merge denied; privileged Owner unexpected history вызывает incident/quarantine |
 | 10 | Снять bootstrap freeze только для conclusive targets после fresh AuthZ и operational checks | Per-target recovery сохраняется независимо; один healthy target не открывает другой |
 | 11 | Включить managed user access только для activated Spaces с published pointer | Cutover Space до published pointer остаётся closed; upstream personal Notes/chats не затрагиваются |
 | 12 | Зафиксировать startup report и оставшиеся BLOCKED/recovery/DLQ items | Нет overall READY при скрытых failed/barrier/missing closure items |
@@ -182,7 +190,7 @@ audience: Команда архитектуры, эксплуатации, secur
 1. **Freeze first:** включить repository/target write freeze и убедиться, что pre-cutover writes остановлены; user access остаётся закрыт.
 2. **Exact HEAD:** прочитать target HEAD и потребовать `HEAD == cutover_sha`.
 3. **Drift stop:** при любом изменении HEAD после sign-off или во время cutover перевести запуск в failed/stopped без published pointer/user activation. Новый CutoverRecord/sign-off/preflight обязателен.
-4. **Protected baseline:** создать/проверить protected validation/cutover tag, target protections и merge-only-GO rules. CI proposal/bot, human/engineering direct push/merge запрещены; bulk после этого не используется.
+4. **Protected baseline:** создать/проверить protected validation/cutover tag, target protections и normal managed merge-only-GO rules. CI proposal/bot и non-privileged human/engineering direct push/merge запрещены; privileged Owner bypass подлежит out-of-band incident detection/quarantine; bulk после этого не используется.
 5. **Inactive preflight:** CI читает exact `cutover_sha`, создаёт отдельные preflight request/run/snapshot IDs и full exact+semantic descriptor с dependency/attachment/policy closure, включая `approval_policy_revision`, `purpose=cutover_preflight`, `is_preflight=true`, `serving_allowed=false`, `snapshot_sha=cutover_sha`.
 6. **Validate preflight:** проверить eligibility, paths/IDs/stable links/media, complete closure, fresh per-Space ACL negative controls, non-null exact+semantic ready hashes и отсутствие `main` writes от CI. Preflight остаётся immutable, никогда не active и не serving.
 7. **Create published pair:** GO создаёт отдельный `IndexRequested(preflight=false)`; CI создаёт отдельные published run/descriptor с новыми request/run/snapshot IDs, но `cutover_sha == main_sha == preflight.snapshot_sha == published.snapshot_sha`, одинаковыми dependency closure, policy triple и exact/semantic hashes. Полная validation повторяется; preflight identity не переиспользуется.
@@ -293,6 +301,19 @@ Test injection и tuple assertions находятся в [test-plan.md §8](test
 
 Periodic intervals, retry/backoff и freshness кроме нормативных group refresh ≤15 минут/revocation ≤30 минут — OWNER_TBD. Reconciliation evidence содержит refs/counts/result codes, но не document text/raw notes/provider payloads. Run row не является merge proof.
 
+### 7.5. Privileged GitLab Owner out-of-band incident / emergency break-glass
+
+G0-D3 остаётся APPROVED и не переоткрывается. Routine/self-service break-glass product capability отсутствует. Эта процедура — DESIGN NOT EXECUTED для обязательного emergency governance, а не разрешение выполнить реальный incident action, production change, history rewrite или direct managed merge.
+
+1. **Restricted account inventory:** вести instance/project Owner accounts, назначенных ответственных и periodic access review; минимизировать privileges и исключить shared credentials.
+2. **Emergency authorization:** для преднамеренного emergency действия получить отдельный authorization record вне этого proposal; зафиксировать actor, reason, exact repository/target/SHAs, timestamp и audit refs. Не выдавать routine admin action за GO merge.
+3. **Detect:** out-of-band reconciliation сравнивает unexpected target HEAD/merge history, MR/note/tag/trailer/audit evidence с GO records. Неизвестный или несоответствующий commit не маркируется GO merge.
+4. **Freeze/quarantine:** немедленно включить managed-write freeze и affected-target `recovery_required`/quarantine, остановить новые managed merges и сохранить неизменяемые audit refs. Соседние targets изолируются по evidence, а не глобально без необходимости.
+5. **Reconcile:** выполнить Git-derived reconciliation всех unexpected commits и unresolved accepts; зафиксировать proven/unproven outcomes и оставить unknown target quarantined.
+6. **Remediate:** подготовить reviewed remediation/revert-MR через normal human decision/GO merge там, где применимо; history rewrite и destructive cleanup запрещены. Не очищать barrier по terminal label или TTL.
+7. **Credential review:** проверить privileged access/session/audit trail и выполнить rotation по отдельной security procedure при подозрении на компрометацию; secrets не попадают в incident evidence.
+8. **Close:** owner-reviewed incident closure требует conclusive target-wide evidence, fresh AuthZ, завершённого remediation и подтверждённого recovery. Quarantine снимается только после этого; reopen сам по себе не доказывает corrected content.
+
 ## 8. Полный rebuild `kb_ops`, `kb_authz`, `kb_index`
 
 ### 8.1. Общий протокол
@@ -303,7 +324,7 @@ Periodic intervals, retry/backoff и freshness кроме нормативных
 4. Не восстанавливать transient merge status, AuthzContext или active pointer как canonical truth.
 5. После каждого schema rebuild выполнить соответствующий reconciliation и negative security checks. Открывать targets/users постепенно после полного safety closure.
 
-### 8.2. `kb_ops`
+### 8.2. `kb_ops`: Git-derived projections
 
 1. Внешний merge freeze уже активен. Создать conservative target barriers для всех targets; отсутствие evidence для unresolved operations означает `recovery_required`.
 2. Сканировать все GitLab MRs/source branches/protected decision tags/MR notes/merge commits/main ancestry и source registry.
@@ -313,7 +334,18 @@ Periodic intervals, retry/backoff и freshness кроме нормативных
 6. Выполнить target-wide reconciliation всех unresolved operations и source cursors. `proposed` не повышать до `merged` без verified merge.
 7. Открывать merges по одному target после conclusive results и fresh AuthZ; unknown targets остаются quarantined.
 
-### 8.3. `kb_authz`
+### 8.3. Correction tasks: отдельный non-Git-derived backup и restore
+
+`docops-correction-task-v1` current projections, append-only events, restricted evidence и idempotency history не выводятся из Git/MR и не входят в Git-derived rebuild §8.2. Это отдельный GO-owned operational backup perimeter внутри `kb_ops`, а не canonical content, ProposalRecord или DecisionRecord.
+
+1. **Separate backup:** по owner-approved cadence/consistency policy сохранять correction-task current projections, append-only events, restricted evidence и idempotency records отдельным durable backup с Space/repository perimeter, backup position, hashes и event-sequence metadata. Git mirror/metadata backup не заменяет этот backup; plaintext secrets и raw private payloads запрещены.
+2. **Admission:** при restore проверить backup completeness, schema/tool versions, Space/repository binding, hashes и event sequence. Missing/corrupt/incomplete backup оставляет affected correction scope unavailable/quarantined и требует incident review по [correction contract](contracts/docops-correction-api.md); не объявлять восстановление из Git-only evidence.
+3. **Operational restore:** восстановить current/events/evidence/idempotency только из этого backup через GO-owned procedure с external merge freeze. Не fabricate/delete/resolve/cancel tasks и не переписывать event history; terminal states не переоткрываются replay.
+4. **Linked-MR reconciliation:** после §8.2 сверить каждый optional linked MR с restored ProposalRecord, canonical DecisionRecord и verified GO merge/outcome. Linked MR сам по себе не доказывает corrected/published; missing/mismatched evidence сохраняет task open/in_review или quarantined по contract, без автоматического resolve/cancel.
+5. **No second canonical write path:** backup/restore/reconciliation и correction API не редактируют, публикуют или архивируют canonical content. Любое content correction идёт только через обычный MR/human DecisionRecord/GO merge; Git-only rebuild не воссоздаёт и не удаляет correction lifecycle.
+6. **Evidence:** отдельно записать backup/restore hashes, event-sequence/perimeter checks, linked-MR reconciliation outcomes, blocked scopes и отсутствие canonical writes вне governed MR path.
+
+### 8.4. `kb_authz`
 
 1. Закрыть privileged operations и все private payload paths; прежние AuthzContexts/sessions не восстанавливать как действующие разрешения.
 2. Создать `spaces`, identities/group snapshots/policy snapshots из deployment registry, fresh IdP nested groups и exact Git policy revisions с composite Space/repository references.
@@ -322,7 +354,7 @@ Periodic intervals, retry/backoff и freshness кроме нормативных
 5. Инвалидировать полный per-Space cursor descriptor/policy/group/epoch set и live subscriptions, выдать новые `authz-context-v2` и проверить fresh deny/anti-enumeration/cross-Space borrowed binding.
 6. Разрешить GO merge recovery только с новым AuthzContext и exact per-Space group/path/longest-prefix approver checks. Revocation propagation не ждёт index.
 
-### 8.4. `kb_index`
+### 8.5. `kb_index`
 
 1. Stale mode выключен; до нового validated pointer retrieval отвечает `INDEX_NOT_READY`.
 2. Для activated Spaces выбрать exact eligible current main; для cutover preflight — exact `cutover_sha`, без serving.
@@ -348,7 +380,8 @@ Periodic intervals, retry/backoff и freshness кроме нормативных
 | Client config | Nonsecret registry/provider/index/source/offline/backup configs и SBOM/seam versions | Config hashes, no secret values/private endpoints в публичном evidence |
 | Secrets | Только отдельный approved encrypted secrets backup/recovery mechanism | Не входят в Git mirror/manifests/logs; доступ и restore отдельно аудируются |
 | Open WebUI state | Users/sessions/chats/models по отдельной pinned upstream procedure | Не выдавать за full Space export; privacy и upstream backup отдельно проверяются |
-| `kb_ops` | Optional operational backup для diagnostics, но rebuild поддерживает conservative Git-derived recovery | Backup status не доказывает merge; restore начинает с freeze/reconciliation |
+| `kb_ops` Git-derived projections | MR/notes/tags/history/source registry rebuild inputs и conservative recovery state | Backup status не доказывает merge outcome; restore начинает с global freeze и conservative barriers по §8.2 |
+| Correction-task non-Git-derived operational state | **Отдельный durable backup** current projections, append-only events, restricted evidence и idempotency records с Space/repository perimeter, hashes и event-sequence metadata по §8.3 | Не заменяется Git mirror/metadata backup; restore проверяет hashes/sequence/perimeter и выполняет linked-MR reconciliation без fabrication/deletion/resolve/cancel и без второго canonical write path |
 | `kb_index` | Optional immutable backend snapshots/artifacts для ускорения | Не доверять active pointer без full validation; RPO/versions/profile/ACL совместимость обязательна |
 
 Full Space export (`git_clone_with_manifests`) не является полным platform backup: он не содержит secrets/private chats и не заменяет upstream users/sessions/models/secrets procedures. Filtered history export — отдельный DEFERRED privileged workflow.
@@ -360,7 +393,7 @@ Full Space export (`git_clone_with_manifests`) не является полны�
 3. До и после metadata/object export наблюдать HEAD/ref versions и immutable object hashes. При drift обозначить package incomplete и создать новый согласованный snapshot; не выдавать смешанные refs за один момент времени.
 4. Access+approval policies должны образовывать один согласованный bundle. Grants mapping и source config хешируются по версии, а не по mutable current display name.
 5. Каждый asset проверяется по immutable version+SHA-256. `closure.complete=true` допустимо только при `decisions_complete=assets_complete=authorization_complete=true`, пустом `missing[]`, всех assets `exported` с совпадающим actual-bytes hash и совпадении всех refs/decisions/outcomes/attempts/recovery/documents/policies hashes. Accepted без proven merge сохраняется с recovery evidence, не с fabricated merge.
-6. Optional DB snapshots координируются отдельными owning components; не заявлять distributed ACID snapshot между GitLab, PostgreSQL и object storage без подтверждённого механизма.
+6. Optional DB snapshots координируются отдельными owning components; не заявлять distributed ACID snapshot между GitLab, PostgreSQL и object storage без подтверждённого механизма. Correction backup имеет собственный non-Git-derived position/hash/event-sequence perimeter и не приравнивается к Git snapshot или Git-derived `kb_ops` rebuild.
 7. Backup cadence, acceptable drift window, metadata consistency mechanism, RPO/RTO и retention — OWNER_TBD после T00. До этого drill не объявляется соответствующим production objectives.
 
 ### 9.3. Export operating rule
@@ -377,15 +410,16 @@ Full Space export (`git_clone_with_manifests`) не является полны�
 4. **Git/mirror restore:** восстановить repositories/refs/objects в designated isolated GitLab perimeter, MR notes/metadata и protected annotated tags по supported T00 procedure; не ослаблять protected refs для удобства.
 5. **Objects:** восстановить immutable object versions и сверить SHA-256/size/media bindings; missing asset оставляет closure failed/BLOCKED.
 6. **Policies/grants:** явно сопоставить stable external groups и policy bundles в isolated IdP/upstream; не создавать personal grants по email и не наследовать production access молчаливо.
-7. **`kb_ops`:** conservative rebuild по разделу 8, external freeze сохраняется, unknown merges quarantined.
-8. **`kb_authz`:** fresh IdP/policy rebuild и новые contexts; все old sessions/cursors invalid.
-9. **`kb_index`:** full validated rebuild и новый pointer; preflight/backup pointer не serving.
-10. **Verify:** сравнить docs/tree/links/parentage/revisions/content hashes; ProposalRecords/Decisions/note+tag/supersedes; real accepted parents/trailers; rejected/cancelled no-merge; assets; policies/grants; no secrets/private chats/cross-client leakage.
-11. **Negative controls:** direct human/bot merge denied, self-approval denied, cross-Space IDOR denied, revoke immediate, late job не откатывает pointer, replay не создаёт duplicate.
-12. **Reopen:** только после conclusive target reconciliation, fresh AuthZ, active index и owner review. Targets открываются отдельно.
-13. **Evidence:** записать environment/commands из baseline, elapsed restore/recovery durations, exact SHAs/configs, closure и blocked checks. Сравнение с RPO/RTO выполняется только после owner thresholds; до этого результат — measured DESIGN rehearsal, не production compliance.
+7. **Git-derived `kb_ops`:** conservative rebuild по §8.2, external freeze сохраняется, unknown merges quarantined.
+8. **Correction operational state:** отдельно от Git-derived rebuild восстановить correction-task current/events/evidence/idempotency из durable non-Git-derived backup по §8.3, проверить hashes/event sequence/perimeter и выполнить linked-MR reconciliation. Git-only rebuild не создаёт и не удаляет task lifecycle; restore/reconciliation не fabricate/delete/resolve/cancel tasks и не создаёт второй canonical write path.
+9. **`kb_authz`:** fresh IdP/policy rebuild и новые contexts; все old sessions/cursors invalid.
+10. **`kb_index`:** full validated rebuild и новый pointer; preflight/backup pointer не serving.
+11. **Verify:** сравнить docs/tree/links/parentage/revisions/content hashes; ProposalRecords/Decisions/note+tag/supersedes; real accepted parents/trailers; rejected/cancelled no-merge; assets; policies/grants; correction current/events/evidence/idempotency и linked-MR outcomes; no secrets/private chats/cross-client leakage и no canonical writes вне MR/human DecisionRecord/GO merge.
+12. **Negative controls:** direct non-privileged human/bot merge denied, self-approval denied, cross-Space IDOR denied, revoke immediate, late job не откатывает pointer, replay не создаёт duplicate; unexpected privileged Owner history обнаруживается и quarantined как incident. Missing/corrupt correction backup оставляет affected scope BLOCKED/quarantined и не восстанавливается из Git-only данных.
+13. **Reopen:** только после conclusive target и linked-MR reconciliation, fresh AuthZ, active index и owner review. Targets открываются отдельно.
+14. **Evidence:** записать environment/commands из baseline, elapsed restore/recovery durations, exact SHAs/configs, closure, отдельные correction backup/restore/hash/event-sequence/linked-MR результаты и blocked checks. Сравнение с RPO/RTO выполняется только после owner thresholds; до этого результат — measured DESIGN rehearsal, не production compliance.
 
-Повторить drill для трёх независимых потерь: только `kb_ops`, только `kb_authz`, только `kb_index`, затем для полной потери БД и полного clean-instance restore. Во всех случаях пустая projection не открывает merge.
+Повторить drill для независимых потерь: только Git-derived `kb_ops`, только отдельный correction-task non-Git-derived backup, только `kb_authz`, только `kb_index`, затем для полной потери БД и полного clean-instance restore. Во всех случаях пустая projection не открывает merge, а отсутствие correction backup не восполняется фабрикацией из Git.
 
 ## 11. Retention и hard purge
 
@@ -396,14 +430,15 @@ Retention values не выбраны. Владелец должен отдель
 - chats, uploaded files, source packages, object versions, mirrors, backups и exports;
 - group snapshots, AuthzContexts, grants, revocation и managed grant sync history;
 - webhook inbox/outbox, idempotency records, merge attempts, reconciliation runs/findings;
+- correction-task current projections, append-only events, restricted sanitized evidence и terminal/open lifecycle records;
 - index runs/snapshots/chunks/embeddings/profiles, exact/semantic projections и DLQ;
 - operational telemetry, sanitized evidence, model/evaluation artifacts и SBOM history.
 
 Правила:
 
-1. Active recovery barriers, unresolved quarantine, active retry/DLQ и incomplete restore/export closure нельзя удалять по generic TTL.
+1. Active recovery barriers, unresolved quarantine, active retry/DLQ, open/in_review correction tasks, their evidence и incomplete restore/export closure нельзя удалять по generic TTL.
 2. Очистка current index или удаление файла из `main` не является privacy purge: старые Git commits, forks/mirrors/backups/object versions остаются отдельным perimeter.
-3. Git history rewrite, filtered history export, global hard purge, destructive cleanup и break-glass governance — **DEFERRED до отдельных ADR, юридического/owner решения и специального verified runbook**.
+3. Git history rewrite, filtered history export, global hard purge, destructive cleanup и новые routine break-glass capabilities — **DEFERRED до отдельных ADR, юридического/owner решения и специального verified runbook**. Emergency G0-D3 out-of-band privileged incident governance обязателен по §7.5 и не откладывается.
 4. Canonical decisions в Git не зависят от удаления rebuildable DB row. Operational retention не должна стирать единственное доказательство unresolved outcome.
 5. Этот документ не содержит purge/delete commands и не разрешает их выполнение.
 
@@ -471,7 +506,7 @@ Retention values не выбраны. Владелец должен отдель
 
 До назначения владельцем не используются как PASS/FAIL: index freshness/lag, p95/p99 Git read/merge latency, TTFT/full response, session/AuthzContext TTL кроме SLO revocation, retry/backoff budgets, queue/DLQ age, corpus size/concurrency/resource limits, search recall/answer quality, backup frequency, RPO/RTO, retention, cost budgets, restore/upgrade windows и alert aggregation windows.
 
-Фиксированные требования, которые не заменяются OWNER_TBD: group refresh ≤15 минут; revocation ≤30 минут; zero unauthorized disclosures в согласованном adversarial suite; ровно один repository=Space; merge-only-GO после human approval; preflight/partial index не serving; recovery не очищается по TTL.
+Фиксированные требования, которые не заменяются OWNER_TBD: group refresh ≤15 минут; revocation ≤30 минут; zero unauthorized disclosures в согласованном adversarial suite; ровно один repository=Space; normal managed merge-only-GO после human approval для non-privileged identities; privileged Owner bypass обнаруживается reconciliation и quarantined как incident; preflight/partial index не serving; recovery не очищается по TTL.
 
 ## 14. Cold offline startup
 
@@ -486,22 +521,22 @@ Retention values не выбраны. Владелец должен отдель
 
 ## 15. Operational acceptance G1–G4
 
-Ниже — критерии будущей приёмки, не отметки о выполнении. Все пункты сейчас остаются незакрытыми DESIGN; real integrations без доступа — BLOCKED.
+Ниже — критерии приёмки и фактический G0 record, не отметки operational execution. **T00 DONE/G0 APPROVED**; G1–G4 остаются незакрытыми DESIGN, real integrations без доступа — BLOCKED.
 
 ### 15.1. G0 readiness перед implementation
 
-- [ ] Owner design review и T00 capability matrix фактически завершены; selected pins/baseline и команды задокументированы.
-- [ ] Подтверждены required GitLab exact-SHA/merge parents/trailers/note+tag/protection/webhook/export capabilities. Любой redesign сохраняет R/I, проходит ADR+owner review и затем получает повторное real capability evidence; документальное resolution само по себе не закрывает blocker — иначе G0 остаётся BLOCKED/stop.
-- [ ] Подтверждены upstream auth/group/session/CSRF seams, DB role/migration boundaries и editor/retrieval reuse. Source inventory/questions могут быть подготовлены в T00, но выбор first source connector относится к owner decision T16/G3 и не является обязательным G0 criterion.
-- [ ] A01–A36, CF-01–CF-30, projection mappings, crash/fault matrix, topology, credentials, backup/rebuild/restore и monitoring приняты как testable design без перевода DESIGN в VERIFIED.
-- [ ] Для каждого недоступного sandbox/integration check статус BLOCKED с владельцем и условием разблокировки.
+- [x] Owner design review и T00 capability matrix фактически завершены; selected pins/baseline и команды задокументированы. **DONE:** [baseline.md](baseline.md), [capability matrix](evidence/t00/capability-matrix.md) и reproducible commands записаны; owner review APPROVED 2026-11-08 — [g0-review.md](g0-review.md). **T00 DONE, G0 APPROVED**; operational rehearsals остаются DESIGN_NOT_EXECUTED.
+- [x] Подтверждены required GitLab exact-SHA/merge parents/trailers/note+tag/protection/webhook/export capabilities для G0. **Synthetic capability evidence accepted:** 42 completed probes ([gitlab-capabilities](evidence/t00/gitlab-capabilities.md)); target-race привёл к nonconforming merge, поэтому GO lock/barrier обязателен. Ограничения зафиксированы и owner-approved (нет target CAS, privileged Owner bypass/G0-D3, settle proof, webhook allowlist). Это не product integration PASS; redesign сохраняет R/I и требует ADR+owner review и повторное real capability evidence.
+- [x] Подтверждены upstream auth/group/session/CSRF seams, DB role/migration boundaries и editor/retrieval reuse для G0. **Accepted with mandatory adapters/deferrals:** static seams, external migrator и runtime DDL denial подтверждены; stock OIDC имеет 2 security FAIL; TipTap adapter selected (G0-D8), browser checks deferred to T04 и не PASS; realtime CRDT вне MVP; CSRF/Origin controls — обязательный adapter (ADR-12). First source connector остаётся owner decision T16/G3.
+- [x] A01–A36, CF-01–CF-30, projection mappings, crash/fault matrix, topology, credentials, backup/rebuild/restore и monitoring приняты как testable design на G0 без перевода DESIGN в VERIFIED. Correction-task contract добавлен как последующий DESIGN, не executed test.
+- [x] Для каждого недоступного sandbox/integration check статус BLOCKED/deferred с владельцем и условием разблокировки зафиксирован. **Текущие follow-up:** browser editor checks deferred to T04, OpenLDAP runtime 8/8 PASS с production AD/live-SLO follow-up, hoster.ai endpoints UNKNOWN/T11 BLOCKED. CI Runner exact-SHA/no-write — PASS 7/7 ([ci-runner.md](evidence/t00/ci-runner.md)).
 
 ### 15.2. G1 — управляемая одна страница
 
 - [ ] Неинженер выполняет read/edit/propose/review/decision/revert без Git/CLI; два независимых human users, business approver без GitLab account.
 - [ ] DecisionRecord note+tag, exact proposal invalidation, self-approval denial, idempotency и real merge parents/trailers проверены.
 - [ ] Concurrent accepts, target race/fencing, crash/timeout/lost response и recovery/quarantine не дают duplicate/last-write-wins; invalid+unknown сохраняет second-MR denial, conclusive failed guarded same-decision retry отделён от terminal conflicted/invalid.
-- [ ] Direct human/engineering/bot/CI merge и all-channel privileged bypass отклонены на серверном/GitLab уровнях.
+- [ ] Direct human/engineering/bot/CI merge и all-channel bypass для non-privileged identities отклонены на серверном/GitLab уровнях; privileged GitLab Owner bypass обрабатывается отдельно как out-of-band incident с reconciliation, affected-target quarantine/managed-write freeze и G0-D3 runbook по §7.5, а не как ordinary denial или approved managed path.
 - [ ] Startup external freeze, `kb_ops`/`kb_authz`/`kb_index` ownership, monitoring recovery alerts и sanitized evidence работают на pinned sandbox.
 - [ ] Нет production user access до published active index и fresh AuthZ.
 
@@ -519,8 +554,8 @@ Retention values не выбраны. Владелец должен отдель
 
 - [ ] Second dedicated instance развёрнут config-only без client code branch; resources/secrets/backups/egress полностью изолированы.
 - [ ] Один выбранный external source работает в безопасном ownership mode без auto-merge; cursors/conflicts/tombstones/one-outstanding проверены.
-- [ ] Полный mirror+MR notes+decision tags+manifests+objects+config/secrets policy restore выполнен в clean instance с closure/negative controls.
-- [ ] Независимые rebuilds и полная потеря БД сохраняют conservative recovery; unknown outcomes не открываются.
+- [ ] Полный mirror+MR notes+decision tags+manifests+objects+config/secrets policy restore выполнен в clean instance с closure/negative controls; отдельный non-Git-derived correction backup/restore и linked-MR reconciliation проверены без fabrication/deletion и второго canonical write path.
+- [ ] Независимые rebuilds и полная потеря БД сохраняют conservative recovery; unknown outcomes не открываются; Git-only rebuild не воссоздаёт и не удаляет correction tasks.
 - [ ] Upgrade/rollback rehearsal, seam registry/SBOM/branding, personal Notes/ordinary chats regression и cold offline startup завершены.
 - [ ] RPO/RTO/retention и operational security acceptance получили owner decisions; hard purge/history rewrite остаются отдельным DEFERRED контуром.
 
@@ -542,6 +577,6 @@ Retention values не выбраны. Владелец должен отдель
 5. hoster.ai main/auxiliary inventory, approved endpoints/models/dimensions/fallback, offline assets и egress/paid-call authorization.
 6. Deployment/runtime manifests, resource/capacity budgets, monitoring thresholds, maintenance windows и incident escalation owners.
 7. Backup cadence/consistency mechanism, RPO/RTO, retention, restore scope и secret recovery policy.
-8. Отдельные ADR для filtered export/history rewrite/hard purge/break-glass и любых новых canonical/index boundaries.
+8. Отдельные ADR для filtered export/history rewrite/hard purge/новых routine break-glass capabilities и любых новых canonical/index boundaries. G0-D3 emergency out-of-band incident runbook уже approved и не требует переоткрытия.
 
 Отсутствие решения фиксируется как UNKNOWN/BLOCKED, а не заменяется предположением, молчаливым default или утверждением об успешной проверке.

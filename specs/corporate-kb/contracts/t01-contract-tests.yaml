@@ -24,6 +24,8 @@ invariant_catalog:
   front_matter: ./front-matter.schema.json#/x-contract-invariants
   index: ./index-snapshot.schema.json#/x-contract-invariants
   export: ./export-manifest.schema.json#/x-contract-invariants
+  correction_task: ./docops-correction-task.schema.json#/x-contract-invariants
+  correction_api: ./docops-correction-api.md
   projection_mapping: ./projection-mapping.md
 tests:
   - id: T01-CF-01
@@ -83,7 +85,7 @@ tests:
         expect: {semantic_valid: false}
   - id: T01-CF-06
     findings: [CF-06]
-    targets: [front-matter.schema.json, docops-review-metadata.schema.json, export-manifest.schema.json#/$defs/documentEntry, openapi.yaml#/components/schemas/DocOpsReviewQueuePage, events.yaml#/$defs/docopsReviewRequestedPayload]
+    targets: [front-matter.schema.json, docops-review-metadata.schema.json, docops-correction-task.schema.json, docops-correction-api.md, export-manifest.schema.json#/$defs/documentEntry, openapi.yaml#/components/schemas/DocOpsReviewQueuePage, openapi.yaml#/components/schemas/DocOpsCorrectionTaskCreateInput, openapi.yaml#/components/schemas/DocOpsCorrectionTaskResolveInput, openapi.yaml#/components/schemas/DocOpsCorrectionTaskCancelInput, events.yaml#/$defs/docopsReviewRequestedPayload]
     vectors:
       - given: valid_until in document-front-matter-v2 with future UTC date and matching metadata/provenance
         expect: {schema_valid: true, review_state: scheduled, access_effect: false}
@@ -95,6 +97,16 @@ tests:
         expect: {semantic_valid: false, side_effects: 0}
       - given: export documentEntry without valid_until or with value different from front-matter-v2 at the same document revision
         expect: {schema_or_semantic_valid: false, export_roundtrip_valid_until_equal: false}
+      - given: correction create with short/mixed-case document_revision_sha, mismatched evidence hash, or client-supplied actor/owner fields
+        expect: {schema_or_GO_rejected: true, error: VALIDATION_ERROR, task_writes: 0, canonical_writes: 0}
+      - given: correction create/get for a document revision outside the authorized Space
+        expect: {schema_or_GO_rejected: true, error: NOT_FOUND, existence_disclosed: false, task_writes: 0, canonical_writes: 0}
+      - given: correction task state resolved without terminal actor/reason, no-MR resolution without evidence, or cancelled without cancellation evidence
+        expect: {schema_valid: false, task_events_written: 0}
+      - given: open task with non-null linked_mr or in_review task without linked_mr
+        expect: {schema_valid: false}
+      - given: task API attempts to edit, publish, archive, or delete canonical content without the governed MR path
+        expect: {result: FORBIDDEN, canonical_writes: 0}
   - id: T01-CF-07
     findings: [CF-07]
     targets: [openapi.yaml, agent-tools.yaml]
@@ -120,7 +132,7 @@ tests:
   - id: T01-CF-09
     findings: [CF-09]
     targets: [openapi.yaml#/x-contract-invariants]
-    invariant_ids: [PATH_BODY_SPACE_ID, PATH_BODY_DOCUMENT_ID, PATH_BODY_PROPOSAL_ID, PATH_BODY_IMPORT_ID, PATH_BODY_RUN_ID, BODY_HEADER_IDEMPOTENCY, DECISION_KEY_AND_PROPOSAL_EQUALITY]
+    invariant_ids: [PATH_BODY_SPACE_ID, PATH_BODY_DOCUMENT_ID, PATH_BODY_PROPOSAL_ID, PATH_BODY_IMPORT_ID, PATH_BODY_RUN_ID, PATH_BODY_CORRECTION_TASK_ID, BODY_HEADER_IDEMPOTENCY, DECISION_KEY_AND_PROPOSAL_EQUALITY]
     vectors:
       - given: each duplicated path/body/header ID changed independently, including cross-Space values
         expect: {result: rejected, error_in_Error_code_enum: true, writes: 0}
@@ -133,6 +145,9 @@ tests:
     targets:
       - 'openapi.yaml#/paths/~1documents~1{document_id}~1history'
       - 'openapi.yaml#/paths/~1spaces~1{space_id}~1review-proposals'
+      - 'openapi.yaml#/paths/~1spaces~1{space_id}~1docops~1correction-tasks~1{task_id}'
+      - 'openapi.yaml#/paths/~1spaces~1{space_id}~1docops~1correction-tasks~1{task_id}~1resolve'
+      - 'openapi.yaml#/paths/~1spaces~1{space_id}~1docops~1correction-tasks~1{task_id}~1cancel'
     vectors:
       - given: business history list then restore selected exact revision through revert-MR
         expect: {exact_revision: true, history_rewrite: false, truncation_explicit: true}
@@ -144,6 +159,16 @@ tests:
         expect: {schema_valid: true}
       - given: non-root with empty parents, root with nonempty parents, or unverified root claim
         expect: {schema_or_semantic_valid: false, error: REVISION_CONFLICT}
+      - given: correction get from another Space or after group/path revocation
+        expect: {result: NOT_FOUND, existence_disclosed: false, raw_evidence_exposed: false}
+      - given: resolve by a non-owner, resolve with stale task_version, or cancel by an unauthorized requester
+        expect: {result: FORBIDDEN, task_version_unchanged: true, task_events_written: 0}
+      - given: open to in_review with a durable valid linked MR, then verified governed merge resolution
+        expect: {state: resolved, exact_revision_preserved: true, merge_commit_required: true, canonical_task_status_created: false}
+      - given: no-MR resolution with reason and evidence or authorized cancellation from open/in_review
+        expect: {terminal_state_recorded: true, canonical_correction_claimed: false, content_writes: 0}
+      - given: resolve/cancel replay on a terminal task with the identical idempotency tuple versus a new key
+        expect: {identical_replay_returns_existing: true, new_key_transition: INVALID_STATE, reopen: false}
   - id: T01-CF-11
     findings: [CF-11]
     targets: [index-snapshot.schema.json]
@@ -253,7 +278,7 @@ tests:
         expect: {semantic_valid: false}
   - id: T01-CF-20
     findings: [CF-20]
-    targets: [integration.md#4-общий-api-contract, database-catalog.yaml#/schemas/kb_ops/tables/idempotency_records]
+    targets: [integration.md#4-общий-api-contract, database-catalog.yaml#/schemas/kb_ops/tables/idempotency_records, openapi.yaml#/x-contract-invariants, docops-correction-api.md]
     vectors:
       - given: same key under another actor, route, concrete path, or payload
         expect: {result: IDEMPOTENCY_KEY_REUSED, writes: 0}
@@ -261,6 +286,12 @@ tests:
         expect: {one_replay_result_for_same_key: true, independent_operation_for_different_key: true}
       - given: two idempotency inserts race
         expect: {global_key_registry_guard: true, duplicate_side_effects: 0}
+      - given: correction create/resolve/cancel with the same key under another verified actor, normalized route, concrete space/task path, evidence, task_version, or linked MR payload
+        expect: {result: IDEMPOTENCY_KEY_REUSED, task_events_written: 0, version_increments: 0, canonical_writes: 0}
+      - given: concurrent identical correction create and concurrent resolve with the same current task_version
+        expect: {one_task_or_resolution_result: true, duplicate_task_events: 0, lost_update: false}
+      - given: path/body space_id or task_id mismatch discovered before idempotency insertion
+        expect: {result: VALIDATION_ERROR, registry_writes: 0, task_events_written: 0}
   - id: T01-CF-21
     findings: [CF-21, R-01]
     targets: [openapi.yaml#/components/schemas/DecisionResult, projection-mapping.md]
@@ -329,6 +360,10 @@ tests:
         expect: {schema_valid: false}
       - given: merged without merged_hash or with non-null outstanding ID/SHA, and any non-pending state with outstanding fields
         expect: {schema_valid: false}
+      - given: correction open/in_review/resolved/cancelled mapping against DocOps scheduled/due/in_review/resolved/removed, Proposal states, and canonical document states
+        expect: {separate_lifecycles: true, silent_enum_substitution: false}
+      - given: kb_ops restore from durable backup followed by Git/MR reconciliation, and a Git-only rebuild without correction-task backup
+        expect: {backup_restores_tasks_events_evidence_idempotency: true, git_only_task_fabrication: false, silent_task_loss: false, unresolved_scope_quarantined: true}
   - id: T01-CF-26
     findings: [CF-26]
     targets: [source-origin.schema.json, openapi.yaml#/components/schemas/LiveOperationalReadResult, database-catalog.yaml#/schemas/kb_ops/tables/source_sync_states]

@@ -4,7 +4,7 @@
 **Authority:** [Architecture Spine](../architecture-spine.md), AD-1–AD-5, AD-8–AD-9, AD-11–AD-16.  
 **Связанные документы:** [platform design](../architecture.md), [integration specification](../integration.md), [index-snapshot-v1](../contracts/index-snapshot.schema.json), [projection mapping](../contracts/projection-mapping.md), [T01 vectors](../contracts/t01-contract-tests.yaml), [specification](../spec.md), [GO](git-orchestrator.md), [Identity](identity-access.md), [Ingestion](ingestion-connectors.md), [Open WebUI](open-webui-fork.md).
 
-Точный existing retrieval backend, Open WebUI code paths, PostgreSQL extensions, embedding model/dimensions, chunking, pgvector index type/parameters и reranker — **UNKNOWN T00**. pgvector+FTS остаётся кандидатом, не выбранным решением; OpenSearch не добавляется без измеренной необходимости и ADR.
+Existing backend audit выполнен на pinned Open WebUI `v0.13.0` ([RAG/editor audit](../evidence/t00/openwebui-rag-editor-audit.md)); PostgreSQL `18.6` + pgvector `0.8.7` прошли 22/22 deterministic synthetic gates ([benchmark](../evidence/t00/retrieval-benchmark.md)). pgvector+FTS — **validated candidate**, не final selection: production embedding model/dimensions/chunking/index profile, quality/latency thresholds и reranker остаются owner/configuration decisions (owner TBD). OpenSearch не добавляется без измеренной необходимости и ADR.
 
 ## 1. Назначение и границы
 
@@ -270,14 +270,13 @@ Metrics связываются с corpus SHA, code/config/model/tool-schema vers
 
 Acceptance требует real sandbox GitLab/PostgreSQL/CI для integration behavior. Модельный score не заменяет deterministic disclosure/pointer/revision tests.
 
-## 12. T00 dependencies
+## 12. T00 status и оставшиеся зависимости
 
-- Зафиксировать Open WebUI commit, PostgreSQL/CI test conventions и реальные retrieval/RAG seams с code references.
-- Аудировать existing backend: exact+semantic support, snapshot/revision mapping, extension/schema ownership, read/write roles и CI entry points.
-- Проверить GitLab exact-SHA snapshot reads, ancestry/history rewrite detection и достаточность metadata для `document_revision_sha`.
-- Выполнить ACL-aware recall benchmark до выбора pgvector+FTS, HNSW/IVFFlat, iterative/exact fallback, partitioning или других parameters; никакой выбор здесь не сделан.
-- Определить через configuration/benchmark embedding model/dimensions, chunking, reranking и hoster provider connections; подготовить offline assets после согласования.
-- Проверить способ единственного pointer writer и transactional publication на выбранном backend без shared-writer migrations.
-- Определить versioned dependency schema и full/incremental equivalence fixtures в T01 на основе audited corpus/links/attachments.
-- Проверить AccessPolicyChanged/AttachmentChanged event seams и reconciliation достаточность на target GitLab/CI.
-- Не обещать freshness/latency/quality thresholds до owner-approved measurements.
+Зафиксировано (2026-11-07):
+
+- Backend audit ([RAG/editor audit](../evidence/t00/openwebui-rag-editor-audit.md)): pgvector реализует DSN/ANN (HNSW/IVFFlat, optional halfvec/iterative scan), GIN FTS и weighted RRF hybrid (`k=60`); native hybrid при metadata filters возвращает `None` → generic fallback читает всю коллекцию (BM25 по `text.split()`, не production exact fallback); native FTS жёстко использует `simple`; dimension изменение существующей таблицы молча невозможно (pad/truncate по config).
+- Synthetic benchmark 22/22 PASS ([benchmark](../evidence/t00/retrieval-benchmark.md)): 6115-row corpus, 0 cross-Space leaks, 0 unauthorized disclosures, 0 stale/pending/rejected/preflight results, 0 late index writes после publication, 100% revision/provenance/citation binding, 100% full/incremental closure equivalence; HNSW filtered 47/47; IVFFlat не применяется ниже 5000-row threshold; revocation действует без reindex; pointer fencing не откатывается late jobs.
+- Russian FTS: measured `russian` profile лучше `simple`; BGE-M3 synthetic MRR `0.8357`, nDCG `0.8793`, recall@10 `0.82` — это не production quality approval.
+- GitLab exact-SHA snapshot reads и DecisionRecord/cutover metadata достаточны для `document_revision_sha`/`snapshot_sha` mapping ([gitlab-capabilities](../evidence/t00/gitlab-capabilities.md)).
+
+Остаются owner/configuration decisions: final embedding model/provider (hoster.ai endpoints UNKNOWN), dimensions/chunking/index profile, reranking, offline assets, production quality и p95/p99 thresholds (owner TBD). Managed `kb_index` обязан использовать Git revision/snapshot/profile/dependency metadata вместо upstream mutable Knowledge/Notes projections; обязательные index metadata (`space_id`, `document_revision_sha`, `snapshot_sha`, `main_generation`, `index_profile_version`, `dependency_hash`, stable section/range, immutable attachment revision) отсутствуют в generic file path — нужны отдельный CI writer и собственные `kb_index` migrations/roles. Смена profile — shadow build + controlled pointer switch, без destructive live rebuild. AccessPolicyChanged/AttachmentChanged event wiring и T01 fixtures — после G0.

@@ -4,7 +4,7 @@
 **Authority:** [Architecture Spine](../architecture-spine.md), AD-1–AD-5, AD-8, AD-10–AD-16.  
 **Связанные документы:** [platform design](../architecture.md), [integration specification](../integration.md), [front-matter-v2](../contracts/front-matter.schema.json), [projection mapping](../contracts/projection-mapping.md), [T01 vectors](../contracts/t01-contract-tests.yaml), [specification](../spec.md), [content standard](../content-standard.md), [GO](git-orchestrator.md), [Identity](identity-access.md), [Retrieval/Index](retrieval-indexing.md).
 
-Первый connector, source-system versions/editions/API, exact repository layout, object-store layout, extraction library route и size/retention thresholds — **UNKNOWN T00/owner decision**. Docling проверяется как существующая upstream integration и добавляется только при доказанной необходимости. Production corpus не создаётся до согласования perimeter и source corpus.
+Open WebUI pinned на `v0.13.0`; upstream extraction/RAG seams audited ([RAG/editor audit](../evidence/t00/openwebui-rag-editor-audit.md)), controlled cutover и export capabilities проверены на GitLab CE `19.5.3` synthetic sandbox ([gitlab-capabilities](../evidence/t00/gitlab-capabilities.md)). Первый connector, source-system versions/editions/API, exact repository layout, object-store layout, extraction library route и size/retention thresholds остаются **owner decisions** — T00 их не выбирал. Docling проверяется как существующая upstream integration и добавляется только при доказанной необходимости. Production corpus не создаётся до согласования perimeter и source corpus.
 
 ## 1. Назначение и границы
 

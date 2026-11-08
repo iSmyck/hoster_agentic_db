@@ -1,6 +1,6 @@
 # Corporate KB — integration contracts
 
-**Статус:** DESIGN DRAFT / PROPOSED для G0. Контракты не являются production approval и не подтверждают реальные возможности Open WebUI, GitLab, CI, IdP, object storage или hoster.ai studio.
+**Статус:** DESIGN / PROPOSED после T00 DONE и G0 APPROVED. Контракты не являются production approval или implementation/integration PASS и не подтверждают невыполненные возможности Open WebUI, GitLab, CI, IdP, object storage или hoster.ai studio.
 
 Главный authority: [ARCHITECTURE-SPINE.md](../architecture-spine.md), AD-1–AD-16. Требования R01–R18 и I01–I14 из [spec.md](../spec.md) имеют приоритет. Общий integration narrative: [integration.md](../integration.md).
 
@@ -11,7 +11,7 @@
 - **UNKNOWN** — проверяется на pinned baseline в T00 либо требует решения владельца.
 - **DEFERRED** — не реализуется в MVP без новых требований и ADR.
 
-Open WebUI commit/tag, GitLab version/edition, upstream routes/code paths, session cookie и фактический CSRF mechanism, token types, webhook headers, CI transport, Git object format, retrieval backend, model IDs/dimensions, editor, source connector и object-store layout — **UNKNOWN до T00**. `/api/kb/v1` и описанные ниже routes относятся только к собственному GO API. Они не выдумывают upstream routes.
+T00 закрепил Open WebUI commit/tag, GitLab version/edition, code paths, Git object format и TipTap adapter direction. Upstream routes, session cookie и фактический CSRF mechanism, token types, webhook headers, CI transport, production retrieval parameters, model IDs/dimensions, source connector и object-store layout остаются implementation/config UNKNOWN по соответствующим gates. `/api/kb/v1` и описанные ниже routes относятся только к собственному GO API. Они не выдумывают upstream routes.
 
 ## 2. Карта артефактов
 
@@ -19,7 +19,7 @@ Open WebUI commit/tag, GitLab version/edition, upstream routes/code paths, sessi
 
 | Файл | Назначение |
 | --- | --- |
-| [openapi.yaml](openapi.yaml) | OpenAPI 3.1 собственного GO API `/api/kb/v1`: browser/human, restricted agent, connector, internal CI, webhook, history/review/DocOps/source boundaries; machine invariants, idempotency, errors, cursor/truncation/limits |
+| [openapi.yaml](openapi.yaml) | OpenAPI 3.1 собственного GO API `/api/kb/v1`: browser/human, restricted agent, connector, internal CI, webhook, history/review/DocOps/source boundaries; correction-task create/get/resolve/cancel; machine invariants, idempotency, errors, cursor/truncation/limits |
 | [agent-tools.yaml](agent-tools.yaml) | Только read/search/propose tools с отдельной restricted body-patch schema; trusted run/actor/per-Space scope и запрет privileged channels |
 | [events.yaml](events.yaml) | At-least-once envelopes и payloads для GitLab→GO→CI, per-Space ACL, attachments, revocation, index status, source cursors, DocOps review |
 | [projection-mapping.md](projection-mapping.md) | Versioned canonical↔API↔event↔DB enum/state/ID/path mapping |
@@ -39,6 +39,7 @@ Open WebUI commit/tag, GitLab version/edition, upstream routes/code paths, sessi
 | [export-manifest.schema.json](export-manifest.schema.json) | Clone refs, documents, decisions note+tag+merge trailers, assets и closure hashes |
 | [source-origin.schema.json](source-origin.schema.json) | Immutable source provenance, DOC-* IDs и previous imported base; operational cursors остаются в GO |
 | [docops-review-metadata.schema.json](docops-review-metadata.schema.json) | Revision-bound projection canonical valid_until/provenance для review queue/events, без authorization effect |
+| [docops-correction-task.schema.json](docops-correction-task.schema.json) | Closed `docops-correction-task-v1`: GO-owned kb_ops operational record, exact revision, trusted actor/policy owner, evidence hash, optional linked MR, idempotency/CAS и `open/in_review/resolved/cancelled`; не canonical content/DecisionRecord |
 
 ### Интеграционные протоколы
 
@@ -48,6 +49,7 @@ Open WebUI commit/tag, GitLab version/edition, upstream routes/code paths, sessi
 | [identity-integration.md](identity-integration.md) | LDAP/OIDC, JIT, stable ID, group recheck, AuthzContext, grants, revocation |
 | [inference-integration.md](inference-integration.md) | Managed model connections, strict/pii_permitted, inventory, no fallback, bounded tools |
 | [source-storage-integration.md](source-storage-integration.md) | Import dry-run/commit, ownership modes, cursors, immutable assets, live_operational read-only |
+| [docops-correction-api.md](docops-correction-api.md) | Correction-task lifecycle, trusted actor/owner, create/get/resolve/cancel, governed MR/no-MR resolution, idempotency/errors, kb_ops backup/restore/rebuild semantics |
 
 ## 3. Общие машинные соглашения
 
@@ -63,7 +65,7 @@ Open WebUI commit/tag, GitLab version/edition, upstream routes/code paths, sessi
 
 - `space_id` — stable lowercase slug; один GitLab repository = один Space. `document_id` — opaque UUID; `source_id` отделён от document ID; IDs не переиспользуются.
 - Paths нормализуются в NFC, используют `/`, не абсолютны для document paths, не содержат `\`, `..`, control characters или ambiguity. Approval prefixes начинаются с `/` и не создают page-level read ACL. Duplicate rule IDs/normalized prefixes отклоняются; выбирается ровно одно longest-normalized-prefix правило на segment boundary. Lossless absolute↔relative policy mapping и root handling зафиксированы в [projection-mapping.md](projection-mapping.md).
-- Git revisions — только полный lowercase SHA. Schema допускает 40 или 64 hex chars, поскольку repository object format не выбран до T00; это не разрешение на short/mixed-case SHA.
+- Git revisions — только полный lowercase SHA. T00 baseline использует SHA-1 (40 hex); schema допускает также 64 hex для versioned future compatibility, но это не разрешение на short/mixed-case SHA или неявную смену object format.
 - `base_sha` — reviewed target HEAD; `proposal_sha` — exact source HEAD; `merge_commit_sha` — проверенный merge commit; `snapshot_sha` — exact main snapshot; `document_revision_sha` — commit версии конкретного документа. Blob/content/dependency hashes не заменяют commit revisions.
 - Порядок revisions/generations определяется Git ancestry, не сортировкой SHA или event timestamps.
 
@@ -99,7 +101,7 @@ Hashes в export manifests вычисляются над явно указанн
 
 - Cross-field equality, которые JSON Schema 2020-12 не выражает (path/body IDs, preflight SHA, hashes/linkage, longest-prefix, archive replacement, ranges), объявлены machine-readable через `x-contract-invariants` рядом со schema/operation.
 - Они обязательны для server-side semantic validation до side effects, а не только documentation. `additionalProperties:false` не заменяет эти проверки.
-- Полный synthetic positive/negative/concurrency/crash catalog находится в [t01-contract-tests.yaml](t01-contract-tests.yaml); canonical↔projection mappings — в [projection-mapping.md](projection-mapping.md). Текущий статус — DESIGN_NOT_EXECUTED до pinned T00 toolchain и owner G0.
+- Полный synthetic positive/negative/concurrency/crash catalog находится в [t01-contract-tests.yaml](t01-contract-tests.yaml), включая correction-task exact-revision/actor/owner/CAS/idempotency/lifecycle/no-MR/backup negatives; canonical↔projection mappings — в [projection-mapping.md](projection-mapping.md). T00 DONE и G0 APPROVED; текущий статус vectors — DESIGN_NOT_EXECUTED до реального T01 execution.
 
 ## 6. Проверка и evidence
 

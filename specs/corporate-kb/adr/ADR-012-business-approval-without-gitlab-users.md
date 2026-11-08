@@ -1,8 +1,8 @@
 # ADR-12 — Business approval without GitLab users
 
 **ID/Title:** ADR-12 / Бизнес-согласование без GitLab user records  
-**Status:** **Accepted during architecture coaching 2026-11-06; реализация зависит от результатов T00**. Не является production security approval.  
-**Date:** 2026-11-06  
+**Status:** **Accepted during architecture coaching 2026-11-06**. T00 evidence записано (см. Verification): stock tool approval подтверждённо не является business approval; GitLab merge metadata подтверждена на sandbox. Не является production security approval.  
+**Date:** 2026-11-06; дополнено T00 evidence 2026-11-08  
 **Requirements/AD links:** R05, R07–R10, R16, R18; I03–I07, I12; [ARCHITECTURE-SPINE.md](../architecture-spine.md): AD-2, AD-4–AD-7, AD-12, AD-13; [spec.md](../spec.md): раздел 5, T03, T05–T07.
 
 ## Context
@@ -71,7 +71,29 @@ CODEOWNERS в информационном content-standard ранее обоз�
 - Удаление approver из группы или изменение path scope между review и merge → forbidden, ноль `main` writes. Новый commit/rebase сбрасывает approval.
 - Проверить Unicode/separator/`..` path cases, согласованность policy bundle/revisions и отказ при stale base/proposal SHA.
 - Доказать отсутствие GitLab user requirement для business owner и невозможность получить merge credential через browser/agent/CI/connector. CODEOWNERS не расширяет business rights.
-- **Текущее состояние:** реальные identity/GitLab integration tests не выполнялись; design acceptance не является security gate PASS.
+### T00 evidence (2026-11-07; Open WebUI `v0.13.0`, GitLab CE `19.5.3`)
+
+Upstream STOP findings ([evidence/t00/openwebui-auth-audit.md](../evidence/t00/openwebui-auth-audit.md)):
+
+- stock approve/reject разрешён только владельцу chat/message: `backend/open_webui/utils/tool_approval.py:80-86`;
+- решение — `approved=True` без independent approver, timestamp, immutable args hash и policy/group snapshot: `backend/open_webui/utils/tool_approval.py:105-135`;
+- resolve endpoint использует `get_verified_user`, не human-only guard: `backend/open_webui/main.py:1883-1899`;
+- cookie принимается как bearer без app-level CSRF/Origin validation; SameSite default `lax`, Secure default `false`: `backend/open_webui/utils/auth.py:386-406`, `backend/open_webui/env.py:781-790`.
+
+GitLab metadata evidence ([evidence/t00/gitlab-capabilities.md](../evidence/t00/gitlab-capabilities.md), 42 completed probes):
+
+- merge commit имеет first parent `base_sha` и second parent `proposal_sha`; trailers `Decision-ID`, `Decision-Note-ID`, `Decision-Hash`, `Approved-by` записываются и читаются;
+- stale source SHA отклоняется HTTP 405 без writes в `main`/MR;
+- canonical DecisionRecord JSON в MR note и protected annotated tag `kb-decisions/<uuid>`; mutation note/tag делает record `invalid`, tag остаётся recoverable; export после удаления source branch работает;
+- CE не имеет per-user protected branch grants — role-based профиль (GO единственный Maintainer) подтверждает, что business approver без GitLab user не требует GitLab-side grants.
+
+Обязательные adapter controls:
+
+1. Platform review + GO DecisionRecord ([ADR-14](ADR-014-canonical-decision-record.md)) вместо stock `approved=True`; independent human approver, immutable evidence: approver, timestamp, exact action/args hash, policy/group snapshot, request/correlation ID.
+2. Отдельные CSRF/Origin controls и production Secure cookie policy до browser acceptance.
+3. Запрет automation/API/subagent credentials для approval path.
+
+**Текущее состояние:** GitLab merge metadata evidence есть; self-approval matrix, group-removal-между-review-и-merge и platform review implementation не выполнялись; design acceptance не является security gate PASS.
 
 ## Related contracts
 

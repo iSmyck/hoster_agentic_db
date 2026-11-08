@@ -6,7 +6,7 @@
 
 Это **не список новых эпиков или stories**, не sprint commitment и не разрешение на реализацию. Идентификаторы E/T не переименовываются и не перенумеровываются. Предлагаемые ниже вертикальные срезы — варианты для будущего planning, а не новые backlog IDs. Capacity, сроки, оценки, story points, бюджет и новые SLA не назначаются. Уже утверждённые ограничения group refresh ≤ 15 минут и revocation SLO ≤ 30 минут остаются требованиями, а не новым плановым обещанием.
 
-Нормативный приоритет: [Architecture Spine AD-1–AD-16](architecture-spine.md) → [spec.md v1.3, R01–R18 и I01–I14](spec.md) → [ADR-03–ADR-16](adr/README.md) → component/database/integration design → плановые детали. Дополнительные ограничения фазы: [AGENTS.md](../../AGENTS.md). Полнота связей находится в [traceability.md](traceability.md), фактические статусы — в [tasks.md](tasks.md).
+Нормативный приоритет: [Architecture Spine AD-1–AD-16](architecture-spine.md) → [spec.md v1.3, R01–R18 и I01–I14](spec.md) → [ADR-03–ADR-16](adr/README.md) → component/database/integration design → плановые детали. Дополнительные ограничения фазы: [AGENTS.md](../../AGENTS.md). Полнота связей находится в [traceability.md](traceability.md), фактические статусы — в [tasks.md](tasks.md). T00 baseline evidence: [baseline.md](baseline.md) и [evidence/t00](evidence/t00/README.md); owner decision record: [g0-review.md](g0-review.md) (**APPROVED**). **T00 DONE, G0 APPROVED**; можно переходить к декомпозиции эпиков, сохраняя deferred gates и зависимости задач.
 
 ## 2. Design readiness и implementation boundary
 
@@ -22,17 +22,17 @@
 
 **Уровень этой готовности — DESIGN.** Она не означает VERIFIED, DONE, security approval, production approval или подтверждённую реализуемость на конкретных версиях.
 
-### BLOCKED FOR IMPLEMENTATION — версии, baseline, реальные системы и owner approval
+### BLOCKED FOR IMPLEMENTATION — readiness correction и остаточные evidence gaps
 
 Реализация T01–T20 не разблокирована:
 
-- `baseline.md` отсутствует; Open WebUI commit/tag, GitLab version/edition, toolchain, Git object format, PostgreSQL/upstream physical layout и реальные lint/test/typecheck команды не закреплены;
-- upstream checkout и реальные code references Open WebUI отсутствуют; auth/grants/tools/RAG/model-connection seams и migration conventions не подтверждены;
-- real sandbox GitLab checks не выполнены: exact-SHA real merge, parents/trailers, MR notes, protected annotated tags, merge-only-GO, scoped credentials, webhooks/audit и metadata export остаются UNKNOWN;
-- real LDAP/OIDC, DB role/migration и CI/index checks не выполнены;
-- редактор и retrieval engine/parameters не выбраны; ACL-aware benchmark не выполнен;
-- [test-plan.md](test-plan.md) существует как `design_not_executed`; полные сценарии A01–A36 и fault matrix сохранены, R/I coverage вынесен в [traceability.md](traceability.md); sanitized baseline/capability evidence отсутствует, A01–A36 и CF-01–CF-30 не выполнялись;
-- владелец явно не утвердил baseline и весь ADR/design package на G0;
+- **T00 DONE, G0 APPROVED** ([tasks.md](tasks.md), [g0-review.md](g0-review.md)); implementation начинается только по зависимостям и сохраняет deferred gates, production readiness не заявляется;
+- pinned baseline и capability evidence **записаны** ([baseline.md](baseline.md), [evidence/t00](evidence/t00/README.md)): Open WebUI `v0.13.0` `c38885a1…`, GitLab CE `19.5.3` (42 completed synthetic probes; target-race nonconforming merge proves mandatory GO lock), PostgreSQL `18.6` + pgvector `0.8.7` (22/22 synthetic gates), Keycloak adapter 9/9, stock OIDC 4 PASS/2 FAIL, external migrator PASS head `e42c8f710a36`. Это synthetic sandbox evidence, не production readiness;
+- CI Runner exact-SHA/no-write evidence записан ([ci-runner.md](evidence/t00/ci-runner.md), 7/7 PASS); production queue/autoscaling/Docker executor/object-store не проверялись;
+- выбран **TipTap adapter (G0-D8)**: WYSIWYG editing retained; headless CodeMirror byte fidelity PASS / TipTap normalization-loss; browser/IME/accessibility/XSS/full managed preview — APPROVED DEFERRAL на T04 (G0-D15), не PASS. Realtime collaboration/CRDT вне MVP; conflict detection, exact/fresh revisions, full diff и новая ProposalVersion обязательны;
+- frontend quality gates не являются releasable baseline: svelte-check FAIL (5722 errors), ESLint parser crash, upstream `npm run build` OOM (G0-D9); Vitest и direct Vite build PASS;
+- identity adapter, deny-by-default execution boundary и external migrator controls подтверждены как обязательные, но не реализованы; stock LDAP/OIDC и stock tool approval не являются ADR-010/ADR-012 implementations;
+- [test-plan.md](test-plan.md) существует как `design_not_executed`; полные сценарии A01–A36 и fault matrix сохранены, R/I coverage вынесен в [traceability.md](traceability.md); A01–A36 и CF-01–CF-30 не выполнялись;
 - реальные hoster.ai studio endpoint/credentials не подтверждены; для T11 это BLOCKED, mock не является PASS.
 
 Фактические состояния T00–T20, G0, owner approval и текущие blockers поддерживаются только в [tasks.md](tasks.md); этот planning input не дублирует live tracker и не меняет статусы. Перечисленные выше отсутствующие evidence — границы готовности design package, а не отдельная динамическая сводка.
@@ -43,19 +43,20 @@
 |---|---|---|
 | [spec.md v1.3](spec.md) | Нормативные R/I/A/T/E, протоколы, gates, DoR/DoD | proposed; не baseline и не разрешение implementation |
 | [ARCHITECTURE-SPINE.md](architecture-spine.md) | AD-1–AD-16, capability map, deferred и consistency conventions | обязательные design invariants; не upstream verification |
-| [architecture.md](architecture.md) | Containers, responsibilities, credentials, lifecycle, recovery, NFR evidence | DESIGN DRAFT для G0; code references появятся после pin |
-| [Open WebUI fork](components/open-webui-fork.md) | UI/editor/review/agent seams, state model, regression Notes/chats | логические seams; компонент редактора UNKNOWN |
-| [Git Orchestrator](components/git-orchestrator.md) | Draft/proposal/decision/merge/recovery/cutover/export protocols | GitLab capabilities UNKNOWN |
-| [Identity and Access](components/identity-access.md) | Stable identity, policy bundle, grants, AuthzContext, revocation | реальные IdP/upstream seams UNKNOWN |
-| [Retrieval and Indexing](components/retrieval-indexing.md) | Snapshot/generation/profile/closure/pointer/query semantics | backend и benchmark UNKNOWN |
+| [architecture.md](architecture.md) | Containers, responsibilities, credentials, lifecycle, recovery, NFR evidence | T00 DONE/G0 APPROVED; pinned code references записаны, implementation gates остаются |
+| [Open WebUI fork](components/open-webui-fork.md) | UI/editor/review/agent seams, state model, regression Notes/chats | TipTap adapter selected G0-D8; canonical adapter/browser evidence pending |
+| [Git Orchestrator](components/git-orchestrator.md) | Draft/proposal/decision/merge/recovery/cutover/export protocols | GitLab 42 synthetic capability probes записаны; product integration не выполнена |
+| [Identity and Access](components/identity-access.md) | Stable identity, policy bundle, grants, AuthzContext, revocation | Keycloak/OpenLDAP synthetic evidence записано; production AD/live-SLO pending |
+| [Retrieval and Indexing](components/retrieval-indexing.md) | Snapshot/generation/profile/closure/pointer/query semantics | pgvector validated candidate 22/22 synthetic gates; production parameters UNKNOWN |
 | [Ingestion and Connectors](components/ingestion-connectors.md) | Dry-run, data barrier, ownership modes, cursors, assets/media | connector/source/object-store layout UNKNOWN |
 | [ADR index](adr/README.md) | ADR-03–ADR-16 и их фактические статусы | Accepted не равен G0/production approval; ADR-01/02 withdrawn |
 | [database.md](database.md) + [database-catalog.yaml](contracts/database-catalog.yaml) | Single-writer schemas, tables, transactions, rebuild/runbooks | логический DESIGN, не DDL/migrations; один instance — assumption до T00 |
 | [integration.md](integration.md) + [contracts/README.md](contracts/README.md) | Сквозные integration protocols и contract map | PROPOSED; T01 contract/conformance tests не выполнялись |
 | [openapi.yaml](contracts/openapi.yaml), [agent-tools.yaml](contracts/agent-tools.yaml), [events.yaml](contracts/events.yaml) | Собственные GO API, bounded tools, event envelopes | не утверждённые upstream routes/registrations/transports |
 | [JSON schemas](contracts/README.md#2-карта-артефактов) | `document-front-matter-v2`, `authz-context-v2`, `export-manifest-v2`, policies, Proposal/Decision, index/origin и DocOps metadata | PROPOSED machine contracts; hashes/limits не являются production commitments |
-| [projection-mapping.md](contracts/projection-mapping.md) + [t01-contract-tests.yaml](contracts/t01-contract-tests.yaml) | Подготовленные canonical↔API↔event↔DB mappings и CF-01–CF-30 consumer vectors | **DESIGN output / DESIGN_NOT_EXECUTED**, не VERIFIED test и не integration PASS |
-| [GitLab](contracts/gitlab-integration.md), [Identity](contracts/identity-integration.md), [Inference](contracts/inference-integration.md), [Source/storage](contracts/source-storage-integration.md) contracts | Детальные external-boundary protocols и T00 checks | реальные capabilities не подтверждены |
+| [projection-mapping.md](contracts/projection-mapping.md) + [t01-contract-tests.yaml](contracts/t01-contract-tests.yaml) | Подготовленные canonical↔API↔event↔DB mappings и CF-01–CF-30 consumer vectors, включая correction lifecycle/idempotency/CAS/no-MR/backup negatives | **DESIGN output / DESIGN_NOT_EXECUTED**, не VERIFIED test и не integration PASS |
+| [docops-correction-task.schema.json](contracts/docops-correction-task.schema.json) + [docops-correction-api.md](contracts/docops-correction-api.md) | Единственный correction-task contract для E04.7/T07b: exact revision, stable actor, policy owner, evidence hash, linked MR optional, open/in_review/resolved/cancelled, create/get/resolve/cancel, kb_ops backup/rebuild | PROPOSED/DESIGN после создания contract; implementation и T01 execution не выполнялись |
+| [GitLab](contracts/gitlab-integration.md), [Identity](contracts/identity-integration.md), [Inference](contracts/inference-integration.md), [Source/storage](contracts/source-storage-integration.md) contracts | Детальные external-boundary protocols и T00 checks | Synthetic capabilities подтверждены в задокументированных sandbox scopes; production integrations и недоступные real hoster/source/object-store checks остаются BLOCKED |
 | [content-standard.md](content-standard.md) | ETL, controlled initial publication, DocOps, media/data barriers | subordinate process standard 2.3; production corpus не создаётся |
 | [operations.md](operations.md) | Deployment topology, credentials, startup/cutover/recovery/export/restore/upgrade runbooks | `design_not_executed`; T18 rehearsals и production readiness не подтверждены |
 | [test-plan.md](test-plan.md) | Test levels, synthetic fixtures, полный A01–A36 scenario catalog, CF vectors и fault matrix | `design_not_executed`; R/I navigation не дублируется и находится в traceability; сценарии не запущены |
@@ -83,7 +84,7 @@
 
 ### Non-goals / DEFERRED без новых требований и ADR
 
-Общая multi-tenant БД; arbitrary page-level ACL внутри repository; realtime collaborative editing/CRDT; agent/connector/LLM auto-merge; несколько approvers/quorum; arbitrary shell/Python/SQL/filesystem/Git; agent bulk/subtree/attachment operations; GraphRAG/people graph; новый inference gateway; universal two-way sync; все connectors сразу; второй Git hosting; automatic rebrand/white-label; admin break-glass; privacy hard purge/filtered history export; GitLab-outage stale reads; OpenSearch без измеренной необходимости.
+Общая multi-tenant БД; arbitrary page-level ACL внутри repository; realtime collaborative editing/CRDT; agent/connector/LLM auto-merge; несколько approvers/quorum; arbitrary shell/Python/SQL/filesystem/Git; agent bulk/subtree/attachment operations; GraphRAG/people graph; новый inference gateway; universal two-way sync; все connectors сразу; второй Git hosting; automatic rebrand/white-label; routine/self-service admin break-glass product capability; privacy hard purge/filtered history export; GitLab-outage stale reads; OpenSearch без измеренной необходимости. Emergency G0-D3 out-of-band privileged incident runbook обязателен и не является routine break-glass feature.
 
 T19/T20 относятся к последующим measured optimizations и не включаются в MVP по наличию общего design package. Обязательные realtime collaboration или page-level ACL с прямым Git access являются stop-триггерами пересмотра канона, а не скрытым расширением scope.
 
@@ -95,11 +96,11 @@ T19/T20 относятся к последующим measured optimizations и �
 | Contracts и test foundation | **E01 / T01**, начальный **T14** | QA + contract owners; schemas/API/tools/events/DB catalog/fixtures | Closed-schema, negative/concurrency/crash harness, A21/A33; последующие все A |
 | Managed documents и access | **E02 / T02,T03** | Open WebUI + GO document mapping + Identity/AuthZ; front matter/policies/AuthzContext | A01,A04,A24–A26,A30,A32,A33; G1 prerequisites |
 | Save и history | **E03 / T04** | GO draft/save/history/revert + UI editor adapter | A08–A10 и связанные conflicts/statuses |
-| Governed workflow | **E04 / T05,T06,T07,T08,T09**, G1-профиль **T11** | GO + Open WebUI + Identity + bounded tools/model connections | A01,A02,A04–A10,A17,A18,A21–A23,A27–A30,A34,A36; G1 |
+| Governed workflow | **E04 / T05,T06,T07,T07b,T08,T09**, G1-профиль **T11** | GO + Open WebUI + Identity + bounded tools/model connections + [correction contract](contracts/docops-correction-api.md) | A01,A02,A04–A10,A17,A18,A21–A23,A27–A30,A34,A36; G1 |
 | Published knowledge pipeline | **E05 / T10**, проверки **T14** | CI/index writer + retrieval read-only + GO/Identity contracts | A02,A03,A11,A12,A21,A22,A25,A31,A35; G2 |
-| Migration и portability | **E06 / T12,T13**, минимальная защита **T15** | Ingestion + GO + index/export + Identity/object storage | A11,A13,A15,A23,A25,A27,A31,A32,A35,A36; G2 |
+| Migration и portability | **E06 / T12,T13**, минимальная защита **T15**; полный T12/T12b после T05, отдельная T12a dry-run раньше | Ingestion + GO + index/export + Identity/object storage | A11,A13,A15,A23,A25,A27,A31,A32,A35,A36; G2 |
 | Internal pilot acceptance | **E07 / T11,T14**, необходимая часть **T18** | Open WebUI/model connections + retrieval + QA + operations | A03,A16,A18,A20,A21 и expert quality/security evidence; G2 |
-| Repeatable client delivery | **E08 / T15,T16,T18**, условно **T17** | Source adapters + dedicated deployment/backup/upgrade/operations | A14–A16,A19,A20,A23,A28,A33; G3 |
+| Repeatable client delivery | **E08 / T15,T16,T18**, условно **T17**; полный T18/G3 явно после T16 | Source adapters + dedicated deployment/backup/upgrade/operations | A14–A16,A19,A20,A23,A28,A33; G3 |
 | Measured evolution, вне текущих E00–E08 | **T19,T20** после benchmark/business gate | Retrieval/QA/operations по измеренной необходимости | T19 зависит T14; T20 зависит T14,T18; G4; новые E IDs здесь не создаются |
 
 Один T может поддерживать несколько результатов, но при будущей декомпозиции получает одного ответственного и единый учёт труда. Компонентная таблица не назначает людей или capacity.
@@ -110,41 +111,45 @@ T19/T20 относятся к последующим measured optimizations и �
 
 ```text
 T00 + owner G0
-  → T01
-  → T02
-  → T03
-  → T04
-  → T05
-  ├─→ T06 ─┐
-  └─→ T07 ─┴─→ T08 ─→ T09 ─→ T11 ─┐
-  ├─→ T10 ──────────────────────────┼─→ T14
-  └─→ T12 ─→ T13 ──────────────────┤
-                         T15 ← T12+T05+T10
-                         T16 ← T15+T03
-                    T14+T18 → T20; T14 → T19
+  → T01 → T02 → T03 → T04
+                       ├─→ T05
+                       │    ├─→ T06 ─┐
+                       │    └─→ T07 ─┴─→ T08 ─→ T09 ─→ T11 ─┐
+                       │    └─→ T12b ─→ T13 ────────────────┤
+                       ├─→ T10 ─────────────────────────────┼─→ T14
+                       │    └─→ T12b preflight/published artifacts
+                       └─→ T12a dry-run (separate early work) ─→ T12b
+
+T15 ← T12+T05+T10; T16 ← T15+T03
+T18 necessary/T18a ← P0 safety gates+T13+соответствующие release gates
+full T18/G3 ← T16+T18a+E06.4 restore evidence
+T14+full T18 → T20; T14 → T19
 ```
 
-Дополнительные зависимости: T13 ← T12; T14 ← T01+T09+T10+T11; T17 ← T12; T18 ← P0 safety gates+T13; T15 также поддерживает E06; T16 не опережает core. T20 не получает самостоятельного разрешения от наличия T14/T18: требуется measured/business gate.
+Дополнительные зависимости: полный T12/T12b ← T03+T04+T05 и T10 artifacts; T13 ← T12; T14 ← T01+T09+T10+T11; T17 ← T12; T15 также поддерживает E06; T16 не опережает core; полный T18/G3 явно зависит от T16 и не закрывается necessary pilot/T18a. **T07b ← T05+T07+созданный correction-task contract**, в `sprint-status.yaml` попадает только при последующей deterministic generation после readiness PASS. T13/T18 restore использует отдельный durable non-Git-derived correction-task backup и linked-MR reconciliation без второго canonical write path. T20 не получает самостоятельного разрешения от наличия T14/T18: требуется measured/business gate.
 
 ### 6.2. Что можно параллелить после G0 без ослабления зависимостей
 
-- **T06 и T07** после T05: enforcement и review UI; G1 закрывается только совместным real evidence.
+- **T06 и T07** после T05: enforcement и review UI; G1 закрывается только совместным real evidence. **T07b** после T07 и созданного correction contract не вводит forward dependency на E04.2 сверх существующей T05/T07 цепочки и не блокирует unrelated DocOps projection work.
 - **T10** после T03+T04 параллельно с T05–T09: CI/index и retrieval не ждут завершения review/agent chain, но T14 ждёт обе ветки.
-- **T12** после T03+T04 параллельно с T05/T10: dry-run/sample discovery и synthetic import; production corpus и реальные данные — только после отдельного разрешения.
-- **T13** после T12 параллельно с завершением E04/E05; полный restore не объявляется до clean-instance evidence.
+- **T12a dry-run/admission** после T03+T04 может выполняться параллельно T05/T10 только как отдельная работа без canonical writes. Полный T12/T12b cutover merge lifecycle начинается после T05 и использует T10 preflight/published artifacts; это не разрешает параллельный full T12 с T05. Production corpus и реальные данные — только после отдельного разрешения.
+- **T13** после полного T12; полный restore не объявляется до clean-instance evidence, включая отдельный durable non-Git-derived correction-task current/events/evidence/idempotency backup/restore и linked-MR reconciliation без второго canonical write path.
+- **T18 full/G3** явно ждёт T16 selected real connector вместе с T18a и E06.4 restore evidence; necessary pilot/T18a могут подготавливать свои slices, но не закрывают full T18/G3 досрочно.
 - UI T07/T08 может готовиться по согласованным contracts параллельно с backend работой, но формальные Depends T08←T07 и T09←T06+T08 сохраняются; mock UI не закрывает G1.
 - QA fixtures/contract vectors готовятся вместе с компонентами после T01, но real integration PASS требует реальных GitLab/IdP/PostgreSQL/CI/hoster по области проверки.
 
 ### 6.3. Блокеры, которые нельзя «распараллелить»
 
+Исходные T00 blockers сохранены для traceability и помечены RESOLVED с датой/scope; они не являются текущими открытыми G0 blockers. Оставшиеся UNKNOWN/BLOCKED относятся к конкретным последующим tasks.
+
 | Блокер | Что именно останавливает | Условие снятия |
 |---|---|---|
-| Нет pinned baseline и реальных code paths | Весь implementation и выбор repo conventions | `baseline.md` с commit/tag, version/edition, toolchain, commands, migrations/seams |
-| GitLab capabilities UNKNOWN | G0; merge/cutover/decision/export implementation и G1/G2 | Synthetic real-sandbox capability matrix по exact-SHA/parents/trailers/note/tag/protection/tokens/webhooks/export |
-| Open WebUI seams UNKNOWN | Identity/grants/tools/UI/retrieval integration и upgrade plan | Pinned checkout, seam registry, Notes/chats regression baseline, editor audit |
-| Identity/DB/CI capabilities UNKNOWN | G0, schema/security/pointer/recovery work | Real IdP/PostgreSQL/CI checks и negative ownership/revocation evidence |
-| Editor и retrieval benchmark отсутствуют | G0 component choices; T07/T08 editor и T10/T19 engine specifics | Сравнение готовых редакторов; ACL-aware recall/SHA/preflight/closure benchmark |
-| Owner G0 approval отсутствует | Старт T01–T20 | Явный review record по baseline и всему ADR/design package; self-approval агента не засчитывается |
+| ~~Нет pinned baseline и реальных code paths~~ **RESOLVED for G0** | Было: implementation и выбор repo conventions | [baseline.md](baseline.md) содержит commit/tag, versions, toolchain, commands, migrations/seams; product implementation остаётся по dependencies |
+| ~~GitLab capabilities UNKNOWN~~ **RESOLVED for G0** | Было: G0 stop | 42 synthetic real-sandbox probes записаны; target CAS/Owner limits приняты с controls. Product merge/cutover/export integration остаётся будущей проверкой |
+| ~~Open WebUI seams UNKNOWN~~ **RESOLVED for G0** | Было: integration/upgrade plan stop | Pinned checkout, code-path/seam audits и Notes/chats regression scope записаны; implementation seam registry и browser checks остаются |
+| ~~Identity/DB/CI capabilities UNKNOWN~~ **RESOLVED for G0** | Было: schema/security/pointer/recovery stop | Keycloak/OpenLDAP/PostgreSQL/CI synthetic evidence записано; production AD/live revocation и product pointer/recovery checks остаются |
+| ~~Editor и retrieval benchmark отсутствуют~~ **RESOLVED for G0** | Было: G0 component choices | Headless editor/ACL-aware benchmark выполнен; TipTap selected G0-D8, pgvector validated candidate. T04 browser и production parameters остаются отдельными follow-up |
+| ~~Owner G0 approval отсутствует~~ **RESOLVED 2026-11-08** | Было: старт T01–T20 | [g0-review.md](g0-review.md) APPROVED по baseline и всему ADR/design package; self-approval не использовалось. Implementation ждёт dependencies/readiness PASS |
 | hoster.ai real endpoint отсутствует | T11 и G2 inference evidence | Согласованный endpoint/config/credentials/egress; иначе T11 BLOCKED |
 | Corpus/source/connector decisions отсутствуют | Production load, T16, соответствующие части G2/G3 | Owner-approved perimeter/corpus/source objects/auth/sandbox; production corpus до этого запрещён |
 
@@ -154,16 +159,16 @@ T00 + owner G0
 
 | Вертикальный результат | Существующие IDs и acceptance | Зависимости / выход |
 |---|---|---|
-| Доказать feasibility и получить право на implementation | E00/T00; baseline mapping всех R/I/A, особенно A24/A34 | Текущий единственный разрешённый поток; `baseline.md`, capability matrix, editor/retrieval proposals, alignment [test-plan.md](test-plan.md), G1 proposal, owner G0 record |
+| Доказать feasibility и получить право на implementation | E00/T00; baseline mapping всех R/I/A, особенно A24/A34 | **DONE/APPROVED 2026-11-08:** `baseline.md`, capability matrix, TipTap/retrieval evidence, [test-plan.md](test-plan.md), G1 proposal и owner G0 record; дальше только dependencies/readiness PASS |
 | Проверять contracts на двух изолированных Spaces до основной реализации | E01/T01 + начальный T14; A21,A33, [projection-mapping.md](contracts/projection-mapping.md), CF-01–CF-30 и fixture vectors для всех A | После G0; closed v2 schemas, explicit canonical↔projection roundtrips, two repositories/two Spaces с independent bindings, semantic/consumer/fault/concurrency/crash harness, real sandbox wiring |
 | Пройти дерево → stable document → authorized read с двумя ACL perimeter | E02/T02,T03; A01,A04,A24–A26,A32,A33 | После T01; front matter/policies/identity fixtures и negative disclosure/schema-writer checks |
 | Сохранить одну страницу, увидеть историю и конфликт без потери текста | E03/T04; A08–A10 | После T03; draft branch, exact revisions, restart/revert-MR, explicit conflicts |
-| Пройти manual edit → MR → review → DecisionRecord → GO merge → restore | E04/T05–T08 + необходимый T06; A05–A10,A17,A27–A30,A34,A36; G1 | После T04; business approver без GitLab user, exact parent/trailers/note/tag, no bypass, race/crash/recovery green |
+| Пройти manual edit → MR → review → DecisionRecord → GO merge → restore | E04/T05–T08 + необходимый T06 + T07b correction contract; A05–A10,A17,A27–A30,A34,A36; G1 | После T04; business approver без GitLab user, exact parent/trailers/note/tag, no bypass, race/crash/recovery green; correction task только operational record |
 | Добавить bounded single-page agent proposal без расширения полномочий | E04/T09 + G1-профиль T11; A02,A04,A05,A17,A18,A21 | После T06+T08; read/search/propose only, trusted run/principals, unsupported operations denied; real inference по доступности |
 | Построить published-only index и выдать current canonical answer/citations | E05/T10 + T14; A02,A03,A11,A12,A21,A22,A25,A35 | После T03+T04; preflight non-serving, full/incremental equivalence, late-job/webhook/ACL/stale guards |
-| Перенести synthetic corpus через controlled cutover и доказать portability | E06/T12,T13 + минимальный T15; A13,A15,A23,A31,A35,A36 | После T03+T04 и index/GO prerequisites; dry-run → unpublished load → freeze/protection/preflight/activation → clone+manifests restore |
+| Перенести synthetic corpus через controlled cutover и доказать portability | E06/T12,T13 + минимальный T15; A13,A15,A23,A31,A35,A36 | T12a dry-run отдельно после T03+T04; полный T12/T12b после T05 с T10 artifacts; dry-run → unpublished load → freeze/protection/preflight/activation → clone+manifests и отдельный correction backup/restore с linked-MR reconciliation |
 | Провести internal pilot на согласованном corpus и approved hoster.ai | E07/T11,T14 + необходимый T18; A03,A16,A18,A20,A21; G2 | После E04–E06; real endpoint, expert questions, quality dimensions отдельно, deterministic P0 suite и runbook evidence |
-| Подключить один источник и повторить dedicated delivery | E08/T15,T16,T18 + условный T17; A14–A16,A19,A20,A23,A28,A33; G3 | После G2 и owner source selection; no auto-merge, source cursor/crash evidence, second isolated instance, restore/upgrade rehearsal |
+| Подключить один источник и повторить dedicated delivery | E08/T15,T16,T18 + условный T17; A14–A16,A19,A20,A23,A28,A33; G3 | После G2 и owner source selection; no auto-merge, source cursor/crash evidence, second isolated instance, restore/upgrade rehearsal; full T18/G3 явно после T16 и включает correction restore/linked-MR reconciliation |
 | Изменить retrieval/performance/trust только по измерениям | T19,T20; G4 | После T14/T18 и benchmark/business gate; не относить к E00–E08 и не создавать stack expansion заранее |
 
 ## 8. Requirement / component / contract / test ownership
@@ -172,7 +177,7 @@ Ownership ниже логический. При декомпозиции каж�
 
 | Область | Requirements/invariants | Component и contract owner | Test/evidence owner |
 |---|---|---|---|
-| Canonical documents/UI | R01–R03,R07–R10,R13; I05,I13,I14 | Open WebUI + GO; front matter, Proposal/Decision, OpenAPI, GitLab protocol | UI/GO owners дают fixtures; QA проверяет A01,A02,A05–A10,A21–A23,A27–A30,A34; business approver выполняет UX acceptance |
+| Canonical documents/UI | R01–R03,R07–R10,R13; I05,I13,I14 | Open WebUI + GO; front matter, Proposal/Decision, [correction-task](contracts/docops-correction-api.md), OpenAPI, GitLab protocol | UI/GO owners дают fixtures; QA проверяет A01,A02,A05–A10,A21–A23,A27–A30,A34 и correction CF-06/10/20/25; business approver выполняет UX acceptance |
 | Identity, ACL и execution boundary | R05,R15,R16; I03,I04,I06,I09,I12 | Identity/AuthZ + GO + Open WebUI; access/approval/AuthzContext/tools/events | Security/QA: A04,A11,A17,A18,A22,A24–A26,A30,A32,A33,A36; real IdP/GitLab evidence |
 | Merge, recovery и cutover | R06–R12,R14; I01,I02,I05–I08,I10,I14 | GO + GitLab/CI/Identity; DecisionRecord, recovery, CutoverRecord, export | GO/QA fault injection: A05–A10,A27–A31,A34–A36; real sandbox, не mocks |
 | Retrieval/index/inference | R03,R04,R11,R15,R18; I08–I13 | CI/index single writer + retrieval read-only + managed model connections; index snapshot/events/inference | Retrieval/ML/QA: A02,A03,A11,A12,A16,A21,A22,A25,A35 и ACL-aware benchmark/golden set |
@@ -267,7 +272,7 @@ Machine-generated reports размещаются в `_bmad-output/test-artifacts
 - Exact base/proposal/merge fixtures: accept/reject/cancel, note+tag corruption, supersedes, stale base, new commit/rebase, two clients/two MRs, target race, lock loss/fencing, response lost, crash до/после external call, DB loss/quarantine; invalid+unknown со second-MR denial, conclusive failed guarded same-decision/new-attempt retry и terminal conflicted/invalid tuple assertions.
 - Index full/incremental/preflight fixtures: links/assets/policy dependencies включая approval revision, late generation, history rewrite, lost/duplicate/out-of-order webhook, CI outage, stale candidate и simultaneous old/new publication на одном Space/profile; separate preflight/published request/run/snapshot IDs с одинаковыми SHA/closure/hashes и pointer→Space activation.
 - Malicious imports/preview: archive traversal, absolute/Unicode ambiguous paths, symlinks, executable HTML/MDX/XSS, `.git`/`.env`/secret-like files, oversized/decompression bombs и invalid UTF-8.
-- Export/restore: explicit refs, peeled annotated tags, MR note metadata, parents/trailers, policy/grants mapping, export-v2 accepted-before-merge/rejected/cancelled/failed/conflicted/invalid outcomes+attempt+recovery, decisions/assets/authorization closure и missing/rejected objects без fabricated hashes; второй synthetic client с независимыми resources.
+- Export/restore: explicit refs, peeled annotated tags, MR note metadata, parents/trailers, policy/grants mapping, export-v2 accepted-before-merge/rejected/cancelled/failed/conflicted/invalid outcomes+attempt+recovery, decisions/assets/authorization closure и missing/rejected objects без fabricated hashes; отдельный non-Git-derived correction-task current/events/evidence/idempotency backup с restore и linked-MR reconciliation без fabrication/deletion и второго canonical write path; второй synthetic client с независимыми resources.
 
 ### 12.2. Environments
 
@@ -288,7 +293,7 @@ Production corpus до согласования perimeter/source corpus и от�
 | **G0** | Pinned baseline; required GitLab/identity/DB capabilities подтверждены или stop/BLOCKED; весь ADR-03–16/design package явно reviewed/approved владельцем | DESIGN package, ADR-файлы, contract mappings и документное review без baseline/capability/owner record |
 | **G1** | Одна страница, два пользователя: manual edit→MR→ProposalRecord→review→DecisionRecord→GO real merge→restore; owner без GitLab user; self-approval/direct merge невозможны; parents/trailers/race/crash/recovery/bypass green | UI/mock без real GitLab, race/crash и no-bypass evidence |
 | **G2** | Согласованный corpus продаж с repository-per-Space ACL, controlled cutover/preflight→published pair/activation, retrieval/index/import/full export, real hoster endpoint, P0 suite и business review | Preflight activation, production corpus без perimeter/sign-off, mocked hoster или incomplete export |
-| **G3** | Один external source без auto-merge, second dedicated instance, schema ownership, decisions/assets/metadata backup restore, operational/security acceptance | Наличие runbook без connector/second-instance/restore drills |
+| **G3** | Один external source без auto-merge, second dedicated instance, schema ownership, decisions/assets/metadata backup restore плюс отдельный correction backup/restore и linked-MR reconciliation, operational/security acceptance; full T18/G3 после T16 | Наличие runbook без connector/second-instance/restore drills или заявка full T18 без T16 |
 | **G4** | Клиентские profile optimizations только после измерений и business gate | Ранняя замена stack или численные targets без benchmark/owner decision |
 
 Фактические gate/task states и blockers находятся только в [tasks.md](tasks.md). Gate закрывается явной записью владельца и доказательствами, а не окончанием спринта или наличием артефакта.
@@ -335,12 +340,12 @@ Git-native канон; repository=Space; merge-only-GO и запрет direct hu
 
 ## 16. Известные пробелы и ограничения пакета
 
-1. **Нет `baseline.md`, pinned versions и реальных code references.** Это основной implementation blocker, а не документ, который следует выдумать по design.
+1. **`baseline.md` и pinned versions записаны** ([baseline.md](baseline.md), [evidence/t00](evidence/t00/README.md)), но это synthetic sandbox evidence: production readiness не заявляется; CI Runner exact-SHA/no-write PASS 7/7, browser editor checks остаются BLOCKED.
 2. **`test-plan.md`, operations и T01 catalog существуют только как DESIGN; executed acceptance/contract evidence отсутствует.** Полные A01–A36 и fault matrix сохранены; дублирующие R/I indexes удалены, нормативная coverage — [traceability.md](traceability.md). CF-01–CF-30 и canonical↔projection mappings подготовлены, но не запущены.
-3. **Нет owner G0 approval.** Accepted ADR не складываются автоматически в G0; Proposed ADR-03–07 и UNKNOWN требуют review.
-4. **Нет реальных GitLab/Open WebUI/IdP/DB/CI/hoster integration PASS.** Все A/CF имеют уровень DESIGN, не VERIFIED.
-5. **Editor/backend/models/source/object-store не выбраны.** Нельзя превращать candidates в architecture facts при декомпозиции.
+3. **G0-D12 APPROVED.** [g0-review.md](g0-review.md) APPROVED: baseline и ADR/design package приняты для epic planning; deferred gates остаются обязательными.
+4. **Нет реальных product integration PASS.** GitLab/IdP/DB/retrieval evidence — synthetic sandbox capability checks, не A01–A36 execution; все A/CF имеют уровень DESIGN, не VERIFIED.
+5. **TipTap adapter selected и owner-approved (G0-D8); canonical adapter/browser work остаётся T04.** Realtime CRDT вне MVP. Final retrieval parameters, models, source и object-store не выбраны; pgvector — validated candidate с owner-TBD thresholds. Нельзя превращать candidates в production architecture facts при декомпозиции.
 6. **T20 не имеет явной строки Requirements в spec.md v1.3.** Любые R mappings для T20 являются design-derived и должны быть подтверждены при последующем planning; T19/T20 не входят в E00–E08.
 7. **Подготовленные projection/state mappings — DESIGN output, не VERIFIED test.** [projection-mapping.md](contracts/projection-mapping.md) уже фиксирует Decision/Cutover/Proposal/index/source/AuthZ/path mappings; [t01-contract-tests.yaml](contracts/t01-contract-tests.yaml) задаёт будущие consumer roundtrips и negatives. Их наличие не доказывает реализацию.
 8. **`operations.md` существует как `design_not_executed`.** Он включён в G0 design review; T18 restore/upgrade/startup rehearsals и production readiness не выполнялись.
-9. **Оценки и capacity отсутствуют намеренно.** Их нельзя реконструировать из отозванных v1.1 чисел или из предложенных срезов.
+9. **Оценки даны как LOW/VERY LOW confidence сценарии, не commitments.** [delivery-estimates.md](delivery-estimates.md) фиксирует capacity assumption 24 person-days/sprint, ranges и риски; реальные capacity, даты и velocity не назначаются.

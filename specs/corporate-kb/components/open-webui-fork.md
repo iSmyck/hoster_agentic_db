@@ -1,10 +1,10 @@
 # Open WebUI fork — component solution design
 
-**Статус:** DESIGN DRAFT для G0.  
+**Статус:** DESIGN после T00 DONE / G0 APPROVED; implementation и deferred browser evidence не выполнены.  
 **Authority:** [Architecture Spine](../architecture-spine.md), AD-1–AD-6, AD-8, AD-11–AD-16.  
 **Связанные документы:** [platform design](../architecture.md), [integration specification](../integration.md), [agent-tools-v2](../contracts/agent-tools.yaml), [front-matter-v2](../contracts/front-matter.schema.json), [T01 vectors](../contracts/t01-contract-tests.yaml), [specification](../spec.md), [GO](git-orchestrator.md), [Identity](identity-access.md), [Retrieval](retrieval-indexing.md), [Ingestion](ingestion-connectors.md).
 
-Open WebUI commit/tag, upstream code paths, UI extension points, WYSIWYG component, model IDs и test commands — **UNKNOWN T00**. Компонентные названия ниже логические и не утверждают существование конкретных upstream modules.
+Open WebUI pinned на `v0.13.0`, commit `c38885a1a737da4968f157092f304f3b5481d0bf` ([baseline.md](../baseline.md)); seam/code-path evidence зафиксировано в [auth audit](../evidence/t00/openwebui-auth-audit.md), [RAG/editor audit](../evidence/t00/openwebui-rag-editor-audit.md) и [toolchain evidence](../evidence/t00/openwebui-toolchain.md). **T00 DONE/G0 APPROVED; TipTap adapter selected и owner-approved (G0-D8)** с WYSIWYG editing retained. Browser/IME/accessibility/XSS/full managed preview checks — **DEFERRED to T04, not PASS**; realtime collaboration/CRDT вне MVP, вместо него conflict detection, exact/fresh revisions, full diff и новая ProposalVersion. License legal clearance и hoster.ai model IDs остаются UNKNOWN/follow-up. Компонентные названия ниже логические и не утверждают существование конкретных upstream modules за пределами audited seams.
 
 ## 1. Назначение и границы
 
@@ -30,7 +30,7 @@ Open WebUI — единая продуктовая оболочка для де�
 - Не экспортирует human merge execution context как agent/native/OpenAPI tool.
 - Не разрешает arbitrary Python Tools, Tool Creation, shell, generic SQL, arbitrary filesystem или arbitrary Git push в managed profile.
 - Не определяет права только в frontend и не передаёт модели недоступный текст.
-- Не переписывает upstream auth/chat/RAG/Notes/editor/collab internals.
+- Не переписывает upstream auth/chat/RAG/Notes internals; managed TipTap adapter реализует только WYSIWYG canonical editing без добавления realtime collaboration/CRDT.
 - Не выполняет automatic conflict merge, rebase или повторную LLM-генерацию при apply.
 - Не создаёт клиентские code branches и не удаляет branding/notices.
 
@@ -41,7 +41,7 @@ Open WebUI — единая продуктовая оболочка для де�
 | Managed KB feature seam | Opt-in routes/navigation/configuration | Не менять personal Notes/ordinary chat defaults |
 | Space navigator | Tree, parent/child, deep links по stable document ID | Не загружать полный корпус без authorization/bounds |
 | Document read adapter | Whole/section, cursor, bounds, revision/truncation | Не считать indexed text canonical original |
-| Editor adapter | Draft editing, front matter/link fidelity, save через GO | Не выбирать/строить собственный редактор до T00 |
+| Editor adapter | Owner-selected TipTap WYSIWYG adapter, canonical serialization, front matter/link fidelity, full diff, save через GO | Не добавлять realtime CRDT или собственный editor stack; conflict/fresh revision/new ProposalVersion вместо automatic merge |
 | Review adapter | Exact-SHA diff/preview/evidence/actions | Не скрывать front matter/structure/attachment changes |
 | Agent tool gateway | Typed read/search/propose calls и trusted run context | Нет merge/grants/shell/SQL/arbitrary tools |
 | Scope/citation presenter | Page/subtree/Space selection, sources, media warnings | Model scope не расширяет AuthzContext |
@@ -263,14 +263,20 @@ Logs/traces используют request/run/document/proposal/decision IDs, rev
 
 G1 требует сквозного manual edit→MR→review→merge→restore на двух пользователях и deterministic no-bypass evidence. UI mock не закрывает gate.
 
-## 11. T00 dependencies
+## 11. T00 status и оставшиеся зависимости
 
-- Pin Open WebUI commit/tag, воспроизвести upstream test/dev environment и записать реальные code paths/commands.
-- Составить seam map auth/users/grants/chat/tools/RAG/model connections и фактические channel/deferred/automation registration paths.
-- Выбрать готовый editor по front matter fidelity, complete diff/preview, Cyrillic, attachments, accessibility и license; не строить собственный без ADR.
-- Подтвердить upstream streaming/native tool capabilities и возможность ограничить managed tool registrations без хирургии core.
-- Проверить managed grants integration с Identity adapter и additive upstream semantics.
-- Определить существующий retrieval composition seam для exact/semantic search и canonical direct read без browser DB access.
-- Зафиксировать hoster.ai studio configuration/capabilities как последующую реальную интеграционную проверку; model IDs/endpoints не выдумывать.
-- Проверить license/branding/notices выбранного commit и оформить seam registry/upgrade baseline.
-- Personal Notes/ordinary chat smoke зафиксировать как обязательный regression suite, не как managed canonical migration.
+Зафиксировано T00 evidence (2026-11-07, не production readiness):
+
+- Pinned checkout и toolchain ([toolchain evidence](../evidence/t00/openwebui-toolchain.md)): backend `uv sync --frozen --group dev --extra postgres`, Ruff format/CI selection PASS, локального pytest suite нет (exit 5); frontend Node `22.23.4`, `npm ci`, Vitest 4/4 и direct Vite build (6 GiB heap) PASS.
+- Frontend risks: upstream `npm run build` OOM (hardcoded 12 GiB Node heap против 12 GiB Docker), `npm run check` FAIL (5722 errors/191 warnings), non-mutating ESLint FAIL (parser crash на `ModelDefaultsPanel.svelte`); это не releasable baseline gates — G0-D9.
+- Seam map auth/users/grants/tools/RAG/model connections зафиксирован с code references; STOP findings для ADR-04/10/12/15 и reusable seams — [auth audit](../evidence/t00/openwebui-auth-audit.md).
+- Editor evidence split: CodeMirror raw round-trip/constructs/full diff PASS headless (byte/front-matter/Cyrillic/attachment metadata fidelity), headless Cyrillic preview FAIL; TipTap native body round-trip FAIL (2382→2319 bytes), table alignment и immutable attachment refs LOST, constructs NORMALIZED. **Owner выбрал TipTap adapter (G0-D8)**, WYSIWYG retained, realtime CRDT вне MVP; browser checks DEFERRED (G0-D15) ([editor audit](../evidence/t00/openwebui-rag-editor-audit.md)).
+- Stock OIDC runtime: login/session/initial groups sync PASS, issuer+sub persistence и revocation FAIL — identity adapter обязателен ([OIDC runtime](../evidence/t00/openwebui-oidc-runtime.md)).
+- License/branding engineering evidence зафиксировано (BSD-3-Clause + branding restriction); legal clearance отсутствует — [license review](../evidence/t00/openwebui-license-review.md), G0-D10.
+
+Остаются после approved G0 до реализации:
+
+- Browser editor checks (WYSIWYG/raw preview, IME/composition, keyboard/screen reader, XSS-safe/full managed preview) — **DEFERRED to T04, not PASS**, browser не запускался. Realtime collaboration/CRDT вне MVP и не является pending check.
+- Managed grants integration с Identity adapter на additive upstream semantics (`True > False`, без deny/veto) — реализация по dependencies после approved G0.
+- hoster.ai studio endpoints/model IDs/streaming/tools contract — UNKNOWN; mock не PASS.
+- Personal Notes/ordinary chats browser regression и seam registry execution — после G0; license/SBOM review перед commercial distribution.
