@@ -1,6 +1,6 @@
 # T04a Durable Drafts, Guarded Navigation and Cursor-Based Git History Evidence Summary
 
-- **Generated:** 2026-11-08T22:04:01.080165+00:00
+- **Generated:** 2026-11-08T22:20:43.223715+00:00
 - **Contracts version:** proposal-record-v1
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Spec baseline commit:** d2c0d072a757808ea891fbf6414f00147679f7a7
@@ -34,7 +34,7 @@
 - `draft_save.valid_human_save.valid` (draft_save): draft branch/commit created, main unchanged
 - `draft_save.valid_agent_save.valid` (draft_save): draft branch/commit created, main unchanged
 - `draft_save.missing_base_sha.missing_base_sha` (draft_save): save rejected with MISSING_BASE_SHA
-- `draft_save.agent_missing_run_id.missing_base_sha` (draft_save): save rejected with MISSING_BASE_SHA
+- `draft_save.agent_missing_run_id.missing_run_id` (draft_save): save rejected with MISSING_RUN_ID
 
 ## Rerun instructions
 

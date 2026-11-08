@@ -97,7 +97,7 @@
       "expected": "draft branch/commit created, main unchanged",
       "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/drafts.yaml",
       "id": "draft_save.valid_human_save.valid",
-      "input_sha256": "9e8f61e3ff1e776066114cd9b218a1be985e331becd11cb520d46991e261e028",
+      "input_sha256": "8e7f327008b2f1c19c800b9107e27f902d087bbf9fb377c54dc48ab8c1d1d226",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
       "scenario_id": "draft_save",
       "status": "PASS"
@@ -115,7 +115,7 @@
       "expected": "draft branch/commit created, main unchanged",
       "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/drafts.yaml",
       "id": "draft_save.valid_agent_save.valid",
-      "input_sha256": "9e8f61e3ff1e776066114cd9b218a1be985e331becd11cb520d46991e261e028",
+      "input_sha256": "8e7f327008b2f1c19c800b9107e27f902d087bbf9fb377c54dc48ab8c1d1d226",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
       "scenario_id": "draft_save",
       "status": "PASS"
@@ -123,6 +123,7 @@
     {
       "actual": "rejected: missing ['base_sha']",
       "details": {
+        "error": "MISSING_BASE_SHA",
         "missing": [
           "base_sha"
         ]
@@ -130,7 +131,7 @@
       "expected": "save rejected with MISSING_BASE_SHA",
       "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/drafts.yaml",
       "id": "draft_save.missing_base_sha.missing_base_sha",
-      "input_sha256": "9e8f61e3ff1e776066114cd9b218a1be985e331becd11cb520d46991e261e028",
+      "input_sha256": "8e7f327008b2f1c19c800b9107e27f902d087bbf9fb377c54dc48ab8c1d1d226",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
       "scenario_id": "draft_save",
       "status": "PASS"
@@ -138,14 +139,15 @@
     {
       "actual": "rejected: missing ['run_id (required for agent actor)']",
       "details": {
+        "error": "MISSING_RUN_ID",
         "missing": [
           "run_id (required for agent actor)"
         ]
       },
-      "expected": "save rejected with MISSING_BASE_SHA",
+      "expected": "save rejected with MISSING_RUN_ID",
       "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/drafts.yaml",
-      "id": "draft_save.agent_missing_run_id.missing_base_sha",
-      "input_sha256": "9e8f61e3ff1e776066114cd9b218a1be985e331becd11cb520d46991e261e028",
+      "id": "draft_save.agent_missing_run_id.missing_run_id",
+      "input_sha256": "8e7f327008b2f1c19c800b9107e27f902d087bbf9fb377c54dc48ab8c1d1d226",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
       "scenario_id": "draft_save",
       "status": "PASS"
@@ -276,37 +278,37 @@
       "expected": "revert-MR created with new commit, no main rewrite",
       "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/restore.yaml",
       "id": "restore.valid_restore_creates_revert_mr.revert_mr_created",
-      "input_sha256": "c989bb87a09852c26058302bd1e63bdd65e69b33c191424afa47350b5e1ffa00",
+      "input_sha256": "e098d44b882ca0ed0496a3480af5783953e2c8d90b241e5b34affce2f13064a6",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
       "scenario_id": "restore",
       "status": "PASS"
     },
     {
-      "actual": "restore refused; history not rewritten",
+      "actual": "restore refused; main history not rewritten",
       "details": {
-        "main_rewritten": true,
+        "main_rewritten": false,
         "revision_sha": "dddddddddddddddddddddddddddddddddddddddd",
         "valid_revision": true
       },
       "expected": "direct main write or invalid revision rejected",
       "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/restore.yaml",
       "id": "restore.direct_main_write_forbidden.no_direct_main_write",
-      "input_sha256": "c989bb87a09852c26058302bd1e63bdd65e69b33c191424afa47350b5e1ffa00",
+      "input_sha256": "e098d44b882ca0ed0496a3480af5783953e2c8d90b241e5b34affce2f13064a6",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
       "scenario_id": "restore",
       "status": "PASS"
     },
     {
-      "actual": "restore refused; history not rewritten",
+      "actual": "restore refused; main history not rewritten",
       "details": {
         "main_rewritten": false,
-        "revision_sha": 0,
+        "revision_sha": "0000000000000000000000000000000000000000",
         "valid_revision": false
       },
       "expected": "direct main write or invalid revision rejected",
       "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/restore.yaml",
       "id": "restore.unknown_revision_rejected.no_direct_main_write",
-      "input_sha256": "c989bb87a09852c26058302bd1e63bdd65e69b33c191424afa47350b5e1ffa00",
+      "input_sha256": "e098d44b882ca0ed0496a3480af5783953e2c8d90b241e5b34affce2f13064a6",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
       "scenario_id": "restore",
       "status": "PASS"
@@ -412,7 +414,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T22:04:01.080165+00:00",
+  "generated_at": "2026-11-08T22:20:43.223715+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
   "schema_version": "t04a-draft-results-v1",
   "sensitive_data_included": false,
