@@ -1,0 +1,548 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "scenarios.yaml loaded",
+      "details": {
+        "fixture": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml"
+      },
+      "expected": "synthetic fixtures load",
+      "fixture_path": null,
+      "id": "harness.fixture_loaded",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "harness",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "decision_id": "00000000-0000-0000-0000-000000000001",
+        "error": null
+      },
+      "expected": "sample decision record is schema valid",
+      "fixture_path": null,
+      "id": "schema.decision_record.valid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "61 patterns compiled",
+      "details": {
+        "bad_regex_count": 0
+      },
+      "expected": "all schema regex patterns compile",
+      "fixture_path": null,
+      "id": "schema.regex_compile",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "143 refs resolved",
+      "details": {
+        "unresolved_count": 0
+      },
+      "expected": "all schema $ref resolve",
+      "fixture_path": null,
+      "id": "schema.refs_resolve",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "pilot isolation valid",
+      "details": {
+        "all_components_separated": true,
+        "migrators_only_rehearsed_upgrades": true,
+        "runtime_migrations_disabled": true,
+        "runtime_non_ddl_role": true
+      },
+      "expected": "pilot environment isolates Spaces, config, PostgreSQL/index, object storage, secrets, backups and egress; runtime is non-DDL; migrators only rehearsed upgrades",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "pilot_isolation.fully_isolated_pilot.isolated",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "pilot_isolation",
+      "status": "PASS"
+    },
+    {
+      "actual": "isolation problem detected",
+      "details": {
+        "all_components_separated": false,
+        "expected_negative": true,
+        "migrators_only_rehearsed_upgrades": true,
+        "runtime_migrations_disabled": true,
+        "runtime_non_ddl_role": true
+      },
+      "expected": "insufficient isolation rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "pilot_isolation.shared_object_storage_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "pilot_isolation",
+      "status": "FAIL"
+    },
+    {
+      "actual": "isolation problem detected",
+      "details": {
+        "all_components_separated": true,
+        "expected_negative": true,
+        "migrators_only_rehearsed_upgrades": true,
+        "runtime_migrations_disabled": true,
+        "runtime_non_ddl_role": false
+      },
+      "expected": "insufficient isolation rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "pilot_isolation.runtime_ddl_role_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "pilot_isolation",
+      "status": "FAIL"
+    },
+    {
+      "actual": "credential/egress separation valid",
+      "details": {
+        "approved_routes_only": true,
+        "credentials_separated": true,
+        "default_egress_closed": true,
+        "no_client_code_branch": true,
+        "no_unauthorized_production_resource": true
+      },
+      "expected": "proposal/merge, connector, CI/index and retrieval credentials are separated; default egress closed; approved routes only; no client code branch; no unauthorized production resource",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "credential_egress_separation.credentials_and_egress_separated.separated",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "credential_egress_separation",
+      "status": "PASS"
+    },
+    {
+      "actual": "separation problem detected",
+      "details": {
+        "approved_routes_only": true,
+        "credentials_separated": false,
+        "default_egress_closed": true,
+        "expected_negative": true,
+        "no_client_code_branch": true,
+        "no_unauthorized_production_resource": true
+      },
+      "expected": "credential/egress leak rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "credential_egress_separation.merge_credential_exposed_to_ci_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "credential_egress_separation",
+      "status": "FAIL"
+    },
+    {
+      "actual": "separation problem detected",
+      "details": {
+        "approved_routes_only": true,
+        "credentials_separated": true,
+        "default_egress_closed": false,
+        "expected_negative": true,
+        "no_client_code_branch": true,
+        "no_unauthorized_production_resource": true
+      },
+      "expected": "credential/egress leak rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "credential_egress_separation.default_egress_open_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "credential_egress_separation",
+      "status": "FAIL"
+    },
+    {
+      "actual": "separation problem detected",
+      "details": {
+        "approved_routes_only": true,
+        "credentials_separated": true,
+        "default_egress_closed": true,
+        "expected_negative": true,
+        "no_client_code_branch": true,
+        "no_unauthorized_production_resource": false
+      },
+      "expected": "credential/egress leak rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "credential_egress_separation.unauthorized_production_resource_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "credential_egress_separation",
+      "status": "FAIL"
+    },
+    {
+      "actual": "runbooks complete",
+      "details": {
+        "all_runbooks_complete": true,
+        "all_runbooks_present": true
+      },
+      "expected": "startup/cutover/recovery/export/backup/restore/upgrade/rollback runbooks rehearsed with versions/refs, commands, sanitized outputs, failure handling, BLOCKED items and independent review",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "runbook_rehearsal.all_runbooks_rehearsed.complete",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "runbook_rehearsal",
+      "status": "PASS"
+    },
+    {
+      "actual": "runbook problem detected",
+      "details": {
+        "all_runbooks_complete": true,
+        "all_runbooks_present": false,
+        "expected_negative": true
+      },
+      "expected": "incomplete runbook rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "runbook_rehearsal.missing_upgrade_runbook_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "runbook_rehearsal",
+      "status": "FAIL"
+    },
+    {
+      "actual": "runbook problem detected",
+      "details": {
+        "all_runbooks_complete": false,
+        "all_runbooks_present": false,
+        "expected_negative": true
+      },
+      "expected": "incomplete runbook rejected with APPROVER_CONFLICT",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "runbook_rehearsal.unreviewed_runbook_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "runbook_rehearsal",
+      "status": "FAIL"
+    },
+    {
+      "actual": "backup/restore drill valid",
+      "details": {
+        "activation_after_snapshot_pointer": true,
+        "closure_validated": true,
+        "kb_authz_rebuilt": true,
+        "kb_index_new_validated_snapshot": true,
+        "kb_ops_global_merge_freeze": true,
+        "per_target_barriers": true
+      },
+      "expected": "backup/restore drill validates closure, rebuilds kb_authz, starts kb_ops under global freeze with barriers, and points kb_index to new validated snapshot before activation",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "backup_restore_drill.restore_drill_valid.valid",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "backup_restore_drill",
+      "status": "PASS"
+    },
+    {
+      "actual": "restore drill problem detected",
+      "details": {
+        "activation_after_snapshot_pointer": false,
+        "closure_validated": true,
+        "expected_negative": true,
+        "kb_authz_rebuilt": true,
+        "kb_index_new_validated_snapshot": true,
+        "kb_ops_global_merge_freeze": true,
+        "per_target_barriers": true
+      },
+      "expected": "invalid restore drill rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "backup_restore_drill.activation_before_snapshot_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "backup_restore_drill",
+      "status": "FAIL"
+    },
+    {
+      "actual": "restore drill problem detected",
+      "details": {
+        "activation_after_snapshot_pointer": true,
+        "closure_validated": false,
+        "expected_negative": true,
+        "kb_authz_rebuilt": true,
+        "kb_index_new_validated_snapshot": true,
+        "kb_ops_global_merge_freeze": true,
+        "per_target_barriers": true
+      },
+      "expected": "invalid restore drill rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "backup_restore_drill.missing_closure_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "backup_restore_drill",
+      "status": "FAIL"
+    },
+    {
+      "actual": "security/regression valid",
+      "details": {
+        "component_schema_isolation": true,
+        "cross_client_access_denied": true,
+        "non_privileged_denials_complete": true,
+        "runtime_ddl_denied": true,
+        "secret_canary_clean": true
+      },
+      "expected": "direct push/merge/auto-merge denied for non-privileged identities; component schema isolation; runtime DDL and cross-client access denied; secret canaries clean",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "security_regression.all_non_privileged_denials.hardened",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "security_regression",
+      "status": "PASS"
+    },
+    {
+      "actual": "security/regression problem detected",
+      "details": {
+        "component_schema_isolation": true,
+        "cross_client_access_denied": true,
+        "expected_negative": true,
+        "non_privileged_denials_complete": false,
+        "runtime_ddl_denied": true,
+        "secret_canary_clean": true
+      },
+      "expected": "bypass or disclosure rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "security_regression.auto_merge_allowed_for_engineering_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "security_regression",
+      "status": "FAIL"
+    },
+    {
+      "actual": "security/regression problem detected",
+      "details": {
+        "component_schema_isolation": true,
+        "cross_client_access_denied": true,
+        "expected_negative": true,
+        "non_privileged_denials_complete": true,
+        "runtime_ddl_denied": true,
+        "secret_canary_clean": false
+      },
+      "expected": "bypass or disclosure rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "security_regression.secret_canary_disclosure_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "security_regression",
+      "status": "FAIL"
+    },
+    {
+      "actual": "bypass governance valid",
+      "details": {
+        "detected": true,
+        "g0_d3_runbook_invoked": true,
+        "not_treated_as_managed_path": true,
+        "owner_bypass_attempted": true,
+        "quarantined": true
+      },
+      "expected": "privileged Owner bypass is detected, quarantined and handled via G0-D3 emergency runbook, not as a managed path",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "privileged_bypass_governance.owner_bypass_handled_as_incident.governed",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "privileged_bypass_governance",
+      "status": "PASS"
+    },
+    {
+      "actual": "bypass governance problem detected",
+      "details": {
+        "detected": false,
+        "expected_negative": true,
+        "g0_d3_runbook_invoked": false,
+        "not_treated_as_managed_path": true,
+        "owner_bypass_attempted": true,
+        "quarantined": false
+      },
+      "expected": "bypass treated as managed path rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "privileged_bypass_governance.undetected_bypass_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "privileged_bypass_governance",
+      "status": "FAIL"
+    },
+    {
+      "actual": "bypass governance problem detected",
+      "details": {
+        "detected": true,
+        "expected_negative": true,
+        "g0_d3_runbook_invoked": true,
+        "not_treated_as_managed_path": false,
+        "owner_bypass_attempted": true,
+        "quarantined": true
+      },
+      "expected": "bypass treated as managed path rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "privileged_bypass_governance.bypass_treated_as_managed_path_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "privileged_bypass_governance",
+      "status": "FAIL"
+    },
+    {
+      "actual": "business-user acceptance valid",
+      "details": {
+        "all_steps_completed": true,
+        "canonical_decisions": true,
+        "history_cursor": true,
+        "no_git_cli": true,
+        "no_self_approval": true,
+        "reviewed_revert_mr": true,
+        "two_independent_non_engineering_users": true
+      },
+      "expected": "two independent non-engineering users complete the full review/decision/restore scenario without Git/CLI",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "business_user_acceptance.two_business_users_complete_scenario.accepted",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "business_user_acceptance",
+      "status": "PASS"
+    },
+    {
+      "actual": "acceptance problem detected",
+      "details": {
+        "all_steps_completed": true,
+        "canonical_decisions": true,
+        "expected_negative": true,
+        "history_cursor": true,
+        "no_git_cli": true,
+        "no_self_approval": true,
+        "reviewed_revert_mr": true,
+        "two_independent_non_engineering_users": false
+      },
+      "expected": "invalid acceptance scenario rejected with APPROVER_CONFLICT",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "business_user_acceptance.engineering_user_participation_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "business_user_acceptance",
+      "status": "FAIL"
+    },
+    {
+      "actual": "acceptance problem detected",
+      "details": {
+        "all_steps_completed": true,
+        "canonical_decisions": true,
+        "expected_negative": true,
+        "history_cursor": true,
+        "no_git_cli": false,
+        "no_self_approval": true,
+        "reviewed_revert_mr": true,
+        "two_independent_non_engineering_users": true
+      },
+      "expected": "invalid acceptance scenario rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "business_user_acceptance.git_cli_used_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "business_user_acceptance",
+      "status": "FAIL"
+    },
+    {
+      "actual": "acceptance problem detected",
+      "details": {
+        "all_steps_completed": true,
+        "canonical_decisions": true,
+        "expected_negative": true,
+        "history_cursor": true,
+        "no_git_cli": true,
+        "no_self_approval": false,
+        "reviewed_revert_mr": true,
+        "two_independent_non_engineering_users": true
+      },
+      "expected": "invalid acceptance scenario rejected with APPROVER_CONFLICT",
+      "fixture_path": "_bmad-output/test-artifacts/t18/fixtures/scenarios.yaml",
+      "id": "business_user_acceptance.self_approval_rejected.rejected",
+      "input_sha256": "71e2110c8e7421f1c68850b5ffd05b7f80ee28c6e59ad724f1075b23253196c8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "business_user_acceptance",
+      "status": "FAIL"
+    },
+    {
+      "actual": "requires owner-authorized pilot environment, corpus and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_pilot_environment_isolation",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires owner-authorized pilot environment, corpus and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_backup_restore_drill",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires owner-authorized pilot environment, corpus and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_business_user_acceptance",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires owner-authorized pilot environment, corpus and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_runbook_rehearsal",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires owner-authorized pilot environment, corpus and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_second_client_preparation",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+  "contracts_version": "pilot-harness-v1",
+  "counts": {
+    "BLOCKED": 5,
+    "FAIL": 16,
+    "FAIL_EXPECTED": 16,
+    "FAIL_UNEXPECTED": 0,
+    "PASS": 11
+  },
+  "environment": {
+    "ad_available": false,
+    "ci_available": false,
+    "gitlab_available": false,
+    "hoster_available": false,
+    "idp_available": false,
+    "ldap_available": false,
+    "pinned_toolchain": {
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_local_no_gitlab"
+  },
+  "generated_at": "2026-11-08T23:51:16.969194+00:00",
+  "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18/run_t18_tests.py",
+  "schema_version": "t18-pilot-results-v1",
+  "sensitive_data_included": false,
+  "spec_baseline_commit": "d2c0d072a757808ea891fbf6414f00147679f7a7"
+}

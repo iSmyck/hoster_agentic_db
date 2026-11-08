@@ -1,0 +1,614 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "scenarios.yaml loaded",
+      "details": {
+        "fixture": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml"
+      },
+      "expected": "synthetic fixtures load",
+      "fixture_path": null,
+      "id": "harness.fixture_loaded",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "harness",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "error": null,
+        "proposal_id": "prop-inference-001"
+      },
+      "expected": "sample proposal record is schema valid",
+      "fixture_path": null,
+      "id": "schema.proposal_record.valid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "61 patterns compiled",
+      "details": {
+        "bad_regex_count": 0
+      },
+      "expected": "all schema regex patterns compile",
+      "fixture_path": null,
+      "id": "schema.regex_compile",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "143 refs resolved",
+      "details": {
+        "unresolved_count": 0
+      },
+      "expected": "all schema $ref resolve",
+      "fixture_path": null,
+      "id": "schema.refs_resolve",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "route inventory complete",
+      "details": {
+        "approved": true,
+        "capabilities": [
+          "streaming",
+          "tools"
+        ],
+        "connection": "hoster-ai-studio-approved",
+        "has_data_profile": true,
+        "has_dimension": true,
+        "has_index_profile_link": true,
+        "has_version": true,
+        "model": "approved-model-chat",
+        "route": "chat"
+      },
+      "expected": "route records approved connection, model/version, data profile, capabilities and index-profile linkage",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "route_inventory.chat_route_complete.complete",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "route_inventory",
+      "status": "PASS"
+    },
+    {
+      "actual": "route inventory complete",
+      "details": {
+        "approved": true,
+        "capabilities": [],
+        "connection": "hoster-ai-studio-approved",
+        "has_data_profile": true,
+        "has_dimension": true,
+        "has_index_profile_link": true,
+        "has_version": true,
+        "model": "approved-model-embed",
+        "route": "embeddings"
+      },
+      "expected": "route records approved connection, model/version, data profile, capabilities and index-profile linkage",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "route_inventory.embeddings_route_complete.complete",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "route_inventory",
+      "status": "PASS"
+    },
+    {
+      "actual": "route inventory problem detected",
+      "details": {
+        "approved": true,
+        "capabilities": [],
+        "connection": "hoster-ai-studio-approved",
+        "expected_negative": true,
+        "has_data_profile": true,
+        "has_dimension": false,
+        "has_index_profile_link": true,
+        "has_version": true,
+        "model": "approved-model-embed",
+        "route": "embeddings"
+      },
+      "expected": "incomplete or unapproved route rejected with INVALID_CONFIG",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "route_inventory.missing_dimension_rejected.rejected",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "route_inventory",
+      "status": "FAIL"
+    },
+    {
+      "actual": "route inventory problem detected",
+      "details": {
+        "approved": false,
+        "capabilities": [
+          "streaming"
+        ],
+        "connection": "external-fallback-provider",
+        "expected_negative": true,
+        "has_data_profile": true,
+        "has_dimension": true,
+        "has_index_profile_link": true,
+        "has_version": true,
+        "model": "fallback-model",
+        "route": "chat"
+      },
+      "expected": "incomplete or unapproved route rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "route_inventory.unapproved_connection_rejected.rejected",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "route_inventory",
+      "status": "FAIL"
+    },
+    {
+      "actual": "streaming/tool-call handling valid",
+      "details": {
+        "all_citations": true,
+        "all_correlated": true,
+        "assembled_args_valid": true,
+        "authorized": true,
+        "executed_partial_content": false,
+        "has_request_id": true,
+        "has_run_id": true
+      },
+      "expected": "streaming tool calls preserve correlation/citations, assemble typed args and validate authz before dispatch",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "streaming_tool_calls.sequential_tool_calls_correlated.safe",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "streaming_tool_calls",
+      "status": "PASS"
+    },
+    {
+      "actual": "streaming/tool-call handling valid",
+      "details": {
+        "all_citations": true,
+        "all_correlated": true,
+        "assembled_args_valid": true,
+        "authorized": true,
+        "executed_partial_content": false,
+        "has_request_id": true,
+        "has_run_id": true
+      },
+      "expected": "streaming tool calls preserve correlation/citations, assemble typed args and validate authz before dispatch",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "streaming_tool_calls.parallel_tool_calls_both_authorized.safe",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "streaming_tool_calls",
+      "status": "PASS"
+    },
+    {
+      "actual": "streaming/tool-call problem detected",
+      "details": {
+        "all_citations": false,
+        "all_correlated": true,
+        "assembled_args_valid": true,
+        "authorized": false,
+        "executed_partial_content": false,
+        "expected_negative": true,
+        "has_request_id": true,
+        "has_run_id": true
+      },
+      "expected": "unsafe streaming/tool-call handling rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "streaming_tool_calls.authorization_missing_before_dispatch.rejected",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "streaming_tool_calls",
+      "status": "FAIL"
+    },
+    {
+      "actual": "streaming/tool-call problem detected",
+      "details": {
+        "all_citations": true,
+        "all_correlated": true,
+        "assembled_args_valid": false,
+        "authorized": true,
+        "executed_partial_content": true,
+        "expected_negative": true,
+        "has_request_id": true,
+        "has_run_id": true
+      },
+      "expected": "unsafe streaming/tool-call handling rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "streaming_tool_calls.partial_content_executed.rejected",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "streaming_tool_calls",
+      "status": "FAIL"
+    },
+    {
+      "actual": "input unexpectedly safe",
+      "details": {
+        "expected_negative": true,
+        "malformed_or_injection": true,
+        "payload_type": "malformed_json",
+        "rejected": true,
+        "unsafe_side_effects": false
+      },
+      "expected": "unsafe input rejected with VALIDATION_ERROR",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "malformed_unsafe_inputs.malformed_json_rejected.rejected",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "malformed_unsafe_inputs",
+      "status": "PASS"
+    },
+    {
+      "actual": "input unexpectedly safe",
+      "details": {
+        "expected_negative": true,
+        "malformed_or_injection": true,
+        "payload_type": "unknown_fields",
+        "rejected": true,
+        "unsafe_side_effects": false
+      },
+      "expected": "unsafe input rejected with VALIDATION_ERROR",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "malformed_unsafe_inputs.unknown_fields_rejected.rejected",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "malformed_unsafe_inputs",
+      "status": "PASS"
+    },
+    {
+      "actual": "input unexpectedly safe",
+      "details": {
+        "expected_negative": true,
+        "malformed_or_injection": true,
+        "payload_type": "oversized",
+        "rejected": true,
+        "unsafe_side_effects": false
+      },
+      "expected": "unsafe input rejected with LIMIT_EXCEEDED",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "malformed_unsafe_inputs.oversized_payload_rejected.rejected",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "malformed_unsafe_inputs",
+      "status": "PASS"
+    },
+    {
+      "actual": "unsafe input detected",
+      "details": {
+        "expected_negative": true,
+        "malformed_or_injection": true,
+        "payload_type": "prompt_injection",
+        "rejected": true,
+        "unsafe_side_effects": true
+      },
+      "expected": "unsafe input rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "malformed_unsafe_inputs.prompt_injection_merge_rejected.rejected",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "malformed_unsafe_inputs",
+      "status": "FAIL"
+    },
+    {
+      "actual": "unsafe input detected",
+      "details": {
+        "expected_negative": true,
+        "malformed_or_injection": true,
+        "payload_type": "prompt_injection",
+        "rejected": true,
+        "unsafe_side_effects": true
+      },
+      "expected": "unsafe input rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "malformed_unsafe_inputs.privilege_expansion_rejected.rejected",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "malformed_unsafe_inputs",
+      "status": "FAIL"
+    },
+    {
+      "actual": "event handling observable",
+      "details": {
+        "event": "retry",
+        "observable": true,
+        "retry_counted": true,
+        "same_idempotency_key": true,
+        "same_payload_hash": true,
+        "stream_closed": true
+      },
+      "expected": "retry/cancel/disconnect/4xx/5xx behavior is observable and preserves idempotency/payload",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "retry_cancel_disconnect.retry_preserves_identity.observable",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "retry_cancel_disconnect",
+      "status": "PASS"
+    },
+    {
+      "actual": "retry/event problem detected",
+      "details": {
+        "event": "retry",
+        "expected_negative": true,
+        "observable": true,
+        "retry_counted": true,
+        "same_idempotency_key": true,
+        "same_payload_hash": false,
+        "stream_closed": true
+      },
+      "expected": "broken idempotency or unobservable event rejected with IDEMPOTENCY_KEY_REUSED",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "retry_cancel_disconnect.retry_changed_payload_rejected.rejected",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "retry_cancel_disconnect",
+      "status": "FAIL"
+    },
+    {
+      "actual": "event handling observable",
+      "details": {
+        "event": "cancel",
+        "observable": true,
+        "retry_counted": true,
+        "same_idempotency_key": true,
+        "same_payload_hash": true,
+        "stream_closed": true
+      },
+      "expected": "retry/cancel/disconnect/4xx/5xx behavior is observable and preserves idempotency/payload",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "retry_cancel_disconnect.cancel_observable.observable",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "retry_cancel_disconnect",
+      "status": "PASS"
+    },
+    {
+      "actual": "event handling observable",
+      "details": {
+        "event": "disconnect",
+        "observable": true,
+        "retry_counted": true,
+        "same_idempotency_key": true,
+        "same_payload_hash": true,
+        "stream_closed": true
+      },
+      "expected": "retry/cancel/disconnect/4xx/5xx behavior is observable and preserves idempotency/payload",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "retry_cancel_disconnect.disconnect_observable.observable",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "retry_cancel_disconnect",
+      "status": "PASS"
+    },
+    {
+      "actual": "event handling observable",
+      "details": {
+        "event": "5xx",
+        "observable": true,
+        "retry_counted": true,
+        "same_idempotency_key": true,
+        "same_payload_hash": true,
+        "stream_closed": true
+      },
+      "expected": "retry/cancel/disconnect/4xx/5xx behavior is observable and preserves idempotency/payload",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "retry_cancel_disconnect.five_xx_observable.observable",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "retry_cancel_disconnect",
+      "status": "PASS"
+    },
+    {
+      "actual": "egress/perimeter valid",
+      "details": {
+        "approved_endpoint": true,
+        "leaves_perimeter": false,
+        "offline_asset_preapproved": true,
+        "pii_permitted": false,
+        "revocation_closes_stream": true
+      },
+      "expected": "egress limited to approved endpoints; PII stays inside perimeter; revocation closes streams; offline assets preapproved",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "egress_perimeter.approved_endpoint_only.contained",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "egress_perimeter",
+      "status": "PASS"
+    },
+    {
+      "actual": "egress/perimeter problem detected",
+      "details": {
+        "approved_endpoint": false,
+        "expected_negative": true,
+        "leaves_perimeter": false,
+        "offline_asset_preapproved": true,
+        "pii_permitted": false,
+        "revocation_closes_stream": true
+      },
+      "expected": "unauthorized egress or leak rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "egress_perimeter.unapproved_endpoint_rejected.rejected",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "egress_perimeter",
+      "status": "FAIL"
+    },
+    {
+      "actual": "egress/perimeter problem detected",
+      "details": {
+        "approved_endpoint": true,
+        "expected_negative": true,
+        "leaves_perimeter": true,
+        "offline_asset_preapproved": true,
+        "pii_permitted": true,
+        "revocation_closes_stream": true
+      },
+      "expected": "unauthorized egress or leak rejected with PII_REVIEW_REQUIRED",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "egress_perimeter.pii_leaves_perimeter_rejected.rejected",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "egress_perimeter",
+      "status": "FAIL"
+    },
+    {
+      "actual": "egress/perimeter problem detected",
+      "details": {
+        "approved_endpoint": true,
+        "expected_negative": true,
+        "leaves_perimeter": false,
+        "offline_asset_preapproved": false,
+        "pii_permitted": false,
+        "revocation_closes_stream": true
+      },
+      "expected": "unauthorized egress or leak rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "egress_perimeter.offline_unapproved_asset_rejected.rejected",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "egress_perimeter",
+      "status": "FAIL"
+    },
+    {
+      "actual": "metrics complete",
+      "details": {
+        "cost_attributed_to_run": true,
+        "fallback_approved": false,
+        "fallback_attempts": 0,
+        "has_latency": true,
+        "has_rates": true,
+        "route_inventory_recorded": true
+      },
+      "expected": "lifecycle metrics report TTFT/full-response latency, rates, route inventory, fallback and cost attribution",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "lifecycle_metrics.metrics_complete.complete",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "lifecycle_metrics",
+      "status": "PASS"
+    },
+    {
+      "actual": "metrics problem detected",
+      "details": {
+        "cost_attributed_to_run": true,
+        "expected_negative": true,
+        "fallback_approved": false,
+        "fallback_attempts": 1,
+        "has_latency": true,
+        "has_rates": true,
+        "route_inventory_recorded": true
+      },
+      "expected": "incomplete or hidden-fallback metrics rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "lifecycle_metrics.hidden_fallback_detected.rejected",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "lifecycle_metrics",
+      "status": "FAIL"
+    },
+    {
+      "actual": "metrics problem detected",
+      "details": {
+        "cost_attributed_to_run": false,
+        "expected_negative": true,
+        "fallback_approved": false,
+        "fallback_attempts": 0,
+        "has_latency": true,
+        "has_rates": true,
+        "route_inventory_recorded": true
+      },
+      "expected": "incomplete or hidden-fallback metrics rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t11/fixtures/scenarios.yaml",
+      "id": "lifecycle_metrics.missing_cost_attribution.rejected",
+      "input_sha256": "b3e509009221ae31b778d5a46a0156af281b33670ddbdc8c0af9c0d6fd8bc95c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "lifecycle_metrics",
+      "status": "FAIL"
+    },
+    {
+      "actual": "requires live hoster.ai sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_hoster_chat_inference",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live hoster.ai sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_hoster_embeddings_inference",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live hoster.ai sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_hoster_vision_inference",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live hoster.ai sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_streaming_tool_call",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live hoster.ai sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_revocation_closes_stream",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+  "contracts_version": "hoster-inference-lifecycle-v1",
+  "counts": {
+    "BLOCKED": 5,
+    "FAIL": 12,
+    "FAIL_EXPECTED": 12,
+    "FAIL_UNEXPECTED": 0,
+    "PASS": 17
+  },
+  "environment": {
+    "ad_available": false,
+    "ci_available": false,
+    "gitlab_available": false,
+    "hoster_available": false,
+    "idp_available": false,
+    "ldap_available": false,
+    "pinned_toolchain": {
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_local_no_gitlab"
+  },
+  "generated_at": "2026-11-08T23:53:07.524208+00:00",
+  "rerun_cmd": "uv run python _bmad-output/test-artifacts/t11/run_t11_tests.py",
+  "schema_version": "t11-inference-results-v1",
+  "sensitive_data_included": false,
+  "spec_baseline_commit": "d2c0d072a757808ea891fbf6414f00147679f7a7"
+}

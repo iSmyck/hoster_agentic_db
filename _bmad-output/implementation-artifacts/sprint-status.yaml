@@ -78,11 +78,11 @@ development_status:
   6-4-t13b-mirror-metadata-backup-rebuild-and-conservative-clean-r: done
   epic-6-retrospective: done
 
-  epic-7: backlog
-  7-1-t11-approved-hoster-ai-studio-inference-lifecycle: backlog
-  7-2-t14-reproducible-quality-safety-and-operational-evaluation: backlog
-  7-3-t18-necessary-pilot-part-pilot-hardening-protected-deploymen: backlog
-  epic-7-retrospective: optional
+  epic-7: done
+  7-1-t11-approved-hoster-ai-studio-inference-lifecycle: done
+  7-2-t14-reproducible-quality-safety-and-operational-evaluation: done
+  7-3-t18-necessary-pilot-part-pilot-hardening-protected-deploymen: done
+  epic-7-retrospective: done
 
   epic-8: backlog
   8-1-t15-safe-source-registry-three-way-updates-and-durable-curso: backlog
