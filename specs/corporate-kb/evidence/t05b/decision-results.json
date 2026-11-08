@@ -1,0 +1,348 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "scenarios.yaml loaded",
+      "details": {
+        "fixture": "_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml"
+      },
+      "expected": "synthetic fixtures load",
+      "fixture_path": null,
+      "id": "harness.fixture_loaded",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "harness",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "decision_id": "dddddddd-dddd-4ddd-addd-dddddddddddd",
+        "error": null
+      },
+      "expected": "sample decision record is schema valid",
+      "fixture_path": null,
+      "id": "schema.decision_record.valid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "61 patterns compiled",
+      "details": {
+        "bad_regex_count": 0
+      },
+      "expected": "all schema regex patterns compile",
+      "fixture_path": null,
+      "id": "schema.regex_compile",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "143 refs resolved",
+      "details": {
+        "unresolved_count": 0
+      },
+      "expected": "all schema $ref resolve",
+      "fixture_path": null,
+      "id": "schema.refs_resolve",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "decision accepted; note/tag/hash consistent",
+      "details": {
+        "hash_mismatch": false,
+        "missing": [],
+        "self_approval": false
+      },
+      "expected": "canonical DecisionRecord note+tag on exact proposal_sha",
+      "fixture_path": "_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml",
+      "id": "decision.valid_accept.valid",
+      "input_sha256": "41eab91d64192c6bf51b434411b5d2f2be7a13446d269472b615302d0a9d5975",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "decision",
+      "status": "PASS"
+    },
+    {
+      "actual": "decision accepted; note/tag/hash consistent",
+      "details": {
+        "hash_mismatch": false,
+        "missing": [],
+        "self_approval": false
+      },
+      "expected": "canonical DecisionRecord note+tag on exact proposal_sha",
+      "fixture_path": "_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml",
+      "id": "decision.valid_reject.valid",
+      "input_sha256": "41eab91d64192c6bf51b434411b5d2f2be7a13446d269472b615302d0a9d5975",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "decision",
+      "status": "PASS"
+    },
+    {
+      "actual": "rejected: self_approval=True, hash_mismatch=False, missing=[]",
+      "details": {
+        "hash_mismatch": false,
+        "missing": [],
+        "self_approval": true
+      },
+      "expected": "decision rejected with APPROVER_CONFLICT",
+      "fixture_path": "_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml",
+      "id": "decision.self_approval_author.rejected",
+      "input_sha256": "41eab91d64192c6bf51b434411b5d2f2be7a13446d269472b615302d0a9d5975",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "decision",
+      "status": "FAIL"
+    },
+    {
+      "actual": "rejected: self_approval=True, hash_mismatch=False, missing=[]",
+      "details": {
+        "hash_mismatch": false,
+        "missing": [],
+        "self_approval": true
+      },
+      "expected": "decision rejected with APPROVER_CONFLICT",
+      "fixture_path": "_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml",
+      "id": "decision.self_approval_version_author.rejected",
+      "input_sha256": "41eab91d64192c6bf51b434411b5d2f2be7a13446d269472b615302d0a9d5975",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "decision",
+      "status": "FAIL"
+    },
+    {
+      "actual": "rejected: self_approval=True, hash_mismatch=False, missing=[]",
+      "details": {
+        "hash_mismatch": false,
+        "missing": [],
+        "self_approval": true
+      },
+      "expected": "decision rejected with APPROVER_CONFLICT",
+      "fixture_path": "_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml",
+      "id": "decision.self_approval_requester.rejected",
+      "input_sha256": "41eab91d64192c6bf51b434411b5d2f2be7a13446d269472b615302d0a9d5975",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "decision",
+      "status": "FAIL"
+    },
+    {
+      "actual": "rejected: self_approval=False, hash_mismatch=True, missing=[]",
+      "details": {
+        "hash_mismatch": true,
+        "missing": [],
+        "self_approval": false
+      },
+      "expected": "decision rejected with DECISION_INVALID",
+      "fixture_path": "_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml",
+      "id": "decision.note_tag_hash_mismatch.rejected",
+      "input_sha256": "41eab91d64192c6bf51b434411b5d2f2be7a13446d269472b615302d0a9d5975",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "decision",
+      "status": "FAIL"
+    },
+    {
+      "actual": "merge proof valid",
+      "details": {
+        "main_writes": 1,
+        "parents": [
+          "ffffffffffffffffffffffffffffffffffffffff",
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        ],
+        "trailers": {
+          "Decision-Id": "dddddddd-dddd-4ddd-addd-dddddddddddd"
+        }
+      },
+      "expected": "merge commit first-parent=base, second-parent=proposal, trailers match, one main write",
+      "fixture_path": "_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml",
+      "id": "merge_proof.valid_merge_proof.valid",
+      "input_sha256": "41eab91d64192c6bf51b434411b5d2f2be7a13446d269472b615302d0a9d5975",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "merge_proof",
+      "status": "PASS"
+    },
+    {
+      "actual": "merge proof invalid",
+      "details": {
+        "main_writes": 1,
+        "parents": [
+          "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        ],
+        "trailers": {
+          "Decision-Id": "dddddddd-dddd-4ddd-addd-dddddddddddd"
+        }
+      },
+      "expected": "merge proof rejected",
+      "fixture_path": "_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml",
+      "id": "merge_proof.wrong_first_parent.invalid",
+      "input_sha256": "41eab91d64192c6bf51b434411b5d2f2be7a13446d269472b615302d0a9d5975",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "merge_proof",
+      "status": "FAIL"
+    },
+    {
+      "actual": "merge proof invalid",
+      "details": {
+        "main_writes": 1,
+        "parents": [
+          "ffffffffffffffffffffffffffffffffffffffff",
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        ],
+        "trailers": {}
+      },
+      "expected": "merge proof rejected",
+      "fixture_path": "_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml",
+      "id": "merge_proof.missing_trailer.invalid",
+      "input_sha256": "41eab91d64192c6bf51b434411b5d2f2be7a13446d269472b615302d0a9d5975",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "merge_proof",
+      "status": "FAIL"
+    },
+    {
+      "actual": "merge proof invalid",
+      "details": {
+        "main_writes": 0,
+        "parents": [],
+        "trailers": {}
+      },
+      "expected": "merge proof rejected",
+      "fixture_path": "_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml",
+      "id": "merge_proof.concurrent_loser_zero_writes.invalid",
+      "input_sha256": "41eab91d64192c6bf51b434411b5d2f2be7a13446d269472b615302d0a9d5975",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "merge_proof",
+      "status": "FAIL"
+    },
+    {
+      "actual": "guarded retry allowed",
+      "details": {
+        "conclusive_failed": true,
+        "merge_attempted": true,
+        "outcome": "failed",
+        "recovery_required": true,
+        "retry_allowed": true
+      },
+      "expected": "conclusive failed permits guarded retry with same decision_id and new attempt_id",
+      "fixture_path": "_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml",
+      "id": "recovery.conclusive_failed_retry.guarded_retry_allowed",
+      "input_sha256": "41eab91d64192c6bf51b434411b5d2f2be7a13446d269472b615302d0a9d5975",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "recovery",
+      "status": "PASS"
+    },
+    {
+      "actual": "retry should be denied",
+      "details": {
+        "conclusive_failed": false,
+        "outcome": "timeout"
+      },
+      "expected": "retry denied for non-conclusive or terminal conflicted/invalid outcome",
+      "fixture_path": "_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml",
+      "id": "recovery.timeout_not_conclusive.retry_denied",
+      "input_sha256": "41eab91d64192c6bf51b434411b5d2f2be7a13446d269472b615302d0a9d5975",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "recovery",
+      "status": "FAIL"
+    },
+    {
+      "actual": "retry should be denied",
+      "details": {
+        "conclusive_failed": false,
+        "outcome": "conflicted"
+      },
+      "expected": "retry denied for non-conclusive or terminal conflicted/invalid outcome",
+      "fixture_path": "_bmad-output/test-artifacts/t05b/fixtures/scenarios.yaml",
+      "id": "recovery.conflicted_terminal.retry_denied",
+      "input_sha256": "41eab91d64192c6bf51b434411b5d2f2be7a13446d269472b615302d0a9d5975",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "recovery",
+      "status": "FAIL"
+    },
+    {
+      "actual": "requires live sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_gitlab_decision_note",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_gitlab_protected_tag",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_gitlab_merge_commit",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_gitlab_per_target_serialization",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_gitlab_recovery_barrier",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+  "contracts_version": "decision-record-v1",
+  "counts": {
+    "BLOCKED": 5,
+    "FAIL": 9,
+    "PASS": 8
+  },
+  "environment": {
+    "ad_available": false,
+    "ci_available": false,
+    "gitlab_available": false,
+    "hoster_available": false,
+    "idp_available": false,
+    "ldap_available": false,
+    "pinned_toolchain": {
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_local_no_gitlab"
+  },
+  "generated_at": "2026-11-08T22:50:58.876641+00:00",
+  "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
+  "schema_version": "t05b-decision-results-v1",
+  "sensitive_data_included": false,
+  "spec_baseline_commit": "d2c0d072a757808ea891fbf6414f00147679f7a7"
+}

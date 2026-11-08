@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 11-08-2026 18:17
-last_updated: 11-08-2026 22:35
+last_updated: 11-09-2026 01:50
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -56,15 +56,15 @@ development_status:
   3-3-tech-debt-pytest-baseline-and-harness-unit-tests: done
   epic-3-retrospective: done
 
-  epic-4: backlog
-  4-1-t05a-exact-proposalrecord-and-proposalversion-lifecycle: backlog
-  4-2-t05b-canonical-decisionrecord-exact-merge-and-conclusive-rec: backlog
-  4-3-t06-merge-only-go-enforcement-fencing-and-quarantine: backlog
-  4-4-t07-exact-business-review-and-independent-decisions: backlog
-  4-5-t08-scoped-working-context-and-canonical-direct-read-agent-t: backlog
-  4-6-t09-restricted-single-page-agent-proposal-tools: backlog
-  4-7-t07b-docops-review-projections-correction-tasks-and-ux-telem: backlog
-  epic-4-retrospective: optional
+  epic-4: done
+  4-1-t05a-exact-proposalrecord-and-proposalversion-lifecycle: done
+  4-2-t05b-canonical-decisionrecord-exact-merge-and-conclusive-rec: done
+  4-3-t06-merge-only-go-enforcement-fencing-and-quarantine: done
+  4-4-t07-exact-business-review-and-independent-decisions: done
+  4-5-t08-scoped-working-context-and-canonical-direct-read-agent-t: done
+  4-6-t09-restricted-single-page-agent-proposal-tools: done
+  4-7-t07b-docops-review-projections-correction-tasks-and-ux-telem: done
+  epic-4-retrospective: done
 
   epic-5: backlog
   5-1-t10a-exact-sha-ci-index-build-and-validated-preflight-artifa: backlog
