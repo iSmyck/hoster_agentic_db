@@ -1,6 +1,6 @@
 # T02 Document Tree and Direct Read Evidence Summary
 
-- **Generated:** 2026-11-08T16:48:04.400786+00:00
+- **Generated:** 2026-11-08T21:55:51.753670+00:00
 - **Contracts version:** document-front-matter-v2
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Spec baseline commit:** 788e299a5316c7d5df685a8f11b043ff36135a10
@@ -9,16 +9,16 @@
 
 ## Counts
 
-- PASS: 109
+- PASS: 104
 - FAIL: 5
 - BLOCKED: 4
-- **Total:** 118
+- **Total:** 113
 
 ## Top findings
 
 ### FAIL
-- `front_matter.sales.bad-archived-no-archive.md.schema` (front_matter): 'archive' is a required property at []; fixture `_bmad-output/test-artifacts/t02/fixtures/sales/bad-archived-no-archive.md`
-- `front_matter.sales.bad-unarchived-with-archive.md.schema` (front_matter): True was expected at ['archived']; fixture `_bmad-output/test-artifacts/t02/fixtures/sales/bad-unarchived-with-archive.md`
+- `front_matter.sales.bad-archived-no-archive.md.schema` (front_matter): 'archive' is a required property at []; fixture `_bmad-output<absolute-path-redacted>`
+- `front_matter.sales.bad-unarchived-with-archive.md.schema` (front_matter): True was expected at ['archived']; fixture `_bmad-output<absolute-path-redacted>`
 - `read.sales.malformed-heading.md.malformed_headings` (read): malformed headings at lines [(14, '####### This heading has too many hashes'), (16, '#This heading lacks a space')]; fixture `None`
 - `archive.sales.bad-archived-no-archive.md.invariant` (archive): archived=True, has_archive=False; fixture `None`
 - `archive.sales.bad-unarchived-with-archive.md.invariant` (archive): archived=False, has_archive=True; fixture `None`

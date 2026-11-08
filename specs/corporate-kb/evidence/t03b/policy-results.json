@@ -30,7 +30,7 @@
       "expected": "approval policy is schema valid",
       "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
       "id": "policy.approval.sales_approval_valid.schema",
-      "input_sha256": "e390de91fba7bc16def8045ca9fbbc619c8bd9c2da377d7d0277a344d871e2a9",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
       "scenario_id": "policy",
       "status": "PASS"
@@ -46,7 +46,7 @@
       "expected": "no duplicate normalized prefixes",
       "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
       "id": "policy.approval.sales_approval_valid.duplicate_prefixes",
-      "input_sha256": "e390de91fba7bc16def8045ca9fbbc619c8bd9c2da377d7d0277a344d871e2a9",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
       "scenario_id": "policy",
       "status": "PASS"
@@ -60,7 +60,7 @@
       "expected": "access policy is schema valid",
       "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
       "id": "policy.access.sales_access_valid.schema",
-      "input_sha256": "e390de91fba7bc16def8045ca9fbbc619c8bd9c2da377d7d0277a344d871e2a9",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
       "scenario_id": "policy",
       "status": "PASS"
@@ -77,7 +77,7 @@
       "expected": "access policy binds exactly one repository_id to one space_id and bundle",
       "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
       "id": "policy.access.sales_access_valid.space_binding",
-      "input_sha256": "e390de91fba7bc16def8045ca9fbbc619c8bd9c2da377d7d0277a344d871e2a9",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
       "scenario_id": "policy",
       "status": "PASS"
@@ -91,7 +91,7 @@
       "expected": "approval policy is schema valid",
       "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
       "id": "policy.approval.pricing_approval_valid.schema",
-      "input_sha256": "e390de91fba7bc16def8045ca9fbbc619c8bd9c2da377d7d0277a344d871e2a9",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
       "scenario_id": "policy",
       "status": "PASS"
@@ -106,7 +106,7 @@
       "expected": "no duplicate normalized prefixes",
       "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
       "id": "policy.approval.pricing_approval_valid.duplicate_prefixes",
-      "input_sha256": "e390de91fba7bc16def8045ca9fbbc619c8bd9c2da377d7d0277a344d871e2a9",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
       "scenario_id": "policy",
       "status": "PASS"
@@ -120,7 +120,7 @@
       "expected": "access policy is schema valid",
       "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
       "id": "policy.access.pricing_access_valid.schema",
-      "input_sha256": "e390de91fba7bc16def8045ca9fbbc619c8bd9c2da377d7d0277a344d871e2a9",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
       "scenario_id": "policy",
       "status": "PASS"
@@ -137,7 +137,7 @@
       "expected": "access policy binds exactly one repository_id to one space_id and bundle",
       "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
       "id": "policy.access.pricing_access_valid.space_binding",
-      "input_sha256": "e390de91fba7bc16def8045ca9fbbc619c8bd9c2da377d7d0277a344d871e2a9",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
       "scenario_id": "policy",
       "status": "PASS"
@@ -150,7 +150,7 @@
       "expected": "approval policy is correctly rejected by schema",
       "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
       "id": "policy.approval.invalid_space_id.schema",
-      "input_sha256": "e390de91fba7bc16def8045ca9fbbc619c8bd9c2da377d7d0277a344d871e2a9",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
       "scenario_id": "policy",
       "status": "PASS"
@@ -164,7 +164,7 @@
       "expected": "approval policy is schema valid",
       "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
       "id": "policy.approval.duplicate_prefix.schema",
-      "input_sha256": "e390de91fba7bc16def8045ca9fbbc619c8bd9c2da377d7d0277a344d871e2a9",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
       "scenario_id": "policy",
       "status": "PASS"
@@ -185,7 +185,42 @@
       "expected": "duplicate normalized prefixes are rejected (INVALID_POLICY)",
       "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
       "id": "policy.approval.duplicate_prefix.duplicate_prefixes",
-      "input_sha256": "e390de91fba7bc16def8045ca9fbbc619c8bd9c2da377d7d0277a344d871e2a9",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "policy",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "policy_bundle_id": "bundle-dup-trailing",
+        "space_id": "dup-trailing-space"
+      },
+      "expected": "approval policy is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
+      "id": "policy.approval.duplicate_prefix_trailing_slash.schema",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "policy",
+      "status": "PASS"
+    },
+    {
+      "actual": "duplicates detected: [('/pricing', ['rule-a', 'rule-b'])]",
+      "details": {
+        "duplicates": [
+          [
+            "/pricing",
+            [
+              "rule-a",
+              "rule-b"
+            ]
+          ]
+        ]
+      },
+      "expected": "duplicate normalized prefixes are rejected (INVALID_POLICY)",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
+      "id": "policy.approval.duplicate_prefix_trailing_slash.duplicate_prefixes",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
       "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
       "scenario_id": "policy",
       "status": "PASS"
@@ -344,9 +379,11 @@
       "status": "PASS"
     },
     {
-      "actual": "selected groups ['pricing-approvers'] do not include parent groups []",
+      "actual": "selected groups ['pricing-approvers'] do not include parent groups ['sales-authors']",
       "details": {
-        "parent_groups": [],
+        "parent_groups": [
+          "sales-authors"
+        ],
         "selected_groups": [
           "pricing-approvers"
         ]
@@ -410,9 +447,12 @@
       "status": "PASS"
     },
     {
-      "actual": "selected groups ['pricing-approvers'] do not include parent groups []",
+      "actual": "selected groups ['pricing-approvers'] do not include parent groups ['sales-approvers', 'sales-authors']",
       "details": {
-        "parent_groups": [],
+        "parent_groups": [
+          "sales-approvers",
+          "sales-authors"
+        ],
         "selected_groups": [
           "pricing-approvers"
         ]
@@ -443,10 +483,11 @@
       "status": "PASS"
     },
     {
-      "actual": "selected groups ['tiers-approvers'] do not include parent groups ['pricing-approvers']",
+      "actual": "selected groups ['tiers-approvers'] do not include parent groups ['pricing-approvers', 'sales-authors']",
       "details": {
         "parent_groups": [
-          "pricing-approvers"
+          "pricing-approvers",
+          "sales-authors"
         ],
         "selected_groups": [
           "tiers-approvers"
@@ -841,7 +882,7 @@
   "counts": {
     "BLOCKED": 5,
     "FAIL": 0,
-    "PASS": 48
+    "PASS": 50
   },
   "environment": {
     "ad_available": false,
@@ -857,7 +898,7 @@
     },
     "sandbox": "synthetic_local_no_idp"
   },
-  "generated_at": "2026-11-08T17:02:48.792136+00:00",
+  "generated_at": "2026-11-08T21:55:52.433111+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
   "schema_version": "t03b-policy-results-v1",
   "sensitive_data_included": false,
