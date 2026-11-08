@@ -1,0 +1,1790 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "loaded 12 documents across 2 Spaces",
+      "details": {
+        "spaces": {
+          "sales": 7,
+          "sales-pricing": 5
+        }
+      },
+      "expected": "two synthetic Space fixtures load",
+      "fixture_path": null,
+      "id": "harness.fixtures_loaded",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "harness",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "document_id": "44444444-4444-4444-8444-444444444444"
+      },
+      "expected": "document front matter is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t02/fixtures/sales/archived/obsolete.md",
+      "id": "front_matter.sales.archived/obsolete.md.schema",
+      "input_sha256": "73cda507b9c720d20e933def2b635ad56efcc837c43efaa09f1285408a072d87",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "front_matter",
+      "status": "PASS"
+    },
+    {
+      "actual": "'archive' is a required property at []",
+      "details": {
+        "document_id": "44444444-4444-4444-8444-444444444445",
+        "error": "'archive' is a required property at []"
+      },
+      "expected": "document front matter is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t02/fixtures/sales/bad-archived-no-archive.md",
+      "id": "front_matter.sales.bad-archived-no-archive.md.schema",
+      "input_sha256": "63c1ae3fa452f2db62ba72f57922c93e2a4210b86f4d317bbcdd645d5c790cd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "front_matter",
+      "status": "FAIL"
+    },
+    {
+      "actual": "True was expected at ['archived']",
+      "details": {
+        "document_id": "44444444-4444-4444-8444-444444444446",
+        "error": "True was expected at ['archived']"
+      },
+      "expected": "document front matter is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t02/fixtures/sales/bad-unarchived-with-archive.md",
+      "id": "front_matter.sales.bad-unarchived-with-archive.md.schema",
+      "input_sha256": "a52dc9f77d08911cc535ade583d8152c846fa81608aad260bbc4a0cc710b08cc",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "front_matter",
+      "status": "FAIL"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "document_id": "11111111-1111-4111-8111-111111111111"
+      },
+      "expected": "document front matter is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t02/fixtures/sales/index.md",
+      "id": "front_matter.sales.index.md.schema",
+      "input_sha256": "dffc4271889b2c8577ac1c6128d697df1800c84a503ea993b40540afc61cf3da",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "front_matter",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "document_id": "44444444-4444-4444-8444-444444444447"
+      },
+      "expected": "document front matter is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t02/fixtures/sales/malformed-heading.md",
+      "id": "front_matter.sales.malformed-heading.md.schema",
+      "input_sha256": "c7b23423260b5c5c2190a2dc43ee7177a07280287679af18e2fd2beca44e192b",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "front_matter",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "document_id": "33333333-3333-4333-8333-333333333333"
+      },
+      "expected": "document front matter is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t02/fixtures/sales/playbook.md",
+      "id": "front_matter.sales.playbook.md.schema",
+      "input_sha256": "abdfc9aee1a6eb86cbdf471a6c564f4fd46f484437189814ac3682d5a41e4ee4",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "front_matter",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "document_id": "22222222-2222-4222-8222-222222222222"
+      },
+      "expected": "document front matter is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t02/fixtures/sales/products.md",
+      "id": "front_matter.sales.products.md.schema",
+      "input_sha256": "d82d0b4755e14a0f940a2dee5520a68fc7dc42bb2602b8f45020e520658f0367",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "front_matter",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "document_id": "88888888-8888-4888-8888-888888888888"
+      },
+      "expected": "document front matter is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t02/fixtures/sales-pricing/attachment/price-list.md",
+      "id": "front_matter.sales-pricing.attachment/price-list.md.schema",
+      "input_sha256": "414701b1b72385b1e4a1df4ac2de14fbbf2e2fa2015066984b58943635c7534b",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "front_matter",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "document_id": "77777777-7777-4777-8777-777777777777"
+      },
+      "expected": "document front matter is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t02/fixtures/sales-pricing/discount.md",
+      "id": "front_matter.sales-pricing.discount.md.schema",
+      "input_sha256": "8b594496ba6cf51f34e401b91e203f6adf07f4df700e7c214874d97e055b36e8",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "front_matter",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "document_id": "55555555-5555-4555-8555-555555555555"
+      },
+      "expected": "document front matter is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t02/fixtures/sales-pricing/index.md",
+      "id": "front_matter.sales-pricing.index.md.schema",
+      "input_sha256": "24e79ab08e0e0b5fd2deced76a63a8ae98d4aa024d6229242b4e43d187c1ee26",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "front_matter",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "document_id": "66666666-6666-4666-8666-666666666666"
+      },
+      "expected": "document front matter is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t02/fixtures/sales-pricing/pricing.md",
+      "id": "front_matter.sales-pricing.pricing.md.schema",
+      "input_sha256": "88fcb0e9cc099a33c05447f3ed00547531a90c8e736830d752c9312160e4a42b",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "front_matter",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "document_id": "99999999-9999-4999-8999-999999999999"
+      },
+      "expected": "document front matter is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t02/fixtures/sales-pricing/цены.md",
+      "id": "front_matter.sales-pricing.цены.md.schema",
+      "input_sha256": "a9c4b3a0ec6c5b834d39fb771d717a0c5fc0f786c9487a743a015a764055e7c4",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "front_matter",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "document_id": "88888888-8888-4888-8888-888888888888",
+        "source_id": "DOC-0001"
+      },
+      "expected": "origin is schema valid",
+      "fixture_path": null,
+      "id": "source_origin.sales-pricing.attachment/price-list.md.schema",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "source_origin",
+      "status": "PASS"
+    },
+    {
+      "actual": "7 unique IDs",
+      "details": {
+        "count": 7
+      },
+      "expected": "document IDs are unique within a Space",
+      "fixture_path": null,
+      "id": "tree.sales.unique_ids",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "tree",
+      "status": "PASS"
+    },
+    {
+      "actual": "all parents resolved",
+      "details": {
+        "count": 3
+      },
+      "expected": "every non-root parent_id resolves within the Space",
+      "fixture_path": null,
+      "id": "tree.sales.parent_exists",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "tree",
+      "status": "PASS"
+    },
+    {
+      "actual": "no cycles",
+      "details": {},
+      "expected": "document parent graph has no cycles",
+      "fixture_path": null,
+      "id": "tree.sales.no_cycles",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "tree",
+      "status": "PASS"
+    },
+    {
+      "actual": "computed breadcrumbs for 7 documents",
+      "details": {
+        "breadcrumbs": {
+          "11111111-1111-4111-8111-111111111111": [
+            "Sales"
+          ],
+          "22222222-2222-4222-8222-222222222222": [
+            "Sales",
+            "Products"
+          ],
+          "33333333-3333-4333-8333-333333333333": [
+            "Sales",
+            "Playbook"
+          ],
+          "44444444-4444-4444-8444-444444444444": [
+            "Sales",
+            "Obsolete Offer"
+          ],
+          "44444444-4444-4444-8444-444444444445": [
+            "Bad Archived Document"
+          ],
+          "44444444-4444-4444-8444-444444444446": [
+            "Bad Restored Document"
+          ],
+          "44444444-4444-4444-8444-444444444447": [
+            "Malformed Heading Example"
+          ]
+        }
+      },
+      "expected": "breadcrumbs resolve to root for every document",
+      "fixture_path": null,
+      "id": "tree.sales.breadcrumbs",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "tree",
+      "status": "PASS"
+    },
+    {
+      "actual": "1 parents with children",
+      "details": {
+        "children": {
+          "11111111-1111-4111-8111-111111111111": [
+            "archived/obsolete.md",
+            "playbook.md",
+            "products.md"
+          ]
+        }
+      },
+      "expected": "parent/child relationships are derivable from parent_id",
+      "fixture_path": null,
+      "id": "tree.sales.parent_child",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "tree",
+      "status": "PASS"
+    },
+    {
+      "actual": "5 unique IDs",
+      "details": {
+        "count": 5
+      },
+      "expected": "document IDs are unique within a Space",
+      "fixture_path": null,
+      "id": "tree.sales-pricing.unique_ids",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "tree",
+      "status": "PASS"
+    },
+    {
+      "actual": "all parents resolved",
+      "details": {
+        "count": 4
+      },
+      "expected": "every non-root parent_id resolves within the Space",
+      "fixture_path": null,
+      "id": "tree.sales-pricing.parent_exists",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "tree",
+      "status": "PASS"
+    },
+    {
+      "actual": "no cycles",
+      "details": {},
+      "expected": "document parent graph has no cycles",
+      "fixture_path": null,
+      "id": "tree.sales-pricing.no_cycles",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "tree",
+      "status": "PASS"
+    },
+    {
+      "actual": "computed breadcrumbs for 5 documents",
+      "details": {
+        "breadcrumbs": {
+          "55555555-5555-4555-8555-555555555555": [
+            "Sales Pricing"
+          ],
+          "66666666-6666-4666-8666-666666666666": [
+            "Sales Pricing",
+            "Pricing"
+          ],
+          "77777777-7777-4777-8777-777777777777": [
+            "Sales Pricing",
+            "Discount Policy"
+          ],
+          "88888888-8888-4888-8888-888888888888": [
+            "Sales Pricing",
+            "Price List"
+          ],
+          "99999999-9999-4999-8999-999999999999": [
+            "Sales Pricing",
+            "Цены"
+          ]
+        }
+      },
+      "expected": "breadcrumbs resolve to root for every document",
+      "fixture_path": null,
+      "id": "tree.sales-pricing.breadcrumbs",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "tree",
+      "status": "PASS"
+    },
+    {
+      "actual": "1 parents with children",
+      "details": {
+        "children": {
+          "55555555-5555-4555-8555-555555555555": [
+            "attachment/price-list.md",
+            "discount.md",
+            "pricing.md",
+            "цены.md"
+          ]
+        }
+      },
+      "expected": "parent/child relationships are derivable from parent_id",
+      "fixture_path": null,
+      "id": "tree.sales-pricing.parent_child",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "tree",
+      "status": "PASS"
+    },
+    {
+      "actual": "UUID preserved at discount.md",
+      "details": {
+        "document_id": "77777777-7777-4777-8777-777777777777",
+        "new_path": "discount.md",
+        "old_path": "offers/discount.md"
+      },
+      "expected": "document 77777777-7777-4777-8777-777777777777 retains UUID after rename from offers/discount.md to discount.md",
+      "fixture_path": null,
+      "id": "tree.sales-pricing.stable_id_rename.77777777-7777-4777-8777-777777777777",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "tree",
+      "status": "PASS"
+    },
+    {
+      "actual": "revision 61bb26567e71d3197a667921f0989185c795ed95",
+      "details": {
+        "document_id": "44444444-4444-4444-8444-444444444444",
+        "path": "archived/obsolete.md"
+      },
+      "expected": "whole read returns exact revision SHA",
+      "fixture_path": null,
+      "id": "read.sales.archived/obsolete.md.whole_revision",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "truncated=false",
+      "details": {
+        "path": "archived/obsolete.md"
+      },
+      "expected": "whole read returns truncated=false",
+      "fixture_path": null,
+      "id": "read.sales.archived/obsolete.md.whole_truncated",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "start=1, end=18, cursor=19",
+      "details": {
+        "cursor": 19,
+        "end_line": 18,
+        "start_line": 1
+      },
+      "expected": "whole read returns start_line, end_line, cursor",
+      "fixture_path": null,
+      "id": "read.sales.archived/obsolete.md.whole_bounds",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "no malformed headings",
+      "details": {
+        "path": "archived/obsolete.md"
+      },
+      "expected": "document contains no malformed Markdown headings",
+      "fixture_path": null,
+      "id": "read.sales.archived/obsolete.md.malformed_headings",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "revision 6647aa6aec4263be90b12cc9716563a1a8a8060e",
+      "details": {
+        "document_id": "44444444-4444-4444-8444-444444444445",
+        "path": "bad-archived-no-archive.md"
+      },
+      "expected": "whole read returns exact revision SHA",
+      "fixture_path": null,
+      "id": "read.sales.bad-archived-no-archive.md.whole_revision",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "truncated=false",
+      "details": {
+        "path": "bad-archived-no-archive.md"
+      },
+      "expected": "whole read returns truncated=false",
+      "fixture_path": null,
+      "id": "read.sales.bad-archived-no-archive.md.whole_truncated",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "start=1, end=14, cursor=15",
+      "details": {
+        "cursor": 15,
+        "end_line": 14,
+        "start_line": 1
+      },
+      "expected": "whole read returns start_line, end_line, cursor",
+      "fixture_path": null,
+      "id": "read.sales.bad-archived-no-archive.md.whole_bounds",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "no malformed headings",
+      "details": {
+        "path": "bad-archived-no-archive.md"
+      },
+      "expected": "document contains no malformed Markdown headings",
+      "fixture_path": null,
+      "id": "read.sales.bad-archived-no-archive.md.malformed_headings",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "revision 8c9a213628543a5f98921b7dfe2c564c6385d9a0",
+      "details": {
+        "document_id": "44444444-4444-4444-8444-444444444446",
+        "path": "bad-unarchived-with-archive.md"
+      },
+      "expected": "whole read returns exact revision SHA",
+      "fixture_path": null,
+      "id": "read.sales.bad-unarchived-with-archive.md.whole_revision",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "truncated=false",
+      "details": {
+        "path": "bad-unarchived-with-archive.md"
+      },
+      "expected": "whole read returns truncated=false",
+      "fixture_path": null,
+      "id": "read.sales.bad-unarchived-with-archive.md.whole_truncated",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "start=1, end=18, cursor=19",
+      "details": {
+        "cursor": 19,
+        "end_line": 18,
+        "start_line": 1
+      },
+      "expected": "whole read returns start_line, end_line, cursor",
+      "fixture_path": null,
+      "id": "read.sales.bad-unarchived-with-archive.md.whole_bounds",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "no malformed headings",
+      "details": {
+        "path": "bad-unarchived-with-archive.md"
+      },
+      "expected": "document contains no malformed Markdown headings",
+      "fixture_path": null,
+      "id": "read.sales.bad-unarchived-with-archive.md.malformed_headings",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "revision 5a94e21c4cdddca9dcbdcd286a2f560ea0d611e5",
+      "details": {
+        "document_id": "11111111-1111-4111-8111-111111111111",
+        "path": "index.md"
+      },
+      "expected": "whole read returns exact revision SHA",
+      "fixture_path": null,
+      "id": "read.sales.index.md.whole_revision",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "truncated=false",
+      "details": {
+        "path": "index.md"
+      },
+      "expected": "whole read returns truncated=false",
+      "fixture_path": null,
+      "id": "read.sales.index.md.whole_truncated",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "start=1, end=14, cursor=15",
+      "details": {
+        "cursor": 15,
+        "end_line": 14,
+        "start_line": 1
+      },
+      "expected": "whole read returns start_line, end_line, cursor",
+      "fixture_path": null,
+      "id": "read.sales.index.md.whole_bounds",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "no malformed headings",
+      "details": {
+        "path": "index.md"
+      },
+      "expected": "document contains no malformed Markdown headings",
+      "fixture_path": null,
+      "id": "read.sales.index.md.malformed_headings",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "revision ff67335803f5c699a8f98c18760f559d8a02e4a6",
+      "details": {
+        "document_id": "44444444-4444-4444-8444-444444444447",
+        "path": "malformed-heading.md"
+      },
+      "expected": "whole read returns exact revision SHA",
+      "fixture_path": null,
+      "id": "read.sales.malformed-heading.md.whole_revision",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "truncated=false",
+      "details": {
+        "path": "malformed-heading.md"
+      },
+      "expected": "whole read returns truncated=false",
+      "fixture_path": null,
+      "id": "read.sales.malformed-heading.md.whole_truncated",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "start=1, end=16, cursor=17",
+      "details": {
+        "cursor": 17,
+        "end_line": 16,
+        "start_line": 1
+      },
+      "expected": "whole read returns start_line, end_line, cursor",
+      "fixture_path": null,
+      "id": "read.sales.malformed-heading.md.whole_bounds",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "malformed headings at lines [(14, '####### This heading has too many hashes'), (16, '#This heading lacks a space')]",
+      "details": {
+        "malformed": [
+          [
+            14,
+            "####### This heading has too many hashes"
+          ],
+          [
+            16,
+            "#This heading lacks a space"
+          ]
+        ],
+        "path": "malformed-heading.md"
+      },
+      "expected": "document contains no malformed Markdown headings",
+      "fixture_path": null,
+      "id": "read.sales.malformed-heading.md.malformed_headings",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "FAIL"
+    },
+    {
+      "actual": "revision 4ec66c1ddacc164897828ac99b6ef5c5a62d610f",
+      "details": {
+        "document_id": "33333333-3333-4333-8333-333333333333",
+        "path": "playbook.md"
+      },
+      "expected": "whole read returns exact revision SHA",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.whole_revision",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "truncated=false",
+      "details": {
+        "path": "playbook.md"
+      },
+      "expected": "whole read returns truncated=false",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.whole_truncated",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "start=1, end=18, cursor=19",
+      "details": {
+        "cursor": 19,
+        "end_line": 18,
+        "start_line": 1
+      },
+      "expected": "whole read returns start_line, end_line, cursor",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.whole_bounds",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "no malformed headings",
+      "details": {
+        "path": "playbook.md"
+      },
+      "expected": "document contains no malformed Markdown headings",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.malformed_headings",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "revision 49b44ac55ac1d7c9f8d54aeb429b78e29487365a",
+      "details": {
+        "document_id": "22222222-2222-4222-8222-222222222222",
+        "path": "products.md"
+      },
+      "expected": "whole read returns exact revision SHA",
+      "fixture_path": null,
+      "id": "read.sales.products.md.whole_revision",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "truncated=false",
+      "details": {
+        "path": "products.md"
+      },
+      "expected": "whole read returns truncated=false",
+      "fixture_path": null,
+      "id": "read.sales.products.md.whole_truncated",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "start=1, end=16, cursor=17",
+      "details": {
+        "cursor": 17,
+        "end_line": 16,
+        "start_line": 1
+      },
+      "expected": "whole read returns start_line, end_line, cursor",
+      "fixture_path": null,
+      "id": "read.sales.products.md.whole_bounds",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "no malformed headings",
+      "details": {
+        "path": "products.md"
+      },
+      "expected": "document contains no malformed Markdown headings",
+      "fixture_path": null,
+      "id": "read.sales.products.md.malformed_headings",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "revision 2c0488c043372c800dca00aaf0c3fc1c9e071d2d",
+      "details": {
+        "document_id": "88888888-8888-4888-8888-888888888888",
+        "path": "attachment/price-list.md"
+      },
+      "expected": "whole read returns exact revision SHA",
+      "fixture_path": null,
+      "id": "read.sales-pricing.attachment/price-list.md.whole_revision",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "truncated=false",
+      "details": {
+        "path": "attachment/price-list.md"
+      },
+      "expected": "whole read returns truncated=false",
+      "fixture_path": null,
+      "id": "read.sales-pricing.attachment/price-list.md.whole_truncated",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "start=1, end=32, cursor=33",
+      "details": {
+        "cursor": 33,
+        "end_line": 32,
+        "start_line": 1
+      },
+      "expected": "whole read returns start_line, end_line, cursor",
+      "fixture_path": null,
+      "id": "read.sales-pricing.attachment/price-list.md.whole_bounds",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "no malformed headings",
+      "details": {
+        "path": "attachment/price-list.md"
+      },
+      "expected": "document contains no malformed Markdown headings",
+      "fixture_path": null,
+      "id": "read.sales-pricing.attachment/price-list.md.malformed_headings",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "revision 3a0f42e2ae46717f217f5ea75ea12e04beab4f49",
+      "details": {
+        "document_id": "77777777-7777-4777-8777-777777777777",
+        "path": "discount.md"
+      },
+      "expected": "whole read returns exact revision SHA",
+      "fixture_path": null,
+      "id": "read.sales-pricing.discount.md.whole_revision",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "truncated=false",
+      "details": {
+        "path": "discount.md"
+      },
+      "expected": "whole read returns truncated=false",
+      "fixture_path": null,
+      "id": "read.sales-pricing.discount.md.whole_truncated",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "start=1, end=14, cursor=15",
+      "details": {
+        "cursor": 15,
+        "end_line": 14,
+        "start_line": 1
+      },
+      "expected": "whole read returns start_line, end_line, cursor",
+      "fixture_path": null,
+      "id": "read.sales-pricing.discount.md.whole_bounds",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "no malformed headings",
+      "details": {
+        "path": "discount.md"
+      },
+      "expected": "document contains no malformed Markdown headings",
+      "fixture_path": null,
+      "id": "read.sales-pricing.discount.md.malformed_headings",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "revision 436cf980e15a470a435cdd3d6086435a0bc06a48",
+      "details": {
+        "document_id": "55555555-5555-4555-8555-555555555555",
+        "path": "index.md"
+      },
+      "expected": "whole read returns exact revision SHA",
+      "fixture_path": null,
+      "id": "read.sales-pricing.index.md.whole_revision",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "truncated=false",
+      "details": {
+        "path": "index.md"
+      },
+      "expected": "whole read returns truncated=false",
+      "fixture_path": null,
+      "id": "read.sales-pricing.index.md.whole_truncated",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "start=1, end=16, cursor=17",
+      "details": {
+        "cursor": 17,
+        "end_line": 16,
+        "start_line": 1
+      },
+      "expected": "whole read returns start_line, end_line, cursor",
+      "fixture_path": null,
+      "id": "read.sales-pricing.index.md.whole_bounds",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "no malformed headings",
+      "details": {
+        "path": "index.md"
+      },
+      "expected": "document contains no malformed Markdown headings",
+      "fixture_path": null,
+      "id": "read.sales-pricing.index.md.malformed_headings",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "revision 00af6a30d6f6fb41e0596ad5eb233192279f4393",
+      "details": {
+        "document_id": "66666666-6666-4666-8666-666666666666",
+        "path": "pricing.md"
+      },
+      "expected": "whole read returns exact revision SHA",
+      "fixture_path": null,
+      "id": "read.sales-pricing.pricing.md.whole_revision",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "truncated=false",
+      "details": {
+        "path": "pricing.md"
+      },
+      "expected": "whole read returns truncated=false",
+      "fixture_path": null,
+      "id": "read.sales-pricing.pricing.md.whole_truncated",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "start=1, end=14, cursor=15",
+      "details": {
+        "cursor": 15,
+        "end_line": 14,
+        "start_line": 1
+      },
+      "expected": "whole read returns start_line, end_line, cursor",
+      "fixture_path": null,
+      "id": "read.sales-pricing.pricing.md.whole_bounds",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "no malformed headings",
+      "details": {
+        "path": "pricing.md"
+      },
+      "expected": "document contains no malformed Markdown headings",
+      "fixture_path": null,
+      "id": "read.sales-pricing.pricing.md.malformed_headings",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "revision 8d8d97875a2bed870654f87d8b9e6751686a233a",
+      "details": {
+        "document_id": "99999999-9999-4999-8999-999999999999",
+        "path": "цены.md"
+      },
+      "expected": "whole read returns exact revision SHA",
+      "fixture_path": null,
+      "id": "read.sales-pricing.цены.md.whole_revision",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "truncated=false",
+      "details": {
+        "path": "цены.md"
+      },
+      "expected": "whole read returns truncated=false",
+      "fixture_path": null,
+      "id": "read.sales-pricing.цены.md.whole_truncated",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "start=1, end=14, cursor=15",
+      "details": {
+        "cursor": 15,
+        "end_line": 14,
+        "start_line": 1
+      },
+      "expected": "whole read returns start_line, end_line, cursor",
+      "fixture_path": null,
+      "id": "read.sales-pricing.цены.md.whole_bounds",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "no malformed headings",
+      "details": {
+        "path": "цены.md"
+      },
+      "expected": "document contains no malformed Markdown headings",
+      "fixture_path": null,
+      "id": "read.sales-pricing.цены.md.malformed_headings",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "revision 4ec66c1ddacc164897828ac99b6ef5c5a62d610f",
+      "details": {
+        "heading": "Steps",
+        "occurrence": 1,
+        "path": "playbook.md"
+      },
+      "expected": "section read returns exact revision SHA",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.1.revision",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "anchor=steps",
+      "details": {
+        "anchor": "steps",
+        "heading": "Steps",
+        "occurrence": 1,
+        "path": "playbook.md"
+      },
+      "expected": "section read returns anchor",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.1.anchor",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "occurrence=1",
+      "details": {
+        "heading": "Steps",
+        "path": "playbook.md"
+      },
+      "expected": "occurrence=1",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.1.occurrence",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "truncated=False",
+      "details": {
+        "heading": "Steps",
+        "max_lines": null,
+        "path": "playbook.md",
+        "total_lines": 3
+      },
+      "expected": "truncated=False",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.1.truncated",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "start=14, end=16, cursor=17, lines=3",
+      "details": {
+        "cursor": 17,
+        "end_line": 16,
+        "heading": "Steps",
+        "line_count": 3,
+        "occurrence": 1,
+        "path": "playbook.md",
+        "start_line": 14
+      },
+      "expected": "section read returns start_line, end_line, cursor",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.1.bounds",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "revision 4ec66c1ddacc164897828ac99b6ef5c5a62d610f",
+      "details": {
+        "heading": "Steps",
+        "occurrence": 2,
+        "path": "playbook.md"
+      },
+      "expected": "section read returns exact revision SHA",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.2.revision",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "anchor=steps",
+      "details": {
+        "anchor": "steps",
+        "heading": "Steps",
+        "occurrence": 2,
+        "path": "playbook.md"
+      },
+      "expected": "section read returns anchor",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.2.anchor",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "occurrence=2",
+      "details": {
+        "heading": "Steps",
+        "path": "playbook.md"
+      },
+      "expected": "occurrence=2",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.2.occurrence",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "truncated=False",
+      "details": {
+        "heading": "Steps",
+        "max_lines": null,
+        "path": "playbook.md",
+        "total_lines": 2
+      },
+      "expected": "truncated=False",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.2.truncated",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "start=17, end=18, cursor=19, lines=2",
+      "details": {
+        "cursor": 19,
+        "end_line": 18,
+        "heading": "Steps",
+        "line_count": 2,
+        "occurrence": 2,
+        "path": "playbook.md",
+        "start_line": 17
+      },
+      "expected": "section read returns start_line, end_line, cursor",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.2.bounds",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "section not found",
+      "details": {
+        "heading": "Steps",
+        "occurrence": 3,
+        "path": "playbook.md",
+        "space_id": "sales"
+      },
+      "expected": "section 'Steps' occurrence 3 not found",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.3",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "revision 4ec66c1ddacc164897828ac99b6ef5c5a62d610f",
+      "details": {
+        "heading": "Steps",
+        "occurrence": 1,
+        "path": "playbook.md"
+      },
+      "expected": "section read returns exact revision SHA",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.1.revision",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "anchor=steps",
+      "details": {
+        "anchor": "steps",
+        "heading": "Steps",
+        "occurrence": 1,
+        "path": "playbook.md"
+      },
+      "expected": "section read returns anchor",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.1.anchor",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "occurrence=1",
+      "details": {
+        "heading": "Steps",
+        "path": "playbook.md"
+      },
+      "expected": "occurrence=1",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.1.occurrence",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "truncated=True",
+      "details": {
+        "heading": "Steps",
+        "max_lines": 1,
+        "path": "playbook.md",
+        "total_lines": 3
+      },
+      "expected": "truncated=True",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.1.truncated",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "start=14, end=14, cursor=15, lines=1",
+      "details": {
+        "cursor": 15,
+        "end_line": 14,
+        "heading": "Steps",
+        "line_count": 1,
+        "occurrence": 1,
+        "path": "playbook.md",
+        "start_line": 14
+      },
+      "expected": "section read returns start_line, end_line, cursor",
+      "fixture_path": null,
+      "id": "read.sales.playbook.md.Steps.1.bounds",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "read",
+      "status": "PASS"
+    },
+    {
+      "actual": "object_id=price-list-q4, version=v1",
+      "details": {
+        "index": 0,
+        "media_class": "substantive",
+        "media_type": "application/pdf",
+        "object_id": "price-list-q4",
+        "path": "attachment/price-list.md",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "size": 12345,
+        "source_ref": "s3://synthetic-bucket/price-list-q4-v1.pdf",
+        "verification_status": "verified",
+        "version": "v1"
+      },
+      "expected": "attachment exposes full immutable tuple",
+      "fixture_path": null,
+      "id": "attachments.sales-pricing.attachment/price-list.md.0",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "attachments",
+      "status": "PASS"
+    },
+    {
+      "actual": "archived=True, has_archive=True",
+      "details": {
+        "archived": true,
+        "document_id": "44444444-4444-4444-8444-444444444444",
+        "has_archive": true,
+        "path": "archived/obsolete.md"
+      },
+      "expected": "archived flag and archive block are consistent",
+      "fixture_path": null,
+      "id": "archive.sales.archived/obsolete.md.invariant",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "archive",
+      "status": "PASS"
+    },
+    {
+      "actual": "archive fields present: ('archived_at', 'reason', 'replacement_document_id')",
+      "details": {
+        "archived_at": "2026-10-01T00:00:00Z",
+        "path": "archived/obsolete.md",
+        "replacement_document_id": null
+      },
+      "expected": "archive block has required fields",
+      "fixture_path": null,
+      "id": "archive.sales.archived/obsolete.md.fields",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "archive",
+      "status": "PASS"
+    },
+    {
+      "actual": "archived=True, has_archive=False",
+      "details": {
+        "archived": true,
+        "document_id": "44444444-4444-4444-8444-444444444445",
+        "has_archive": false,
+        "path": "bad-archived-no-archive.md"
+      },
+      "expected": "archived=true iff archive block is present",
+      "fixture_path": null,
+      "id": "archive.sales.bad-archived-no-archive.md.invariant",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "archive",
+      "status": "FAIL"
+    },
+    {
+      "actual": "archived=False, has_archive=True",
+      "details": {
+        "archived": false,
+        "document_id": "44444444-4444-4444-8444-444444444446",
+        "has_archive": true,
+        "path": "bad-unarchived-with-archive.md"
+      },
+      "expected": "archived=true iff archive block is present",
+      "fixture_path": null,
+      "id": "archive.sales.bad-unarchived-with-archive.md.invariant",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "archive",
+      "status": "FAIL"
+    },
+    {
+      "actual": "archive fields present: ('archived_at', 'reason', 'replacement_document_id')",
+      "details": {
+        "archived_at": "2026-10-01T00:00:00Z",
+        "path": "bad-unarchived-with-archive.md",
+        "replacement_document_id": null
+      },
+      "expected": "archive block has required fields",
+      "fixture_path": null,
+      "id": "archive.sales.bad-unarchived-with-archive.md.fields",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "archive",
+      "status": "PASS"
+    },
+    {
+      "actual": "archived=False, has_archive=False",
+      "details": {
+        "archived": false,
+        "document_id": "11111111-1111-4111-8111-111111111111",
+        "has_archive": false,
+        "path": "index.md"
+      },
+      "expected": "archived flag and archive block are consistent",
+      "fixture_path": null,
+      "id": "archive.sales.index.md.invariant",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "archive",
+      "status": "PASS"
+    },
+    {
+      "actual": "archived=False, has_archive=False",
+      "details": {
+        "archived": false,
+        "document_id": "44444444-4444-4444-8444-444444444447",
+        "has_archive": false,
+        "path": "malformed-heading.md"
+      },
+      "expected": "archived flag and archive block are consistent",
+      "fixture_path": null,
+      "id": "archive.sales.malformed-heading.md.invariant",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "archive",
+      "status": "PASS"
+    },
+    {
+      "actual": "archived=False, has_archive=False",
+      "details": {
+        "archived": false,
+        "document_id": "33333333-3333-4333-8333-333333333333",
+        "has_archive": false,
+        "path": "playbook.md"
+      },
+      "expected": "archived flag and archive block are consistent",
+      "fixture_path": null,
+      "id": "archive.sales.playbook.md.invariant",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "archive",
+      "status": "PASS"
+    },
+    {
+      "actual": "archived=False, has_archive=False",
+      "details": {
+        "archived": false,
+        "document_id": "22222222-2222-4222-8222-222222222222",
+        "has_archive": false,
+        "path": "products.md"
+      },
+      "expected": "archived flag and archive block are consistent",
+      "fixture_path": null,
+      "id": "archive.sales.products.md.invariant",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "archive",
+      "status": "PASS"
+    },
+    {
+      "actual": "archived=False, has_archive=False",
+      "details": {
+        "archived": false,
+        "document_id": "88888888-8888-4888-8888-888888888888",
+        "has_archive": false,
+        "path": "attachment/price-list.md"
+      },
+      "expected": "archived flag and archive block are consistent",
+      "fixture_path": null,
+      "id": "archive.sales-pricing.attachment/price-list.md.invariant",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "archive",
+      "status": "PASS"
+    },
+    {
+      "actual": "archived=False, has_archive=False",
+      "details": {
+        "archived": false,
+        "document_id": "77777777-7777-4777-8777-777777777777",
+        "has_archive": false,
+        "path": "discount.md"
+      },
+      "expected": "archived flag and archive block are consistent",
+      "fixture_path": null,
+      "id": "archive.sales-pricing.discount.md.invariant",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "archive",
+      "status": "PASS"
+    },
+    {
+      "actual": "archived=False, has_archive=False",
+      "details": {
+        "archived": false,
+        "document_id": "55555555-5555-4555-8555-555555555555",
+        "has_archive": false,
+        "path": "index.md"
+      },
+      "expected": "archived flag and archive block are consistent",
+      "fixture_path": null,
+      "id": "archive.sales-pricing.index.md.invariant",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "archive",
+      "status": "PASS"
+    },
+    {
+      "actual": "archived=False, has_archive=False",
+      "details": {
+        "archived": false,
+        "document_id": "66666666-6666-4666-8666-666666666666",
+        "has_archive": false,
+        "path": "pricing.md"
+      },
+      "expected": "archived flag and archive block are consistent",
+      "fixture_path": null,
+      "id": "archive.sales-pricing.pricing.md.invariant",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "archive",
+      "status": "PASS"
+    },
+    {
+      "actual": "archived=False, has_archive=False",
+      "details": {
+        "archived": false,
+        "document_id": "99999999-9999-4999-8999-999999999999",
+        "has_archive": false,
+        "path": "цены.md"
+      },
+      "expected": "archived flag and archive block are consistent",
+      "fixture_path": null,
+      "id": "archive.sales-pricing.цены.md.invariant",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "archive",
+      "status": "PASS"
+    },
+    {
+      "actual": "/pricing <-> pricing = True",
+      "details": {
+        "absolute": "/pricing",
+        "lossless": true,
+        "relative": "pricing"
+      },
+      "expected": "/pricing <-> pricing mapping is lossless",
+      "fixture_path": "/Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/test-artifacts/t02/fixtures/paths.yaml",
+      "id": "paths.absolute_relative_lossless./pricing",
+      "input_sha256": "8e25f6a178e1c6628b6ee92f6ddd52ee74cb0523d90f524dc8fff94dfbd02040",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "/sales/products <-> sales/products = True",
+      "details": {
+        "absolute": "/sales/products",
+        "lossless": true,
+        "relative": "sales/products"
+      },
+      "expected": "/sales/products <-> sales/products mapping is lossless",
+      "fixture_path": "/Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/test-artifacts/t02/fixtures/paths.yaml",
+      "id": "paths.absolute_relative_lossless./sales/products",
+      "input_sha256": "8e25f6a178e1c6628b6ee92f6ddd52ee74cb0523d90f524dc8fff94dfbd02040",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "rejected=True, normalized=None",
+      "details": {
+        "normalized": null,
+        "path": "/pricing/",
+        "rejected": true
+      },
+      "expected": "ambiguous path /pricing/ is rejected",
+      "fixture_path": "/Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/test-artifacts/t02/fixtures/paths.yaml",
+      "id": "paths.ambiguous_rejected./pricing/",
+      "input_sha256": "8e25f6a178e1c6628b6ee92f6ddd52ee74cb0523d90f524dc8fff94dfbd02040",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "rejected=True, normalized=None",
+      "details": {
+        "normalized": null,
+        "path": "..",
+        "rejected": true
+      },
+      "expected": "ambiguous path .. is rejected",
+      "fixture_path": "/Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/test-artifacts/t02/fixtures/paths.yaml",
+      "id": "paths.ambiguous_rejected...",
+      "input_sha256": "8e25f6a178e1c6628b6ee92f6ddd52ee74cb0523d90f524dc8fff94dfbd02040",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "rejected=True, normalized=None",
+      "details": {
+        "normalized": null,
+        "path": "pricing/../products",
+        "rejected": true
+      },
+      "expected": "ambiguous path pricing/../products is rejected",
+      "fixture_path": "/Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/test-artifacts/t02/fixtures/paths.yaml",
+      "id": "paths.ambiguous_rejected.pricing/../products",
+      "input_sha256": "8e25f6a178e1c6628b6ee92f6ddd52ee74cb0523d90f524dc8fff94dfbd02040",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "rejected=True, normalized=None",
+      "details": {
+        "normalized": null,
+        "path": "./pricing",
+        "rejected": true
+      },
+      "expected": "ambiguous path ./pricing is rejected",
+      "fixture_path": "/Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/test-artifacts/t02/fixtures/paths.yaml",
+      "id": "paths.ambiguous_rejected../pricing",
+      "input_sha256": "8e25f6a178e1c6628b6ee92f6ddd52ee74cb0523d90f524dc8fff94dfbd02040",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "rejected=True, normalized=None",
+      "details": {
+        "normalized": null,
+        "path": "sales\\\\products",
+        "rejected": true
+      },
+      "expected": "ambiguous path sales\\\\products is rejected",
+      "fixture_path": "/Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/test-artifacts/t02/fixtures/paths.yaml",
+      "id": "paths.ambiguous_rejected.sales\\\\products",
+      "input_sha256": "8e25f6a178e1c6628b6ee92f6ddd52ee74cb0523d90f524dc8fff94dfbd02040",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "NFC(nfc)==NFC(nfd): True",
+      "details": {
+        "duplicate": true,
+        "nfc": "café",
+        "nfd": "café"
+      },
+      "expected": "NFC/NFD duplicates are detected",
+      "fixture_path": "/Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/test-artifacts/t02/fixtures/paths.yaml",
+      "id": "paths.nfc_nfd_duplicate.café",
+      "input_sha256": "8e25f6a178e1c6628b6ee92f6ddd52ee74cb0523d90f524dc8fff94dfbd02040",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "source_id=DOC-0001",
+      "details": {
+        "source_id": "DOC-0001",
+        "valid": true
+      },
+      "expected": "source_id 'DOC-0001' retains exact case",
+      "fixture_path": "/Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/test-artifacts/t02/fixtures/paths.yaml",
+      "id": "paths.source_id_case.DOC-0001",
+      "input_sha256": "8e25f6a178e1c6628b6ee92f6ddd52ee74cb0523d90f524dc8fff94dfbd02040",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "source_id=doc-0001",
+      "details": {
+        "source_id": "doc-0001",
+        "valid": false
+      },
+      "expected": "source_id 'doc-0001' retains exact case",
+      "fixture_path": "/Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/test-artifacts/t02/fixtures/paths.yaml",
+      "id": "paths.source_id_case.doc-0001",
+      "input_sha256": "8e25f6a178e1c6628b6ee92f6ddd52ee74cb0523d90f524dc8fff94dfbd02040",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "requires live GitLab/GO sandbox and ACL service",
+      "details": {
+        "reason": "requires live GitLab/GO sandbox and ACL service"
+      },
+      "expected": "live GitLab/GO integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_gitlab_tree_read",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live GitLab/GO sandbox and ACL service",
+      "details": {
+        "reason": "requires live GitLab/GO sandbox and ACL service"
+      },
+      "expected": "live GitLab/GO integration evidence",
+      "fixture_path": null,
+      "id": "runtime.exact_revision_git_blob",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live GitLab/GO sandbox and ACL service",
+      "details": {
+        "reason": "requires live GitLab/GO sandbox and ACL service"
+      },
+      "expected": "live GitLab/GO integration evidence",
+      "fixture_path": null,
+      "id": "runtime.authz_read_rejection",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live GitLab/GO sandbox and ACL service",
+      "details": {
+        "reason": "requires live GitLab/GO sandbox and ACL service"
+      },
+      "expected": "live GitLab/GO integration evidence",
+      "fixture_path": null,
+      "id": "runtime.cross_space_link_resolution",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+  "contracts_version": "document-front-matter-v2",
+  "counts": {
+    "BLOCKED": 4,
+    "FAIL": 5,
+    "PASS": 109
+  },
+  "environment": {
+    "ci_available": false,
+    "git_lab_available": false,
+    "hoster_available": false,
+    "idp_available": false,
+    "pinned_toolchain": {
+      "gitlab_ce": "19.5.3-ce.0",
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "pgvector": "0.8.7",
+      "postgresql": "18.6",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_local_no_gitlab"
+  },
+  "generated_at": "2026-11-08T16:48:04.400786+00:00",
+  "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
+  "schema_version": "t02-document-results-v1",
+  "secrets_included": false,
+  "spec_baseline_commit": "788e299a5316c7d5df685a8f11b043ff36135a10"
+}
