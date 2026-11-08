@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 11-08-2026 18:17
-last_updated: 11-08-2026 18:18
+last_updated: 11-08-2026 19:15
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -40,9 +40,9 @@ development_status:
   0-1-t00-baseline-audit-and-owner-g0-approval: done
   epic-0-retrospective: optional
 
-  epic-1: backlog
-  1-1-t01-reproducible-two-space-sandbox-and-executable-defect-evi: backlog
-  epic-1-retrospective: optional
+  epic-1: done
+  1-1-t01-reproducible-two-space-sandbox-and-executable-defect-evi: done
+  epic-1-retrospective: done
 
   epic-2: backlog
   2-1-t02-git-backed-document-tree-and-canonical-direct-read: backlog
