@@ -1,0 +1,420 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "loaded 5 fixture files",
+      "details": {
+        "fixtures": [
+          "drafts",
+          "history",
+          "idempotency",
+          "restore",
+          "stale_base"
+        ]
+      },
+      "expected": "synthetic draft fixtures load",
+      "fixture_path": null,
+      "id": "harness.fixtures_loaded",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "harness",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "error": null,
+        "proposal_id": "prop-draft-1"
+      },
+      "expected": "sample proposal record is schema valid",
+      "fixture_path": null,
+      "id": "schema.proposal_record.valid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "decision_id": "44444444-4444-4444-8444-444444444444",
+        "error": null
+      },
+      "expected": "sample decision record is schema valid",
+      "fixture_path": null,
+      "id": "schema.decision_record.valid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "document_id": "11111111-1111-4111-8111-111111111111",
+        "error": null
+      },
+      "expected": "sample front matter is schema valid",
+      "fixture_path": null,
+      "id": "schema.front_matter.valid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "61 patterns compiled",
+      "details": {},
+      "expected": "all schema regex patterns compile",
+      "fixture_path": null,
+      "id": "schema.regex_compile",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "143 refs resolved",
+      "details": {},
+      "expected": "all schema $ref resolve",
+      "fixture_path": null,
+      "id": "schema.refs_resolve",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "draft save accepted with valid base_sha and attribution",
+      "details": {
+        "author_stable_id": "user-sales-1",
+        "base_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "branch_created": true,
+        "document_path": "playbook.md",
+        "main_unchanged": true,
+        "target_branch": "main"
+      },
+      "expected": "draft branch/commit created, main unchanged",
+      "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/drafts.yaml",
+      "id": "draft_save.valid_human_save.valid",
+      "input_sha256": "9e8f61e3ff1e776066114cd9b218a1be985e331becd11cb520d46991e261e028",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "draft_save",
+      "status": "PASS"
+    },
+    {
+      "actual": "draft save accepted with valid base_sha and attribution",
+      "details": {
+        "author_stable_id": "agent-proposal-1",
+        "base_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "branch_created": true,
+        "document_path": "proposals/agent-proposal.md",
+        "main_unchanged": true,
+        "target_branch": "main"
+      },
+      "expected": "draft branch/commit created, main unchanged",
+      "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/drafts.yaml",
+      "id": "draft_save.valid_agent_save.valid",
+      "input_sha256": "9e8f61e3ff1e776066114cd9b218a1be985e331becd11cb520d46991e261e028",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "draft_save",
+      "status": "PASS"
+    },
+    {
+      "actual": "rejected: missing ['base_sha']",
+      "details": {
+        "missing": [
+          "base_sha"
+        ]
+      },
+      "expected": "save rejected with MISSING_BASE_SHA",
+      "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/drafts.yaml",
+      "id": "draft_save.missing_base_sha.missing_base_sha",
+      "input_sha256": "9e8f61e3ff1e776066114cd9b218a1be985e331becd11cb520d46991e261e028",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "draft_save",
+      "status": "PASS"
+    },
+    {
+      "actual": "rejected: missing ['run_id (required for agent actor)']",
+      "details": {
+        "missing": [
+          "run_id (required for agent actor)"
+        ]
+      },
+      "expected": "save rejected with MISSING_BASE_SHA",
+      "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/drafts.yaml",
+      "id": "draft_save.agent_missing_run_id.missing_base_sha",
+      "input_sha256": "9e8f61e3ff1e776066114cd9b218a1be985e331becd11cb520d46991e261e028",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "draft_save",
+      "status": "PASS"
+    },
+    {
+      "actual": "idempotency key matches existing draft with identical payload",
+      "details": {
+        "duplicate_commit": false,
+        "existing_proposal_sha": "dddddddddddddddddddddddddddddddddddddddd",
+        "idempotency_key": "draft-sales-1"
+      },
+      "expected": "existing draft returned, no duplicate commit",
+      "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/idempotency.yaml",
+      "id": "idempotency.same_payload_replay.same_payload_replay",
+      "input_sha256": "bb040b22b5f3de5dd24d0013cd74db3ce06d9001ecb70f48a2a3fe0a01c977dc",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "idempotency",
+      "status": "PASS"
+    },
+    {
+      "actual": "idempotency key reused with different payload",
+      "details": {
+        "existing_payload_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "idempotency_key": "draft-sales-1",
+        "input_payload_hash": "2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "expected": "IDEMPOTENCY_KEY_REUSED when payload differs",
+      "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/idempotency.yaml",
+      "id": "idempotency.different_payload_reused_key.different_payload_rejected",
+      "input_sha256": "bb040b22b5f3de5dd24d0013cd74db3ce06d9001ecb70f48a2a3fe0a01c977dc",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "idempotency",
+      "status": "PASS"
+    },
+    {
+      "actual": "target advanced before save; stale base detected",
+      "details": {
+        "base_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "diff_view": true,
+        "silent_overwrite": false,
+        "target_head": "ffffffffffffffffffffffffffffffffffffffff"
+      },
+      "expected": "STALE_BASE conflict with diff view",
+      "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/stale_base.yaml",
+      "id": "stale_base.target_advanced_before_save.conflict_detected",
+      "input_sha256": "b7a3a66498b50e53e19ca6be5c99bf1a52dad26fa66e6c59c2d5dabe82b91234",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "stale_base",
+      "status": "PASS"
+    },
+    {
+      "actual": "stale base refused, no main/draft overwrite",
+      "details": {
+        "base_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "silent_overwrite": false,
+        "target_head": "ffffffffffffffffffffffffffffffffffffffff"
+      },
+      "expected": "silent overwrite rejected",
+      "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/stale_base.yaml",
+      "id": "stale_base.no_silent_overwrite.no_silent_overwrite",
+      "input_sha256": "b7a3a66498b50e53e19ca6be5c99bf1a52dad26fa66e6c59c2d5dabe82b91234",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "stale_base",
+      "status": "PASS"
+    },
+    {
+      "actual": "page is ordered and cursor/truncation metadata present",
+      "details": {
+        "cursor": null,
+        "next_cursor": 2,
+        "ordered": true,
+        "page_size": 2,
+        "truncated": true,
+        "truncation_reason": "limit"
+      },
+      "expected": "ordered commits with explicit truncation reason and next cursor",
+      "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/history.yaml",
+      "id": "history_cursor.first_page_with_cursor.pagination",
+      "input_sha256": "40078bfe847674170e0b70126daae68a927143122b6ed694ecb716331f2f7b00",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "history_cursor",
+      "status": "PASS"
+    },
+    {
+      "actual": "page is ordered and cursor/truncation metadata present",
+      "details": {
+        "cursor": 2,
+        "next_cursor": null,
+        "ordered": true,
+        "page_size": 1,
+        "truncated": false,
+        "truncation_reason": null
+      },
+      "expected": "ordered commits with explicit truncation reason and next cursor",
+      "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/history.yaml",
+      "id": "history_cursor.second_page_no_truncation.pagination",
+      "input_sha256": "40078bfe847674170e0b70126daae68a927143122b6ed694ecb716331f2f7b00",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "history_cursor",
+      "status": "PASS"
+    },
+    {
+      "actual": "commits are not in ancestry order",
+      "details": {
+        "ordered": false,
+        "shas": [
+          "dddddddddddddddddddddddddddddddddddddddd",
+          "ffffffffffffffffffffffffffffffffffffffff",
+          "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+        ]
+      },
+      "expected": "out-of-order history rejected",
+      "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/history.yaml",
+      "id": "history_cursor.out_of_order_rejected.out_of_order_rejected",
+      "input_sha256": "40078bfe847674170e0b70126daae68a927143122b6ed694ecb716331f2f7b00",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "history_cursor",
+      "status": "PASS"
+    },
+    {
+      "actual": "restore produced a new commit on revert-MR; main unchanged",
+      "details": {
+        "created_revert_mr": true,
+        "main_rewritten": false,
+        "new_commit_sha": "9999999999999999999999999999999999999999",
+        "revision_sha": "dddddddddddddddddddddddddddddddddddddddd"
+      },
+      "expected": "revert-MR created with new commit, no main rewrite",
+      "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/restore.yaml",
+      "id": "restore.valid_restore_creates_revert_mr.revert_mr_created",
+      "input_sha256": "c989bb87a09852c26058302bd1e63bdd65e69b33c191424afa47350b5e1ffa00",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "restore",
+      "status": "PASS"
+    },
+    {
+      "actual": "restore refused; history not rewritten",
+      "details": {
+        "main_rewritten": true,
+        "revision_sha": "dddddddddddddddddddddddddddddddddddddddd",
+        "valid_revision": true
+      },
+      "expected": "direct main write or invalid revision rejected",
+      "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/restore.yaml",
+      "id": "restore.direct_main_write_forbidden.no_direct_main_write",
+      "input_sha256": "c989bb87a09852c26058302bd1e63bdd65e69b33c191424afa47350b5e1ffa00",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "restore",
+      "status": "PASS"
+    },
+    {
+      "actual": "restore refused; history not rewritten",
+      "details": {
+        "main_rewritten": false,
+        "revision_sha": 0,
+        "valid_revision": false
+      },
+      "expected": "direct main write or invalid revision rejected",
+      "fixture_path": "_bmad-output/test-artifacts/t04a/fixtures/restore.yaml",
+      "id": "restore.unknown_revision_rejected.no_direct_main_write",
+      "input_sha256": "c989bb87a09852c26058302bd1e63bdd65e69b33c191424afa47350b5e1ffa00",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "restore",
+      "status": "PASS"
+    },
+    {
+      "actual": "requires live GitLab/GO sandbox and credentials",
+      "details": {
+        "reason": "requires live GitLab/GO sandbox and credentials"
+      },
+      "expected": "live GitLab/GO integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_gitlab_draft_branch",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live GitLab/GO sandbox and credentials",
+      "details": {
+        "reason": "requires live GitLab/GO sandbox and credentials"
+      },
+      "expected": "live GitLab/GO integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_gitlab_save_cas",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live GitLab/GO sandbox and credentials",
+      "details": {
+        "reason": "requires live GitLab/GO sandbox and credentials"
+      },
+      "expected": "live GitLab/GO integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_gitlab_idempotency_registry",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live GitLab/GO sandbox and credentials",
+      "details": {
+        "reason": "requires live GitLab/GO sandbox and credentials"
+      },
+      "expected": "live GitLab/GO integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_gitlab_stale_base_diff",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live GitLab/GO sandbox and credentials",
+      "details": {
+        "reason": "requires live GitLab/GO sandbox and credentials"
+      },
+      "expected": "live GitLab/GO integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_gitlab_history_cursor",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live GitLab/GO sandbox and credentials",
+      "details": {
+        "reason": "requires live GitLab/GO sandbox and credentials"
+      },
+      "expected": "live GitLab/GO integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_gitlab_restore_revert_mr",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+  "contracts_version": "proposal-record-v1",
+  "counts": {
+    "BLOCKED": 6,
+    "FAIL": 0,
+    "PASS": 20
+  },
+  "environment": {
+    "ad_available": false,
+    "ci_available": false,
+    "gitlab_available": false,
+    "hoster_available": false,
+    "idp_available": false,
+    "ldap_available": false,
+    "pinned_toolchain": {
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_local_no_gitlab"
+  },
+  "generated_at": "2026-11-08T22:04:01.080165+00:00",
+  "rerun_cmd": "uv run python _bmad-output/test-artifacts/t04a/run_draft_tests.py",
+  "schema_version": "t04a-draft-results-v1",
+  "sensitive_data_included": false,
+  "spec_baseline_commit": "d2c0d072a757808ea891fbf6414f00147679f7a7"
+}
