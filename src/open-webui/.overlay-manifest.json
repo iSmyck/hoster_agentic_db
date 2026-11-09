@@ -1,0 +1,7 @@
+[
+  "src/lib/api/kb.ts",
+  "src/lib/components/KBDocumentRead.svelte",
+  "src/lib/components/KBTree.svelte",
+  "src/lib/plugins/kb-proxy.ts",
+  "src/routes/kb/+page.svelte"
+]

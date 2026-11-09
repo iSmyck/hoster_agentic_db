@@ -17,6 +17,7 @@ from retrieval.app.schemas.retrieval import (
     IndexActivateResponse,
     IndexBuildRequest,
     IndexBuildResponse,
+    IndexPointerResponse,
     SearchRequest,
     SearchResponse,
 )
@@ -108,6 +109,31 @@ def activate_index(
         )
     except RetrievalServiceError as exc:
         raise _handle_domain_error(exc) from exc
+    return {
+        "pointer_id": pointer.id,
+        "space_id": pointer.space_id,
+        "profile": pointer.profile,
+        "generation_id": pointer.generation_id,
+        "fence_token": pointer.fence_token,
+        "active": pointer.active,
+    }
+
+
+@router.get(
+    "/api/kb/v1/index/pointer",
+    response_model=IndexPointerResponse,
+)
+def get_active_pointer(
+    space_id: str,
+    db: Annotated[Session, Depends(get_db)],
+    profile: str = "default",
+) -> dict[str, Any]:
+    pointer = indexing.get_active_pointer(db, space_id, profile)
+    if pointer is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "NOT_FOUND", "message": "no active pointer for space/profile"},
+        )
     return {
         "pointer_id": pointer.id,
         "space_id": pointer.space_id,

@@ -191,13 +191,13 @@ def activate_pointer(
     return new_pointer
 
 
-def get_active_generation(
+def get_active_pointer(
     db: Session,
     space_id: str,
     profile: str,
-) -> IndexGeneration | None:
-    """Return the active generation for a Space/profile, or None."""
-    pointer = (
+) -> IndexPointer | None:
+    """Return the active pointer for a Space/profile, or None."""
+    return (
         db.query(IndexPointer)
         .filter(
             IndexPointer.space_id == space_id,
@@ -206,6 +206,15 @@ def get_active_generation(
         )
         .first()
     )
+
+
+def get_active_generation(
+    db: Session,
+    space_id: str,
+    profile: str,
+) -> IndexGeneration | None:
+    """Return the active generation for a Space/profile, or None."""
+    pointer = get_active_pointer(db, space_id, profile)
     if pointer is None:
         return None
     return db.get(IndexGeneration, pointer.generation_id)

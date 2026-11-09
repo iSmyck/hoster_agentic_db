@@ -51,6 +51,17 @@ class IndexActivateResponse(BaseModel):
     active: bool
 
 
+class IndexPointerResponse(BaseModel):
+    """Active index pointer for a space/profile."""
+
+    pointer_id: uuid.UUID
+    space_id: str
+    profile: str
+    generation_id: uuid.UUID
+    fence_token: int
+    active: bool
+
+
 class SearchRequest(BaseModel):
     """POST /api/kb/v1/search"""
 

@@ -15,15 +15,32 @@ import base64
 import os
 import sys
 from datetime import UTC, datetime
+from typing import Any
 from urllib.parse import quote
 
 import httpx
-from sqlalchemy import create_engine, text
 
 IDENTITY_URL = os.environ.get("IDENTITY_SERVICE_URL", "http://localhost:8001")
 GO_URL = os.environ.get("GO_SERVICE_URL", "http://localhost:8002")
 RETRIEVAL_URL = os.environ.get("RETRIEVAL_SERVICE_URL", "http://localhost:8003")
 INGESTION_URL = os.environ.get("INGESTION_SERVICE_URL", "http://localhost:8004")
+
+
+def _http_request(method: str, url: str, **kwargs: Any) -> httpx.Response:
+    """Execute an httpx request and convert transport errors to a clean failure."""
+    try:
+        return httpx.request(method, url, **kwargs)
+    except httpx.RequestError as exc:
+        _fail(f"HTTP request failed for {exc.request.url}: {exc}")
+
+
+def _http_get(url: str, **kwargs: Any) -> httpx.Response:
+    return _http_request("GET", url, **kwargs)
+
+
+def _http_post(url: str, **kwargs: Any) -> httpx.Response:
+    return _http_request("POST", url, **kwargs)
+
 
 KEYCLOAK_URL = os.environ.get("KEYCLOAK_URL", "http://localhost:8082")
 KEYCLOAK_REALM = os.environ.get("KEYCLOAK_REALM", "corp-kb")
@@ -45,7 +62,7 @@ def _fail(message: str) -> None:
 def _get_keycloak_token() -> str:
     if not KEYCLOAK_CLIENT_SECRET:
         _fail("KEYCLOAK_CLIENT_SECRET is not set")
-    resp = httpx.post(
+    resp = _http_post(
         f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/token",
         data={
             "grant_type": "password",
@@ -65,7 +82,7 @@ def _get_keycloak_token() -> str:
 
 
 def _resolve_identity(token: str) -> dict:
-    resp = httpx.post(
+    resp = _http_post(
         f"{IDENTITY_URL}/api/kb/v1/identity/resolve-token",
         json={"access_token": token},
         timeout=30.0,
@@ -83,7 +100,7 @@ def _ensure_authz(actor_id: str, external_ref: dict) -> None:
     if not sub or not issuer:
         _fail("Identity external_ref missing sub/issuer")
 
-    resp = httpx.post(
+    resp = _http_post(
         f"{IDENTITY_URL}/api/kb/v1/groups/snapshot",
         json={
             "space_id": SPACE_ID,
@@ -100,7 +117,7 @@ def _ensure_authz(actor_id: str, external_ref: dict) -> None:
     if resp.status_code not in (200, 201):
         _fail(f"Group snapshot failed: {resp.status_code}")
 
-    resp = httpx.post(
+    resp = _http_post(
         f"{IDENTITY_URL}/api/kb/v1/policies/activate",
         json={
             "space_id": SPACE_ID,
@@ -118,7 +135,7 @@ def _ensure_authz(actor_id: str, external_ref: dict) -> None:
 
 
 def _gitlab_project_id() -> str:
-    resp = httpx.get(
+    resp = _http_get(
         f"{GITLAB_URL}/api/v4/projects",
         headers={"Authorization": f"Bearer {GITLAB_TOKEN}"},
         params={"search": SPACE_ID.split("/")[-1]},
@@ -132,7 +149,17 @@ def _gitlab_project_id() -> str:
     _fail(f"GitLab project {SPACE_ID} not found")
 
 
-def _ensure_test_document(project_id: str) -> str:
+def _default_branch(project_id: str) -> str:
+    resp = _http_get(
+        f"{GITLAB_URL}/api/v4/projects/{project_id}",
+        headers={"Authorization": f"Bearer {GITLAB_TOKEN}"},
+        timeout=30.0,
+    )
+    resp.raise_for_status()
+    return resp.json().get("default_branch", "main")
+
+
+def _ensure_test_document(project_id: str, branch: str) -> str:
     timestamp = datetime.now(UTC).isoformat()
     path = f"smoke-e2e-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}.md"
     content = f"""# E2E Smoke Test Document
@@ -152,11 +179,11 @@ This document was created by the end-to-end smoke test at {timestamp}.
 For questions, contact the sales team at sales@example.com.
 """
     encoded = base64.b64encode(content.encode()).decode()
-    resp = httpx.post(
+    resp = _http_post(
         f"{GITLAB_URL}/api/v4/projects/{project_id}/repository/files/{quote(path, safe='')}",
         headers={"Authorization": f"Bearer {GITLAB_TOKEN}"},
         json={
-            "branch": "main",
+            "branch": branch,
             "content": encoded,
             "encoding": "base64",
             "commit_message": f"E2E smoke test document {timestamp}",
@@ -168,9 +195,9 @@ For questions, contact the sales team at sales@example.com.
     return path
 
 
-def _get_head_sha(project_id: str) -> str:
-    resp = httpx.get(
-        f"{GITLAB_URL}/api/v4/projects/{project_id}/repository/commits/main",
+def _get_head_sha(project_id: str, branch: str) -> str:
+    resp = _http_get(
+        f"{GITLAB_URL}/api/v4/projects/{project_id}/repository/commits/{quote(branch, safe='')}",
         headers={"Authorization": f"Bearer {GITLAB_TOKEN}"},
         timeout=30.0,
     )
@@ -179,7 +206,7 @@ def _get_head_sha(project_id: str) -> str:
 
 
 def _build_index(sha: str) -> dict:
-    resp = httpx.post(
+    resp = _http_post(
         f"{RETRIEVAL_URL}/api/kb/v1/index/build",
         json={"space_id": SPACE_ID, "snapshot_sha": sha},
         timeout=120.0,
@@ -192,24 +219,21 @@ def _build_index(sha: str) -> dict:
 
 
 def _current_fence_token() -> int:
-    db_url = os.environ.get("RETRIEVAL_DATABASE_URL", os.environ.get("DATABASE_URL", ""))
-    if not db_url:
-        _fail("RETRIEVAL_DATABASE_URL or DATABASE_URL required for fence token lookup")
-    engine = create_engine(db_url)
-    with engine.connect() as conn:
-        row = conn.execute(
-            text(
-                "SELECT fence_token FROM kb_index.index_pointers "
-                "WHERE space_id = :space_id AND profile = :profile AND active"
-            ),
-            {"space_id": SPACE_ID, "profile": "default"},
-        ).fetchone()
-    return row[0] if row else 0
+    resp = _http_get(
+        f"{RETRIEVAL_URL}/api/kb/v1/index/pointer",
+        params={"space_id": SPACE_ID, "profile": "default"},
+        timeout=30.0,
+    )
+    if resp.status_code == 404:
+        return 0
+    if resp.status_code != 200:
+        _fail(f"Failed to read active pointer: {resp.status_code}")
+    return resp.json()["fence_token"]
 
 
 def _activate_index(generation_id: str) -> dict:
     fence_token = _current_fence_token()
-    resp = httpx.post(
+    resp = _http_post(
         f"{RETRIEVAL_URL}/api/kb/v1/index/activate",
         json={
             "space_id": SPACE_ID,
@@ -227,7 +251,7 @@ def _activate_index(generation_id: str) -> dict:
 
 
 def _search(actor_id: str, query: str) -> dict:
-    resp = httpx.post(
+    resp = _http_post(
         f"{RETRIEVAL_URL}/api/kb/v1/search",
         json={
             "space_id": SPACE_ID,
@@ -259,11 +283,12 @@ def main() -> int:
 
     print("4. Preparing GitLab test document...")
     project_id = _gitlab_project_id()
-    doc_path = _ensure_test_document(project_id)
-    print(f"   created {doc_path}")
+    branch = _default_branch(project_id)
+    doc_path = _ensure_test_document(project_id, branch)
+    print(f"   created {doc_path} on branch {branch}")
 
     print("5. Reading GitLab HEAD...")
-    head_sha = _get_head_sha(project_id)
+    head_sha = _get_head_sha(project_id, branch)
     print(f"   HEAD: {head_sha}")
 
     print("6. Building index...")

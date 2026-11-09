@@ -25,7 +25,7 @@ class ResolveIdentityRequest(BaseModel):
 class ResolveTokenRequest(BaseModel):
     """POST /api/kb/v1/identity/resolve-token"""
 
-    access_token: str
+    access_token: str = Field(..., min_length=1, max_length=8192)
 
 
 class IdentityResponse(BaseModel):

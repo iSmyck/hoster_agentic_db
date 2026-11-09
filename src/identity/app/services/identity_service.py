@@ -56,10 +56,15 @@ def _ref_matches(stored: dict[str, Any], requested: dict[str, Any]) -> bool:
     stored ref must equal the corresponding key in the requested ref. An
     empty requested ref is intentionally a non-match to avoid matching all
     identities when no ref is supplied.
+
+    For group membership, the stored ref must contain both ``issuer`` and
+    ``sub`` so that a bare ``sub`` cannot match across identity providers.
     """
     if not requested:
         return False
     if not stored:
+        return False
+    if "issuer" not in stored or "sub" not in stored:
         return False
     return all(requested.get(k) == v for k, v in stored.items())
 

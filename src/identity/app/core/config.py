@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import AliasChoices, Field, field_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -76,6 +76,20 @@ class Settings(BaseSettings):
         if not isinstance(value, str):
             return str(value)
         return value
+
+    @field_validator("IDENTITY_ADAPTER")
+    @classmethod
+    def _valid_identity_adapter(cls, value: str) -> str:
+        allowed = {"stub", "keycloak"}
+        if value.lower() not in allowed:
+            raise ValueError(f"IDENTITY_ADAPTER must be one of {allowed!r}")
+        return value.lower()
+
+    @model_validator(mode="after")
+    def _keycloak_secret_required(self) -> Settings:
+        if self.IDENTITY_ADAPTER == "keycloak" and not self.KEYCLOAK_CLIENT_SECRET:
+            raise ValueError("KEYCLOAK_CLIENT_SECRET is required when IDENTITY_ADAPTER=keycloak")
+        return self
 
 
 settings = Settings()

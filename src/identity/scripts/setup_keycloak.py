@@ -19,8 +19,6 @@ import httpx
 DEFAULT_KEYCLOAK_URL = "http://localhost:8082"
 DEFAULT_REALM = "corp-kb"
 DEFAULT_CLIENT_ID = "identity-service"
-DEFAULT_ADMIN_USER = "admin"
-DEFAULT_ADMIN_PASSWORD = "admin"
 
 
 def _admin_token(keycloak_url: str, admin_user: str, admin_password: str) -> str:
@@ -183,10 +181,17 @@ def main() -> int:
     keycloak_url = os.environ.get("KEYCLOAK_URL", DEFAULT_KEYCLOAK_URL).rstrip("/")
     realm = os.environ.get("KEYCLOAK_REALM", DEFAULT_REALM)
     client_id = os.environ.get("KEYCLOAK_CLIENT_ID", DEFAULT_CLIENT_ID)
-    admin_user = os.environ.get("KEYCLOAK_ADMIN_USER", DEFAULT_ADMIN_USER)
-    admin_password = os.environ.get("KEYCLOAK_ADMIN_PASSWORD", DEFAULT_ADMIN_PASSWORD)
+    admin_user = os.environ.get("KEYCLOAK_ADMIN_USER", "")
+    admin_password = os.environ.get("KEYCLOAK_ADMIN_PASSWORD", "")
     test_username = os.environ.get("KEYCLOAK_TEST_USERNAME", "testuser")
     test_password = os.environ.get("KEYCLOAK_TEST_PASSWORD", "testpass")
+
+    if not admin_user or not admin_password:
+        print(
+            "KEYCLOAK_ADMIN_USER and KEYCLOAK_ADMIN_PASSWORD must be set",
+            file=sys.stderr,
+        )
+        return 1
 
     print(f"Keycloak admin: {keycloak_url}")
     token = _admin_token(keycloak_url, admin_user, admin_password)
@@ -207,7 +212,9 @@ def main() -> int:
 
     secret = client.get("secret")
     if secret:
-        print(f"\nKEYCLOAK_CLIENT_SECRET={secret}")
+        print("\n# Client secret created.")
+        print("# Retrieve it from the Keycloak admin console or read the client")
+        print("# via the admin API; it is not printed here to avoid leaking it.")
     else:
         print("\n# No client secret returned; Keycloak may require re-reading the client.")
 
