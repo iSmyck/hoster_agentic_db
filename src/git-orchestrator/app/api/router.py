@@ -120,10 +120,21 @@ def get_tree(
         entries = git_orchestrator.get_tree(db, adapter, request.space_id, request.sha)
     except (GitLabAdapterError, httpx.HTTPError) as exc:
         raise _handle_adapter_error(exc) from exc
+    # GitLab returns object hashes in the ``id`` field; expose them as ``sha``
+    # to match the internal contract.
+    normalized = [
+        {
+            "path": entry.get("path", ""),
+            "type": entry.get("type", ""),
+            "sha": entry.get("sha") or entry.get("id", ""),
+            "mode": entry.get("mode"),
+        }
+        for entry in entries
+    ]
     return {
         "space_id": request.space_id,
         "sha": request.sha,
-        "entries": entries,
+        "entries": normalized,
     }
 
 

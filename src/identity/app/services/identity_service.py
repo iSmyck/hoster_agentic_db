@@ -52,12 +52,16 @@ def _normalize_ref(external_ref: Any) -> dict[str, Any]:
 def _ref_matches(stored: dict[str, Any], requested: dict[str, Any]) -> bool:
     """Check whether requested ref matches a stored ref.
 
-    An empty requested ref is intentionally a non-match to avoid matching all
+    The stored ref is treated as a subset filter: every key present in the
+    stored ref must equal the corresponding key in the requested ref. An
+    empty requested ref is intentionally a non-match to avoid matching all
     identities when no ref is supplied.
     """
     if not requested:
         return False
-    return all(stored.get(k) == v for k, v in requested.items())
+    if not stored:
+        return False
+    return all(requested.get(k) == v for k, v in stored.items())
 
 
 _VALID_ACTOR_TYPES = {"human", "agent", "connector", "internal_ci"}
