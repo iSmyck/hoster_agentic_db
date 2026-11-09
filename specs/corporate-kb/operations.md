@@ -3,7 +3,7 @@ name: Corporate KB operations design
 type: deployment-and-operations-runbooks
 status: design_not_executed
 created: '2026-11-06'
-updated: '2026-11-08'
+updated: '2026-11-09'
 specification_version: '1.3'
 audience: Команда архитектуры, эксплуатации, security, QA и владельцы клиентского контура
 ---
@@ -29,7 +29,7 @@ Pinned baseline записан в [baseline.md](baseline.md) (**DONE — G0 APPR
 - **Cutover settle proof:** активация пользователей/merge только после negative push proof (GitLab protection propagation race наблюдался в sandbox).
 - **Webhooks:** local-URL relaxation — sandbox-only; production требует reachable allowlisted endpoints и secret validation.
 
-Нормативный порядок: [Architecture Spine](architecture-spine.md) AD-1–AD-16 → [spec.md](spec.md) R01–R18/I01–I14 → [ADR](adr/README.md) → [architecture.md](architecture.md), [integration.md](integration.md), [database.md](database.md), [components](components/), [contracts](contracts/README.md). Canonical↔projection mappings и DESIGN_NOT_EXECUTED consumer vectors: [projection-mapping.md](contracts/projection-mapping.md), [t01-contract-tests.yaml](contracts/t01-contract-tests.yaml). Контентный контур: [content-standard.md](content-standard.md). Сопутствующие проверки: [test-plan.md](test-plan.md), полный каталог A01–A36. Phase/evidence rules: [AGENTS.md](../../AGENTS.md) и [tasks.md](tasks.md).
+Нормативный порядок: [Architecture Spine](architecture-spine.md) AD-1–AD-17 → [spec.md](spec.md) R01–R18/I01–I14 → [ADR](adr/README.md) → [architecture.md](architecture.md), [integration.md](integration.md), [database.md](database.md), [components](components/), [contracts](contracts/README.md). Canonical↔projection mappings и DESIGN_NOT_EXECUTED consumer vectors: [projection-mapping.md](contracts/projection-mapping.md), [t01-contract-tests.yaml](contracts/t01-contract-tests.yaml). Контентный контур: [content-standard.md](content-standard.md). Сопутствующие проверки: [test-plan.md](test-plan.md), полный каталог A01–A36. Phase/evidence rules: [AGENTS.md](../../AGENTS.md) и [tasks.md](tasks.md).
 
 Обозначения:
 
@@ -54,12 +54,15 @@ Pinned baseline записан в [baseline.md](baseline.md) (**DONE — G0 APPR
 - backups, Git mirrors, MR metadata exports, manifests и restore environments;
 - network perimeter и egress allowlist.
 
+GitLab является отдельным platform data service вне клиентского application namespace и его release lifecycle по [ADR-17](adr/ADR-017-gitlab-deployment-topology.md). Tenant profile выбирает `shared` (общий hardened instance, приватная group `kb-<client>/`) или `dedicated` (отдельный instance из того же pinned baseline и versioned configuration template). Application install/upgrade/rollback/uninstall не создаёт и не удаляет GitLab workloads/PVC. В обоих режимах managed credentials, mirrors, metadata/assets exports, required durable operational backups и restore environments разделяются по клиенту; instance-wide backup не заменяет per-client restore. Общий configuration template не содержит общие секреты.
+
 Каноном остаются GitLab/MR/protected tags/immutable objects и согласованные policies. PostgreSQL, CI/index, caches и vector backend не становятся общим canonical store. Между клиентами запрещены shared `kb_*` instance, mixed mirror/export/backup, общий grant context и скрытый shared credential.
 
 ### 2.2. Логические компоненты и права
 
 | Компонент | Развёртывание и данные | Разрешено | Запрещено |
 | --- | --- | --- | --- |
+| GitLab platform service | Вне клиентского application namespace; `shared` group/client или `dedicated` instance по ADR-17; независимые persistent state и per-client backups | Canonical repositories/MR/notes/tags/policies, scoped client service identities | Размещение в application release lifecycle, cross-client credentials/mixed backups, client-managed privileged Owner в shared managed profile |
 | Open WebUI pinned fork | Reusable core + small versioned feature seam; personal Notes/ordinary chats отдельно от managed KB | UI, sessions, managed upstream identities/grants, model connections, bounded calls | GitLab merge, `kb_*` writes, неограниченные tools, скрытый provider fallback |
 | GO proposal/read | Отдельная service capability и credential | Exact canonical reads, branches, MRs, ProposalRecords, DecisionRecord notes/tags, drafts | Merge permission для proposal identity; direct `kb_authz`/`kb_index` writes |
 | GO merge/recovery | Отдельная merge service identity; durable per-target barriers | Human-decision apply, merge-only-GO, fencing/reconciliation, `kb_ops` | Agent/connector/CI use; direct human merge; direct `kb_authz`/`kb_index` writes |

@@ -2,7 +2,7 @@
 
 **Статус:** DESIGN / PROPOSED после T00 DONE и G0 APPROVED. Контракты не являются production approval или implementation/integration PASS и не подтверждают невыполненные возможности Open WebUI, GitLab, CI, IdP, object storage или hoster.ai studio.
 
-Главный authority: [ARCHITECTURE-SPINE.md](../architecture-spine.md), AD-1–AD-16. Требования R01–R18 и I01–I14 из [spec.md](../spec.md) имеют приоритет. Общий integration narrative: [integration.md](../integration.md).
+Главный authority: [ARCHITECTURE-SPINE.md](../architecture-spine.md), AD-1–AD-17. Требования R01–R18 и I01–I14 из [spec.md](../spec.md) имеют приоритет. Общий integration narrative: [integration.md](../integration.md).
 
 ## 1. Правила чтения
 

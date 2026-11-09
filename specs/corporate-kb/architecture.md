@@ -3,7 +3,7 @@ name: Corporate Agentic Knowledge Platform
 type: component-solution-design
 status: baseline_verified_g0_approved
 created: '2026-11-06'
-updated: '2026-11-08'
+updated: '2026-11-09'
 audience: Команда разработки для G0 и последующей декомпозиции
 ---
 
@@ -13,18 +13,18 @@ audience: Команда разработки для G0 и последующе�
 
 Документ переводит обязательные инварианты Architecture Spine в компонентный engineering design: границы ответственности, контракты, владение состоянием, сквозные протоколы, recovery и критерии проверки. Он предназначен для G0 и последующей декомпозиции в stories, но не разрешает реализацию, production rollout, миграции или выбор непроверенных upstream-возможностей.
 
-**Статус:** T00 DONE, G0 APPROVED, дополнен T00 evidence 2026-11-08. AD-1–AD-16 приняты и не переоткрываются. Pinned baseline выбран и runtime-проверен на synthetic sandboxes: Open WebUI `v0.13.0` (`c38885a1a737da4968f157092f304f3b5481d0bf`), GitLab CE `19.5.3-ce.0`, PostgreSQL `18.6` + pgvector `0.8.7`, Keycloak `26.8.2` (sandbox IdP) — [baseline.md](baseline.md), [evidence/t00](evidence/t00/README.md). Это **не production readiness**: deferred gates T04 browser editor, T13/T16 object-store ACL, T11 hoster inputs, production AD/live-SLO и legal clearance перед managed distribution остаются обязательными. Owner decision record — [g0-review.md](g0-review.md) (APPROVED).
+**Статус:** T00 DONE, G0 APPROVED, дополнен T00 evidence 2026-11-08. AD-1–AD-16 приняты и не переоткрываются; AD-17 owner-approved отдельно 2026-11-09 как deployment addendum. Pinned baseline выбран и runtime-проверен на synthetic sandboxes: Open WebUI `v0.13.0` (`c38885a1a737da4968f157092f304f3b5481d0bf`), GitLab CE `19.5.3-ce.0`, PostgreSQL `18.6` + pgvector `0.8.7`, Keycloak `26.8.2` (sandbox IdP) — [baseline.md](baseline.md), [evidence/t00](evidence/t00/README.md). Это **не production readiness**: deferred gates T04 browser editor, T13/T16 object-store ACL, T11 hoster inputs, production AD/live-SLO и legal clearance перед managed distribution остаются обязательными. Owner decision record — [g0-review.md](g0-review.md) (APPROVED).
 
 Используемые обозначения:
 
-- **REQUIREMENT** — R01–R18, I01–I14 и принятые AD-1–AD-16; обязательно.
+- **REQUIREMENT** — R01–R18, I01–I14 и принятые AD-1–AD-17; обязательно.
 - **DESIGN** — уточнение реализации в этом документе, не заменяющее требование.
 - **UNKNOWN** — должно быть подтверждено в T00 или соответствующей задаче.
 - **DEFERRED** — не входит в MVP и требует отдельного решения владельца/ADR.
 
 ### 1.1. Источники и приоритет
 
-1. Главный authority: [Architecture Spine](architecture-spine.md), AD-1–AD-16.
+1. Главный authority: [Architecture Spine](architecture-spine.md), AD-1–AD-17.
 2. [Платформенная спецификация](spec.md): R01–R18, I01–I14, acceptance и backlog.
 3. [Content standard](content-standard.md): ознакомительный контекст ETL, первичной сборки, DocOps и медиа.
 4. [AGENTS.md](../../AGENTS.md): текущий phase gate и ограничения безопасности.
@@ -370,6 +370,8 @@ Incremental run публикуется только если его полный
 
 ## 9. Deployment и environments
 
+GitLab развёртывается как отдельный platform data service **вне клиентского application namespace и его release lifecycle** по [ADR-17](adr/ADR-017-gitlab-deployment-topology.md). Tenant profile выбирает `shared` или `dedicated`: Standard использует общий hardened instance с приватной group на клиента, а Isolated/Dedicated — отдельный instance из того же pinned baseline и versioned configuration template. В обоих режимах repositories=Spaces, managed credentials и backup/restore имеют per-client perimeter; общий configuration template не содержит общие секреты. Application release не создаёт и не удаляет GitLab workloads/PVC.
+
 | Environment | Назначение | Обязательные ограничения |
 | --- | --- | --- |
 | Local/T00 | Upstream audit, synthetic fixtures, capability matrix | Без клиентских документов, реальных secrets и production migrations |
@@ -431,7 +433,7 @@ LLM judge не является единственным арбитром кач
 
 ## 12. AD/ADR и document map
 
-### 12.1. Прослеживаемость AD-1–AD-16
+### 12.1. Прослеживаемость AD-1–AD-17
 
 | AD | Обязательное следствие в design | Основные компоненты |
 | --- | --- | --- |
@@ -451,10 +453,11 @@ LLM judge не является единственным арбитром кач
 | AD-14 | Strict/pii_permitted, provider inventory, approved inference | Ingestion, Open WebUI, Index |
 | AD-15 | Versioned attachments с Space ACL и media verification | Ingestion, Index, GO |
 | AD-16 | Воспроизводимые release evidence и deterministic security gates | Все |
+| AD-17 | GitLab вне application namespace; Shared/Dedicated по tenant profile; per-client credentials/backups | Deployment, GO, GitLab, operations |
 
 ### 12.2. ADR map
 
-[ADR index](adr/README.md) и файлы ADR-03–ADR-16 существуют. Их Accepted/Proposed статусы относятся к отдельным решениям и не образуют общий owner G0 approval. T00 evidence записано в [baseline.md](baseline.md) и [evidence/t00](evidence/t00/README.md); editor direction resolved как owner-approved TipTap adapter (G0-D8), оставшиеся UNKNOWN относятся к owner thresholds, hoster.ai endpoints и license legal review; CI Runner exact-SHA/no-write — PASS 7/7.
+[ADR index](adr/README.md) и файлы ADR-03–ADR-17 существуют. Их Accepted/Proposed статусы относятся к отдельным решениям и не образуют общий owner G0 approval. ADR-17 принят владельцем отдельно 2026-11-09 и не меняет исторический G0 record. T00 evidence записано в [baseline.md](baseline.md) и [evidence/t00](evidence/t00/README.md); editor direction resolved как owner-approved TipTap adapter (G0-D8), оставшиеся UNKNOWN относятся к owner thresholds, hoster.ai endpoints и license legal review; CI Runner exact-SHA/no-write — PASS 7/7.
 
 | ADR | Соотношение с этим design | Фактический статус / T00 evidence |
 | --- | --- | --- |
@@ -472,6 +475,7 @@ LLM judge не является единственным арбитром кач
 | [ADR-14](adr/ADR-014-canonical-decision-record.md) DecisionRecord | Note+tag, canonical hashes и merge linkage; AD-1/AD-7 | **Accepted** during architecture coaching; note+tag/hash/invalid-after-mutation PASS synthetic |
 | [ADR-15](adr/ADR-015-postgresql-schema-ownership.md) Schema ownership | Single-writer schemas и full-perimeter associations; AD-8 | **Accepted** during architecture coaching; external migrator PASS (head `e42c8f710a36`), runtime DDL denial PASS; `kb_*` schemas не созданы |
 | [ADR-16](adr/ADR-016-repository-per-space.md) Repository=Space | Единый ACL/history/index/export perimeter; AD-4 | **Accepted** during architecture coaching; cross-Space isolation PASS synthetic; repository provisioning proposal — owner decision |
+| [ADR-17](adr/ADR-017-gitlab-deployment-topology.md) GitLab deployment topology | GitLab вне application namespace; Shared/Dedicated, per-client credentials/backups; AD-17 | **Accepted by project owner 2026-11-09**; production instances, shared two-client isolation, dedicated deployment и restore drills — BLOCKED до real evidence |
 | ADR-01/02 v1.1 | Сняты ADR-08; Notes/DB collab не канон | **Withdrawn**; не реализовывать |
 
 ### 12.3. Document map

@@ -13,7 +13,7 @@ audience: Команда архитектуры, разработки, QA и э�
 
 **DESIGN DRAFT для G0, не миграция и не production approval.** Документ задаёт логический физический дизайн проекций и операционного состояния. Он не подтверждает возможности конкретных версий Open WebUI, GitLab, PostgreSQL или retrieval backend и не разрешает создавать production corpus, выполнять migrations или открывать egress.
 
-Источники по приоритету: Architecture Spine AD-1–AD-16, R01–R18 и I01–I14 из `spec.md`, затем `architecture.md`, component designs и ADR-03–ADR-16. Обязательные решения:
+Источники по приоритету: Architecture Spine AD-1–AD-17, R01–R18 и I01–I14 из `spec.md`, затем `architecture.md`, component designs и ADR-03–ADR-17. Обязательные решения:
 
 1. **Канон — GitLab.** Markdown + front matter и commit SHA; MR и append-only ProposalRecord; canonical DecisionRecord JSON в structured MR note и protected annotated tag `kb-decisions/<decision_id>` на `proposal_sha`; CutoverRecord и versioned access/approval policies; immutable/versioned object storage для originals/large assets. Merge commit, его parents и trailers проверяются в GitLab.
 2. **PostgreSQL не участвует в canonical write path.** Здесь нет canonical-таблиц документов, revisions, proposals, decisions, policies или assets. Все перечисленные таблицы — rebuildable projections либо operational safety/journal state. Поле `canonical_source` обязательно для каждой таблицы и не означает, что строка БД сама стала каноном.

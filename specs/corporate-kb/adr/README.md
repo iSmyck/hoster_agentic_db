@@ -6,7 +6,7 @@
 
 Поле `access` во front matter не является самостоятельным источником авторизации; CODEOWNERS относится только к инженерному ownership/review; после cutover auto-merge запрещён, включая source-managed и детерминированную синхронизацию. Эти правила не смешиваются с более ранними информационными формулировками стандарта.
 
-Канонический ID записывается как `ADR-03`…`ADR-16`; ноль в именах файлов `ADR-003`…`ADR-016` является только форматом имени. Ссылки в тексте используют канонический ID.
+Канонический ID записывается как `ADR-03`…`ADR-17`; ноль в именах файлов `ADR-003`…`ADR-017` является только форматом имени. Ссылки в тексте используют канонический ID.
 
 ## Индекс
 
@@ -28,6 +28,7 @@
 | [ADR-14](ADR-014-canonical-decision-record.md) | Canonical DecisionRecord | **Accepted during architecture coaching 2026-11-06; реализация зависит от результатов T00** | 2026-11-06 |
 | [ADR-15](ADR-015-postgresql-schema-ownership.md) | PostgreSQL schema ownership | **Accepted during architecture coaching 2026-11-06; реализация зависит от результатов T00** | 2026-11-06 |
 | [ADR-16](ADR-016-repository-per-space.md) | One repository per Space | **Accepted during architecture coaching 2026-11-06; реализация зависит от результатов T00** | 2026-11-06 |
+| [ADR-17](ADR-017-gitlab-deployment-topology.md) | GitLab deployment topology and tenant profiles | **Accepted by project owner**; GitLab вне application namespace, `shared`/`dedicated` по tenant profile; production gates открыты | 2026-11-09 |
 
 ## Границы статусов
 

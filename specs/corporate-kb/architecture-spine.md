@@ -7,7 +7,7 @@ paradigm: 'Git-native document lifecycle, hexagonal ports-and-adapters, rebuilda
 scope: 'Modified components, data ownership, database and integration contracts'
 status: final
 created: '2026-11-06'
-updated: '2026-11-06'
+updated: '2026-11-09'
 binds: [R01, R02, R03, R04, R05, R06, R07, R08, R09, R10, R11, R12, R13, R14, R15, R16, R17, R18]
 sources:
   - specs/corporate-kb/spec.md
@@ -129,6 +129,12 @@ GitLab владеет документным lifecycle. Open WebUI остаёт�
 - **Prevents:** DONE по UI smoke и подмену детерминированной безопасности модельной оценкой.
 - **Rule:** Каждый release candidate фиксирует corpus SHA, code/config/model/tool-schema versions, dataset и sanitized results. Negative merge/push/ACL/disclosure tests детерминированы; golden set оценивает retrieval, factual support, citation correctness и abstention отдельно. LLM judge не единственный арбитр. Metrics включают TTFT/full response, Git/merge latency, CI lag, HEAD/index drift, restore и upgrade regression.
 
+### AD-17 — GitLab вне application namespace, профили Shared/Dedicated [ADOPTED]
+
+- **Binds:** R05, R14, R17, R18; tenant profile, GitLab provisioning, GO credentials, backup/restore.
+- **Prevents:** связывание lifecycle канонических данных с application namespace, cross-client credentials/backups и несовместимые клиентские deployment-схемы.
+- **Rule:** GitLab — отдельный platform data service вне клиентского application namespace и его release lifecycle. Tenant profile выбирает `shared` или `dedicated`. Shared использует общий hardened instance с приватной group на клиента и repository=Space, но не общие canonical repositories, managed credentials или backups. Dedicated использует тот же pinned baseline и versioned configuration template с отдельными instance, endpoints, secrets, storage, network и backups без client code branch. Общий template не означает общие секреты. Shared GitLab — общий trust/failure domain с restricted admin governance, audit и reconciliation; per-client export/restore обязателен в обоих профилях. Конкретные production instances и rollout требуют отдельных gates и owner authorization.
+
 ## Consistency Conventions
 
 | Concern | Convention |
@@ -201,7 +207,7 @@ flowchart LR
 | R05, R16: identity and authorization | Identity/AuthZ adapter + GO policy enforcement | AD-4, AD-5, AD-6, AD-12 |
 | R06–R10: proposals, review, merge, restore | GO + GitLab + review UI | AD-1, AD-3, AD-5, AD-6, AD-7, AD-13 |
 | R12–R13: import and external updates | Source adapters + staging + GO | AD-3, AD-10, AD-14, AD-15 |
-| R14, R17: portability and packaging | Deployment configuration + Git/GitLab/object backup | AD-7, AD-11 |
+| R14, R17: portability and packaging | Deployment configuration + Git/GitLab/object backup | AD-7, AD-11, AD-17 |
 | R15: approved inference | Open WebUI model integration + provider adapters | AD-5, AD-11, AD-14 |
 | R18: regression and operations evidence | CI, test harness, reconciliation, metrics | AD-3, AD-7, AD-9, AD-11, AD-16 |
 

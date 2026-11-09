@@ -2,7 +2,7 @@
 
 **Статус:** DESIGN DRAFT / PROPOSED для G0. Документ задаёт сквозные integration contracts и обязательное поведение собственных компонентов. Он не разрешает implementation, production migration, corpus load, deploy или включение egress и не является security/design approval владельца.
 
-**Приоритет:** [ARCHITECTURE-SPINE.md](architecture-spine.md), AD-1–AD-16 → [spec.md](spec.md), R01–R18 и I01–I14 → принятые [ADR](adr/README.md) → [architecture.md](architecture.md) и component designs. При расхождении применяется более высокий приоритет, а не молчаливое объединение правил.
+**Приоритет:** [ARCHITECTURE-SPINE.md](architecture-spine.md), AD-1–AD-17 → [spec.md](spec.md), R01–R18 и I01–I14 → принятые [ADR](adr/README.md) → [architecture.md](architecture.md) и component designs. При расхождении применяется более высокий приоритет, а не молчаливое объединение правил.
 
 **UNKNOWN до T00:** Open WebUI commit/tag и code paths, GitLab version/edition и API semantics, toolchain, session/CSRF/token mechanisms, webhook headers, CI transport, Git object format, editor, retrieval engine, model IDs/dimensions, source connector, object-store layout, numeric production limits и остальные SLO. Все routes ниже — **PROPOSED собственные GO contracts**, не Open WebUI upstream routes. Отсутствие реальной интеграционной проверки обозначается BLOCKED, не PASS.
 

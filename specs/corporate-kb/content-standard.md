@@ -3,7 +3,7 @@
 Версия 2.3, 6 ноября 2026. Внутренний стандарт ИИ-команды hoster.by.
 Заменяет черновик от 4 ноября 2026 (изменения — в changelog в конце).
 
-Связанные документы: [`spec.md`](spec.md) — спецификация платформы 1.3 (Open WebUI + GitLab), [`contracts/front-matter.schema.json`](contracts/front-matter.schema.json) — canonical front matter, [`contracts/decision-record.schema.json`](contracts/decision-record.schema.json) — протокол accept/reject/cancel, [`adr/README.md`](adr/README.md) — обязательные ADR-03–ADR-16. Этот стандарт описывает **контентные процессы** вокруг платформы: как готовится корпус и как он остаётся актуальным. ETL-методика сохранена; нормативные границы синхронизированы с design package без разрешения implementation, production corpus load или cutover.
+Связанные документы: [`spec.md`](spec.md) — спецификация платформы 1.3 (Open WebUI + GitLab), [`contracts/front-matter.schema.json`](contracts/front-matter.schema.json) — canonical front matter, [`contracts/decision-record.schema.json`](contracts/decision-record.schema.json) — протокол accept/reject/cancel, [`adr/README.md`](adr/README.md) — обязательные ADR-03–ADR-17. Этот стандарт описывает **контентные процессы** вокруг платформы: как готовится корпус и как он остаётся актуальным. ETL-методика сохранена; нормативные границы синхронизированы с design package без разрешения implementation, production corpus load или cutover.
 
 ## Коротко о стандарте
 
