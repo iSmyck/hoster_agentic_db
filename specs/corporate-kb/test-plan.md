@@ -14,7 +14,7 @@ audience: Команда архитектуры, разработки, QA, secur
 
 **Все сценарии имеют статус DESIGN NOT EXECUTED.** Этот документ планирует проверки и evidence, но не сообщает о выполненных тестах, интеграциях, restore drills, operational owner acceptance или production readiness. Отдельный T00/G0 owner design approval получен и не меняет статус сценариев. Он не разрешает implementation, migrations, production corpus load, deploy, destructive cleanup, платные внешние вызовы или включение egress.
 
-Приоритет: [Architecture Spine](architecture-spine.md) AD-1–AD-16 → [spec.md](spec.md) v1.3, R01–R18 и I01–I14 → [ADR](adr/README.md) → [architecture.md](architecture.md), [integration.md](integration.md), [database.md](database.md), [components](components/) и [contracts](contracts/README.md). Canonical↔projection rules и обязательный DESIGN_NOT_EXECUTED vector catalog: [projection-mapping.md](contracts/projection-mapping.md) и [t01-contract-tests.yaml](contracts/t01-contract-tests.yaml). Единственный correction-task contract для E04.7/T07b: [docops-correction-task-v1](contracts/docops-correction-task.schema.json) + [API/lifecycle](contracts/docops-correction-api.md). Дополнительный контекст импорта и медиа: [content-standard.md](content-standard.md). Phase gate и evidence rules: [AGENTS.md](../../AGENTS.md) и [tasks.md](tasks.md).
+Приоритет: [Architecture Spine](architecture-spine.md) AD-1–AD-17 → [spec.md](spec.md) v1.3, R01–R18 и I01–I14 → [ADR](adr/README.md) → [architecture.md](architecture.md), [integration.md](integration.md), [database.md](database.md), [components](components/) и [contracts](contracts/README.md). Canonical↔projection rules и обязательный DESIGN_NOT_EXECUTED vector catalog: [projection-mapping.md](contracts/projection-mapping.md) и [t01-contract-tests.yaml](contracts/t01-contract-tests.yaml). Единственный correction-task contract для E04.7/T07b: [docops-correction-task-v1](contracts/docops-correction-task.schema.json) + [API/lifecycle](contracts/docops-correction-api.md). Дополнительный контекст импорта и медиа: [content-standard.md](content-standard.md). Phase gate и evidence rules: [AGENTS.md](../../AGENTS.md) и [tasks.md](tasks.md).
 
 Обозначения:
 
@@ -351,11 +351,11 @@ Supporting ownership: A01,A07,A22,A26,A27,A36; новые A IDs не созда�
 
 ### A19 — Второй клиент без code branch
 
-- **Цель:** доказать config-only dedicated delivery и полную изоляцию клиентов.
-- **Предусловия:** один reusable core artifact; `fixture-client-b` config/repositories; отдельные DB/index/objects/secrets/backups/egress.
-- **Ключевые шаги:** развернуть second synthetic instance без изменения core; выполнить smoke/cutover/export/backup; попытаться использовать credentials/cache/grants/IDs первого клиента; сравнить code/SBOM/seam registry и config deltas.
-- **Ожидаемый результат:** нет клиентской code branch и shared canonical store; каждый клиент имеет independent repositories=Spaces, PostgreSQL/index/objects/secrets/backups/egress; cross-client access denied; differences ограничены versioned config/adapters.
-- **Evidence:** deployment manifests без секретов, code/config diff, resource/credential inventory, cross-client denial, isolated backup/export reports.
+- **Цель:** доказать config-only delivery и полную изоляцию клиентов для ADR-17 `shared` и `dedicated` GitLab profiles.
+- **Предусловия:** один reusable core artifact; `fixture-client-b` config/repositories; отдельные DB/index/objects/secrets/client backup packages/egress; общий hardened GitLab с двумя synthetic client groups для `shared` и отдельный synthetic GitLab instance для `dedicated`.
+- **Ключевые шаги:** развернуть second synthetic application instance без изменения core в обоих профилях; проверить отсутствие GitLab resources/RBAC ownership в application release; выполнить smoke/cutover/export/backup и Shared coordinated-upgrade rehearsal; попытаться использовать credentials/cache/grants/IDs первого клиента; сравнить code/SBOM/seam registry и config deltas.
+- **Ожидаемый результат:** нет клиентской code branch, shared canonical repository/history, cross-client credentials или client backup packages; каждый клиент имеет independent repositories=Spaces, PostgreSQL/index/objects/secrets/backups/egress; managed credentials ограничены `(tenant_id,space_id,repository_id,capability)`; `dedicated` дополнительно имеет отдельный GitLab instance; cross-client и same-client wrong-Space access denied; backup/restore независим per Space; differences ограничены versioned config/adapters.
+- **Evidence:** deployment manifests/RBAC без GitLab ownership и секретов, code/config diff, instance/profile/resource/credential inventory, cross-client denial, isolated backup/export reports, Shared upgrade coordination evidence.
 - **Требования/компоненты:** R17; deployment/configuration, Open WebUI, GO, Identity, CI/index, object/backup perimeter. Levels: integration, security, restore. Gate: G3.
 
 ### A20 — Personal Notes и ordinary chats regression

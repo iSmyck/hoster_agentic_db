@@ -1,7 +1,7 @@
 # ADR-07 — Client packaging and license
 
 **ID/Title:** ADR-07 / Клиентская упаковка, изоляция deployment и лицензионные ограничения  
-**Status:** **Proposed** до T00 baseline, GitLab edition review и юридической license/SBOM проверки; не разрешает commercial distribution или production rollout.  
+**Status:** **Proposed** до T00 baseline, GitLab edition review и юридической license/SBOM проверки; не разрешает commercial distribution или production rollout. GitLab placement и Shared/Dedicated exception уточнены отдельным owner-approved ADR-17 от 2026-11-09.
 **Date:** 2026-11-06  
 **Requirements/AD links:** R01, R05, R14–R18; I02–I04, I09; [ARCHITECTURE-SPINE.md](../architecture-spine.md): AD-2, AD-4, AD-11, AD-12, AD-14; [spec.md](../spec.md): T00, T11, T18.
 
@@ -14,21 +14,21 @@ Open WebUI license не является обычной MIT; branding/notices н
 ## Decision
 
 1. Поставлять **один reusable core + versioned configuration/adapters** на dedicated client deployment. Клиентские code branches запрещены; изменения общего ядра проходят product review.
-2. Каждый клиент получает независимые GitLab repositories по ADR-16, configuration, PostgreSQL/index, object storage, secrets, backups и approved egress. Cross-client credentials/data/cache не создаются.
+2. Каждый клиент получает независимые GitLab repositories по ADR-16, configuration, PostgreSQL/index, object storage, secrets, client backup packages и approved egress. Cross-client credentials/data/cache не создаются. Размещение GitLab instance определяется ADR-17: Shared hosting допускается только с per-client groups/repositories, credentials и backup/restore; это не общий application/PostgreSQL/index/object/secrets data plane.
 3. Open WebUI остаётся минимальным fork. Для каждого изменения ведётся **seam registry**: code reference, назначение, upstream dependency, tests, owner и upgrade risk. Managed KB включается feature flag; personal Notes и обычные чаты сохраняются.
 4. Identity подключается конфигурацией LDAP/OIDC по ADR-10; endpoint/provider/model parameters, data profile и source adapters — deployment configuration. Конкретные URLs, model IDs, dimensions и editor не фиксируются этим ADR.
 5. **Branding и notices выбранного Open WebUI baseline сохраняются.** White-label/rebrand, изменение notices или распространение иного пакета требуют license review и отдельного решения владельца; автоматический rebrand не входит в объём.
 6. До коммерческого распространения выполняется license/SBOM review core, fork seams, plugins, models, extraction/OCR assets и transitive dependencies. Утверждение «бесплатный стек» не используется: GitLab edition, инфраструктура, inference, хранение и сопровождение учитываются отдельно.
 7. T00 фиксирует Open WebUI commit/tag и GitLab version/edition. До этого capabilities не считаются подтверждёнными. Недостаток необходимой GitLab capability останавливает G0/design для license/design decision; обходной непроверенный enforcement не объявляется эквивалентом.
 8. Upgrade package включает pinned baselines, migration/rollback runbook, regression suite, проверку branding/notices, seam registry и повторный license/SBOM review. Upstream migrations остаются upstream-owned по ADR-15.
-9. Поставка и rollout выполняются только после соответствующих gates и отдельных owner approvals; этот ADR не выбирает deployment toolchain.
+9. Поставка и rollout выполняются только после соответствующих gates и отдельных owner approvals; этот ADR не выбирает deployment toolchain. Kubernetes application namespace и размещение GitLab вне его lifecycle для соответствующего deployment profile зафиксированы отдельно ADR-17 и не выбирают конкретный packaging/orchestration tool.
 
 ## Alternatives and tradeoffs
 
 | Альтернатива | Компромисс | Результат |
 |---|---|---|
 | Отдельный fork на клиента | Быстрая локальная кастомизация, но невоспроизводимые upgrades и поддержка | Запрещено как default |
-| Единый shared deployment/data plane | Меньше instances, но смешивает клиентские данные/secrets и усложняет изоляцию | Отклонено для клиентской поставки |
+| Единый shared application/PostgreSQL/index/object/secrets data plane | Меньше instances, но смешивает клиентские данные/secrets и усложняет изоляцию | Отклонено; Shared GitLab hosting допускается только в границах ADR-17 и не создаёт общий client data plane |
 | Полный rebrand без legal review | Коммерчески удобно, но риск нарушения license/notices | Не разрешено |
 | Зафиксировать предполагаемую GitLab edition сейчас | Упрощает смету, но опирается на непроверенные capabilities | Отложено до T00 |
 | Переписать upstream auth/chat/RAG под packaging | Контроль кода, но большой fork и upgrade cost | Отклонено; reuse и seams |
@@ -67,4 +67,4 @@ Open WebUI license не является обычной MIT; branding/notices н
 - LDAP/OIDC group mapping, data profiles `strict`/`pii_permitted`, provider/egress allowlist.
 - Independent clone/manifest/backup package; PostgreSQL writer/role matrix.
 - Pinned dependency/SBOM/license inventory и upgrade/rollback runbook.
-- [ADR-04](ADR-004-execution-capability-boundary.md), [ADR-06](ADR-006-portability-retention.md), [ADR-10](ADR-010-ldap-oidc-identity.md), [ADR-15](ADR-015-postgresql-schema-ownership.md), [ADR-16](ADR-016-repository-per-space.md).
+- [ADR-04](ADR-004-execution-capability-boundary.md), [ADR-06](ADR-006-portability-retention.md), [ADR-10](ADR-010-ldap-oidc-identity.md), [ADR-15](ADR-015-postgresql-schema-ownership.md), [ADR-16](ADR-016-repository-per-space.md), [ADR-17](ADR-017-gitlab-deployment-topology.md).

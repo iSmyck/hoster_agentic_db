@@ -54,15 +54,15 @@ Pinned baseline записан в [baseline.md](baseline.md) (**DONE — G0 APPR
 - backups, Git mirrors, MR metadata exports, manifests и restore environments;
 - network perimeter и egress allowlist.
 
-GitLab является отдельным platform data service вне клиентского application namespace и его release lifecycle по [ADR-17](adr/ADR-017-gitlab-deployment-topology.md). Tenant profile выбирает `shared` (общий hardened instance, приватная group `kb-<client>/`) или `dedicated` (отдельный instance из того же pinned baseline и versioned configuration template). Application install/upgrade/rollback/uninstall не создаёт и не удаляет GitLab workloads/PVC. В обоих режимах managed credentials, mirrors, metadata/assets exports, required durable operational backups и restore environments разделяются по клиенту; instance-wide backup не заменяет per-client restore. Общий configuration template не содержит общие секреты.
+GitLab является отдельным platform data service вне клиентского application namespace и его release lifecycle по [ADR-17](adr/ADR-017-gitlab-deployment-topology.md). Tenant profile выбирает `shared` (общий hardened instance, приватная group `kb-<client>/`) или `dedicated` (отдельный instance из того же pinned baseline и versioned configuration template). Application install/upgrade/recreate/rollback/uninstall и его ServiceAccounts/hooks не создают, не удаляют и не управляют GitLab workloads/PVC. В обоих режимах managed credentials имеют scope `(tenant_id,space_id,repository_id,capability)`, а mirrors, metadata/assets exports и restore environments образуют независимые per-Space packages внутри per-client outer perimeter; required durable operational backups имеют explicit Space mapping и не смешивают Space snapshots. Instance-wide backup — только restricted platform control-plane DR artifact: он не выдаётся клиенту, не используется для per-client restore и не заменяет per-client package. Общий configuration template не содержит общие секреты. Миграция существующего Space между профилями DEFERRED до отдельного ADR/runbook.
 
-Каноном остаются GitLab/MR/protected tags/immutable objects и согласованные policies. PostgreSQL, CI/index, caches и vector backend не становятся общим canonical store. Между клиентами запрещены shared `kb_*` instance, mixed mirror/export/backup, общий grant context и скрытый shared credential.
+Каноном остаются GitLab/MR/protected tags/immutable objects и согласованные policies. PostgreSQL, CI/index, caches и vector backend не становятся общим canonical store. Между клиентами запрещены shared `kb_*` instance, mixed client mirror/export/backup, общий grant context и скрытый shared credential. Restricted platform-wide GitLab DR не входит в client-facing perimeter и не создаёт per-client restore unit.
 
 ### 2.2. Логические компоненты и права
 
 | Компонент | Развёртывание и данные | Разрешено | Запрещено |
 | --- | --- | --- | --- |
-| GitLab platform service | Вне клиентского application namespace; `shared` group/client или `dedicated` instance по ADR-17; независимые persistent state и per-client backups | Canonical repositories/MR/notes/tags/policies, scoped client service identities | Размещение в application release lifecycle, cross-client credentials/mixed backups, client-managed privileged Owner в shared managed profile |
+| GitLab platform service | Вне клиентского application namespace/release lifecycle; `shared` имеет общий instance с раздельными client groups/repositories, `dedicated` — отдельный instance; per-client backup/restore в обоих режимах | Canonical repositories/MR/notes/tags/policies, service identities scoped by `(tenant_id,space_id,repository_id,capability)` | Application ownership GitLab resources, cross-client credentials/client backup packages, client-managed privileged Owner в shared managed profile |
 | Open WebUI pinned fork | Reusable core + small versioned feature seam; personal Notes/ordinary chats отдельно от managed KB | UI, sessions, managed upstream identities/grants, model connections, bounded calls | GitLab merge, `kb_*` writes, неограниченные tools, скрытый provider fallback |
 | GO proposal/read | Отдельная service capability и credential | Exact canonical reads, branches, MRs, ProposalRecords, DecisionRecord notes/tags, drafts | Merge permission для proposal identity; direct `kb_authz`/`kb_index` writes |
 | GO merge/recovery | Отдельная merge service identity; durable per-target barriers | Human-decision apply, merge-only-GO, fencing/reconciliation, `kb_ops` | Agent/connector/CI use; direct human merge; direct `kb_authz`/`kb_index` writes |
@@ -131,6 +131,7 @@ GitLab является отдельным platform data service вне клие
 | Ingestion object writer | Staging/immutable object write capability | Approved source package/asset writes | Canonical merge или arbitrary object deletion |
 | Export operator | Human delegated full-Space/history capability | Full clone+manifests с per-batch fresh authorization | Filtered export как поддерживаемый формат; чужой Space/history |
 | Backup/mirror | Separate read/write backup credentials | Explicit refs+MR metadata+assets+manifests backup и restore в designated target | Production write/merge; cross-client repositories; secrets в открытом manifest |
+| Shared GitLab platform admin/DR | Separate restricted platform control-plane credentials outside client namespaces | Shared instance administration и platform DR с inventory/audit | Normal managed read/propose/merge/export, client/GO ownership или client-facing restore package |
 | hoster.ai/model connections | Open WebUI connection secret refs | Только approved models/routes | Secrets в browser/export/logs; неуказанный fallback/external PII route |
 
 ### 3.3. Secret handling policy
@@ -456,6 +457,7 @@ Retention values не выбраны. Владелец должен отдель
 5. Проверить не затрагиваются ли personal Notes/ordinary chats; включить A20 regression. Копирование upstream backend ради KB запрещено.
 6. Выполнить backup/restore readiness и проверить exact refs/decision/assets closure до upgrade. Upgrade не должен требовать history rewrite.
 7. Согласовать maintenance window, external merge freeze, expected user impact, rollback triggers и owner approval. Численные windows — OWNER_TBD.
+8. Для Shared GitLab по ADR-17 зафиксировать все affected tenants, общий maintenance/write-freeze plan, per-client backup readiness и rollback impact. Независимый per-client version change/rollback на общем instance запрещён. После изменения выполнить startup reconciliation и per-client negative checks перед staged activation; Dedicated использует отдельный authorized window.
 
 ### 12.2. Upgrade rehearsal и выполнение
 

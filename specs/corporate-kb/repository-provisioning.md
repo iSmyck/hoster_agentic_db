@@ -1,10 +1,10 @@
 # Repository and Space provisioning proposal
 
-Status: **APPROVED at G0-D13**. This is a provisioning design, not a command to create production repositories or load a corpus.
+Status: **APPROVED at G0-D13**. GitLab placement and Shared/Dedicated profiles are clarified by **ADR-17, accepted by the project owner on 2026-11-09**. This is a provisioning design, not a command to create production repositories or load a corpus.
 
 ## 1. Namespace and identity model
 
-Each dedicated client deployment receives one GitLab group namespace:
+Each dedicated client deployment receives one GitLab group namespace. The group is hosted either on a shared hardened GitLab instance (`shared`) or on a separate client instance (`dedicated`) according to the tenant profile and [ADR-17](adr/ADR-017-gitlab-deployment-topology.md). GitLab itself remains outside the client application namespace and its release lifecycle; shared hosting never implies shared canonical repositories, managed credentials or client backup packages. Restricted platform-wide DR is governed separately by ADR-17.
 
 ```text
 kb-<client>/
@@ -31,11 +31,13 @@ The actual client, group names and initial Spaces remain owner decisions.
 
 ## 2. Per-Space provisioning record
 
-Each Space is registered in a versioned deployment registry with:
+Each Space is registered in a versioned deployment registry. `gitlab_mode`, `gitlab_instance_id` and the client group are client-level values inherited as read-only bindings by every Space of that client; mixed-mode or mixed-instance overrides within one client are invalid. Per-Space records contain:
 
 | Field | Purpose |
 |---|---|
 | `space_id` | Stable Space identifier |
+| `gitlab_mode` | `shared` or `dedicated` deployment profile from ADR-17 |
+| `gitlab_instance_id` | Trusted logical GitLab instance binding; not a client-supplied agent argument |
 | `gitlab_project_id` | Stable GitLab binding |
 | `repository_path` | Provisioned namespace/path |
 | `state` | `unpublished`, `cutover_ready`, `active`, `suspended` |
@@ -49,13 +51,13 @@ Registry entries are configuration only; canonical document history remains in t
 
 ## 3. Creation order
 
-1. Owner approves `space_id`, ACL policy bundle and data profile.
-2. Provision a private repository and stable GitLab project ID.
+1. Owner approves `space_id`, ACL policy bundle, data profile and the ADR-17 `shared`/`dedicated` tenant profile with a trusted GitLab instance binding.
+2. Provision a private repository and stable GitLab project ID outside the client application namespace lifecycle.
 3. Create only synthetic or explicitly approved unpublished initial content.
-4. Register service identities:
-   - GO: Maintainer, sole normal merge actor;
-   - agent/proposal writer: Developer, cannot merge;
-   - CI/indexer: Reporter/read-only Git access;
+4. Register service identities with explicit `(tenant_id,space_id,repository_id,capability)` scope; client group membership alone is not sufficient:
+   - GO: Maintainer, sole normal merge actor for this Space repository;
+   - agent/proposal writer: Developer, cannot merge and cannot access another Space by default;
+   - CI/indexer: Reporter/read-only Git access for this Space repository;
    - connector/source: read-only source scope, no merge permission.
 5. Configure `merge_method=merge` and protect `kb-decisions/*`; keep `main` unpublished with only the controlled import writer.
 6. Execute unpublished import/dry-run and owner/data-barrier validation.
@@ -85,7 +87,7 @@ Space suspension disables user access and active index serving immediately, with
 
 ## 6. Owner decisions still required
 
-- Actual GitLab group namespace and client repository list.
+- Actual GitLab instance/profile assignment, group namespace and client repository list. The `shared`/`dedicated` decision mechanism is fixed by ADR-17; production placement remains an owner input.
 - Initial Space IDs, business groups and path-scoped approval policies.
 - Existing corpus mapping and whether any current repository must be split.
 - Source connector, object-store layout and production cutover schedule.

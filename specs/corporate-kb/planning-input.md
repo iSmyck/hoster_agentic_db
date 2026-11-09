@@ -6,7 +6,7 @@
 
 Это **не список новых эпиков или stories**, не sprint commitment и не разрешение на реализацию. Идентификаторы E/T не переименовываются и не перенумеровываются. Предлагаемые ниже вертикальные срезы — варианты для будущего planning, а не новые backlog IDs. Capacity, сроки, оценки, story points, бюджет и новые SLA не назначаются. Уже утверждённые ограничения group refresh ≤ 15 минут и revocation SLO ≤ 30 минут остаются требованиями, а не новым плановым обещанием.
 
-Нормативный приоритет: [Architecture Spine AD-1–AD-16](architecture-spine.md) → [spec.md v1.3, R01–R18 и I01–I14](spec.md) → [ADR-03–ADR-16](adr/README.md) → component/database/integration design → плановые детали. Дополнительные ограничения фазы: [AGENTS.md](../../AGENTS.md). Полнота связей находится в [traceability.md](traceability.md), фактические статусы — в [tasks.md](tasks.md). T00 baseline evidence: [baseline.md](baseline.md) и [evidence/t00](evidence/t00/README.md); owner decision record: [g0-review.md](g0-review.md) (**APPROVED**). **T00 DONE, G0 APPROVED**; можно переходить к декомпозиции эпиков, сохраняя deferred gates и зависимости задач.
+Нормативный приоритет: [Architecture Spine AD-1–AD-17](architecture-spine.md) → [spec.md v1.3, R01–R18 и I01–I14](spec.md) → [ADR-03–ADR-17](adr/README.md) → component/database/integration design → плановые детали. Дополнительные ограничения фазы: [AGENTS.md](../../AGENTS.md). Полнота связей находится в [traceability.md](traceability.md), фактические статусы — в [tasks.md](tasks.md). T00 baseline evidence: [baseline.md](baseline.md) и [evidence/t00](evidence/t00/README.md); owner decision record: [g0-review.md](g0-review.md) (**APPROVED**). **T00 DONE, G0 APPROVED**; можно переходить к декомпозиции эпиков, сохраняя deferred gates и зависимости задач.
 
 ## 2. Design readiness и implementation boundary
 
@@ -15,7 +15,7 @@
 Для аналитической декомпозиции уже есть:
 
 - стабильные R01–R18, I01–I14, A01–A36, E00–E08 и T00–T20;
-- принятые архитектурные инварианты AD-1–AD-16 и оформленные ADR-03–ADR-16 с различением Accepted/Proposed;
+- принятые архитектурные инварианты AD-1–AD-17 и оформленные ADR-03–ADR-17 с различением Accepted/Proposed;
 - component boundaries, state ownership, DB catalog, API/tool/event/schema contracts и integration protocols;
 - dependency/gate model, acceptance coverage и правила evidence;
 - synthetic-fixture и environment needs для последующего T01.
@@ -42,14 +42,14 @@
 | Пакет | Что уже можно использовать | Статус и ограничение |
 |---|---|---|
 | [spec.md v1.3](spec.md) | Нормативные R/I/A/T/E, протоколы, gates, DoR/DoD | proposed; не baseline и не разрешение implementation |
-| [ARCHITECTURE-SPINE.md](architecture-spine.md) | AD-1–AD-16, capability map, deferred и consistency conventions | обязательные design invariants; не upstream verification |
+| [ARCHITECTURE-SPINE.md](architecture-spine.md) | AD-1–AD-17, capability map, deferred и consistency conventions | обязательные design invariants; не upstream verification |
 | [architecture.md](architecture.md) | Containers, responsibilities, credentials, lifecycle, recovery, NFR evidence | T00 DONE/G0 APPROVED; pinned code references записаны, implementation gates остаются |
 | [Open WebUI fork](components/open-webui-fork.md) | UI/editor/review/agent seams, state model, regression Notes/chats | TipTap adapter selected G0-D8; canonical adapter/browser evidence pending |
 | [Git Orchestrator](components/git-orchestrator.md) | Draft/proposal/decision/merge/recovery/cutover/export protocols | GitLab 42 synthetic capability probes записаны; product integration не выполнена |
 | [Identity and Access](components/identity-access.md) | Stable identity, policy bundle, grants, AuthzContext, revocation | Keycloak/OpenLDAP synthetic evidence записано; production AD/live-SLO pending |
 | [Retrieval and Indexing](components/retrieval-indexing.md) | Snapshot/generation/profile/closure/pointer/query semantics | pgvector validated candidate 22/22 synthetic gates; production parameters UNKNOWN |
 | [Ingestion and Connectors](components/ingestion-connectors.md) | Dry-run, data barrier, ownership modes, cursors, assets/media | connector/source/object-store layout UNKNOWN |
-| [ADR index](adr/README.md) | ADR-03–ADR-16 и их фактические статусы | Accepted не равен G0/production approval; ADR-01/02 withdrawn |
+| [ADR index](adr/README.md) | ADR-03–ADR-17 и их фактические статусы | Accepted не равен G0/production approval; ADR-01/02 withdrawn |
 | [database.md](database.md) + [database-catalog.yaml](contracts/database-catalog.yaml) | Single-writer schemas, tables, transactions, rebuild/runbooks | логический DESIGN, не DDL/migrations; один instance — assumption до T00 |
 | [integration.md](integration.md) + [contracts/README.md](contracts/README.md) | Сквозные integration protocols и contract map | PROPOSED; T01 contract/conformance tests не выполнялись |
 | [openapi.yaml](contracts/openapi.yaml), [agent-tools.yaml](contracts/agent-tools.yaml), [events.yaml](contracts/events.yaml) | Собственные GO API, bounded tools, event envelopes | не утверждённые upstream routes/registrations/transports |
