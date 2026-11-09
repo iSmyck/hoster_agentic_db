@@ -18,6 +18,7 @@ from identity.app.schemas.authz import (
     PathCheckResponse,
     PolicyBundleRequest,
     ResolveIdentityRequest,
+    ResolveTokenRequest,
 )
 from identity.app.services import identity_service
 from identity.app.services.identity_service import IdentityServiceError
@@ -36,6 +37,9 @@ def _handle_domain_error(exc: IdentityServiceError) -> HTTPException:
         "INVALID_PATH": status.HTTP_422_UNPROCESSABLE_CONTENT,
         "INVALID_ACTOR_TYPE": status.HTTP_422_UNPROCESSABLE_CONTENT,
         "INVALID_IDENTITY_REF": status.HTTP_422_UNPROCESSABLE_CONTENT,
+        "IDENTITY_ADAPTER_NOT_AVAILABLE": status.HTTP_503_SERVICE_UNAVAILABLE,
+        "IDENTITY_ADAPTER_ERROR:TOKEN_INVALID": status.HTTP_401_UNAUTHORIZED,
+        "UNKNOWN_IDENTITY_ADAPTER": status.HTTP_500_INTERNAL_SERVER_ERROR,
     }
     return HTTPException(
         status_code=code_map.get(exc.code, status.HTTP_400_BAD_REQUEST),
@@ -50,6 +54,18 @@ def resolve_identity(
 ) -> Any:
     try:
         identity = identity_service.resolve_identity(db, request.external_ref)
+    except IdentityServiceError as exc:
+        raise _handle_domain_error(exc) from exc
+    return identity
+
+
+@router.post("/api/kb/v1/identity/resolve-token", response_model=IdentityResponse)
+def resolve_identity_token(
+    request: ResolveTokenRequest,
+    db: Annotated[Session, Depends(get_db)],
+) -> Any:
+    try:
+        identity = identity_service.resolve_identity_from_token(db, request.access_token)
     except IdentityServiceError as exc:
         raise _handle_domain_error(exc) from exc
     return identity

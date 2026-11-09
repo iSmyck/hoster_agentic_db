@@ -42,6 +42,32 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("IDENTITY_LOG_LEVEL", "LOG_LEVEL"),
     )
 
+    KEYCLOAK_URL: str = Field(
+        default="http://localhost:8082",
+        description="Keycloak base URL.",
+        validation_alias=AliasChoices("IDENTITY_KEYCLOAK_URL", "KEYCLOAK_URL"),
+    )
+    KEYCLOAK_REALM: str = Field(
+        default="corp-kb",
+        description="Keycloak realm name.",
+        validation_alias=AliasChoices("IDENTITY_KEYCLOAK_REALM", "KEYCLOAK_REALM"),
+    )
+    KEYCLOAK_CLIENT_ID: str = Field(
+        default="identity-service",
+        description="Keycloak client id.",
+        validation_alias=AliasChoices("IDENTITY_KEYCLOAK_CLIENT_ID", "KEYCLOAK_CLIENT_ID"),
+    )
+    KEYCLOAK_CLIENT_SECRET: str = Field(
+        default="",
+        description="Keycloak client secret.",
+        validation_alias=AliasChoices("IDENTITY_KEYCLOAK_CLIENT_SECRET", "KEYCLOAK_CLIENT_SECRET"),
+    )
+    IDENTITY_ADAPTER: str = Field(
+        default="stub",
+        description="Identity adapter implementation: 'stub' or 'keycloak'.",
+        validation_alias=AliasChoices("IDENTITY_ADAPTER"),
+    )
+
     @field_validator("KB_AUTHZ_SCHEMA", mode="before")
     @classmethod
     def _empty_schema_means_none(cls, value: object) -> str | None:

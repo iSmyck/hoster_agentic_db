@@ -22,6 +22,12 @@ class ResolveIdentityRequest(BaseModel):
     external_ref: ExternalRef | dict[str, Any]
 
 
+class ResolveTokenRequest(BaseModel):
+    """POST /api/kb/v1/identity/resolve-token"""
+
+    access_token: str
+
+
 class IdentityResponse(BaseModel):
     """Stable identity response."""
 

@@ -17,6 +17,7 @@ from sqlalchemy import and_, desc, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from identity.app.adapters.keycloak import IdentityAdapterError, KeycloakIdentityAdapter
 from identity.app.core.config import settings
 from identity.app.models.authz import (
     AuthzContext,
@@ -107,6 +108,47 @@ def resolve_identity(
             if identity is None:
                 raise IdentityServiceError("NOT_FOUND", "linked identity missing")
     return identity
+
+
+def _get_identity_adapter() -> KeycloakIdentityAdapter:
+    """Return the configured upstream identity adapter."""
+    adapter_name = settings.IDENTITY_ADAPTER.lower()
+    if adapter_name == "keycloak":
+        return KeycloakIdentityAdapter(
+            keycloak_url=settings.KEYCLOAK_URL,
+            realm=settings.KEYCLOAK_REALM,
+            client_id=settings.KEYCLOAK_CLIENT_ID,
+            client_secret=settings.KEYCLOAK_CLIENT_SECRET,
+        )
+    if adapter_name == "stub":
+        raise IdentityServiceError(
+            "IDENTITY_ADAPTER_NOT_AVAILABLE",
+            "The stub adapter cannot resolve tokens",
+        )
+    raise IdentityServiceError(
+        "UNKNOWN_IDENTITY_ADAPTER",
+        f"Unknown identity adapter: {settings.IDENTITY_ADAPTER!r}",
+    )
+
+
+def resolve_identity_from_token(
+    db: Session,
+    access_token: str,
+) -> Identity:
+    """Resolve a stable Identity from a bearer access token.
+
+    Uses the configured upstream adapter to normalize the token into an
+    external_ref and then delegates to :func:`resolve_identity`.
+    """
+    adapter = _get_identity_adapter()
+    try:
+        external_ref = adapter.resolve_external_refs(access_token)
+    except IdentityAdapterError as exc:
+        raise IdentityServiceError(
+            f"IDENTITY_ADAPTER_ERROR:{exc.code}",
+            exc.message,
+        ) from exc
+    return resolve_identity(db, external_ref)
 
 
 def _next_space_epoch(db: Session, space_id: str) -> int:
