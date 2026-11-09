@@ -94,6 +94,58 @@ export interface PathCheckResponse {
 	reason: string;
 }
 
+export interface ProposalRecord {
+	id: string;
+	space_id: string;
+	proposal_sha: string;
+	base_sha: string;
+	target_sha?: string | null;
+	status: string;
+	idempotency_key: string;
+	created_at: string;
+}
+
+export interface DecisionRecord {
+	id: string;
+	proposal_id: string;
+	outcome: string;
+	actor_id: string;
+	idempotency_key: string;
+	record_sha256: string;
+	note_id?: number | null;
+	tag_name: string;
+	state: string;
+	supersedes_decision_id?: string | null;
+	created_at: string;
+}
+
+export interface ProposalSubmitRequest {
+	space_id: string;
+	proposal_sha: string;
+	base_sha: string;
+	target_sha?: string | null;
+	target_branch?: string;
+	idempotency_key: string;
+	proposal_data: Record<string, unknown>;
+}
+
+export interface DecisionSubmitRequest {
+	proposal_id: string;
+	action: 'accepted' | 'rejected' | 'cancelled';
+	actor_id: string;
+	idempotency_key: string;
+	decision_data: Record<string, unknown>;
+}
+
+export interface MergeResponse {
+	proposal_id: string;
+	status: string;
+	merge_sha?: string | null;
+	detail: string;
+	fence_token?: number | null;
+	recovery_required?: boolean | null;
+}
+
 export interface KBApiErrorDetail {
 	code: string;
 	message: string;
@@ -313,6 +365,41 @@ export class KBClient {
 		const title = raw.path.split('/').pop() ?? raw.path;
 		const attachments = extractAttachments(raw.content);
 		return { title, body: raw.content, attachments, sha: raw.sha };
+	}
+
+	/**
+	 * Submit a new proposal to the Git Orchestrator.
+	 */
+	async submitProposal(request: ProposalSubmitRequest): Promise<ProposalRecord> {
+		return this.post<ProposalRecord>(this.gitUrl, '/proposals', request);
+	}
+
+	/**
+	 * Record a human decision for a proposal.
+	 */
+	async recordDecision(request: DecisionSubmitRequest): Promise<DecisionRecord> {
+		return this.post<DecisionRecord>(this.gitUrl, '/decisions', request);
+	}
+
+	/**
+	 * Execute an accepted proposal merge.
+	 */
+	async executeMerge(proposalId: string): Promise<MergeResponse> {
+		return this.post<MergeResponse>(this.gitUrl, `/proposals/${proposalId}/merge`, {});
+	}
+
+	/**
+	 * Reconcile a quarantined merge attempt using Git-derived evidence.
+	 */
+	async reconcileMerge(proposalId: string): Promise<MergeResponse> {
+		return this.post<MergeResponse>(this.gitUrl, `/proposals/${proposalId}/reconcile`, {});
+	}
+
+	/**
+	 * Recheck upstream group membership before a sensitive operation.
+	 */
+	async recheckGroups(spaceId: string, accessToken: string): Promise<{ space_id: string; epoch: number; groups: string[]; groups_ingested: number }> {
+		return this.post(this.identityUrl, '/groups/recheck', { space_id: spaceId, access_token: accessToken });
 	}
 }
 
