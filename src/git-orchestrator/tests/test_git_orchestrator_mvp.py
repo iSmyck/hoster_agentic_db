@@ -304,9 +304,9 @@ class TestMerge:
         # Make the stub return the verified merge SHA.
         original_merge = stub_adapter.merge_merge_request
 
-        def _verified_merge(space_id: str, mr_iid: int, sha: str) -> dict[str, Any]:
-            mr = original_merge(space_id, mr_iid, sha)
-            mr["sha"] = merge_sha
+        def _verified_merge(space_id: str, mr_iid: int, sha: str, merge_commit_message: str | None = None) -> dict[str, Any]:
+            mr = original_merge(space_id, mr_iid, sha, merge_commit_message)
+            mr["merge_commit_sha"] = merge_sha
             return mr
 
         stub_adapter.merge_merge_request = _verified_merge  # type: ignore[assignment]
@@ -486,9 +486,9 @@ class TestMerge:
         }
         original_merge = stub_adapter.merge_merge_request
 
-        def _verified_merge(space_id: str, mr_iid: int, sha: str) -> dict[str, Any]:
-            mr = original_merge(space_id, mr_iid, sha)
-            mr["sha"] = merge_sha
+        def _verified_merge(space_id: str, mr_iid: int, sha: str, merge_commit_message: str | None = None) -> dict[str, Any]:
+            mr = original_merge(space_id, mr_iid, sha, merge_commit_message)
+            mr["merge_commit_sha"] = merge_sha
             return mr
 
         stub_adapter.merge_merge_request = _verified_merge  # type: ignore[assignment]

@@ -317,12 +317,13 @@ def execute_merge(
             proposal.space_id,
             mr_iid,
             proposal.proposal_sha,
+            merge_commit_message=merge_message,
         )
-        merge_sha = result.get("sha")
+        merge_sha = result.get("merge_commit_sha") or result.get("sha")
         if merge_sha is None:
             raise GitOrchestratorError(
                 "MERGE_FAILED",
-                "GitLab merge response missing commit SHA",
+                "GitLab merge response missing merge commit SHA",
             )
 
         # Verify the merge commit exists and has correct parentage.
@@ -360,9 +361,9 @@ def execute_merge(
         ) from exc
     except GitOrchestratorError as exc:
         if exc.code in ("MERGE_PARENT_MISMATCH", "MERGE_FAILED"):
-            # Verified failure: clear recovery and mark decision failed.
-            decision.state = "failed"
-            proposal.recovery_required = False
+            # Post-call verification failed: outcome is ambiguous, not proven failed.
+            # ADR-13 §7: only conclusive no-merge evidence may clear the barrier.
+            decision.state = "quarantined"
             db.flush()
             db.commit()
         raise
@@ -439,17 +440,16 @@ def reconcile_merge(
         if not candidate_shas:
             break
 
-    # No merge commit found: proposal was not merged.
-    decision.state = "failed"
-    proposal.status = "in_review"
-    proposal.recovery_required = False
+    # No merge commit found within the window: outcome is still unknown.
+    # ADR-13 §7: only conclusive no-merge evidence may set failed.
+    decision.state = "quarantined"
     db.flush()
     db.commit()
     return {
         "proposal_id": proposal.id,
-        "status": "failed",
+        "status": "quarantined",
         "merge_sha": None,
-        "detail": "reconciled from Git: no merge commit found for proposal",
+        "detail": "merge outcome still unknown; manual investigation required",
     }
 
 

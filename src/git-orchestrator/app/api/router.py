@@ -219,3 +219,16 @@ def merge_rules(
         return git_orchestrator.direct_push_guard(db, adapter, space_id)
     except GitOrchestratorError as exc:
         raise _handle_domain_error(exc) from exc
+
+
+@router.get("/api/kb/v1/spaces/{space_id}/branches/{branch}")
+def get_branch(
+    space_id: str,
+    branch: str,
+    db: Annotated[Session, Depends(get_db)],
+    adapter: Annotated[GitLabAdapter, Depends(get_gitlab_adapter)],
+) -> dict[str, Any]:
+    try:
+        return adapter.get_branch(space_id, branch)
+    except (GitLabAdapterError, httpx.HTTPError) as exc:
+        raise _handle_adapter_error(exc) from exc

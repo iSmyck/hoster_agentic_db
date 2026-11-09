@@ -42,6 +42,7 @@ class GitLabAdapter(ABC):
         space_id: str,
         mr_iid: int,
         sha: str,
+        merge_commit_message: str | None = None,
     ) -> dict[str, Any]:
         """Apply the MR merge and return merge metadata."""
 
@@ -182,17 +183,21 @@ class HttpGitLabAdapter(GitLabAdapter):
         space_id: str,
         mr_iid: int,
         sha: str,
+        merge_commit_message: str | None = None,
     ) -> dict[str, Any]:
         import httpx
 
         url = f"{self._project_url(space_id)}/merge_requests/{mr_iid}/merge"
+        payload: dict[str, Any] = {
+            "sha": sha,
+            "should_remove_source_branch": False,
+        }
+        if merge_commit_message is not None:
+            payload["merge_commit_message"] = merge_commit_message
         response = httpx.put(
             url,
             headers=self._headers(),
-            json={
-                "sha": sha,
-                "should_remove_source_branch": False,
-            },
+            json=payload,
             timeout=30,
         )
         response.raise_for_status()
@@ -337,12 +342,15 @@ class StubGitLabAdapter(GitLabAdapter):
         space_id: str,
         mr_iid: int,
         sha: str,
+        merge_commit_message: str | None = None,
     ) -> dict[str, Any]:
         if self.state.get(("merge_fail", space_id, mr_iid)):
             raise GitLabAdapterError("merge failed")
         mr = self.get_merge_request(space_id, mr_iid)
         mr["state"] = "merged"
         mr["sha"] = sha
+        if merge_commit_message is not None:
+            mr["merge_commit_message"] = merge_commit_message
         self.state[("mr", space_id, mr_iid)] = mr
         return mr
 
