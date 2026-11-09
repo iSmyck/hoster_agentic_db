@@ -26,7 +26,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "src/identity/tests"]
+testpaths = ["tests", "src/identity/tests", "src/git-orchestrator/tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 pythonpath = ["src"]
@@ -34,3 +34,8 @@ pythonpath = ["src"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+
+[tool.ruff.lint.per-file-ignores]
+"src/git-orchestrator/**/*" = ["N999"]
+"src/git-orchestrator/tests/conftest.py" = ["E402"]
+"src/git-orchestrator/migrations/env.py" = ["E402"]

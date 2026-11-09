@@ -99,10 +99,10 @@ development_status:
   9-4-i04-policy-activation-authzcontext-and-path-approval: done
   epic-9-retrospective: done
 
-  epic-10: backlog
-  10-1-i05-git-orchestrator-bootstrap-and-gitlab-client: backlog
-  10-2-i06-proposalrecord-and-decisionrecord-lifecycle: backlog
-  epic-10-retrospective: optional
+  epic-10: done
+  10-1-i05-git-orchestrator-bootstrap-and-gitlab-client: done
+  10-2-i06-proposalrecord-and-decisionrecord-lifecycle: done
+  epic-10-retrospective: done
 
   epic-11: backlog
   11-1-i07-open-webui-fork-setup-and-kb-api-client: backlog
