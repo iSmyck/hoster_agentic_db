@@ -2,9 +2,10 @@
 
 ## Current phase
 
-- T00 baseline audit is DONE and the owner G0 design review is APPROVED: `specs/corporate-kb/g0-review.md`.
+- **G0 design review APPROVED; T00 VERIFIED (synthetic baseline).** Live runtime acceptance for T00 remains BLOCKED by deferred gates (editor, object-store ACL, hoster inputs, production AD/SLO, migrations/HA).
+- **Active phase: G1 vertical slice implementation.** One page, two users, sandbox GitLab: `edit → MR → review → DecisionRecord (note+tag) → merge (trailers, parents) → restore`. Scope is limited to closing implementation gaps identified in `implementation-gap-review.md` (WP-00–WP-05).
 - Pinned baseline: Open WebUI `v0.13.0` (commit `c38885a1a737da4968f157092f304f3b5481d0bf`), checkout at `_bmad-output/test-artifacts/t00/upstream/open-webui`. Versions, code refs, and toolchain: `specs/corporate-kb/baseline.md`.
-- Sprint development is in progress per `_bmad-output/implementation-artifacts/sprint-status.yaml`; work only on the active story scope.
+- **Scope discipline:** do not create new design documents, ADRs, contracts, or runbooks until G1 passes live acceptance. Do not expand tables/schemas without a separate ADR. T19/T20 remain DEFERRED per ADR-19.
 - Do not change pinned versions, upgrade dependencies, run product migrations, or perform mass formatting outside an approved story/ADR.
 - Do not create the production knowledge-base corpus before its repository perimeter and source corpus are agreed.
 
