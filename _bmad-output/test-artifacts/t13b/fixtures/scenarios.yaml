@@ -1,0 +1,382 @@
+scenarios:
+  git_mirror_refs_objects:
+    fixtures:
+      - name: complete_mirror_with_protected_tags
+        input:
+          refs:
+            - ref_name: refs/heads/main
+              object_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              protected: true
+            - ref_name: refs/tags/kb-decisions/11111111-1111-4111-8111-111111111111
+              object_sha: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              protected: true
+            - ref_name: refs/tags/kb-cutover/sales
+              object_sha: "cccccccccccccccccccccccccccccccccccccccc"
+              protected: true
+          objects:
+            - object_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              present: true
+            - object_sha: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              present: true
+          missing_refs: []
+          missing_objects: []
+        expected:
+          status: PASS
+      - name: missing_protected_tag_rejected
+        input:
+          refs:
+            - ref_name: refs/heads/main
+              object_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              protected: true
+          objects:
+            - object_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              present: true
+          missing_refs:
+            - refs/tags/kb-cutover/sales
+          missing_objects: []
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: missing_object_rejected
+        input:
+          refs:
+            - ref_name: refs/heads/main
+              object_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              protected: true
+          objects:
+            - object_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              present: false
+          missing_refs: []
+          missing_objects:
+            - "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  metadata_backup:
+    fixtures:
+      - name: gitlab_metadata_captured
+        input:
+          metadata:
+            mrs:
+              - mr_id: 1
+                proposal_id: MR-1
+                note_record_sha256_match: true
+            notes:
+              - note_id: note-1
+                record_sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            audit_events:
+              - event_id: audit-1
+                target: merge
+          consistent: true
+        expected:
+          status: PASS
+      - name: missing_mr_metadata_rejected
+        input:
+          metadata:
+            mrs: []
+            notes: []
+            audit_events: []
+          consistent: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: inconsistent_metadata_rejected
+        input:
+          metadata:
+            mrs:
+              - mr_id: 1
+                proposal_id: MR-1
+                note_record_sha256_match: false
+            notes: []
+            audit_events: []
+          consistent: false
+        expected:
+          status: FAIL
+          error: DECISION_INVALID
+
+  object_backup:
+    fixtures:
+      - name: immutable_object_versions_match
+        input:
+          objects:
+            - object_id: diagram.png
+              version: "1"
+              sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              present: true
+              immutable: true
+          mutable_objects: []
+        expected:
+          status: PASS
+      - name: mutable_object_rejected
+        input:
+          objects:
+            - object_id: diagram.png
+              version: "1"
+              sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              present: true
+              immutable: false
+          mutable_objects:
+            - diagram.png
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: hash_mismatch_object_rejected
+        input:
+          objects:
+            - object_id: diagram.png
+              version: "1"
+              sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              present_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              present: true
+              immutable: true
+          mutable_objects: []
+        expected:
+          status: FAIL
+          error: DECISION_INVALID
+
+  secrets_separation:
+    fixtures:
+      - name: no_secrets_in_ordinary_backup
+        input:
+          ordinary_backup_contains_secrets: false
+          secrets_recovery_policy_exists: true
+          secrets_in_recovery_policy_only: true
+        expected:
+          status: PASS
+      - name: secrets_in_ordinary_backup_rejected
+        input:
+          ordinary_backup_contains_secrets: true
+          secrets_recovery_policy_exists: true
+          secrets_in_recovery_policy_only: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: missing_secrets_recovery_policy_rejected
+        input:
+          ordinary_backup_contains_secrets: false
+          secrets_recovery_policy_exists: false
+          secrets_in_recovery_policy_only: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  kb_authz_rebuild:
+    fixtures:
+      - name: rebuild_from_git_policy_and_fresh_idp
+        input:
+          source: git_policy_plus_fresh_idp
+          inherited_active_grants: false
+          idp_data_fresh: true
+          policy_bundle_loaded: true
+        expected:
+          status: PASS
+      - name: inherited_grants_not_truth
+        input:
+          source: inherited_backup
+          inherited_active_grants: true
+          idp_data_fresh: true
+          policy_bundle_loaded: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: stale_idp_rejected
+        input:
+          source: git_policy_plus_fresh_idp
+          inherited_active_grants: false
+          idp_data_fresh: false
+          policy_bundle_loaded: true
+        expected:
+          status: FAIL
+          error: AUTHZ_GROUP_STALE
+
+  kb_ops_rebuild:
+    fixtures:
+      - name: rebuild_under_global_merge_freeze_with_barriers
+        input:
+          source: git_mrs_notes_tags_history_registry
+          global_merge_freeze: true
+          per_target_barriers: true
+          unknown_outcomes_quarantined: true
+        expected:
+          status: PASS
+      - name: no_global_freeze_rejected
+        input:
+          source: git_mrs_notes_tags_history_registry
+          global_merge_freeze: false
+          per_target_barriers: true
+          unknown_outcomes_quarantined: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: unknown_outcomes_auto_cleared_rejected
+        input:
+          source: git_mrs_notes_tags_history_registry
+          global_merge_freeze: true
+          per_target_barriers: true
+          unknown_outcomes_quarantined: false
+        expected:
+          status: FAIL
+          error: RECOVERY_REQUIRED
+
+  kb_index_rebuild:
+    fixtures:
+      - name: rebuild_from_git_assets_config
+        input:
+          source: git_plus_immutable_assets_plus_config
+          canonical_git_mutated: false
+          active_pointer_restored_as_truth: false
+          assets_hash_verified: true
+        expected:
+          status: PASS
+      - name: canonical_git_mutation_rejected
+        input:
+          source: git_plus_immutable_assets_plus_config
+          canonical_git_mutated: true
+          active_pointer_restored_as_truth: false
+          assets_hash_verified: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: active_pointer_as_truth_rejected
+        input:
+          source: git_plus_immutable_assets_plus_config
+          canonical_git_mutated: false
+          active_pointer_restored_as_truth: true
+          assets_hash_verified: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  correction_task_backup_reconciliation:
+    fixtures:
+      - name: restore_with_hash_event_sequence_checks
+        input:
+          backup:
+            current_projection_hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            event_sequence_valid: true
+            perimeter_check_passed: true
+          reconciliation:
+            linked_mr_verified: true
+            no_fabricated_decisions: true
+            no_deleted_canonical_writes: true
+        expected:
+          status: PASS
+      - name: event_sequence_mismatch_rejected
+        input:
+          backup:
+            current_projection_hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            event_sequence_valid: false
+            perimeter_check_passed: true
+          reconciliation:
+            linked_mr_verified: true
+            no_fabricated_decisions: true
+            no_deleted_canonical_writes: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: fabricated_canonical_write_rejected
+        input:
+          backup:
+            current_projection_hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            event_sequence_valid: true
+            perimeter_check_passed: true
+          reconciliation:
+            linked_mr_verified: true
+            no_fabricated_decisions: false
+            no_deleted_canonical_writes: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: deleted_canonical_write_rejected
+        input:
+          backup:
+            current_projection_hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            event_sequence_valid: true
+            perimeter_check_passed: true
+          reconciliation:
+            linked_mr_verified: true
+            no_fabricated_decisions: true
+            no_deleted_canonical_writes: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  clean_isolated_instance:
+    fixtures:
+      - name: no_inherited_rows_grants_pointer
+        input:
+          inherited_active_grants: false
+          inherited_active_pointer: false
+          inherited_operational_rows: false
+          rebuild_sources_verified: true
+        expected:
+          status: PASS
+      - name: inherited_active_pointer_rejected
+        input:
+          inherited_active_grants: false
+          inherited_active_pointer: true
+          inherited_operational_rows: false
+          rebuild_sources_verified: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: inherited_operational_rows_rejected
+        input:
+          inherited_active_grants: false
+          inherited_active_pointer: false
+          inherited_operational_rows: true
+          rebuild_sources_verified: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  conservative_rebuild:
+    fixtures:
+      - name: unknown_outcome_remains_quarantined
+        input:
+          empty_database: true
+          terminal_label: true
+          superseded_decision: true
+          generic_ttl_expired: true
+          conclusive_reconciliation: false
+          outcome: unknown
+        expected:
+          status: PASS
+      - name: empty_database_does_not_clear_unknown
+        input:
+          empty_database: true
+          terminal_label: false
+          superseded_decision: false
+          generic_ttl_expired: false
+          conclusive_reconciliation: false
+          outcome: unknown
+        expected:
+          status: PASS
+      - name: file_dump_existence_not_pass
+        input:
+          dump_files_exist: true
+          closure_complete: false
+          grants_verified: false
+          assets_verified: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: missing_assets_block_ready
+        input:
+          dump_files_exist: true
+          closure_complete: false
+          grants_verified: true
+          assets_verified: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: missing_grants_block_ready
+        input:
+          dump_files_exist: true
+          closure_complete: false
+          grants_verified: false
+          assets_verified: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE

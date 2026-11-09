@@ -1,0 +1,906 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "loaded 6 fixture files",
+      "details": {
+        "fixtures": [
+          "authz_contexts",
+          "errors",
+          "paths",
+          "policies",
+          "prefixes",
+          "revocations"
+        ]
+      },
+      "expected": "synthetic policy fixtures load",
+      "fixture_path": null,
+      "id": "harness.fixtures_loaded",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "harness",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "policy_bundle_id": "bundle-sales-v1",
+        "space_id": "sales"
+      },
+      "expected": "approval policy is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
+      "id": "policy.approval.sales_approval_valid.schema",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "policy",
+      "status": "PASS"
+    },
+    {
+      "actual": "no duplicate normalized prefixes found",
+      "details": {
+        "prefixes": [
+          "/",
+          "/pricing"
+        ]
+      },
+      "expected": "no duplicate normalized prefixes",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
+      "id": "policy.approval.sales_approval_valid.duplicate_prefixes",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "policy",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "policy_bundle_id": "bundle-sales-v1",
+        "space_id": "sales"
+      },
+      "expected": "access policy is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
+      "id": "policy.access.sales_access_valid.schema",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "policy",
+      "status": "PASS"
+    },
+    {
+      "actual": "space_id=sales, repository_id=repo-sales, bundle_id=bundle-sales-v1",
+      "details": {
+        "access_policy_revision": null,
+        "approval_policy_revision": null,
+        "policy_bundle_id": "bundle-sales-v1",
+        "repository_id": "repo-sales",
+        "space_id": "sales"
+      },
+      "expected": "access policy binds exactly one repository_id to one space_id and bundle",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
+      "id": "policy.access.sales_access_valid.space_binding",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "policy",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "policy_bundle_id": "bundle-sales-pricing-v1",
+        "space_id": "sales-pricing"
+      },
+      "expected": "approval policy is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
+      "id": "policy.approval.pricing_approval_valid.schema",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "policy",
+      "status": "PASS"
+    },
+    {
+      "actual": "no duplicate normalized prefixes found",
+      "details": {
+        "prefixes": [
+          "/"
+        ]
+      },
+      "expected": "no duplicate normalized prefixes",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
+      "id": "policy.approval.pricing_approval_valid.duplicate_prefixes",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "policy",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "policy_bundle_id": "bundle-sales-pricing-v1",
+        "space_id": "sales-pricing"
+      },
+      "expected": "access policy is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
+      "id": "policy.access.pricing_access_valid.schema",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "policy",
+      "status": "PASS"
+    },
+    {
+      "actual": "space_id=sales-pricing, repository_id=repo-sales-pricing, bundle_id=bundle-sales-pricing-v1",
+      "details": {
+        "access_policy_revision": null,
+        "approval_policy_revision": null,
+        "policy_bundle_id": "bundle-sales-pricing-v1",
+        "repository_id": "repo-sales-pricing",
+        "space_id": "sales-pricing"
+      },
+      "expected": "access policy binds exactly one repository_id to one space_id and bundle",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
+      "id": "policy.access.pricing_access_valid.space_binding",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "policy",
+      "status": "PASS"
+    },
+    {
+      "actual": "'INVALID_SPACE' does not match '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$' at ['space_id']",
+      "details": {
+        "error": "'INVALID_SPACE' does not match '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$' at ['space_id']"
+      },
+      "expected": "approval policy is correctly rejected by schema",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
+      "id": "policy.approval.invalid_space_id.schema",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "policy",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "policy_bundle_id": "bundle-dup",
+        "space_id": "dup-space"
+      },
+      "expected": "approval policy is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
+      "id": "policy.approval.duplicate_prefix.schema",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "policy",
+      "status": "PASS"
+    },
+    {
+      "actual": "duplicates detected: [('/pricing', ['rule-a', 'rule-b'])]",
+      "details": {
+        "duplicates": [
+          [
+            "/pricing",
+            [
+              "rule-a",
+              "rule-b"
+            ]
+          ]
+        ]
+      },
+      "expected": "duplicate normalized prefixes are rejected (INVALID_POLICY)",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
+      "id": "policy.approval.duplicate_prefix.duplicate_prefixes",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "policy",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "policy_bundle_id": "bundle-dup-trailing",
+        "space_id": "dup-trailing-space"
+      },
+      "expected": "approval policy is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
+      "id": "policy.approval.duplicate_prefix_trailing_slash.schema",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "policy",
+      "status": "PASS"
+    },
+    {
+      "actual": "duplicates detected: [('/pricing', ['rule-a', 'rule-b'])]",
+      "details": {
+        "duplicates": [
+          [
+            "/pricing",
+            [
+              "rule-a",
+              "rule-b"
+            ]
+          ]
+        ]
+      },
+      "expected": "duplicate normalized prefixes are rejected (INVALID_POLICY)",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/policies.yaml",
+      "id": "policy.approval.duplicate_prefix_trailing_slash.duplicate_prefixes",
+      "input_sha256": "6465f7a57acbbdf79dfc68b41c467b449fb6988f1288c585e719cd9a932eddd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "policy",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "stable_id": "user-sales-1"
+      },
+      "expected": "AuthzContext is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/authz_contexts.yaml",
+      "id": "authz_context.sales_space_isolated.schema",
+      "input_sha256": "81646b93f5aa56aef1499235ce2b7e49c2c7f3838d43e1939e6f197d6f10cdc9",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "authz_context",
+      "status": "PASS"
+    },
+    {
+      "actual": "1 independent Space binding(s), no orphan path scopes",
+      "details": {
+        "bindings": [
+          {
+            "access_policy_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "approval_policy_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "group_snapshot_id": "21111111-1111-4111-8111-111111111111",
+            "policy_bundle_id": "bundle-sales-v1",
+            "repository_id": "repo-sales",
+            "revocation_epoch": 5,
+            "space_id": "sales"
+          }
+        ]
+      },
+      "expected": "each Space has independent repository/bundle/revisions/group/epoch bindings",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/authz_contexts.yaml",
+      "id": "authz_context.sales_space_isolated.space_isolation",
+      "input_sha256": "81646b93f5aa56aef1499235ce2b7e49c2c7f3838d43e1939e6f197d6f10cdc9",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "authz_context",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "stable_id": "user-pricing-1"
+      },
+      "expected": "AuthzContext is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/authz_contexts.yaml",
+      "id": "authz_context.pricing_space_isolated.schema",
+      "input_sha256": "81646b93f5aa56aef1499235ce2b7e49c2c7f3838d43e1939e6f197d6f10cdc9",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "authz_context",
+      "status": "PASS"
+    },
+    {
+      "actual": "1 independent Space binding(s), no orphan path scopes",
+      "details": {
+        "bindings": [
+          {
+            "access_policy_revision": "dddddddddddddddddddddddddddddddddddddddd",
+            "approval_policy_revision": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+            "group_snapshot_id": "23333333-3333-4333-8333-333333333333",
+            "policy_bundle_id": "bundle-sales-pricing-v1",
+            "repository_id": "repo-sales-pricing",
+            "revocation_epoch": 7,
+            "space_id": "sales-pricing"
+          }
+        ]
+      },
+      "expected": "each Space has independent repository/bundle/revisions/group/epoch bindings",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/authz_contexts.yaml",
+      "id": "authz_context.pricing_space_isolated.space_isolation",
+      "input_sha256": "81646b93f5aa56aef1499235ce2b7e49c2c7f3838d43e1939e6f197d6f10cdc9",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "authz_context",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "stable_id": "user-shared-1"
+      },
+      "expected": "AuthzContext is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/authz_contexts.yaml",
+      "id": "authz_context.shared_bundle_should_fail.schema",
+      "input_sha256": "81646b93f5aa56aef1499235ce2b7e49c2c7f3838d43e1939e6f197d6f10cdc9",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "authz_context",
+      "status": "PASS"
+    },
+    {
+      "actual": "shared_space_ids=[], shared_repository_ids=[], shared_bundle_ids=['shared-bundle-v1'], shared_group_snapshot_ids=[], orphan_path_space_ids=[]",
+      "details": {
+        "orphan_path_space_ids": [],
+        "shared_bundle_ids": [
+          "shared-bundle-v1"
+        ],
+        "shared_group_snapshot_ids": [],
+        "shared_repository_ids": [],
+        "shared_space_ids": []
+      },
+      "expected": "fixture should exhibit shared or missing Space bindings",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/authz_contexts.yaml",
+      "id": "authz_context.shared_bundle_should_fail.space_isolation",
+      "input_sha256": "81646b93f5aa56aef1499235ce2b7e49c2c7f3838d43e1939e6f197d6f10cdc9",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "authz_context",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "stable_id": "user-orphan-1"
+      },
+      "expected": "AuthzContext is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/authz_contexts.yaml",
+      "id": "authz_context.orphan_path_scope_should_fail.schema",
+      "input_sha256": "81646b93f5aa56aef1499235ce2b7e49c2c7f3838d43e1939e6f197d6f10cdc9",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "authz_context",
+      "status": "PASS"
+    },
+    {
+      "actual": "shared_space_ids=[], shared_repository_ids=[], shared_bundle_ids=[], shared_group_snapshot_ids=[], orphan_path_space_ids=['unknown-space']",
+      "details": {
+        "orphan_path_space_ids": [
+          "unknown-space"
+        ],
+        "shared_bundle_ids": [],
+        "shared_group_snapshot_ids": [],
+        "shared_repository_ids": [],
+        "shared_space_ids": []
+      },
+      "expected": "fixture should exhibit shared or missing Space bindings",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/authz_contexts.yaml",
+      "id": "authz_context.orphan_path_scope_should_fail.space_isolation",
+      "input_sha256": "81646b93f5aa56aef1499235ce2b7e49c2c7f3838d43e1939e6f197d6f10cdc9",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "authz_context",
+      "status": "PASS"
+    },
+    {
+      "actual": "rule pricing-rule selected",
+      "details": {
+        "path": "/pricing/current.md",
+        "selected_groups": [
+          "pricing-approvers"
+        ],
+        "selected_rule_id": "pricing-rule"
+      },
+      "expected": "rule pricing-rule is selected",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/prefixes.yaml",
+      "id": "longest_prefix.pricing_current_selects_pricing.selection",
+      "input_sha256": "5c89204f3d0ad8639e4ff4b74e60bcf5ca3e006154059a387d63a9b1f8384ea1",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "longest_prefix",
+      "status": "PASS"
+    },
+    {
+      "actual": "selected groups ['pricing-approvers'] do not include parent groups ['sales-authors']",
+      "details": {
+        "parent_groups": [
+          "sales-authors"
+        ],
+        "selected_groups": [
+          "pricing-approvers"
+        ]
+      },
+      "expected": "parent-prefix groups are not unioned into selected rule",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/prefixes.yaml",
+      "id": "longest_prefix.pricing_current_selects_pricing.no_parent_union",
+      "input_sha256": "5c89204f3d0ad8639e4ff4b74e60bcf5ca3e006154059a387d63a9b1f8384ea1",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "longest_prefix",
+      "status": "PASS"
+    },
+    {
+      "actual": "rule root-rule selected",
+      "details": {
+        "path": "/other/document.md",
+        "selected_groups": [
+          "sales-authors"
+        ],
+        "selected_rule_id": "root-rule"
+      },
+      "expected": "rule root-rule is selected",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/prefixes.yaml",
+      "id": "longest_prefix.root_fallback.selection",
+      "input_sha256": "5c89204f3d0ad8639e4ff4b74e60bcf5ca3e006154059a387d63a9b1f8384ea1",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "longest_prefix",
+      "status": "PASS"
+    },
+    {
+      "actual": "selected groups ['sales-authors'] do not include parent groups []",
+      "details": {
+        "parent_groups": [],
+        "selected_groups": [
+          "sales-authors"
+        ]
+      },
+      "expected": "parent-prefix groups are not unioned into selected rule",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/prefixes.yaml",
+      "id": "longest_prefix.root_fallback.no_parent_union",
+      "input_sha256": "5c89204f3d0ad8639e4ff4b74e60bcf5ca3e006154059a387d63a9b1f8384ea1",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "longest_prefix",
+      "status": "PASS"
+    },
+    {
+      "actual": "rule pricing-rule selected",
+      "details": {
+        "path": "/pricing/current.md",
+        "selected_groups": [
+          "pricing-approvers"
+        ],
+        "selected_rule_id": "pricing-rule"
+      },
+      "expected": "rule pricing-rule is selected",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/prefixes.yaml",
+      "id": "longest_prefix.no_parent_union.selection",
+      "input_sha256": "5c89204f3d0ad8639e4ff4b74e60bcf5ca3e006154059a387d63a9b1f8384ea1",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "longest_prefix",
+      "status": "PASS"
+    },
+    {
+      "actual": "selected groups ['pricing-approvers'] do not include parent groups ['sales-approvers', 'sales-authors']",
+      "details": {
+        "parent_groups": [
+          "sales-approvers",
+          "sales-authors"
+        ],
+        "selected_groups": [
+          "pricing-approvers"
+        ]
+      },
+      "expected": "parent-prefix groups are not unioned into selected rule",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/prefixes.yaml",
+      "id": "longest_prefix.no_parent_union.no_parent_union",
+      "input_sha256": "5c89204f3d0ad8639e4ff4b74e60bcf5ca3e006154059a387d63a9b1f8384ea1",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "longest_prefix",
+      "status": "PASS"
+    },
+    {
+      "actual": "rule tiers-rule selected",
+      "details": {
+        "path": "/pricing/tiers/enterprise.md",
+        "selected_groups": [
+          "tiers-approvers"
+        ],
+        "selected_rule_id": "tiers-rule"
+      },
+      "expected": "rule tiers-rule is selected",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/prefixes.yaml",
+      "id": "longest_prefix.deeper_prefix_wins.selection",
+      "input_sha256": "5c89204f3d0ad8639e4ff4b74e60bcf5ca3e006154059a387d63a9b1f8384ea1",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "longest_prefix",
+      "status": "PASS"
+    },
+    {
+      "actual": "selected groups ['tiers-approvers'] do not include parent groups ['pricing-approvers', 'sales-authors']",
+      "details": {
+        "parent_groups": [
+          "pricing-approvers",
+          "sales-authors"
+        ],
+        "selected_groups": [
+          "tiers-approvers"
+        ]
+      },
+      "expected": "parent-prefix groups are not unioned into selected rule",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/prefixes.yaml",
+      "id": "longest_prefix.deeper_prefix_wins.no_parent_union",
+      "input_sha256": "5c89204f3d0ad8639e4ff4b74e60bcf5ca3e006154059a387d63a9b1f8384ea1",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "longest_prefix",
+      "status": "PASS"
+    },
+    {
+      "actual": "no rule matched",
+      "details": {
+        "path": "/unrelated/path.md",
+        "rules": [
+          {
+            "external_group_ids": [
+              "pricing-approvers"
+            ],
+            "path_prefix": "/pricing",
+            "rule_id": "pricing-rule"
+          }
+        ]
+      },
+      "expected": "no rule matches the path",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/prefixes.yaml",
+      "id": "longest_prefix.no_match.no_match",
+      "input_sha256": "5c89204f3d0ad8639e4ff4b74e60bcf5ca3e006154059a387d63a9b1f8384ea1",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "longest_prefix",
+      "status": "PASS"
+    },
+    {
+      "actual": "canonical /, relative ",
+      "details": {
+        "absolute": "/",
+        "canonical": "/",
+        "relative": ""
+      },
+      "expected": "absolute / maps losslessly to relative ",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/paths.yaml",
+      "id": "path.root_empty_prefix.canonical",
+      "input_sha256": "158695cf9531c6d11f8ee64ca63fee92a73a15cbc7f6550e86d8c71cf9f9bedc",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "/ == /",
+      "details": {
+        "canonical": "/",
+        "round_trip": "/"
+      },
+      "expected": "relative -> absolute round-trip is lossless",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/paths.yaml",
+      "id": "path.root_empty_prefix.round_trip",
+      "input_sha256": "158695cf9531c6d11f8ee64ca63fee92a73a15cbc7f6550e86d8c71cf9f9bedc",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "canonical /pricing, relative pricing",
+      "details": {
+        "absolute": "/pricing",
+        "canonical": "/pricing",
+        "relative": "pricing"
+      },
+      "expected": "absolute /pricing maps losslessly to relative pricing",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/paths.yaml",
+      "id": "path.pricing_absolute.canonical",
+      "input_sha256": "158695cf9531c6d11f8ee64ca63fee92a73a15cbc7f6550e86d8c71cf9f9bedc",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "/pricing == /pricing",
+      "details": {
+        "canonical": "/pricing",
+        "round_trip": "/pricing"
+      },
+      "expected": "relative -> absolute round-trip is lossless",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/paths.yaml",
+      "id": "path.pricing_absolute.round_trip",
+      "input_sha256": "158695cf9531c6d11f8ee64ca63fee92a73a15cbc7f6550e86d8c71cf9f9bedc",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "canonical /pricing, relative pricing",
+      "details": {
+        "absolute": "pricing",
+        "canonical": "/pricing",
+        "relative": "pricing"
+      },
+      "expected": "absolute pricing maps losslessly to relative pricing",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/paths.yaml",
+      "id": "path.pricing_without_leading_slash.canonical",
+      "input_sha256": "158695cf9531c6d11f8ee64ca63fee92a73a15cbc7f6550e86d8c71cf9f9bedc",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "/pricing == /pricing",
+      "details": {
+        "canonical": "/pricing",
+        "round_trip": "/pricing"
+      },
+      "expected": "relative -> absolute round-trip is lossless",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/paths.yaml",
+      "id": "path.pricing_without_leading_slash.round_trip",
+      "input_sha256": "158695cf9531c6d11f8ee64ca63fee92a73a15cbc7f6550e86d8c71cf9f9bedc",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "canonical /pricing/tiers/enterprise, relative pricing/tiers/enterprise",
+      "details": {
+        "absolute": "/pricing/tiers/enterprise",
+        "canonical": "/pricing/tiers/enterprise",
+        "relative": "pricing/tiers/enterprise"
+      },
+      "expected": "absolute /pricing/tiers/enterprise maps losslessly to relative pricing/tiers/enterprise",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/paths.yaml",
+      "id": "path.nested_path.canonical",
+      "input_sha256": "158695cf9531c6d11f8ee64ca63fee92a73a15cbc7f6550e86d8c71cf9f9bedc",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "/pricing/tiers/enterprise == /pricing/tiers/enterprise",
+      "details": {
+        "canonical": "/pricing/tiers/enterprise",
+        "round_trip": "/pricing/tiers/enterprise"
+      },
+      "expected": "relative -> absolute round-trip is lossless",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/paths.yaml",
+      "id": "path.nested_path.round_trip",
+      "input_sha256": "158695cf9531c6d11f8ee64ca63fee92a73a15cbc7f6550e86d8c71cf9f9bedc",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "normalization rejected the path",
+      "details": {
+        "absolute": "/pricing/"
+      },
+      "expected": "/pricing/ is rejected as ambiguous/invalid",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/paths.yaml",
+      "id": "path.trailing_slash_rejected.rejected",
+      "input_sha256": "158695cf9531c6d11f8ee64ca63fee92a73a15cbc7f6550e86d8c71cf9f9bedc",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "normalization rejected the path",
+      "details": {
+        "absolute": "/pricing/../other"
+      },
+      "expected": "/pricing/../other is rejected as ambiguous/invalid",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/paths.yaml",
+      "id": "path.parent_traversal_rejected.rejected",
+      "input_sha256": "158695cf9531c6d11f8ee64ca63fee92a73a15cbc7f6550e86d8c71cf9f9bedc",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "normalization rejected the path",
+      "details": {
+        "absolute": "/pricing/./current"
+      },
+      "expected": "/pricing/./current is rejected as ambiguous/invalid",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/paths.yaml",
+      "id": "path.dot_segment_rejected.rejected",
+      "input_sha256": "158695cf9531c6d11f8ee64ca63fee92a73a15cbc7f6550e86d8c71cf9f9bedc",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "normalization rejected the path",
+      "details": {
+        "absolute": "/pricing\\\\current"
+      },
+      "expected": "/pricing\\\\current is rejected as ambiguous/invalid",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/paths.yaml",
+      "id": "path.backslash_rejected.rejected",
+      "input_sha256": "158695cf9531c6d11f8ee64ca63fee92a73a15cbc7f6550e86d8c71cf9f9bedc",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "paths",
+      "status": "PASS"
+    },
+    {
+      "actual": "stale: ['space sales epoch 5 < policy_epoch 10']",
+      "details": {
+        "policy_epoch": 10,
+        "stale_reasons": [
+          "space sales epoch 5 < policy_epoch 10"
+        ]
+      },
+      "expected": "context with old revocation epoch is rejected/stale",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/revocations.yaml",
+      "id": "revocation.space_epoch_stale.stale",
+      "input_sha256": "9102c6d3e713e0f66269fbc5b7c2d336aef72fd1b4e85cc13685f28e1174b51a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "revocation",
+      "status": "PASS"
+    },
+    {
+      "actual": "stale: ['top-level epoch 8 < policy_epoch 10']",
+      "details": {
+        "policy_epoch": 10,
+        "stale_reasons": [
+          "top-level epoch 8 < policy_epoch 10"
+        ]
+      },
+      "expected": "context with old revocation epoch is rejected/stale",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/revocations.yaml",
+      "id": "revocation.top_level_epoch_stale.stale",
+      "input_sha256": "9102c6d3e713e0f66269fbc5b7c2d336aef72fd1b4e85cc13685f28e1174b51a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "revocation",
+      "status": "PASS"
+    },
+    {
+      "actual": "context epoch is fresh",
+      "details": {
+        "policy_epoch": 10,
+        "space_epochs": [
+          {
+            "revocation_epoch": 10,
+            "space_id": "sales"
+          }
+        ],
+        "top_level_epoch": 10
+      },
+      "expected": "context epoch is fresh",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/revocations.yaml",
+      "id": "revocation.epoch_fresh.stale",
+      "input_sha256": "9102c6d3e713e0f66269fbc5b7c2d336aef72fd1b4e85cc13685f28e1174b51a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "revocation",
+      "status": "PASS"
+    },
+    {
+      "actual": "envelope valid and details sanitized",
+      "details": {
+        "extra": [
+          "details"
+        ],
+        "fields": [
+          "code",
+          "details",
+          "message",
+          "request_id",
+          "retryable"
+        ]
+      },
+      "expected": "error uses {code, message, request_id, retryable} with sanitized details",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/errors.yaml",
+      "id": "error_shape.valid_denied_envelope.envelope",
+      "input_sha256": "f74eb08a406a52bb74e995da9a1d36e0ae1e62bbb902ef288f0b515e4c66a610",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "error_shape",
+      "status": "PASS"
+    },
+    {
+      "actual": "missing=['request_id'], has_sensitive_detail=False",
+      "details": {
+        "has_sensitive_detail": false,
+        "missing": [
+          "request_id"
+        ]
+      },
+      "expected": "error envelope is correctly rejected as malformed",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/errors.yaml",
+      "id": "error_shape.missing_request_id.envelope",
+      "input_sha256": "f74eb08a406a52bb74e995da9a1d36e0ae1e62bbb902ef288f0b515e4c66a610",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "error_shape",
+      "status": "PASS"
+    },
+    {
+      "actual": "missing=['retryable'], has_sensitive_detail=False",
+      "details": {
+        "has_sensitive_detail": false,
+        "missing": [
+          "retryable"
+        ]
+      },
+      "expected": "error envelope is correctly rejected as malformed",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/errors.yaml",
+      "id": "error_shape.missing_retryable.envelope",
+      "input_sha256": "f74eb08a406a52bb74e995da9a1d36e0ae1e62bbb902ef288f0b515e4c66a610",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "error_shape",
+      "status": "PASS"
+    },
+    {
+      "actual": "missing=[], has_sensitive_detail=True",
+      "details": {
+        "has_sensitive_detail": true,
+        "missing": []
+      },
+      "expected": "error envelope is correctly rejected as malformed",
+      "fixture_path": "_bmad-output/test-artifacts/t03b/fixtures/errors.yaml",
+      "id": "error_shape.sensitive_detail_in_details.envelope",
+      "input_sha256": "f74eb08a406a52bb74e995da9a1d36e0ae1e62bbb902ef288f0b515e4c66a610",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "error_shape",
+      "status": "PASS"
+    },
+    {
+      "actual": "requires live AuthZ/IdP/GO sandbox and credentials",
+      "details": {
+        "reason": "requires live AuthZ/IdP/GO sandbox and credentials"
+      },
+      "expected": "live AuthZ/IdP/GO integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_authz_context_issuance",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live AuthZ/IdP/GO sandbox and credentials",
+      "details": {
+        "reason": "requires live AuthZ/IdP/GO sandbox and credentials"
+      },
+      "expected": "live AuthZ/IdP/GO integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_policy_activation",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live AuthZ/IdP/GO sandbox and credentials",
+      "details": {
+        "reason": "requires live AuthZ/IdP/GO sandbox and credentials"
+      },
+      "expected": "live AuthZ/IdP/GO integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_revocation_epoch_sync",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live AuthZ/IdP/GO sandbox and credentials",
+      "details": {
+        "reason": "requires live AuthZ/IdP/GO sandbox and credentials"
+      },
+      "expected": "live AuthZ/IdP/GO integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_longest_prefix_enforcement",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live AuthZ/IdP/GO sandbox and credentials",
+      "details": {
+        "reason": "requires live AuthZ/IdP/GO sandbox and credentials"
+      },
+      "expected": "live AuthZ/IdP/GO integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_error_response_shape",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+  "contracts_version": "authz-context-v2",
+  "counts": {
+    "BLOCKED": 5,
+    "FAIL": 0,
+    "PASS": 50
+  },
+  "environment": {
+    "ad_available": false,
+    "ci_available": false,
+    "hoster_available": false,
+    "idp_available": false,
+    "ldap_available": false,
+    "pinned_toolchain": {
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_local_no_idp"
+  },
+  "generated_at": "2026-11-08T21:55:52.433290+00:00",
+  "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
+  "schema_version": "t03b-policy-results-v1",
+  "sensitive_data_included": false,
+  "spec_baseline_commit": "788e299a5316c7d5df685a8f11b043ff36135a10"
+}

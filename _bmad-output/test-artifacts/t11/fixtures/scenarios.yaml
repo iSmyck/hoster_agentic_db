@@ -1,0 +1,305 @@
+scenarios:
+  route_inventory:
+    fixtures:
+      - name: chat_route_complete
+        input:
+          route: chat
+          connection: hoster-ai-studio-approved
+          model: approved-model-chat
+          model_version: "1"
+          data_profile: strict
+          capabilities: [streaming, tools]
+          dimension: 1024
+          index_profile_link: pgvector-fts-v1
+        expected:
+          status: PASS
+      - name: embeddings_route_complete
+        input:
+          route: embeddings
+          connection: hoster-ai-studio-approved
+          model: approved-model-embed
+          model_version: "2"
+          data_profile: strict
+          capabilities: []
+          dimension: 768
+          index_profile_link: pgvector-fts-v1
+        expected:
+          status: PASS
+      - name: missing_dimension_rejected
+        input:
+          route: embeddings
+          connection: hoster-ai-studio-approved
+          model: approved-model-embed
+          model_version: "2"
+          data_profile: strict
+          capabilities: []
+          dimension: null
+          index_profile_link: pgvector-fts-v1
+        expected:
+          status: FAIL
+          error: INVALID_CONFIG
+      - name: unapproved_connection_rejected
+        input:
+          route: chat
+          connection: external-fallback-provider
+          model: fallback-model
+          model_version: "1"
+          data_profile: strict
+          capabilities: [streaming]
+          dimension: 1024
+          index_profile_link: pgvector-fts-v1
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  streaming_tool_calls:
+    fixtures:
+      - name: sequential_tool_calls_correlated
+        input:
+          request_id: req-1
+          run_id: run-1
+          chunks:
+            - tool_call_id: call-1
+              function: search
+              citation_refs: [doc-1]
+            - tool_call_id: call-1
+              function: search
+              citation_refs: [doc-1]
+          assembled_args_valid: true
+          executed_partial_content: false
+          authorized: true
+        expected:
+          status: PASS
+      - name: parallel_tool_calls_both_authorized
+        input:
+          request_id: req-2
+          run_id: run-2
+          chunks:
+            - tool_call_id: call-2
+              function: search
+              citation_refs: [doc-2]
+            - tool_call_id: call-3
+              function: read
+              citation_refs: [doc-3]
+          assembled_args_valid: true
+          executed_partial_content: false
+          authorized: true
+        expected:
+          status: PASS
+      - name: authorization_missing_before_dispatch
+        input:
+          request_id: req-3
+          run_id: run-3
+          chunks:
+            - tool_call_id: call-4
+              function: search
+              citation_refs: []
+          assembled_args_valid: true
+          executed_partial_content: false
+          authorized: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: partial_content_executed
+        input:
+          request_id: req-4
+          run_id: run-4
+          chunks:
+            - tool_call_id: call-5
+              function: search
+              citation_refs: [doc-5]
+          assembled_args_valid: false
+          executed_partial_content: true
+          authorized: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  malformed_unsafe_inputs:
+    fixtures:
+      - name: malformed_json_rejected
+        input:
+          payload_type: malformed_json
+          rejected: true
+          attempted_shell: false
+          attempted_sql: false
+          attempted_merge: false
+          attempted_privilege: false
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+      - name: unknown_fields_rejected
+        input:
+          payload_type: unknown_fields
+          rejected: true
+          attempted_shell: false
+          attempted_sql: false
+          attempted_merge: false
+          attempted_privilege: false
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+      - name: oversized_payload_rejected
+        input:
+          payload_type: oversized
+          rejected: true
+          attempted_shell: false
+          attempted_sql: false
+          attempted_merge: false
+          attempted_privilege: false
+        expected:
+          status: FAIL
+          error: LIMIT_EXCEEDED
+      - name: prompt_injection_merge_rejected
+        input:
+          payload_type: prompt_injection
+          rejected: true
+          attempted_shell: false
+          attempted_sql: false
+          attempted_merge: true
+          attempted_privilege: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: privilege_expansion_rejected
+        input:
+          payload_type: prompt_injection
+          rejected: true
+          attempted_shell: false
+          attempted_sql: false
+          attempted_merge: false
+          attempted_privilege: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  retry_cancel_disconnect:
+    fixtures:
+      - name: retry_preserves_identity
+        input:
+          event: retry
+          observable: true
+          same_idempotency_key: true
+          same_payload_hash: true
+          retry_counted: true
+        expected:
+          status: PASS
+      - name: retry_changed_payload_rejected
+        input:
+          event: retry
+          observable: true
+          same_idempotency_key: true
+          same_payload_hash: false
+          retry_counted: true
+        expected:
+          status: FAIL
+          error: IDEMPOTENCY_KEY_REUSED
+      - name: cancel_observable
+        input:
+          event: cancel
+          observable: true
+          stream_closed: true
+        expected:
+          status: PASS
+      - name: disconnect_observable
+        input:
+          event: disconnect
+          observable: true
+          stream_closed: true
+        expected:
+          status: PASS
+      - name: five_xx_observable
+        input:
+          event: 5xx
+          observable: true
+          retry_counted: true
+        expected:
+          status: PASS
+
+  egress_perimeter:
+    fixtures:
+      - name: approved_endpoint_only
+        input:
+          egress_endpoint: hoster-ai-studio-approved
+          approved: true
+          pii_permitted: false
+          leaves_perimeter: false
+          revocation_closes_stream: true
+          offline_asset_preapproved: true
+        expected:
+          status: PASS
+      - name: unapproved_endpoint_rejected
+        input:
+          egress_endpoint: external-fallback
+          approved: false
+          pii_permitted: false
+          leaves_perimeter: false
+          revocation_closes_stream: true
+          offline_asset_preapproved: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: pii_leaves_perimeter_rejected
+        input:
+          egress_endpoint: hoster-ai-studio-approved
+          approved: true
+          pii_permitted: true
+          leaves_perimeter: true
+          revocation_closes_stream: true
+          offline_asset_preapproved: true
+        expected:
+          status: FAIL
+          error: PII_REVIEW_REQUIRED
+      - name: offline_unapproved_asset_rejected
+        input:
+          egress_endpoint: hoster-ai-studio-approved
+          approved: true
+          pii_permitted: false
+          leaves_perimeter: false
+          revocation_closes_stream: true
+          offline_asset_preapproved: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  lifecycle_metrics:
+    fixtures:
+      - name: metrics_complete
+        input:
+          ttft_ms: 120
+          full_response_ms: 890
+          retry_rate: 0.01
+          cancel_rate: 0.0
+          malformed_rate: 0.0
+          route_inventory_recorded: true
+          fallback_attempts: 0
+          cost_attributed_to_run: true
+        expected:
+          status: PASS
+      - name: hidden_fallback_detected
+        input:
+          ttft_ms: 120
+          full_response_ms: 890
+          retry_rate: 0.01
+          cancel_rate: 0.0
+          malformed_rate: 0.0
+          route_inventory_recorded: true
+          fallback_attempts: 1
+          fallback_approved: false
+          cost_attributed_to_run: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: missing_cost_attribution
+        input:
+          ttft_ms: 120
+          full_response_ms: 890
+          retry_rate: 0.01
+          cancel_rate: 0.0
+          malformed_rate: 0.0
+          route_inventory_recorded: true
+          fallback_attempts: 0
+          cost_attributed_to_run: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE

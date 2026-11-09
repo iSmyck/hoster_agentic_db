@@ -1,0 +1,1454 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "parsed 30 test entries",
+      "cf_id": "CF-30",
+      "details": {},
+      "expected": "t01-contract-tests.yaml parses",
+      "fixture_path": "specs/corporate-kb/contracts/t01-contract-tests.yaml",
+      "id": "harness.catalog_parse",
+      "input_sha256": "715286873fdf9c03015d6e677f9bd4802d06bfe956d46c1d7b8fb1b2c4e8b2a7",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "11 schema files parsed",
+      "cf_id": "CF-30",
+      "details": {},
+      "expected": "all .schema.json parse",
+      "fixture_path": null,
+      "id": "CF-30.json_schema_parse",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "openapi.yaml parsed",
+      "cf_id": "CF-30",
+      "details": {},
+      "expected": "openapi.yaml parses",
+      "fixture_path": null,
+      "id": "CF-30.yaml_parse.openapi.yaml",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "agent-tools.yaml parsed",
+      "cf_id": "CF-30",
+      "details": {},
+      "expected": "agent-tools.yaml parses",
+      "fixture_path": null,
+      "id": "CF-30.yaml_parse.agent-tools.yaml",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "events.yaml parsed",
+      "cf_id": "CF-30",
+      "details": {},
+      "expected": "events.yaml parses",
+      "fixture_path": null,
+      "id": "CF-30.yaml_parse.events.yaml",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "t01-contract-tests.yaml parsed",
+      "cf_id": "CF-30",
+      "details": {},
+      "expected": "t01-contract-tests.yaml parses",
+      "fixture_path": null,
+      "id": "CF-30.yaml_parse.t01-contract-tests.yaml",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "143 refs resolved",
+      "cf_id": "CF-30",
+      "details": {},
+      "expected": "all schema $ref resolve",
+      "fixture_path": null,
+      "id": "CF-30.schema_refs_resolve",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "81 refs resolved",
+      "cf_id": "CF-30",
+      "details": {},
+      "expected": "all OpenAPI/agent-tools $ref resolve",
+      "fixture_path": null,
+      "id": "CF-30.openapi_refs_resolve",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "61 patterns compiled",
+      "cf_id": "CF-30",
+      "details": {},
+      "expected": "all regex patterns compile",
+      "fixture_path": null,
+      "id": "CF-30.regex_compile",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "29 operationIds unique",
+      "cf_id": "CF-30",
+      "details": {},
+      "expected": "OpenAPI operationIds are unique",
+      "fixture_path": null,
+      "id": "CF-30.operationIds_unique",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "all mutation operations require Idempotency-Key",
+      "cf_id": "CF-30",
+      "details": {},
+      "expected": "mutating operations require Idempotency-Key header",
+      "fixture_path": null,
+      "id": "CF-30.mutation_headers_complete",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "matched 7 operationIds",
+      "cf_id": "CF-30",
+      "details": {},
+      "expected": "agent-tools operationIds match bounded-agent OpenAPI operations",
+      "fixture_path": null,
+      "id": "CF-30.agent_tool_operationId_mapping",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "semantic consumer assertions require a running GO backend and real sandbox not provisioned for T01",
+      "cf_id": "CF-30",
+      "details": {
+        "reason": "semantic consumer assertions require a running GO backend and real sandbox not provisioned for T01"
+      },
+      "expected": "semantic consumer assertions pass",
+      "fixture_path": null,
+      "id": "CF-30.semantic_consumer_assertions",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "NOT_EXECUTED"
+    },
+    {
+      "actual": "real GitLab/IdP/CI/hoster.ai sandbox and credentials are not provisioned for T01",
+      "cf_id": "CF-30",
+      "details": {
+        "reason": "real GitLab/IdP/CI/hoster.ai sandbox and credentials are not provisioned for T01"
+      },
+      "expected": "integration_status available",
+      "fixture_path": null,
+      "id": "CF-30.integration_status",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "NOT_EXECUTED"
+    },
+    {
+      "actual": "42 local links checked",
+      "cf_id": "CF-29",
+      "details": {},
+      "expected": "local Markdown links resolve",
+      "fixture_path": null,
+      "id": "CF-29.specs/corporate-kb/integration.md.links",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "7 local links checked",
+      "cf_id": "CF-29",
+      "details": {},
+      "expected": "local Markdown links resolve",
+      "fixture_path": null,
+      "id": "CF-29.specs/corporate-kb/contracts/gitlab-integration.md.links",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "7.1=True, 7.3=True, 7.7=False",
+      "cf_id": "CF-29",
+      "details": {},
+      "expected": "spec references 7.1 and 7.3 for crash recovery in both files, not 7.7",
+      "fixture_path": null,
+      "id": "CF-29.spec_reference_7.1_and_7.3",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "cf_id": "CF-01",
+      "details": {},
+      "expected": "sales authz-context is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf01_authz_context_sales.yaml",
+      "id": "CF-01.sales_schema",
+      "input_sha256": "6485774e56e4ecf200fa809ce2418321fb0f7011b6fb28f15e6830b7bf41d73c",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "cf_id": "CF-01",
+      "details": {},
+      "expected": "pricing authz-context is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf01_authz_context_pricing.yaml",
+      "id": "CF-01.pricing_schema",
+      "input_sha256": "273b7660a46bce56937c8190b0cc988b4f843c3397cd6a13dbc508d7d4aa9257",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "distinct repository_id, policy_bundle_id, group_snapshot",
+      "cf_id": "CF-01",
+      "details": {},
+      "expected": "sales and sales-pricing have distinct repository/bundle/group snapshot",
+      "fixture_path": null,
+      "id": "CF-01.space_isolation",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "requires live AuthzContext service and GitLab webhook/identity sandbox",
+      "cf_id": "CF-01",
+      "details": {
+        "reason": "requires live AuthzContext service and GitLab webhook/identity sandbox"
+      },
+      "expected": "POLICY_REVISION_MISMATCH / AUTHZ_CONTEXT_STALE / rejected",
+      "fixture_path": null,
+      "id": "CF-01.search_fanout",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live AuthzContext service and GitLab webhook/identity sandbox",
+      "cf_id": "CF-01",
+      "details": {
+        "reason": "requires live AuthzContext service and GitLab webhook/identity sandbox"
+      },
+      "expected": "POLICY_REVISION_MISMATCH / AUTHZ_CONTEXT_STALE / rejected",
+      "fixture_path": null,
+      "id": "CF-01.cursor_replay_stale",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live AuthzContext service and GitLab webhook/identity sandbox",
+      "cf_id": "CF-01",
+      "details": {
+        "reason": "requires live AuthzContext service and GitLab webhook/identity sandbox"
+      },
+      "expected": "POLICY_REVISION_MISMATCH / AUTHZ_CONTEXT_STALE / rejected",
+      "fixture_path": null,
+      "id": "CF-01.access_policy_changed_rejection",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "schema valid",
+      "cf_id": "CF-02",
+      "details": {},
+      "expected": "valid policy schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf02_approval_policy_valid.yaml",
+      "id": "CF-02.valid_schema",
+      "input_sha256": "92f06244081334502703376da1c7a3fe45523286b65f8e45ecfa40dada52fbb1",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "cf_id": "CF-02",
+      "details": {},
+      "expected": "duplicate_prefix policy schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf02_approval_policy_duplicate_prefix.yaml",
+      "id": "CF-02.duplicate_prefix_schema",
+      "input_sha256": "0d14aedaa62ad9c26e0a82ad444610cdc9ea8c4b5197ecd9d683237c6a7ec58b",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "cf_id": "CF-02",
+      "details": {},
+      "expected": "cyrillic policy schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf02_approval_policy_cyrillic.yaml",
+      "id": "CF-02.cyrillic_schema",
+      "input_sha256": "3b6deccdce96449226b643ef9fede43e8a8246cd844410e2b72f4fc303d4bbf3",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "duplicates: ['/pricing']",
+      "cf_id": "CF-02",
+      "details": {},
+      "expected": "duplicate normalized prefixes are rejected (INVALID_POLICY)",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf02_approval_policy_duplicate_prefix.yaml",
+      "id": "CF-02.duplicate_prefix_detected",
+      "input_sha256": "0d14aedaa62ad9c26e0a82ad444610cdc9ea8c4b5197ecd9d683237c6a7ec58b",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "NFC-normalized duplicates: ['/цена', '/цена']",
+      "cf_id": "CF-02",
+      "details": {},
+      "expected": "NFC/NFD duplicate prefixes are rejected",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf02_approval_policy_cyrillic.yaml",
+      "id": "CF-02.cyrillic_duplicate_detected",
+      "input_sha256": "3b6deccdce96449226b643ef9fede43e8a8246cd844410e2b72f4fc303d4bbf3",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "longest-prefix rule selection requires active approval policy service",
+      "cf_id": "CF-02",
+      "details": {
+        "reason": "longest-prefix rule selection requires active approval policy service"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-02.longest_prefix_assignment",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "'archive' is a required property at []",
+      "cf_id": "CF-03",
+      "details": {},
+      "expected": "archived_without_archive fails schema validation",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf03_front_matter_archived_without_archive.yaml",
+      "id": "CF-03.archived_without_archive_rejected",
+      "input_sha256": "bb531657590eb06334b6782a767192df6549126c8a69ee0438b21829fa6ef850",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "True was expected at ['archived']",
+      "cf_id": "CF-03",
+      "details": {},
+      "expected": "unarchived_with_archive fails schema validation",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf03_front_matter_unarchived_with_archive.yaml",
+      "id": "CF-03.unarchived_with_archive_rejected",
+      "input_sha256": "c8991e1fb91c57e7d6bbe6debdc0512feac546cd7bd5488216c93a93a24e7cd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "cf_id": "CF-03",
+      "details": {},
+      "expected": "valid_restore is schema valid",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf03_front_matter_valid_restore.yaml",
+      "id": "CF-03.valid_restore_accepted",
+      "input_sha256": "03805b4d047549e20efb901dbe2a3582e61a5e8a04927adc5c8b1e1f34418467",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "archived=True, has_archive=False",
+      "cf_id": "CF-03",
+      "details": {},
+      "expected": "archived flag and archive block are consistent",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf03_front_matter_archived_without_archive.yaml",
+      "id": "CF-03.archived_without_archive_bidirectional",
+      "input_sha256": "bb531657590eb06334b6782a767192df6549126c8a69ee0438b21829fa6ef850",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "archived=False, has_archive=True",
+      "cf_id": "CF-03",
+      "details": {},
+      "expected": "archived flag and archive block are consistent",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf03_front_matter_unarchived_with_archive.yaml",
+      "id": "CF-03.unarchived_with_archive_bidirectional",
+      "input_sha256": "c8991e1fb91c57e7d6bbe6debdc0512feac546cd7bd5488216c93a93a24e7cd0",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "archived=False, has_archive=False",
+      "cf_id": "CF-03",
+      "details": {},
+      "expected": "archived flag and archive block are consistent",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf03_front_matter_valid_restore.yaml",
+      "id": "CF-03.valid_restore_bidirectional",
+      "input_sha256": "03805b4d047549e20efb901dbe2a3582e61a5e8a04927adc5c8b1e1f34418467",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "archive replacement/descendant semantics require canonical document service",
+      "cf_id": "CF-03",
+      "details": {
+        "reason": "archive replacement/descendant semantics require canonical document service"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-03.replacement_semantics",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "'origin' is a required property at []",
+      "cf_id": "CF-04",
+      "details": {},
+      "expected": "migrated front matter without origin is rejected",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf04_front_matter_migrated_no_origin.yaml",
+      "id": "CF-04.migrated_no_origin_rejected",
+      "input_sha256": "9d69e33e40afcd9fc01b5c6120f6a1c073413ba648d64717c31c3606219f4a5e",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "cf_id": "CF-04",
+      "details": {},
+      "expected": "source-origin allows live_operational ownership_mode",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf04_source_origin_live_operational.yaml",
+      "id": "CF-04.source_origin_live_operational_valid",
+      "input_sha256": "e5322e93166c5112c2f8f7c5d935948c36b50667391124c590cc8717f8fe1288",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "canonical front matter live_operational rejection requires document service",
+      "cf_id": "CF-04",
+      "details": {
+        "reason": "canonical front matter live_operational rejection requires document service"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-04.live_operational_canonical_forbidden",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "schema valid",
+      "cf_id": "CF-05",
+      "details": {},
+      "expected": "source_id DOC-0001 is valid",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf05_source_id_doc0001.yaml",
+      "id": "CF-05.doc0001_valid",
+      "input_sha256": "c94c5cd9416ec7b37c05fe53f0520b7f5506ddab5ce3eb43c084ab3c2db82265",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "source_id lowercase rewrite requires canonical source service for semantic validation",
+      "cf_id": "CF-05",
+      "details": {
+        "reason": "source_id lowercase rewrite requires canonical source service for semantic validation"
+      },
+      "expected": "semantic_valid=false (DOC-0001 preserved)",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf05_source_id_lowercase.yaml",
+      "id": "CF-05.lowercase_semantic_rejected",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "schema valid",
+      "cf_id": "CF-06",
+      "details": {},
+      "expected": "valid open correction task passes schema",
+      "fixture_path": null,
+      "id": "CF-06.correction_task_schema_valid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "{'proposal_id': 'prop-1', 'proposal_sha': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'merge_commit_sha': 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'} is not of type 'null' at ['linked_mr']",
+      "cf_id": "CF-06",
+      "details": {},
+      "expected": "open task with non-null linked_mr is schema-invalid",
+      "fixture_path": null,
+      "id": "CF-06.open_with_linked_mr_rejected",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "requires live GO backend, GitLab MR sandbox and idempotency registry",
+      "cf_id": "CF-06",
+      "details": {
+        "reason": "requires live GO backend, GitLab MR sandbox and idempotency registry"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-06.review_scheduled_due_removed",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live GO backend, GitLab MR sandbox and idempotency registry",
+      "cf_id": "CF-06",
+      "details": {
+        "reason": "requires live GO backend, GitLab MR sandbox and idempotency registry"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-06.correction_create_resolve_cancel",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live GO backend, GitLab MR sandbox and idempotency registry",
+      "cf_id": "CF-06",
+      "details": {
+        "reason": "requires live GO backend, GitLab MR sandbox and idempotency registry"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-06.idempotency_and_cas",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live GO backend, GitLab MR sandbox and idempotency registry",
+      "cf_id": "CF-06",
+      "details": {
+        "reason": "requires live GO backend, GitLab MR sandbox and idempotency registry"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-06.mr_governance",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "matched 7 operationIds",
+      "cf_id": "CF-07",
+      "details": {},
+      "expected": "agent-tools operationIds match bounded-agent OpenAPI operations exactly",
+      "fixture_path": null,
+      "id": "CF-07.agent_tool_catalog_matches",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "requires running GO service and agent credential sandbox",
+      "cf_id": "CF-07",
+      "details": {
+        "reason": "requires running GO service and agent credential sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-07.bounded_agent_forbidden_writes",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires running GO service and agent credential sandbox",
+      "cf_id": "CF-07",
+      "details": {
+        "reason": "requires running GO service and agent credential sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-07.agent_propose_rejected",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires connector credential sandbox and immutable binding registry",
+      "cf_id": "CF-08",
+      "details": {
+        "reason": "requires connector credential sandbox and immutable binding registry"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-08.dry_run_staging",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires connector credential sandbox and immutable binding registry",
+      "cf_id": "CF-08",
+      "details": {
+        "reason": "requires connector credential sandbox and immutable binding registry"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-08.post_cutover_proposal",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires connector credential sandbox and immutable binding registry",
+      "cf_id": "CF-08",
+      "details": {
+        "reason": "requires connector credential sandbox and immutable binding registry"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-08.pre_cutover_forbidden",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires connector credential sandbox and immutable binding registry",
+      "cf_id": "CF-08",
+      "details": {
+        "reason": "requires connector credential sandbox and immutable binding registry"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-08.cursor_binding_exact",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "found 8 required IDs",
+      "cf_id": "CF-09",
+      "details": {},
+      "expected": "required invariant IDs present: {'DECISION_KEY_AND_PROPOSAL_EQUALITY', 'PATH_BODY_CORRECTION_TASK_ID', 'PATH_BODY_RUN_ID', 'PATH_BODY_PROPOSAL_ID', 'BODY_HEADER_IDEMPOTENCY', 'PATH_BODY_SPACE_ID', 'PATH_BODY_DOCUMENT_ID', 'PATH_BODY_IMPORT_ID'}",
+      "fixture_path": null,
+      "id": "CF-09.required_invariant_ids",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "requires running GO API and mutation paths",
+      "cf_id": "CF-09",
+      "details": {
+        "reason": "requires running GO API and mutation paths"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-09.path_body_id_mismatch_rejected",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires running GO API and mutation paths",
+      "cf_id": "CF-09",
+      "details": {
+        "reason": "requires running GO API and mutation paths"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-09.error_enum_coverage",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires running GO API and mutation paths",
+      "cf_id": "CF-09",
+      "details": {
+        "reason": "requires running GO API and mutation paths"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-09.tool_adapter_route",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab repository fixtures and GO runtime",
+      "cf_id": "CF-10",
+      "details": {
+        "reason": "requires GitLab repository fixtures and GO runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-10.history_revert_mr",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab repository fixtures and GO runtime",
+      "cf_id": "CF-10",
+      "details": {
+        "reason": "requires GitLab repository fixtures and GO runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-10.approver_queue_prefix",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab repository fixtures and GO runtime",
+      "cf_id": "CF-10",
+      "details": {
+        "reason": "requires GitLab repository fixtures and GO runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-10.protected_object_not_found",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab repository fixtures and GO runtime",
+      "cf_id": "CF-10",
+      "details": {
+        "reason": "requires GitLab repository fixtures and GO runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-10.verified_root_commit",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab repository fixtures and GO runtime",
+      "cf_id": "CF-10",
+      "details": {
+        "reason": "requires GitLab repository fixtures and GO runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-10.non_root_empty_parents",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab repository fixtures and GO runtime",
+      "cf_id": "CF-10",
+      "details": {
+        "reason": "requires GitLab repository fixtures and GO runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-10.correction_get_cross_space",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab repository fixtures and GO runtime",
+      "cf_id": "CF-10",
+      "details": {
+        "reason": "requires GitLab repository fixtures and GO runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-10.resolve_cancel_authz",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab repository fixtures and GO runtime",
+      "cf_id": "CF-10",
+      "details": {
+        "reason": "requires GitLab repository fixtures and GO runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-10.open_to_in_review_merge",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab repository fixtures and GO runtime",
+      "cf_id": "CF-10",
+      "details": {
+        "reason": "requires GitLab repository fixtures and GO runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-10.no_mr_resolution",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab repository fixtures and GO runtime",
+      "cf_id": "CF-10",
+      "details": {
+        "reason": "requires GitLab repository fixtures and GO runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-10.idempotency_replay",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "matched error path; first error: False was expected at ['preflight', 'serving_allowed']",
+      "cf_id": "CF-11",
+      "details": {},
+      "expected": "requested_serving fails schema validation under ['preflight', 'serving_allowed']",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf11_index_snapshot_requested_serving.yaml",
+      "id": "CF-11.requested_serving_rejected",
+      "input_sha256": "61a63749dec8ccc31ed2ad460e8e53bb2aa5d90bb2b321948f996cf35bdbe901",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "matched error path; first error: None is not of type 'string' at ['exact_projection', 'projection_sha256']",
+      "cf_id": "CF-11",
+      "details": {},
+      "expected": "active_null_hash fails schema validation under ['exact_projection', 'projection_sha256']",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf11_index_snapshot_active_null_hash.yaml",
+      "id": "CF-11.active_null_hash_rejected",
+      "input_sha256": "1df4ca822ee780802d46d23813db75bec86641ac7e6d180beceebeaf39d074d9",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "matched error path; first error: ['missing-dependency-1'] is expected to be empty at ['closure', 'missing_inputs']",
+      "cf_id": "CF-11",
+      "details": {},
+      "expected": "incremental_missing_inputs fails schema validation under ['closure', 'missing_inputs']",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf11_index_snapshot_incremental_missing.yaml",
+      "id": "CF-11.incremental_missing_inputs_rejected",
+      "input_sha256": "848600b09b446ef96162b60daff53c0ad170b40b42d9e8d7fe9e0562308ebb69",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "requires index-run runtime and validated snapshots",
+      "cf_id": "CF-11",
+      "details": {
+        "reason": "requires index-run runtime and validated snapshots"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-11.preflight_cutover_sha_mismatch",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires index-run runtime and validated snapshots",
+      "cf_id": "CF-11",
+      "details": {
+        "reason": "requires index-run runtime and validated snapshots"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-11.active_incremental_history_rewrite",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab merge sandbox, index cutover runtime or export manifest runtime",
+      "cf_id": "CF-12",
+      "details": {
+        "reason": "requires GitLab merge sandbox, index cutover runtime or export manifest runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-12.cutover",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab merge sandbox, index cutover runtime or export manifest runtime",
+      "cf_id": "CF-13",
+      "details": {
+        "reason": "requires GitLab merge sandbox, index cutover runtime or export manifest runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-13.concurrent_publication",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab merge sandbox, index cutover runtime or export manifest runtime",
+      "cf_id": "CF-14",
+      "details": {
+        "reason": "requires GitLab merge sandbox, index cutover runtime or export manifest runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-14.export_closure",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab merge sandbox, index cutover runtime or export manifest runtime",
+      "cf_id": "CF-15",
+      "details": {
+        "reason": "requires GitLab merge sandbox, index cutover runtime or export manifest runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-15.decision_export",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab merge sandbox, index cutover runtime or export manifest runtime",
+      "cf_id": "CF-16",
+      "details": {
+        "reason": "requires GitLab merge sandbox, index cutover runtime or export manifest runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-16.export_request_manifest",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab merge sandbox, index cutover runtime or export manifest runtime",
+      "cf_id": "CF-17",
+      "details": {
+        "reason": "requires GitLab merge sandbox, index cutover runtime or export manifest runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-17.export_hash_linkage",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GitLab merge sandbox, index cutover runtime or export manifest runtime",
+      "cf_id": "CF-18",
+      "details": {
+        "reason": "requires GitLab merge sandbox, index cutover runtime or export manifest runtime"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-18.decision_merge_linkage",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "schema valid",
+      "cf_id": "CF-19",
+      "details": {},
+      "expected": "negative fixture is valid except for intended line-range violation",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf19_proposal_record_bad_line_range.yaml",
+      "id": "CF-19.bad_line_range_fixture_schema",
+      "input_sha256": "614fef3798d5baf0a6c4e700a6894643adda24625077a0a8c37ad51a125ccb64",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "reversed ranges: [(0, {'start_line': 10, 'end_line': 5})]",
+      "cf_id": "CF-19",
+      "details": {},
+      "expected": "line_range with end_line < start_line is rejected as semantic violation",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf19_proposal_record_bad_line_range.yaml",
+      "id": "CF-19.bad_line_range_detected",
+      "input_sha256": "614fef3798d5baf0a6c4e700a6894643adda24625077a0a8c37ad51a125ccb64",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "requires proposal runtime and import service",
+      "cf_id": "CF-19",
+      "details": {
+        "reason": "requires proposal runtime and import service"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-19.proposal_state_combinations",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires proposal runtime and import service",
+      "cf_id": "CF-19",
+      "details": {
+        "reason": "requires proposal runtime and import service"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-19.import_manifest_errors",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires proposal runtime and import service",
+      "cf_id": "CF-19",
+      "details": {
+        "reason": "requires proposal runtime and import service"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-19.truncation_consistency",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires global idempotency key registry and DB sandbox",
+      "cf_id": "CF-20",
+      "details": {
+        "reason": "requires global idempotency key registry and DB sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-20.key_reused_different_payload",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires global idempotency key registry and DB sandbox",
+      "cf_id": "CF-20",
+      "details": {
+        "reason": "requires global idempotency key registry and DB sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-20.concurrent_replay_independent",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires global idempotency key registry and DB sandbox",
+      "cf_id": "CF-20",
+      "details": {
+        "reason": "requires global idempotency key registry and DB sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-20.race_duplicate_guard",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires global idempotency key registry and DB sandbox",
+      "cf_id": "CF-20",
+      "details": {
+        "reason": "requires global idempotency key registry and DB sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-20.correction_idempotency",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires global idempotency key registry and DB sandbox",
+      "cf_id": "CF-20",
+      "details": {
+        "reason": "requires global idempotency key registry and DB sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-20.concurrent_correction",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires global idempotency key registry and DB sandbox",
+      "cf_id": "CF-20",
+      "details": {
+        "reason": "requires global idempotency key registry and DB sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-20.path_body_mismatch_before_insert",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GO runtime, decision/merge service or index DB sandbox",
+      "cf_id": "CF-21",
+      "details": {
+        "reason": "requires GO runtime, decision/merge service or index DB sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-21.decision_recovery",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GO runtime, decision/merge service or index DB sandbox",
+      "cf_id": "CF-22",
+      "details": {
+        "reason": "requires GO runtime, decision/merge service or index DB sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-22.db_fk",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GO runtime, decision/merge service or index DB sandbox",
+      "cf_id": "CF-23",
+      "details": {
+        "reason": "requires GO runtime, decision/merge service or index DB sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-23.decision_merge_refs",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires GO runtime, decision/merge service or index DB sandbox",
+      "cf_id": "CF-24",
+      "details": {
+        "reason": "requires GO runtime, decision/merge service or index DB sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-24.index_db_roundtrip",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "25 required rows present",
+      "cf_id": "CF-25",
+      "details": {},
+      "expected": "projection-mapping.md contains required enum/state rows",
+      "fixture_path": null,
+      "id": "CF-25.required_rows_present",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "requires running projection / DB roundtrip sandbox",
+      "cf_id": "CF-25",
+      "details": {
+        "reason": "requires running projection / DB roundtrip sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-25.enum_mapping_exact",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires running projection / DB roundtrip sandbox",
+      "cf_id": "CF-25",
+      "details": {
+        "reason": "requires running projection / DB roundtrip sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-25.derived_mapping_exact",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires running projection / DB roundtrip sandbox",
+      "cf_id": "CF-25",
+      "details": {
+        "reason": "requires running projection / DB roundtrip sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-25.stable_uuid_epochs",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires running projection / DB roundtrip sandbox",
+      "cf_id": "CF-25",
+      "details": {
+        "reason": "requires running projection / DB roundtrip sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-25.recorded_accepted_projection",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires running projection / DB roundtrip sandbox",
+      "cf_id": "CF-25",
+      "details": {
+        "reason": "requires running projection / DB roundtrip sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-25.version_hash_pairs",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires running projection / DB roundtrip sandbox",
+      "cf_id": "CF-25",
+      "details": {
+        "reason": "requires running projection / DB roundtrip sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-25.proposal_pending_requirements",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires running projection / DB roundtrip sandbox",
+      "cf_id": "CF-25",
+      "details": {
+        "reason": "requires running projection / DB roundtrip sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-25.merged_requirements",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires running projection / DB roundtrip sandbox",
+      "cf_id": "CF-25",
+      "details": {
+        "reason": "requires running projection / DB roundtrip sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-25.correction_state_mapping",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires running projection / DB roundtrip sandbox",
+      "cf_id": "CF-25",
+      "details": {
+        "reason": "requires running projection / DB roundtrip sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-25.backup_restore_reconciliation",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires source connector sandbox and live_operational read path",
+      "cf_id": "CF-26",
+      "details": {
+        "reason": "requires source connector sandbox and live_operational read path"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-26.live_operational_rejected",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires source connector sandbox and live_operational read path",
+      "cf_id": "CF-26",
+      "details": {
+        "reason": "requires source connector sandbox and live_operational read path"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-26.registered_typed_read",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires document link projection and DB sandbox",
+      "cf_id": "CF-27",
+      "details": {
+        "reason": "requires document link projection and DB sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-27.target_projection_invalid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires document link projection and DB sandbox",
+      "cf_id": "CF-27",
+      "details": {
+        "reason": "requires document link projection and DB sandbox"
+      },
+      "expected": "real sandbox/integration evidence",
+      "fixture_path": null,
+      "id": "CF-27.swapped_orphan_cycle_cross_space",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "/ <-> ",
+      "cf_id": "CF-28",
+      "details": {},
+      "expected": "absolute/relative path mapping is lossless",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf28_paths.yaml",
+      "id": "CF-28.absolute_relative_lossless./",
+      "input_sha256": "e8c18843df36d372a172a8887ed415c875398d7580a7c52e58b09c92599af982",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "/pricing <-> pricing",
+      "cf_id": "CF-28",
+      "details": {},
+      "expected": "absolute/relative path mapping is lossless",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf28_paths.yaml",
+      "id": "CF-28.absolute_relative_lossless./pricing",
+      "input_sha256": "e8c18843df36d372a172a8887ed415c875398d7580a7c52e58b09c92599af982",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "/approval-policy.yaml <-> approval-policy.yaml",
+      "cf_id": "CF-28",
+      "details": {},
+      "expected": "absolute/relative path mapping is lossless",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf28_paths.yaml",
+      "id": "CF-28.absolute_relative_lossless./approval-policy.yaml",
+      "input_sha256": "e8c18843df36d372a172a8887ed415c875398d7580a7c52e58b09c92599af982",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "/pricing//current rejected",
+      "cf_id": "CF-28",
+      "details": {},
+      "expected": "ambiguous path rejected",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf28_paths.yaml",
+      "id": "CF-28.ambiguous_rejected./pricing//current",
+      "input_sha256": "e8c18843df36d372a172a8887ed415c875398d7580a7c52e58b09c92599af982",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "/pricing/../current rejected",
+      "cf_id": "CF-28",
+      "details": {},
+      "expected": "ambiguous path rejected",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf28_paths.yaml",
+      "id": "CF-28.ambiguous_rejected./pricing/../current",
+      "input_sha256": "e8c18843df36d372a172a8887ed415c875398d7580a7c52e58b09c92599af982",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "\\pricing\\current rejected",
+      "cf_id": "CF-28",
+      "details": {},
+      "expected": "ambiguous path rejected",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf28_paths.yaml",
+      "id": "CF-28.ambiguous_rejected.\\pricing\\current",
+      "input_sha256": "e8c18843df36d372a172a8887ed415c875398d7580a7c52e58b09c92599af982",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "/pricing/ rejected",
+      "cf_id": "CF-28",
+      "details": {},
+      "expected": "ambiguous path rejected",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf28_paths.yaml",
+      "id": "CF-28.ambiguous_rejected./pricing/",
+      "input_sha256": "e8c18843df36d372a172a8887ed415c875398d7580a7c52e58b09c92599af982",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    },
+    {
+      "actual": "NFC(/цёна) == NFC(/цёна)",
+      "cf_id": "CF-28",
+      "details": {},
+      "expected": "NFC/NFD duplicates are detected",
+      "fixture_path": "_bmad-output/test-artifacts/t01/fixtures/payloads/cf28_paths.yaml",
+      "id": "CF-28.nfc_nfd_duplicate",
+      "input_sha256": "e8c18843df36d372a172a8887ed415c875398d7580a7c52e58b09c92599af982",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+      "status": "PASS"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+  "contracts_version": "t01-contract-tests-v1",
+  "counts": {
+    "BLOCKED": 65,
+    "FAIL": 0,
+    "NOT_EXECUTED": 2,
+    "PASS": 50
+  },
+  "environment": {
+    "ci_available": false,
+    "git_lab_available": false,
+    "hoster_available": false,
+    "idp_available": false,
+    "pinned_toolchain": {
+      "gitlab_ce": "19.5.3-ce.0",
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "pgvector": "0.8.7",
+      "postgresql": "18.6",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_local_no_gitlab"
+  },
+  "generated_at": "2026-11-08T16:32:01.453697+00:00",
+  "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
+  "schema_version": "t01-contract-results-v1",
+  "secrets_included": false
+}

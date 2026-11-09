@@ -1,0 +1,42 @@
+# T04b browser editor gate vectors for executable HTML/MDX/XSS content.
+# All payloads are synthetic and intentionally harmless in this structural harness.
+
+fixtures:
+  - name: script_and_event_handlers
+    payloads:
+      - label: inline_script
+        value: '<script>alert("xss")</script>'
+        expected: reject
+      - label: onerror_attribute
+        value: '<img src=x onerror="alert(1)">'
+        expected: reject
+      - label: javascript_protocol
+        value: '[click](javascript:alert(1))'
+        expected: reject
+      - label: safe_paragraph
+        value: 'This is normal paragraph text.'
+        expected: allow
+
+  - name: mdx_and_jsx
+    payloads:
+      - label: mdx_component
+        value: '<EditorToolbar onClick={() => steal()} />'
+        expected: reject
+      - label: mdx_import
+        value: 'import { Evil } from "evil";<Evil />'
+        expected: reject
+      - label: safe_bold
+        value: '**bold text**'
+        expected: allow
+
+  - name: cdata_and_obfuscation
+    payloads:
+      - label: cdata_script
+        value: '<![CDATA[<script>alert(1)</script>]]>'
+        expected: reject
+      - label: mixed_case_script
+        value: '<ScRiPt>alert(1)</ScRiPt>'
+        expected: reject
+      - label: safe_table
+        value: '| a | b |\n|---|---|\n| 1 | 2 |'
+        expected: allow

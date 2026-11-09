@@ -1,0 +1,309 @@
+scenarios:
+  deterministic_manifest:
+    fixtures:
+      - name: same_source_config_same_manifest
+        input:
+          source_config_sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          documents:
+            - path: pricing.md
+              source_id: DOC-0001
+            - path: guide/intro.md
+              source_id: DOC-0002
+          replay:
+            same_source: true
+            same_config: true
+          manifest_sha256: "6763d280ddda438ddee200337aee9950a7e1c59f35f0afdc42d6bacc34379274"
+        expected:
+          status: PASS
+      - name: changed_input_new_manifest
+        input:
+          source_config_sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          documents:
+            - path: pricing.md
+              source_id: DOC-0001
+          replay:
+            same_source: false
+            same_config: true
+          manifest_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: changed_config_new_manifest
+        input:
+          source_config_sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          documents:
+            - path: pricing.md
+              source_id: DOC-0001
+          replay:
+            same_source: true
+            same_config: false
+          manifest_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  admission_gates:
+    fixtures:
+      - name: stable_owner_and_barrier_complete
+        input:
+          stable_source_owner: true
+          data_barrier_complete: true
+          pii_hits: 0
+          critical_media_without_verification: 0
+        expected:
+          status: PASS
+      - name: missing_stable_owner
+        input:
+          stable_source_owner: false
+          data_barrier_complete: true
+          pii_hits: 0
+          critical_media_without_verification: 0
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+      - name: incomplete_data_barrier
+        input:
+          stable_source_owner: true
+          data_barrier_complete: false
+          pii_hits: 0
+          critical_media_without_verification: 0
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+      - name: pii_requires_disposition
+        input:
+          stable_source_owner: true
+          data_barrier_complete: true
+          pii_hits: 3
+          pii_dispositioned: false
+          critical_media_without_verification: 0
+        expected:
+          status: FAIL
+          error: PII_REVIEW_REQUIRED
+      - name: pii_dispositioned_allowed
+        input:
+          stable_source_owner: true
+          data_barrier_complete: true
+          pii_hits: 3
+          pii_dispositioned: true
+          critical_media_without_verification: 0
+        expected:
+          status: PASS
+      - name: critical_media_blocked
+        input:
+          stable_source_owner: true
+          data_barrier_complete: true
+          pii_hits: 0
+          critical_media_without_verification: 2
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: handwritten_media_blocked
+        input:
+          stable_source_owner: true
+          data_barrier_complete: true
+          pii_hits: 0
+          critical_media_without_verification: 1
+          media_class: handwritten
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  path_to_id_mapping:
+    fixtures:
+      - name: stable_path_to_uuid
+        input:
+          documents:
+            - path: pricing.md
+              source_id: DOC-0001
+              expected_document_id: "11111111-1111-4111-8111-111111111111"
+            - path: guide/intro.md
+              source_id: DOC-0002
+              expected_document_id: "22222222-2222-4222-8222-222222222222"
+          paths_are_nfc: true
+        expected:
+          status: PASS
+      - name: nfd_path_rejected
+        input:
+          documents:
+            - path: "cafe\u0301.md"
+              source_id: DOC-0003
+          paths_are_nfc: false
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+      - name: absolute_path_rejected
+        input:
+          documents:
+            - path: /etc/pricing.md
+              source_id: DOC-0004
+          paths_are_nfc: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: source_id_case_preserved
+        input:
+          documents:
+            - path: pricing.md
+              source_id: DOC-0001
+          expected_source_id: DOC-0001
+        expected:
+          status: PASS
+      - name: source_id_lowercase_rewrite_rejected
+        input:
+          documents:
+            - path: pricing.md
+              source_id: doc-0001
+          expected_source_id: DOC-0001
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+
+  security_blockers:
+    fixtures:
+      - name: traversal_blocked
+        input:
+          hazard: traversal
+          path: "../../../etc/passwd"
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: symlink_blocked
+        input:
+          hazard: symlink
+          path: "link.md"
+          symlink_target: "/etc/passwd"
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: ambiguous_path_blocked
+        input:
+          hazard: ambiguous_path
+          path: "pricing//details.md"
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: executable_html_blocked
+        input:
+          hazard: executable_html
+          content: "<script>alert(1)</script>"
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: executable_mdx_blocked
+        input:
+          hazard: executable_mdx
+          content: "{(()=>{alert(1)})()}"
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: secret_in_content_blocked
+        input:
+          hazard: secret
+          content: "AWS_SECRET_ACCESS_KEY=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: invalid_utf8_blocked
+        input:
+          hazard: invalid_utf8
+          content: "\xff\xfe"
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: oversized_blocked
+        input:
+          hazard: oversized
+          size_bytes: 1099511627777
+        expected:
+          status: FAIL
+          error: LIMIT_EXCEEDED
+      - name: decompression_bomb_blocked
+        input:
+          hazard: decompression_bomb
+          compression_ratio: 10000
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: mutable_unhashed_attachment_blocked
+        input:
+          hazard: mutable_unhashed_attachment
+          attachment:
+            object_id: diagram.png
+            version: "1"
+            size: 1234
+            media_type: image/png
+            source_ref: "https://example.com/diagram.png"
+            sha256: null
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: safe_attachment_allowed
+        input:
+          hazard: none
+          attachment:
+            object_id: diagram.png
+            version: "1"
+            sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            size: 1234
+            media_type: image/png
+            source_ref: "s3://bucket/object?v=1"
+        expected:
+          status: PASS
+
+  zero_canonical_writes:
+    fixtures:
+      - name: dry_run_writes_nothing
+        input:
+          canonical_writes: 0
+          branches_created: 0
+          mrs_created: 0
+          main_commits: 0
+          active_index_pointers: 0
+          merged_cursors: 0
+        expected:
+          status: PASS
+      - name: any_canonical_write_rejected
+        input:
+          canonical_writes: 1
+          branches_created: 0
+          mrs_created: 0
+          main_commits: 0
+          active_index_pointers: 0
+          merged_cursors: 0
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: branch_created_rejected
+        input:
+          canonical_writes: 0
+          branches_created: 1
+          mrs_created: 0
+          main_commits: 0
+          active_index_pointers: 0
+          merged_cursors: 0
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: mr_created_rejected
+        input:
+          canonical_writes: 0
+          branches_created: 0
+          mrs_created: 1
+          main_commits: 0
+          active_index_pointers: 0
+          merged_cursors: 0
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: active_index_pointer_rejected
+        input:
+          canonical_writes: 0
+          branches_created: 0
+          mrs_created: 0
+          main_commits: 0
+          active_index_pointers: 1
+          merged_cursors: 0
+        expected:
+          status: FAIL
+          error: INVALID_STATE

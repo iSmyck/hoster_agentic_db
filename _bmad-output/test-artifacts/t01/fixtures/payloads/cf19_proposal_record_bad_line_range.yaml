@@ -1,0 +1,25 @@
+schema_version: proposal-record-v1
+proposal_id: PROP-0001
+proposal_version_id: 22222222-2222-4222-8222-222222222222
+repository_id: repo-sales
+space_id: sales
+target_branch: main
+proposal_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+base_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+author_stable_id: user-sales-2
+version_author_stable_id: user-sales-2
+requester_stable_id: user-sales-2
+actor_type: human
+rationale: test fixture
+evidence:
+  - kind: document_revision
+    ref: pricing/current.md
+    sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    document_id: 33333333-3333-4333-8333-333333333333
+    revision_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    range:
+      start_line: 10
+      end_line: 5
+idempotency_key: 44444444-4444-4444-8444-444444444444
+payload_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+created_at: "2026-11-08T00:00:00Z"

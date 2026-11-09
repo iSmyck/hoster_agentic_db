@@ -1,0 +1,206 @@
+scenarios:
+  proposal_lifecycle:
+    fixtures:
+      - name: valid_human_proposal
+        input:
+          proposal_id: prop-001
+          proposal_version_id: 11111111-1111-4111-8111-111111111111
+          repository_id: repo-sales
+          space_id: sales
+          target_branch: main
+          proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          author_stable_id: user-sales-1
+          version_author_stable_id: user-sales-1
+          requester_stable_id: user-sales-1
+          actor_type: human
+          rationale: Update discount guidance.
+          idempotency_key: prop-001-v1
+        expected:
+          status: PASS
+      - name: valid_agent_proposal
+        input:
+          proposal_id: prop-002
+          proposal_version_id: 22222222-2222-4222-8222-222222222222
+          repository_id: repo-sales
+          space_id: sales
+          target_branch: main
+          proposal_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          author_stable_id: agent-1
+          version_author_stable_id: agent-1
+          requester_stable_id: user-sales-1
+          actor_type: agent
+          run_id: run-2026-001
+          rationale: Proposed single-page edit.
+          idempotency_key: prop-002-v1
+        expected:
+          status: PASS
+      - name: version_evolution
+        input:
+          proposal_id: prop-001
+          proposal_version_id: 33333333-3333-4333-8333-333333333333
+          supersedes_proposal_version_id: 11111111-1111-4111-8111-111111111111
+          prior_approval_invalidated: true
+          repository_id: repo-sales
+          space_id: sales
+          target_branch: main
+          proposal_sha: cccccccccccccccccccccccccccccccccccccccc
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          author_stable_id: user-sales-1
+          version_author_stable_id: user-sales-1
+          requester_stable_id: user-sales-1
+          actor_type: human
+          rationale: Revised after feedback.
+          idempotency_key: prop-001-v2
+        expected:
+          status: PASS
+      - name: missing_base_sha
+        input:
+          proposal_id: prop-003
+          proposal_version_id: 44444444-4444-4444-8444-444444444444
+          repository_id: repo-sales
+          space_id: sales
+          target_branch: main
+          proposal_sha: dddddddddddddddddddddddddddddddddddddddd
+          author_stable_id: user-sales-1
+          version_author_stable_id: user-sales-1
+          requester_stable_id: user-sales-1
+          actor_type: human
+          rationale: Missing base.
+          idempotency_key: prop-003-v1
+        expected:
+          status: FAIL
+          error: MISSING_BASE_SHA
+      - name: agent_missing_run_id
+        input:
+          proposal_id: prop-004
+          proposal_version_id: 55555555-5555-4555-8555-555555555555
+          repository_id: repo-sales
+          space_id: sales
+          target_branch: main
+          proposal_sha: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          author_stable_id: agent-1
+          version_author_stable_id: agent-1
+          requester_stable_id: user-sales-1
+          actor_type: agent
+          rationale: Agent proposal missing run_id.
+          idempotency_key: prop-004-v1
+        expected:
+          status: FAIL
+          error: MISSING_RUN_ID
+      - name: base_equals_proposal_sha
+        input:
+          proposal_id: prop-005
+          proposal_version_id: 66666666-6666-4666-8666-666666666666
+          repository_id: repo-sales
+          space_id: sales
+          target_branch: main
+          proposal_sha: ffffffffffffffffffffffffffffffffffffffff
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          author_stable_id: user-sales-1
+          version_author_stable_id: user-sales-1
+          requester_stable_id: user-sales-1
+          actor_type: human
+          rationale: No change.
+          idempotency_key: prop-005-v1
+        expected:
+          status: FAIL
+          error: PROPOSAL_VERSION_MISMATCH
+  idempotency:
+    fixtures:
+      - name: same_key_same_payload
+        input:
+          idempotency_key: prop-001-v1
+          first_payload_hash: "1111111111111111111111111111111111111111111111111111111111111111"
+          second_payload_hash: "1111111111111111111111111111111111111111111111111111111111111111"
+        expected:
+          status: PASS
+      - name: same_key_different_payload
+        input:
+          idempotency_key: prop-001-v1
+          first_payload_hash: "1111111111111111111111111111111111111111111111111111111111111111"
+          second_payload_hash: "2222222222222222222222222222222222222222222222222222222222222222"
+        expected:
+          status: FAIL
+          error: IDEMPOTENCY_KEY_REUSED
+  archive_restore:
+    fixtures:
+      - name: archived_document
+        input:
+          archived: true
+          archive:
+            replaced_by_id: 99999999-9999-4999-8999-999999999999
+            archived_at: "2026-11-01T00:00:00Z"
+        expected:
+          status: PASS
+      - name: archive_flag_without_archive
+        input:
+          archived: true
+        expected:
+          status: FAIL
+          error: ARCHIVE_INVARIANT_VIOLATED
+      - name: restore_creates_reviewed_version
+        input:
+          is_restore: true
+          archived: false
+        expected:
+          status: PASS
+      - name: active_document_with_archive_object
+        input:
+          archived: false
+          archive:
+            replaced_by_id: 99999999-9999-4999-8999-999999999999
+        expected:
+          status: FAIL
+          error: ARCHIVE_INVARIANT_VIOLATED
+  limits:
+    fixtures:
+      - name: evidence_count_exceeded
+        input:
+          rationale: Short rationale.
+          idempotency_key: key-1
+          evidence:
+            - kind: document_revision
+              ref: doc
+              sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+              document_id: 11111111-1111-4111-8111-111111111111
+              revision_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          evidence_count: 65
+          writes: 0
+        expected:
+          status: FAIL
+          error: LIMIT_EXCEEDED
+      - name: rationale_too_long
+        input:
+          rationale: too long
+          rationale_length: 10001
+          idempotency_key: key-2
+          evidence: []
+          writes: 0
+        expected:
+          status: FAIL
+          error: LIMIT_EXCEEDED
+      - name: idempotency_key_too_long
+        input:
+          rationale: OK
+          idempotency_key: key-long
+          idempotency_key_length: 256
+          evidence: []
+          writes: 0
+        expected:
+          status: FAIL
+          error: LIMIT_EXCEEDED
+      - name: within_bounds
+        input:
+          rationale: Reasonable rationale.
+          idempotency_key: key-ok
+          evidence:
+            - kind: document_revision
+              ref: doc
+              sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+              document_id: 11111111-1111-4111-8111-111111111111
+              revision_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        expected:
+          status: PASS

@@ -1,0 +1,62 @@
+fixtures:
+  - name: valid_restore_creates_revert_mr
+    description: Restoring an exact historical revision creates a revert-MR with a new commit.
+    input:
+      revision_sha: dddddddddddddddddddddddddddddddddddddddd
+    state:
+      history:
+        - sha: ffffffffffffffffffffffffffffffffffffffff
+          author_stable_id: user-sales-1
+          message: "Update discount guidance"
+          timestamp: "2026-11-08T12:00:00Z"
+        - sha: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+          author_stable_id: user-sales-2
+          message: "Add pricing section"
+          timestamp: "2026-11-08T11:00:00Z"
+        - sha: dddddddddddddddddddddddddddddddddddddddd
+          author_stable_id: user-sales-1
+          message: "Initial playbook"
+          timestamp: "2026-11-08T10:00:00Z"
+      main_head_before: ffffffffffffffffffffffffffffffffffffffff
+      main_head_after: ffffffffffffffffffffffffffffffffffffffff
+    expected:
+      created_revert_mr: true
+      main_rewritten: false
+      new_commit_sha: "9999999999999999999999999999999999999999"
+      status: PASS
+
+  - name: direct_main_write_forbidden
+    description: A restore that would rewrite main directly must be rejected.
+    input:
+      revision_sha: dddddddddddddddddddddddddddddddddddddddd
+    state:
+      history:
+        - sha: ffffffffffffffffffffffffffffffffffffffff
+          author_stable_id: user-sales-1
+          message: "Update discount guidance"
+          timestamp: "2026-11-08T12:00:00Z"
+        - sha: dddddddddddddddddddddddddddddddddddddddd
+          author_stable_id: user-sales-1
+          message: "Initial playbook"
+          timestamp: "2026-11-08T10:00:00Z"
+      main_head_before: ffffffffffffffffffffffffffffffffffffffff
+      main_head_after: 8888888888888888888888888888888888888888
+    expected:
+      main_rewritten: false
+      status: FAIL
+
+  - name: unknown_revision_rejected
+    description: Restoring a revision not present in history is rejected without writes.
+    input:
+      revision_sha: "0000000000000000000000000000000000000000"
+    state:
+      history:
+        - sha: ffffffffffffffffffffffffffffffffffffffff
+          author_stable_id: user-sales-1
+          message: "Update discount guidance"
+          timestamp: "2026-11-08T12:00:00Z"
+      main_head_before: ffffffffffffffffffffffffffffffffffffffff
+      main_head_after: ffffffffffffffffffffffffffffffffffffffff
+    expected:
+      main_rewritten: false
+      status: FAIL

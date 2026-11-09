@@ -1,0 +1,22 @@
+absolute_relative_pairs:
+  - absolute: /pricing
+    relative: pricing
+  - absolute: /sales/products
+    relative: sales/products
+
+ambiguous_paths:
+  - path: /pricing/
+  - path: ..
+  - path: pricing/../products
+  - path: ./pricing
+  - path: sales\\products
+
+nfc_nfd:
+  - nfc: "café"
+    nfd: "cafe\u0301"
+
+source_id_cases:
+  - source_id: DOC-0001
+    valid: true
+  - source_id: DOC-0001-invalid-case
+    valid: false

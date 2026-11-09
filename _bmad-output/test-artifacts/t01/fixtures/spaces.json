@@ -1,0 +1,54 @@
+{
+  "sales": {
+    "access_policy_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "active_snapshot": true,
+    "approval_policy_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "approvers": [
+      "user-sales-3"
+    ],
+    "authors": [
+      "user-sales-2"
+    ],
+    "group_snapshot": {
+      "captured_at": "2026-11-08T00:00:00Z",
+      "groups": [
+        "sales-authors",
+        "sales-approvers"
+      ],
+      "snapshot_id": "gs-sales-1"
+    },
+    "policy_bundle_id": "bundle-sales-v1",
+    "readers": [
+      "user-sales-1"
+    ],
+    "repository_id": "repo-sales",
+    "revocation_epoch": 1,
+    "space_id": "sales"
+  },
+  "sales-pricing": {
+    "access_policy_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "active_snapshot": true,
+    "approval_policy_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "approvers": [
+      "user-pricing-3"
+    ],
+    "authors": [
+      "user-pricing-2"
+    ],
+    "group_snapshot": {
+      "captured_at": "2026-11-08T00:00:00Z",
+      "groups": [
+        "pricing-authors",
+        "pricing-approvers"
+      ],
+      "snapshot_id": "gs-pricing-1"
+    },
+    "policy_bundle_id": "bundle-pricing-v1",
+    "readers": [
+      "user-pricing-1"
+    ],
+    "repository_id": "repo-sales-pricing",
+    "revocation_epoch": 2,
+    "space_id": "sales-pricing"
+  }
+}

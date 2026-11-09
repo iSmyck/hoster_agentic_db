@@ -1,0 +1,86 @@
+fixtures:
+  - name: valid_human_save
+    description: Author saves a draft from the current base; main must stay untouched.
+    input:
+      actor_type: human
+      author_stable_id: user-sales-1
+      base_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      content: |
+        ---
+        schema_version: document-front-matter-v2
+        id: 11111111-1111-4111-8111-111111111111
+        title: Pricing Playbook
+        parent_id: null
+        ownership_mode: curated
+        links: []
+        valid_until: "2026-12-31"
+        archived: false
+        attachments: []
+        ---
+
+        # Pricing Playbook
+
+        Updated discount guidance.
+      document_path: playbook.md
+      idempotency_key: draft-sales-1
+      target_branch: main
+    expected:
+      branch_created: true
+      main_unchanged: true
+      status: PASS
+
+  - name: valid_agent_save
+    description: Agent actor must include run_id and still create a durable draft branch.
+    input:
+      actor_type: agent
+      author_stable_id: agent-proposal-1
+      base_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      content: |
+        ---
+        schema_version: document-front-matter-v2
+        id: 22222222-2222-4222-8222-222222222222
+        title: Agent Proposal
+        parent_id: null
+        ownership_mode: curated
+        links: []
+        valid_until: null
+        archived: false
+        attachments: []
+        ---
+
+        Proposed change.
+      document_path: proposals/agent-proposal.md
+      idempotency_key: draft-agent-1
+      run_id: run-2026-001
+      target_branch: main
+    expected:
+      branch_created: true
+      main_unchanged: true
+      status: PASS
+
+  - name: missing_base_sha
+    description: Save without a base_sha must be rejected before any write.
+    input:
+      actor_type: human
+      author_stable_id: user-sales-1
+      content: "no base"
+      document_path: playbook.md
+      idempotency_key: draft-missing-base
+      target_branch: main
+    expected:
+      error: MISSING_BASE_SHA
+      status: FAIL
+
+  - name: agent_missing_run_id
+    description: Agent actor without run_id must be rejected.
+    input:
+      actor_type: agent
+      author_stable_id: agent-proposal-1
+      base_sha: cccccccccccccccccccccccccccccccccccccccc
+      content: "agent content"
+      document_path: proposals/agent-proposal.md
+      idempotency_key: draft-agent-no-run
+      target_branch: main
+    expected:
+      error: MISSING_RUN_ID
+      status: FAIL

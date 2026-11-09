@@ -1,0 +1,299 @@
+scenarios:
+  cutover_record:
+    fixtures:
+      - name: valid_cutover_record
+        input:
+          space_id: sales
+          repository_id: repo-sales
+          cutover_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          evidence_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          signoff_stable_id: "stable-signoff-1"
+          signed_at: "2026-11-09T00:00:00Z"
+          all_fields_present: true
+        expected:
+          status: PASS
+      - name: missing_cutover_sha
+        input:
+          space_id: sales
+          repository_id: repo-sales
+          cutover_sha: null
+          evidence_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          signoff_stable_id: "stable-signoff-1"
+          signed_at: "2026-11-09T00:00:00Z"
+          all_fields_present: false
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+      - name: missing_signoff_identity
+        input:
+          space_id: sales
+          repository_id: repo-sales
+          cutover_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          evidence_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          signoff_stable_id: null
+          signed_at: "2026-11-09T00:00:00Z"
+          all_fields_present: false
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+
+  write_freeze:
+    fixtures:
+      - name: freeze_before_any_later_step
+        input:
+          freeze: true
+          user_access_closed: true
+          published_index_exists: false
+          protection_active: false
+          preflight_validated: false
+          published_created: false
+          activated: false
+        expected:
+          status: PASS
+      - name: activation_without_freeze_rejected
+        input:
+          freeze: false
+          user_access_closed: true
+          published_index_exists: false
+          protection_active: true
+          preflight_validated: true
+          published_created: true
+          activated: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: user_access_open_during_freeze_rejected
+        input:
+          freeze: true
+          user_access_closed: false
+          published_index_exists: false
+          protection_active: false
+          preflight_validated: false
+          published_created: false
+          activated: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: published_index_exists_before_cutover_rejected
+        input:
+          freeze: true
+          user_access_closed: true
+          published_index_exists: true
+          protection_active: false
+          preflight_validated: false
+          published_created: false
+          activated: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  head_verification:
+    fixtures:
+      - name: head_equals_cutover_sha
+        input:
+          head_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          cutover_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          drift_after_signoff: false
+        expected:
+          status: PASS
+      - name: head_drift_requires_new_record
+        input:
+          head_sha: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          cutover_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          drift_after_signoff: true
+        expected:
+          status: FAIL
+          error: STALE_BASE
+      - name: head_mismatch_before_signoff_rejected
+        input:
+          head_sha: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          cutover_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          drift_after_signoff: false
+        expected:
+          status: FAIL
+          error: STALE_BASE
+
+  protected_rules:
+    fixtures:
+      - name: protected_tags_and_mr_only_rules
+        input:
+          validation_tag: refs/tags/kb-validation/sales
+          cutover_tag: refs/tags/kb-cutover/sales
+          mr_only_rules: true
+          merge_only_go: true
+          negative_direct_push_proof: true
+        expected:
+          status: PASS
+      - name: missing_validation_tag
+        input:
+          validation_tag: null
+          cutover_tag: refs/tags/kb-cutover/sales
+          mr_only_rules: true
+          merge_only_go: true
+          negative_direct_push_proof: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: direct_push_not_blocked
+        input:
+          validation_tag: refs/tags/kb-validation/sales
+          cutover_tag: refs/tags/kb-cutover/sales
+          mr_only_rules: true
+          merge_only_go: true
+          negative_direct_push_proof: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: merge_not_only_go
+        input:
+          validation_tag: refs/tags/kb-validation/sales
+          cutover_tag: refs/tags/kb-cutover/sales
+          mr_only_rules: true
+          merge_only_go: false
+          negative_direct_push_proof: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  preflight_to_published_order:
+    fixtures:
+      - name: preflight_validated_then_published
+        input:
+          preflight:
+            snapshot_id: "11111111-1111-4111-8111-111111111111"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            is_preflight: true
+            serving_allowed: false
+            validated: true
+          published:
+            snapshot_id: "22222222-2222-4222-8222-222222222222"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            is_preflight: false
+            serving_allowed: true
+            full_validation_repeated: true
+        expected:
+          status: PASS
+      - name: published_without_preflight_validation_rejected
+        input:
+          preflight:
+            snapshot_id: "11111111-1111-4111-8111-111111111111"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            is_preflight: true
+            serving_allowed: false
+            validated: false
+          published:
+            snapshot_id: "22222222-2222-4222-8222-222222222222"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            is_preflight: false
+            serving_allowed: true
+            full_validation_repeated: true
+        expected:
+          status: FAIL
+          error: INDEX_NOT_READY
+      - name: preflight_activated_rejected
+        input:
+          preflight:
+            snapshot_id: "11111111-1111-4111-8111-111111111111"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            is_preflight: true
+            serving_allowed: true
+            validated: true
+          published:
+            snapshot_id: "22222222-2222-4222-8222-222222222222"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            is_preflight: false
+            serving_allowed: true
+            full_validation_repeated: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: reused_published_id_rejected
+        input:
+          preflight:
+            snapshot_id: "11111111-1111-4111-8111-111111111111"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            is_preflight: true
+            serving_allowed: false
+            validated: true
+          published:
+            snapshot_id: "11111111-1111-4111-8111-111111111111"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            is_preflight: false
+            serving_allowed: true
+            full_validation_repeated: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  activation:
+    fixtures:
+      - name: activation_after_published_pointer_observable
+        input:
+          published_pointer_observable: true
+          user_access_opened: true
+        expected:
+          status: PASS
+      - name: activation_before_observable_pointer_rejected
+        input:
+          published_pointer_observable: false
+          user_access_opened: true
+        expected:
+          status: FAIL
+          error: INDEX_NOT_READY
+      - name: user_access_opened_without_activation_rejected
+        input:
+          published_pointer_observable: true
+          user_access_opened: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  bypass:
+    fixtures:
+      - name: activation_before_published_rejected
+        input:
+          steps:
+            - freeze
+            - head_verified
+            - protection
+            - activation
+            - preflight
+            - published
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: published_before_protection_rejected
+        input:
+          steps:
+            - freeze
+            - head_verified
+            - preflight
+            - published
+            - protection
+            - activation
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: protection_before_head_rejected
+        input:
+          steps:
+            - freeze
+            - protection
+            - head_verified
+            - preflight
+            - published
+            - activation
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: valid_order_passes
+        input:
+          steps:
+            - freeze
+            - head_verified
+            - protection
+            - preflight
+            - published
+            - activation
+        expected:
+          status: PASS

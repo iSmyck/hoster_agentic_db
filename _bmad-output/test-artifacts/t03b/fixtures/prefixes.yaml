@@ -1,0 +1,66 @@
+fixtures:
+  - name: pricing_current_selects_pricing
+    path: /pricing/current.md
+    expected_rule_id: pricing-rule
+    rules:
+      - rule_id: root-rule
+        path_prefix: /
+        external_group_ids:
+          - sales-authors
+      - rule_id: pricing-rule
+        path_prefix: /pricing
+        external_group_ids:
+          - pricing-approvers
+
+  - name: root_fallback
+    path: /other/document.md
+    expected_rule_id: root-rule
+    rules:
+      - rule_id: root-rule
+        path_prefix: /
+        external_group_ids:
+          - sales-authors
+      - rule_id: pricing-rule
+        path_prefix: /pricing
+        external_group_ids:
+          - pricing-approvers
+
+  - name: no_parent_union
+    path: /pricing/current.md
+    expected_rule_id: pricing-rule
+    rules:
+      - rule_id: root-rule
+        path_prefix: /
+        external_group_ids:
+          - sales-authors
+          - sales-approvers
+      - rule_id: pricing-rule
+        path_prefix: /pricing
+        external_group_ids:
+          - pricing-approvers
+
+  - name: deeper_prefix_wins
+    path: /pricing/tiers/enterprise.md
+    expected_rule_id: tiers-rule
+    rules:
+      - rule_id: root-rule
+        path_prefix: /
+        external_group_ids:
+          - sales-authors
+      - rule_id: pricing-rule
+        path_prefix: /pricing
+        external_group_ids:
+          - pricing-approvers
+      - rule_id: tiers-rule
+        path_prefix: /pricing/tiers
+        external_group_ids:
+          - tiers-approvers
+
+  - name: no_match
+    path: /unrelated/path.md
+    expect_no_match: true
+    rules:
+      - rule_id: pricing-rule
+        path_prefix: /pricing
+        external_group_ids:
+          - pricing-approvers

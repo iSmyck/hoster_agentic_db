@@ -1,0 +1,289 @@
+scenarios:
+  feasibility_inventory:
+    fixtures:
+      - name: sharepoint_selected_inventory_complete
+        input:
+          selected_connector: SharePoint
+          inventory:
+            edition: SharePoint Online
+            api: Microsoft Graph Sites/Drives
+            authentication: OIDC service principal with sites.read.all
+            sandbox: tenant-sandbox-001
+            scopes: sites.read.all files.read.all
+            rate_limits: 12000 requests/10s
+          other_connectors:
+            - name: Bitrix24
+              claimed_ready: false
+            - name: Kayako
+              claimed_ready: false
+        expected:
+          status: PASS
+      - name: missing_rate_limits_rejected
+        input:
+          selected_connector: SharePoint
+          inventory:
+            edition: SharePoint Online
+            api: Microsoft Graph Sites/Drives
+            authentication: OIDC service principal
+            sandbox: tenant-sandbox-001
+            scopes: sites.read.all
+            rate_limits: ""
+          other_connectors:
+            - name: Bitrix24
+              claimed_ready: false
+            - name: Kayako
+              claimed_ready: false
+        expected:
+          status: FAIL
+          error: INVALID_CONFIG
+      - name: unselected_connector_claimed_ready_rejected
+        input:
+          selected_connector: SharePoint
+          inventory:
+            edition: SharePoint Online
+            api: Microsoft Graph Sites/Drives
+            authentication: OIDC service principal
+            sandbox: tenant-sandbox-001
+            scopes: sites.read.all
+            rate_limits: 12000 requests/10s
+          other_connectors:
+            - name: Bitrix24
+              claimed_ready: true
+            - name: Kayako
+              claimed_ready: false
+        expected:
+          status: FAIL
+          error: INVALID_CONFIG
+
+  connector_identity_provenance:
+    fixtures:
+      - name: stable_identity_and_provenance
+        input:
+          stable_remote_id: true
+          immutable_version_or_hash: true
+          source_owner: true
+          provenance: true
+          maps_to_configured_space: true
+        expected:
+          status: PASS
+      - name: missing_stable_remote_id_rejected
+        input:
+          stable_remote_id: false
+          immutable_version_or_hash: true
+          source_owner: true
+          provenance: true
+          maps_to_configured_space: true
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+      - name: wrong_space_mapping_rejected
+        input:
+          stable_remote_id: true
+          immutable_version_or_hash: true
+          source_owner: true
+          provenance: true
+          maps_to_configured_space: false
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+
+  connector_capabilities:
+    fixtures:
+      - name: proposal_only_no_forbidden
+        input:
+          capabilities:
+            - list
+            - changes
+            - fetch
+            - propose
+          proposal_only_to_go: true
+        expected:
+          status: PASS
+      - name: auto_merge_capability_rejected
+        input:
+          capabilities:
+            - list
+            - changes
+            - fetch
+            - propose
+            - auto_merge
+          proposal_only_to_go: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: index_pointer_capability_rejected
+        input:
+          capabilities:
+            - list
+            - fetch
+            - propose
+            - index_pointer
+          proposal_only_to_go: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  access_revocation:
+    fixtures:
+      - name: healthy_access
+        input:
+          credentials_revoked: false
+          changed_acl_hint: false
+          revoked_group_membership: false
+          operation_failed_closed: false
+          access_hint_treated_as_hint_only: true
+        expected:
+          status: PASS
+      - name: revoked_credentials_fail_closed
+        input:
+          credentials_revoked: true
+          changed_acl_hint: false
+          revoked_group_membership: false
+          operation_failed_closed: true
+          access_hint_treated_as_hint_only: true
+        expected:
+          status: PASS
+      - name: acl_hint_not_authority
+        input:
+          credentials_revoked: false
+          changed_acl_hint: true
+          revoked_group_membership: false
+          operation_failed_closed: true
+          access_hint_treated_as_hint_only: true
+        expected:
+          status: PASS
+      - name: hint_treated_as_authority_rejected
+        input:
+          credentials_revoked: false
+          changed_acl_hint: true
+          revoked_group_membership: false
+          operation_failed_closed: true
+          access_hint_treated_as_hint_only: false
+        expected:
+          status: FAIL
+          error: AUTHZ_GROUP_STALE
+
+  deletion_retry_dedupe:
+    fixtures:
+      - name: deletion_creates_tombstone
+        input:
+          source_deleted: true
+          tombstone_mr_created: true
+          bounded_retry_preserves_identity: true
+          duplicate_event: false
+          outstanding_proposal_count: 1
+          poison_reached_dead_letter: true
+        expected:
+          status: PASS
+      - name: duplicate_event_deduped
+        input:
+          source_deleted: false
+          tombstone_mr_created: false
+          bounded_retry_preserves_identity: true
+          duplicate_event: true
+          outstanding_proposal_count: 1
+          poison_reached_dead_letter: true
+        expected:
+          status: PASS
+      - name: duplicate_creates_second_proposal_rejected
+        input:
+          source_deleted: false
+          tombstone_mr_created: false
+          bounded_retry_preserves_identity: true
+          duplicate_event: true
+          outstanding_proposal_count: 2
+          poison_reached_dead_letter: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: poison_missing_dead_letter_rejected
+        input:
+          source_deleted: false
+          tombstone_mr_created: false
+          bounded_retry_preserves_identity: true
+          duplicate_event: false
+          outstanding_proposal_count: 0
+          poison_reached_dead_letter: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  attachments_object_acl:
+    fixtures:
+      - name: immutable_versioned_attachments
+        input:
+          attachments:
+            - sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+              size: 12345
+              media_type: application/pdf
+              source_ref: sharepoint://drive/item/1
+              immutable: true
+          mutable_url_used: false
+          missing_object: false
+          object_acl_failed: false
+        expected:
+          status: PASS
+      - name: mutable_url_rejected
+        input:
+          attachments:
+            - sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+              size: 12345
+              media_type: application/pdf
+              source_ref: sharepoint://drive/item/1
+              immutable: true
+          mutable_url_used: true
+          missing_object: false
+          object_acl_failed: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: missing_object_rejected
+        input:
+          attachments:
+            - sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+              size: 12345
+              media_type: application/pdf
+              source_ref: sharepoint://drive/item/1
+              immutable: true
+          mutable_url_used: false
+          missing_object: true
+          object_acl_failed: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: object_acl_fail_rejected
+        input:
+          attachments:
+            - sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+              size: 12345
+              media_type: application/pdf
+              source_ref: sharepoint://drive/item/1
+              immutable: true
+          mutable_url_used: false
+          missing_object: false
+          object_acl_failed: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  secrets_hygiene:
+    fixtures:
+      - name: no_secret_leaks
+        input:
+          secret_leak_locations: []
+        expected:
+          status: PASS
+      - name: token_in_log_rejected
+        input:
+          secret_leak_locations:
+            - logs
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: signed_url_in_document_rejected
+        input:
+          secret_leak_locations:
+            - documents
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED

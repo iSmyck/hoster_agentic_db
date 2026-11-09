@@ -1,0 +1,13 @@
+schema_version: document-front-matter-v2
+id: 11111111-1111-4111-8111-111111111111
+title: Live doc with orphan archive block
+parent_id: null
+ownership_mode: curated
+links: []
+valid_until: null
+archived: false
+archive:
+  archived_at: "2026-11-08T00:00:00Z"
+  reason: test fixture
+  replacement_document_id: null
+attachments: []

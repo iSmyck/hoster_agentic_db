@@ -1,0 +1,16 @@
+# Synthetic path normalization vectors for CF-28.
+absolute_relative_pairs:
+  - absolute: /
+    relative: ""
+  - absolute: /pricing
+    relative: pricing
+  - absolute: /approval-policy.yaml
+    relative: approval-policy.yaml
+ambiguous_paths:
+  - path: /pricing//current
+  - path: /pricing/../current
+  - path: "\\pricing\\current"
+  - path: /pricing/
+nfc_nfd:
+  - nfc: /цёна
+    nfd: /цёна

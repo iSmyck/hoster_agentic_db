@@ -1,0 +1,513 @@
+scenarios:
+  clean_restore:
+    fixtures:
+      - name: clean_restore_ready
+        input:
+          refs_validated: true
+          mr_note_audit_metadata_validated: true
+          decisions_validated: true
+          assets_closure_validated: true
+          hashes_verified: true
+          kb_authz_rebuilt: true
+          kb_ops_global_merge_freeze: true
+          kb_ops_per_target_barriers: true
+          kb_index_new_validated_snapshot: true
+          activation_before_validation: false
+        expected:
+          status: PASS
+      - name: activation_before_validation_rejected
+        input:
+          refs_validated: true
+          mr_note_audit_metadata_validated: true
+          decisions_validated: true
+          assets_closure_validated: true
+          hashes_verified: true
+          kb_authz_rebuilt: true
+          kb_ops_global_merge_freeze: true
+          kb_ops_per_target_barriers: true
+          kb_index_new_validated_snapshot: true
+          activation_before_validation: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: missing_kb_authz_rebuild_rejected
+        input:
+          refs_validated: true
+          mr_note_audit_metadata_validated: true
+          decisions_validated: true
+          assets_closure_validated: true
+          hashes_verified: true
+          kb_authz_rebuilt: false
+          kb_ops_global_merge_freeze: true
+          kb_ops_per_target_barriers: true
+          kb_index_new_validated_snapshot: true
+          activation_before_validation: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: missing_assets_closure_rejected
+        input:
+          refs_validated: true
+          mr_note_audit_metadata_validated: true
+          decisions_validated: true
+          assets_closure_validated: false
+          hashes_verified: true
+          kb_authz_rebuilt: true
+          kb_ops_global_merge_freeze: true
+          kb_ops_per_target_barriers: true
+          kb_index_new_validated_snapshot: true
+          activation_before_validation: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  correction_backup:
+    fixtures:
+      - name: correction_backup_reconciles_cleanly
+        input:
+          backup:
+            current_projection_hash: "0000000000000000000000000000000000000000000000000000000000000000"
+            event_sequence_valid: true
+            perimeter_check_passed: true
+          reconciliation:
+            linked_mr_verified: true
+            no_fabricated_decisions: true
+            no_deleted_canonical_writes: true
+            no_resolved_or_cancelled_tasks: true
+            no_second_canonical_write_path: true
+        expected:
+          status: PASS
+      - name: fabricated_decision_rejected
+        input:
+          backup:
+            current_projection_hash: "0000000000000000000000000000000000000000000000000000000000000000"
+            event_sequence_valid: true
+            perimeter_check_passed: true
+          reconciliation:
+            linked_mr_verified: true
+            no_fabricated_decisions: false
+            no_deleted_canonical_writes: true
+            no_resolved_or_cancelled_tasks: true
+            no_second_canonical_write_path: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: deleted_canonical_write_rejected
+        input:
+          backup:
+            current_projection_hash: "0000000000000000000000000000000000000000000000000000000000000000"
+            event_sequence_valid: true
+            perimeter_check_passed: true
+          reconciliation:
+            linked_mr_verified: true
+            no_fabricated_decisions: true
+            no_deleted_canonical_writes: false
+            no_resolved_or_cancelled_tasks: true
+            no_second_canonical_write_path: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: second_canonical_write_path_rejected
+        input:
+          backup:
+            current_projection_hash: "0000000000000000000000000000000000000000000000000000000000000000"
+            event_sequence_valid: true
+            perimeter_check_passed: true
+          reconciliation:
+            linked_mr_verified: true
+            no_fabricated_decisions: true
+            no_deleted_canonical_writes: true
+            no_resolved_or_cancelled_tasks: true
+            no_second_canonical_write_path: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  unknown_merge_quarantine:
+    fixtures:
+      - name: known_outcome_ready
+        input:
+          unknown_merge_outcome: false
+          quarantined: false
+          auto_cleared_by_terminal_or_ttl: false
+          missing_assets: false
+          incomplete_closure: false
+          missing_correction_backup: false
+          ready_claimed: true
+        expected:
+          status: PASS
+      - name: unknown_quarantined_not_ready
+        input:
+          unknown_merge_outcome: true
+          quarantined: true
+          auto_cleared_by_terminal_or_ttl: false
+          missing_assets: false
+          incomplete_closure: false
+          missing_correction_backup: false
+          ready_claimed: false
+        expected:
+          status: PASS
+      - name: unknown_auto_cleared_rejected
+        input:
+          unknown_merge_outcome: true
+          quarantined: true
+          auto_cleared_by_terminal_or_ttl: true
+          missing_assets: false
+          incomplete_closure: false
+          missing_correction_backup: false
+          ready_claimed: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: missing_assets_blocks_ready
+        input:
+          unknown_merge_outcome: false
+          quarantined: false
+          auto_cleared_by_terminal_or_ttl: false
+          missing_assets: true
+          incomplete_closure: false
+          missing_correction_backup: false
+          ready_claimed: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: missing_correction_backup_blocks_ready
+        input:
+          unknown_merge_outcome: false
+          quarantined: false
+          auto_cleared_by_terminal_or_ttl: false
+          missing_assets: false
+          incomplete_closure: false
+          missing_correction_backup: true
+          ready_claimed: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  metrics_alerts_runbooks:
+    fixtures:
+      - name: coverage_complete_telemetry_clean
+        input:
+          runbook_coverage:
+            - startup
+            - cutover
+            - merge_latency
+            - locks_fencing_recovery
+            - quarantine
+            - decision_mismatch
+            - ci_webhook_head_drift
+            - revocation
+            - source_cursors
+            - export_backup_closure
+            - source_sync
+            - ttft_full_response
+            - restore_upgrade
+          metric_coverage:
+            - startup
+            - cutover
+            - merge_latency
+            - locks_fencing_recovery
+            - quarantine
+            - decision_mismatch
+            - ci_webhook_head_drift
+            - revocation
+            - source_cursors
+            - export_backup_closure
+            - source_sync
+            - ttft_full_response
+            - restore_upgrade
+          alert_coverage:
+            - locks_fencing_recovery
+            - quarantine
+            - decision_mismatch
+            - revocation
+            - source_cursors
+          secrets_in_telemetry: false
+          raw_content_in_telemetry: false
+          owner_approved_rpo_rto: true
+          owner_approved_retention: true
+          owner_approved_backup_cadence: true
+        expected:
+          status: PASS
+      - name: missing_runbook_rejected
+        input:
+          runbook_coverage:
+            - startup
+            - cutover
+          metric_coverage:
+            - startup
+            - cutover
+            - merge_latency
+            - locks_fencing_recovery
+            - quarantine
+            - decision_mismatch
+            - ci_webhook_head_drift
+            - revocation
+            - source_cursors
+            - export_backup_closure
+            - source_sync
+            - ttft_full_response
+            - restore_upgrade
+          alert_coverage:
+            - locks_fencing_recovery
+            - quarantine
+            - decision_mismatch
+            - revocation
+            - source_cursors
+          secrets_in_telemetry: false
+          raw_content_in_telemetry: false
+          owner_approved_rpo_rto: true
+          owner_approved_retention: true
+          owner_approved_backup_cadence: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: secrets_in_telemetry_rejected
+        input:
+          runbook_coverage:
+            - startup
+            - cutover
+            - merge_latency
+            - locks_fencing_recovery
+            - quarantine
+            - decision_mismatch
+            - ci_webhook_head_drift
+            - revocation
+            - source_cursors
+            - export_backup_closure
+            - source_sync
+            - ttft_full_response
+            - restore_upgrade
+          metric_coverage:
+            - startup
+            - cutover
+            - merge_latency
+            - locks_fencing_recovery
+            - quarantine
+            - decision_mismatch
+            - ci_webhook_head_drift
+            - revocation
+            - source_cursors
+            - export_backup_closure
+            - source_sync
+            - ttft_full_response
+            - restore_upgrade
+          alert_coverage:
+            - locks_fencing_recovery
+            - quarantine
+            - decision_mismatch
+            - revocation
+            - source_cursors
+          secrets_in_telemetry: true
+          raw_content_in_telemetry: false
+          owner_approved_rpo_rto: true
+          owner_approved_retention: true
+          owner_approved_backup_cadence: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: missing_rpo_rejected
+        input:
+          runbook_coverage:
+            - startup
+            - cutover
+            - merge_latency
+            - locks_fencing_recovery
+            - quarantine
+            - decision_mismatch
+            - ci_webhook_head_drift
+            - revocation
+            - source_cursors
+            - export_backup_closure
+            - source_sync
+            - ttft_full_response
+            - restore_upgrade
+          metric_coverage:
+            - startup
+            - cutover
+            - merge_latency
+            - locks_fencing_recovery
+            - quarantine
+            - decision_mismatch
+            - ci_webhook_head_drift
+            - revocation
+            - source_cursors
+            - export_backup_closure
+            - source_sync
+            - ttft_full_response
+            - restore_upgrade
+          alert_coverage:
+            - locks_fencing_recovery
+            - quarantine
+            - decision_mismatch
+            - revocation
+            - source_cursors
+          secrets_in_telemetry: false
+          raw_content_in_telemetry: false
+          owner_approved_rpo_rto: false
+          owner_approved_retention: true
+          owner_approved_backup_cadence: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  upgrade_rollback:
+    fixtures:
+      - name: upgrade_rehearsal_complete
+        input:
+          dependency_pins_checked: true
+          sbom_license_diff_reviewed: true
+          branding_notices_preserved: true
+          external_migration_order_verified: true
+          cold_offline_startup_rehearsed: true
+          registered_seams_exercised: true
+          failure_blocks_upgrade: true
+          rollback_path_preserved: true
+        expected:
+          status: PASS
+      - name: upgrade_failure_not_blocked_rejected
+        input:
+          dependency_pins_checked: true
+          sbom_license_diff_reviewed: true
+          branding_notices_preserved: true
+          external_migration_order_verified: true
+          cold_offline_startup_rehearsed: true
+          registered_seams_exercised: true
+          failure_blocks_upgrade: false
+          rollback_path_preserved: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: missing_rollback_rejected
+        input:
+          dependency_pins_checked: true
+          sbom_license_diff_reviewed: true
+          branding_notices_preserved: true
+          external_migration_order_verified: true
+          cold_offline_startup_rehearsed: true
+          registered_seams_exercised: true
+          failure_blocks_upgrade: true
+          rollback_path_preserved: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: missing_seams_rejected
+        input:
+          dependency_pins_checked: true
+          sbom_license_diff_reviewed: true
+          branding_notices_preserved: true
+          external_migration_order_verified: true
+          cold_offline_startup_rehearsed: true
+          registered_seams_exercised: false
+          failure_blocks_upgrade: true
+          rollback_path_preserved: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  cross_client_negative:
+    fixtures:
+      - name: no_cross_client_access
+        input:
+          second_client_reads_first_client: false
+          second_client_writes_first_client: false
+          blocked: true
+        expected:
+          status: PASS
+      - name: cross_client_read_blocked
+        input:
+          second_client_reads_first_client: true
+          second_client_writes_first_client: false
+          blocked: true
+        expected:
+          status: PASS
+      - name: cross_client_write_blocked
+        input:
+          second_client_reads_first_client: false
+          second_client_writes_first_client: true
+          blocked: true
+        expected:
+          status: PASS
+      - name: cross_client_read_allowed_rejected
+        input:
+          second_client_reads_first_client: true
+          second_client_writes_first_client: false
+          blocked: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: cross_client_write_allowed_rejected
+        input:
+          second_client_reads_first_client: false
+          second_client_writes_first_client: true
+          blocked: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  full_g3_acceptance:
+    fixtures:
+      - name: full_g3_criteria_met
+        input:
+          e08_4_second_client_deployed: true
+          e08_2_real_connector_evidence: true
+          clean_restore_evidence: true
+          upgrade_rehearsal_evidence: true
+          independent_owner_review: true
+          auto_merge_occurred: false
+          external_source_update_human_decision: true
+          external_source_update_go_merge: true
+        expected:
+          status: PASS
+      - name: missing_second_client_rejected
+        input:
+          e08_4_second_client_deployed: false
+          e08_2_real_connector_evidence: true
+          clean_restore_evidence: true
+          upgrade_rehearsal_evidence: true
+          independent_owner_review: true
+          auto_merge_occurred: false
+          external_source_update_human_decision: true
+          external_source_update_go_merge: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: missing_real_connector_rejected
+        input:
+          e08_4_second_client_deployed: true
+          e08_2_real_connector_evidence: false
+          clean_restore_evidence: true
+          upgrade_rehearsal_evidence: true
+          independent_owner_review: true
+          auto_merge_occurred: false
+          external_source_update_human_decision: true
+          external_source_update_go_merge: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: auto_merge_rejected
+        input:
+          e08_4_second_client_deployed: true
+          e08_2_real_connector_evidence: true
+          clean_restore_evidence: true
+          upgrade_rehearsal_evidence: true
+          independent_owner_review: true
+          auto_merge_occurred: true
+          external_source_update_human_decision: true
+          external_source_update_go_merge: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: missing_independent_review_rejected
+        input:
+          e08_4_second_client_deployed: true
+          e08_2_real_connector_evidence: true
+          clean_restore_evidence: true
+          upgrade_rehearsal_evidence: true
+          independent_owner_review: false
+          auto_merge_occurred: false
+          external_source_update_human_decision: true
+          external_source_update_go_merge: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE

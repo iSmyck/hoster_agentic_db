@@ -1,0 +1,346 @@
+scenarios:
+  eval_case_versioning:
+    fixtures:
+      - name: complete_eval_case
+        input:
+          corpus_snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          code_version: "0.1.0"
+          config_version: "kb-config-2026-11-09"
+          model_version: "approved-model-chat-v1"
+          tool_schema_version: "agent-tools-v2"
+          dataset_version: "russian-golden-001"
+          scope: "pilot_sales"
+          expected_evidence: [exact_recall, semantic_recall, citation_correctness]
+          grader_config_approved: true
+          same_data_barrier_as_production: true
+        expected:
+          status: PASS
+      - name: missing_corpus_sha_rejected
+        input:
+          corpus_snapshot_sha: null
+          code_version: "0.1.0"
+          config_version: "kb-config-2026-11-09"
+          model_version: "approved-model-chat-v1"
+          tool_schema_version: "agent-tools-v2"
+          dataset_version: "russian-golden-001"
+          scope: "pilot_sales"
+          expected_evidence: [exact_recall]
+          grader_config_approved: true
+          same_data_barrier_as_production: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: unapproved_grader_rejected
+        input:
+          corpus_snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          code_version: "0.1.0"
+          config_version: "kb-config-2026-11-09"
+          model_version: "approved-model-chat-v1"
+          tool_schema_version: "agent-tools-v2"
+          dataset_version: "russian-golden-001"
+          scope: "pilot_sales"
+          expected_evidence: [exact_recall]
+          grader_config_approved: false
+          same_data_barrier_as_production: true
+        expected:
+          status: FAIL
+          error: APPROVER_CONFLICT
+
+  quality_metrics:
+    fixtures:
+      - name: all_categories_separated
+        input:
+          metrics:
+            page_read:
+              exact_recall: 0.9
+              semantic_recall: 0.85
+              factual_support: 0.95
+              citation_correctness: 0.92
+              abstention_no_answer: 0.1
+            section_read:
+              exact_recall: 0.88
+              semantic_recall: 0.86
+              factual_support: 0.94
+              citation_correctness: 0.91
+              abstention_no_answer: 0.12
+            long_heading:
+              exact_recall: 0.82
+              semantic_recall: 0.84
+              factual_support: 0.93
+              citation_correctness: 0.9
+              abstention_no_answer: 0.15
+            repeated_heading:
+              exact_recall: 0.8
+              semantic_recall: 0.83
+              factual_support: 0.92
+              citation_correctness: 0.89
+              abstention_no_answer: 0.18
+            stale:
+              exact_recall: 0.0
+              semantic_recall: 0.0
+              factual_support: 0.0
+              citation_correctness: 0.0
+              abstention_no_answer: 1.0
+            private:
+              exact_recall: 0.0
+              semantic_recall: 0.0
+              factual_support: 0.0
+              citation_correctness: 0.0
+              abstention_no_answer: 1.0
+            conflict:
+              exact_recall: 0.0
+              semantic_recall: 0.0
+              factual_support: 0.0
+              citation_correctness: 0.0
+              abstention_no_answer: 1.0
+          undifferentiated_score: false
+        expected:
+          status: PASS
+      - name: undifferentiated_score_rejected
+        input:
+          metrics:
+            overall: { score: 0.87 }
+          undifferentiated_score: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: missing_abstention_rejected
+        input:
+          metrics:
+            page_read:
+              exact_recall: 0.9
+              semantic_recall: 0.85
+              factual_support: 0.95
+              citation_correctness: 0.92
+          undifferentiated_score: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  citation_groundedness:
+    fixtures:
+      - name: citations_match_canonical_evidence
+        input:
+          citations:
+            - revision_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              section: "pricing"
+            - revision_sha: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              section: "terms"
+          canonical_evidence:
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "pricing"
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb": "terms"
+          unsupported_answer: false
+          silent_stale_substitution: false
+          threshold_recorded: true
+          llm_judge_sole_arbiter: false
+        expected:
+          status: PASS
+      - name: unsupported_answer_rejected
+        input:
+          citations: []
+          canonical_evidence: {}
+          unsupported_answer: true
+          silent_stale_substitution: false
+          threshold_recorded: true
+          llm_judge_sole_arbiter: false
+        expected:
+          status: FAIL
+          error: CITATION_MISMATCH
+      - name: silent_stale_substitution_rejected
+        input:
+          citations:
+            - revision_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              section: "pricing"
+          canonical_evidence:
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "pricing-obsolete"
+          unsupported_answer: false
+          silent_stale_substitution: true
+          threshold_recorded: true
+          llm_judge_sole_arbiter: false
+        expected:
+          status: FAIL
+          error: CITATION_MISMATCH
+      - name: llm_judge_sole_arbiter_rejected
+        input:
+          citations:
+            - revision_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              section: "pricing"
+          canonical_evidence:
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "pricing"
+          unsupported_answer: false
+          silent_stale_substitution: false
+          threshold_recorded: true
+          llm_judge_sole_arbiter: true
+        expected:
+          status: FAIL
+          error: APPROVER_CONFLICT
+
+  deterministic_adversarial:
+    fixtures:
+      - name: merge_boundary_suite
+        input:
+          suite_type: merge_boundary
+          deterministic_result: true
+          zero_unauthorized_disclosure: true
+          probabilistic_score_only: false
+        expected:
+          status: PASS
+      - name: acl_isolation_suite
+        input:
+          suite_type: acl_isolation
+          deterministic_result: true
+          zero_unauthorized_disclosure: true
+          probabilistic_score_only: false
+        expected:
+          status: PASS
+      - name: prompt_injection_suite
+        input:
+          suite_type: prompt_injection
+          deterministic_result: true
+          zero_unauthorized_disclosure: true
+          probabilistic_score_only: false
+        expected:
+          status: PASS
+      - name: probabilistic_only_rejected
+        input:
+          suite_type: quality_score_only
+          deterministic_result: false
+          zero_unauthorized_disclosure: true
+          probabilistic_score_only: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: unauthorized_disclosure_rejected
+        input:
+          suite_type: acl_isolation
+          deterministic_result: true
+          zero_unauthorized_disclosure: false
+          probabilistic_score_only: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  operational_measurements:
+    fixtures:
+      - name: metrics_separated
+        input:
+          metrics:
+            ttft_ms: 120
+            full_response_ms: 890
+            git_read_latency_ms: 45
+            git_merge_latency_ms: 230
+            merge_to_index_freshness_s: 180
+            ci_queue_lag_s: 90
+          outcomes:
+            retrieval: success
+            patch: success
+            conflict: none
+            restore: success
+          cost_drivers:
+            inference_tokens: 1200
+            embedding_calls: 5
+        expected:
+          status: PASS
+      - name: missing_git_merge_latency_rejected
+        input:
+          metrics:
+            ttft_ms: 120
+            full_response_ms: 890
+            git_read_latency_ms: 45
+          outcomes:
+            retrieval: success
+          cost_drivers: {}
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  observability:
+    fixtures:
+      - name: telemetry_complete_and_correlated
+        input:
+          telemetry:
+            - tree_read_latency_errors
+            - truncation_cursor_continuation
+            - durable_draft_proposal_outcomes
+            - review_sha_mismatch_conflict_rates
+            - preview_reliability
+            - ui_retry_idempotency_correlation
+          request_run_proposal_correlation: true
+        expected:
+          status: PASS
+      - name: missing_correlation_rejected
+        input:
+          telemetry:
+            - tree_read_latency_errors
+            - truncation_cursor_continuation
+            - durable_draft_proposal_outcomes
+            - review_sha_mismatch_conflict_rates
+            - preview_reliability
+            - ui_retry_idempotency_correlation
+          request_run_proposal_correlation: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  russian_golden_set:
+    fixtures:
+      - name: russian_set_ready
+        input:
+          cases:
+            - question: "Какова цена продукта для корпоративных клиентов?"
+              golden_answer: "Цена указана в разделе pricing основного документа."
+              language: ru
+            - question: "Какие условия оплаты?"
+              golden_answer: "Условия оплаты описаны в разделе terms."
+              language: ru
+          local_grader: true
+          claims_live_inference_pass: false
+        expected:
+          status: PASS
+      - name: missing_golden_answer_rejected
+        input:
+          cases:
+            - question: "Какова цена?"
+              golden_answer: ""
+              language: ru
+          local_grader: true
+          claims_live_inference_pass: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: live_inference_claim_rejected
+        input:
+          cases:
+            - question: "Какова цена?"
+              golden_answer: "..."
+              language: ru
+          local_grader: false
+          claims_live_inference_pass: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  human_in_the_loop:
+    fixtures:
+      - name: refusal_with_human_disposition
+        input:
+          case_type: refusal
+          human_disposition_recorded: true
+          automated_only_disposition: false
+        expected:
+          status: PASS
+      - name: groundedness_with_human_disposition
+        input:
+          case_type: groundedness
+          human_disposition_recorded: true
+          automated_only_disposition: false
+        expected:
+          status: PASS
+      - name: automated_only_disposition_rejected
+        input:
+          case_type: refusal
+          human_disposition_recorded: false
+          automated_only_disposition: true
+        expected:
+          status: FAIL
+          error: APPROVER_CONFLICT

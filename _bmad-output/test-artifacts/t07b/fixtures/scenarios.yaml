@@ -1,0 +1,102 @@
+scenarios:
+  review_projection:
+    fixtures:
+      - name: valid_due_projection
+        input:
+          review_required: true
+          review_state: due
+          valid_until: "2026-11-01"
+          metadata_matches_canonical: true
+        expected:
+          status: PASS
+      - name: removed_projection
+        input:
+          review_required: false
+          review_state: removed
+          valid_until: null
+          metadata_matches_canonical: true
+        expected:
+          status: PASS
+      - name: mismatched_canonical
+        input:
+          review_required: true
+          review_state: due
+          valid_until: "2026-11-01"
+          metadata_matches_canonical: false
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+  correction_task:
+    fixtures:
+      - name: create_open
+        input:
+          state: open
+          previous_state: null
+          document_revision_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          linked_mr: null
+        expected:
+          status: PASS
+      - name: open_to_in_review
+        input:
+          state: in_review
+          previous_state: open
+          document_revision_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          linked_mr:
+            proposal_id: prop-corr-1
+            proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+            merge_commit_sha: null
+        expected:
+          status: PASS
+      - name: in_review_to_resolved
+        input:
+          state: resolved
+          previous_state: in_review
+          document_revision_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          linked_mr:
+            proposal_id: prop-corr-1
+            proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+            merge_commit_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          resolution_evidence_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+        expected:
+          status: PASS
+      - name: open_to_resolved_invalid
+        input:
+          state: resolved
+          previous_state: open
+          document_revision_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          linked_mr: null
+          resolution_evidence_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: no_mr_resolution_with_evidence
+        input:
+          state: resolved
+          previous_state: in_review
+          document_revision_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          linked_mr: null
+          resolution_evidence_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+        expected:
+          status: PASS
+  telemetry:
+    fixtures:
+      - name: safe_telemetry
+        input:
+          event: review_opened
+          document_id: 11111111-1111-4111-8111-111111111111
+        expected:
+          status: PASS
+      - name: raw_document_leak
+        input:
+          event: review_opened
+          raw_document: "# Secret content"
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: raw_query_leak
+        input:
+          event: search_performed
+          raw_query: "salary data"
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED

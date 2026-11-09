@@ -1,0 +1,85 @@
+# Synthetic identity payloads for stable-key validation.
+# Email/login are contact attributes only; they are never identity keys.
+fixtures:
+  - name: oidc_valid
+    description: OIDC identity with issuer-scoped sub
+    expected_valid: true
+    payload:
+      source: oidc
+      issuer: https://idp.t03a.invalid/realms/corporate-kb
+      sub: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+      email: alice@t03a.invalid
+      login: alice
+      actor_type: human
+
+  - name: ad_valid
+    description: Active Directory identity with objectGUID
+    expected_valid: true
+    payload:
+      source: ad
+      directory: ad.corp.t03a.invalid
+      object_guid: bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
+      email: bob@t03a.invalid
+      login: CORP\bob
+      actor_type: human
+
+  - name: ldap_valid
+    description: OpenLDAP identity with entryUUID
+    expected_valid: true
+    payload:
+      source: ldap
+      directory: ldap.corp.t03a.invalid
+      entry_uuid: cccccccc-cccc-4ccc-8ccc-cccccccccccc
+      email: carol@t03a.invalid
+      login: carol
+      actor_type: human
+
+  - name: oidc_missing_sub
+    description: OIDC identity without sub must fail
+    expected_valid: false
+    payload:
+      source: oidc
+      issuer: https://idp.t03a.invalid/realms/corporate-kb
+      email: missing-sub@t03a.invalid
+      login: missing-sub
+      actor_type: human
+
+  - name: ad_missing_object_guid
+    description: AD identity without objectGUID must fail
+    expected_valid: false
+    payload:
+      source: ad
+      directory: ad.corp.t03a.invalid
+      email: missing-guid@t03a.invalid
+      login: missing-guid
+      actor_type: human
+
+  - name: ldap_missing_entry_uuid
+    description: LDAP identity without entryUUID must fail
+    expected_valid: false
+    payload:
+      source: ldap
+      directory: ldap.corp.t03a.invalid
+      email: missing-uuid@t03a.invalid
+      login: missing-uuid
+      actor_type: human
+
+  - name: email_only
+    description: Email/login alone cannot be an identity key
+    expected_valid: false
+    payload:
+      source: oidc
+      email: email-only@t03a.invalid
+      login: email-only
+      actor_type: human
+
+  - name: oidc_empty_issuer
+    description: Empty issuer is not a valid namespace
+    expected_valid: false
+    payload:
+      source: oidc
+      issuer: ""
+      sub: dddddddd-dddd-4ddd-8ddd-dddddddddddd
+      email: empty-issuer@t03a.invalid
+      login: empty-issuer
+      actor_type: human

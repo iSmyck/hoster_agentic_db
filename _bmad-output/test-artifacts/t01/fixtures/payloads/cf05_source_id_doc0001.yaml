@@ -1,0 +1,9 @@
+schema_version: source-origin-v1
+source_id: DOC-0001
+source_binding_id: binding-1
+source_object_id: object-1
+source_version: v1
+source_content_sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+source_ref: synthetic://object/1
+observed_at: "2026-11-08T00:00:00Z"
+ownership_mode: migrated

@@ -1,0 +1,138 @@
+scenarios:
+  review:
+    fixtures:
+      - name: complete_review
+        input:
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          diff_exact: true
+          preview_reliable: true
+          rationale: Reviewed pricing update.
+          evidence:
+            - Approved by sales lead.
+          affected_files:
+            - path: pricing.md
+              before_sha: ffffffffffffffffffffffffffffffffffffffff
+              after_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        expected:
+          status: PASS
+      - name: stale_base_review
+        input:
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          diff_exact: true
+          preview_reliable: true
+          head_advanced: true
+          rationale: Reviewed pricing update.
+          evidence:
+            - Approved by sales lead.
+          affected_files:
+            - path: pricing.md
+              before_sha: ffffffffffffffffffffffffffffffffffffffff
+              after_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        expected:
+          status: FAIL
+          error: STALE_BASE
+      - name: unreliable_preview_blocks_apply
+        input:
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          diff_exact: true
+          preview_reliable: false
+          rationale: Reviewed pricing update.
+          evidence:
+            - Approved by sales lead.
+          affected_files:
+            - path: pricing.md
+              before_sha: ffffffffffffffffffffffffffffffffffffffff
+              after_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        expected:
+          status: FAIL
+          error: PREVIEW_UNRELIABLE
+      - name: independent_decision
+        input:
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          diff_exact: true
+          preview_reliable: true
+          approver: user-sales-approver-1
+          rationale: Independent review complete.
+          evidence:
+            - Reviewer not author/requester.
+          affected_files:
+            - path: pricing.md
+              before_sha: ffffffffffffffffffffffffffffffffffffffff
+              after_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        expected:
+          status: PASS
+  csrf_origin:
+    fixtures:
+      - name: valid_origin_and_csrf
+        input:
+          origin_header: "https://kb.example.com"
+          origin_matches: true
+          csrf_token: present
+          csrf_valid: true
+        expected:
+          status: PASS
+      - name: missing_origin
+        input:
+          origin_header: ""
+          origin_matches: false
+          csrf_token: present
+          csrf_valid: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: origin_mismatch
+        input:
+          origin_header: "https://evil.example.com"
+          origin_matches: false
+          csrf_token: present
+          csrf_valid: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: missing_csrf
+        input:
+          origin_header: "https://kb.example.com"
+          origin_matches: true
+          csrf_token: ""
+          csrf_valid: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+  lifecycle:
+    fixtures:
+      - name: draft_state
+        input:
+          state: draft
+          masked_as_published: false
+        expected:
+          status: PASS
+      - name: in_review_state
+        input:
+          state: in_review
+          masked_as_published: false
+        expected:
+          status: PASS
+      - name: published_state
+        input:
+          state: published
+          masked_as_published: false
+        expected:
+          status: PASS
+      - name: recovery_required_not_masked
+        input:
+          state: recovery_required
+          masked_as_published: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: conflicted_not_masked
+        input:
+          state: conflicted
+          masked_as_published: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE

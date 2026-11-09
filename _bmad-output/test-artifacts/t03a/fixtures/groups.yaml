@@ -1,0 +1,130 @@
+# Synthetic group membership fixtures.
+# Each fixture defines a group forest and the expected resolved snapshot.
+fixtures:
+  - name: nested_groups
+    description: Group A contains group B; B contains user u1. A should transitively contain u1.
+    groups:
+      - group_id: group-a
+        members:
+          - id: group-b
+            type: group
+      - group_id: group-b
+        members:
+          - id: user-u1
+            type: user
+    expected:
+      snapshots:
+        group-a:
+          - group_id: group-a
+            member_id: user-u1
+            membership_source: nested
+        group-b:
+          - group_id: group-b
+            member_id: user-u1
+            membership_source: direct
+      cycles: []
+
+  - name: deep_nesting
+    description: Three-level nesting with multiple users.
+    groups:
+      - group_id: org-all
+        members:
+          - id: division-sales
+            type: group
+          - id: division-hr
+            type: group
+      - group_id: division-sales
+        members:
+          - id: sales-authors
+            type: group
+      - group_id: sales-authors
+        members:
+          - id: user-s1
+            type: user
+          - id: user-s2
+            type: user
+      - group_id: division-hr
+        members:
+          - id: user-h1
+            type: user
+    expected:
+      snapshots:
+        org-all:
+          - group_id: org-all
+            member_id: user-s1
+            membership_source: nested
+          - group_id: org-all
+            member_id: user-s2
+            membership_source: nested
+          - group_id: org-all
+            member_id: user-h1
+            membership_source: nested
+        division-sales:
+          - group_id: division-sales
+            member_id: user-s1
+            membership_source: nested
+          - group_id: division-sales
+            member_id: user-s2
+            membership_source: nested
+        sales-authors:
+          - group_id: sales-authors
+            member_id: user-s1
+            membership_source: direct
+          - group_id: sales-authors
+            member_id: user-s2
+            membership_source: direct
+        division-hr:
+          - group_id: division-hr
+            member_id: user-h1
+            membership_source: direct
+      cycles: []
+
+  - name: empty_group
+    description: A group with no members must still appear in the snapshot with an explicit empty result.
+    groups:
+      - group_id: empty-reviewers
+        members: []
+      - group_id: authors
+        members:
+          - id: user-a1
+            type: user
+    expected:
+      snapshots:
+        empty-reviewers: []
+        authors:
+          - group_id: authors
+            member_id: user-a1
+            membership_source: direct
+      cycles: []
+
+  - name: cycle
+    description: Cyclic group nesting must be detected and rejected.
+    groups:
+      - group_id: cycle-alpha
+        members:
+          - id: cycle-beta
+            type: group
+      - group_id: cycle-beta
+        members:
+          - id: cycle-alpha
+            type: group
+    expected:
+      snapshots:
+        cycle-alpha: []
+        cycle-beta: []
+      cycles:
+        - [cycle-alpha, cycle-beta, cycle-alpha]
+
+  - name: missing_child_group
+    description: A reference to a non-existent child group must not silently succeed.
+    groups:
+      - group_id: parent-with-missing-child
+        members:
+          - id: does-not-exist
+            type: group
+    expected:
+      snapshots:
+        parent-with-missing-child: []
+      cycles: []
+    expected_missing_groups:
+      - does-not-exist

@@ -1,0 +1,74 @@
+fixtures:
+  - name: first_page_with_cursor
+    description: Paginated history returns the newest commits first, with truncation reason and next cursor.
+    input:
+      cursor: null
+      limit: 2
+    state:
+      commits:
+        - sha: ffffffffffffffffffffffffffffffffffffffff
+          author_stable_id: user-sales-1
+          message: "Update discount guidance"
+          timestamp: "2026-11-08T12:00:00Z"
+        - sha: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+          author_stable_id: user-sales-2
+          message: "Add pricing section"
+          timestamp: "2026-11-08T11:00:00Z"
+        - sha: dddddddddddddddddddddddddddddddddddddddd
+          author_stable_id: user-sales-1
+          message: "Initial playbook"
+          timestamp: "2026-11-08T10:00:00Z"
+    expected:
+      next_cursor: 2
+      ordered: true
+      status: PASS
+      truncated: true
+      truncation_reason: limit
+
+  - name: second_page_no_truncation
+    description: The final page has no next cursor and an explicit no-truncation reason.
+    input:
+      cursor: 2
+      limit: 2
+    state:
+      commits:
+        - sha: ffffffffffffffffffffffffffffffffffffffff
+          author_stable_id: user-sales-1
+          message: "Update discount guidance"
+          timestamp: "2026-11-08T12:00:00Z"
+        - sha: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+          author_stable_id: user-sales-2
+          message: "Add pricing section"
+          timestamp: "2026-11-08T11:00:00Z"
+        - sha: dddddddddddddddddddddddddddddddddddddddd
+          author_stable_id: user-sales-1
+          message: "Initial playbook"
+          timestamp: "2026-11-08T10:00:00Z"
+    expected:
+      next_cursor: null
+      ordered: true
+      status: PASS
+      truncated: false
+      truncation_reason: null
+
+  - name: out_of_order_rejected
+    description: History that is not in ancestry order must be rejected.
+    input:
+      cursor: null
+      limit: 3
+    state:
+      commits:
+        - sha: dddddddddddddddddddddddddddddddddddddddd
+          author_stable_id: user-sales-1
+          message: "Initial playbook"
+          timestamp: "2026-11-08T10:00:00Z"
+        - sha: ffffffffffffffffffffffffffffffffffffffff
+          author_stable_id: user-sales-1
+          message: "Update discount guidance"
+          timestamp: "2026-11-08T12:00:00Z"
+        - sha: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+          author_stable_id: user-sales-2
+          message: "Add pricing section"
+          timestamp: "2026-11-08T11:00:00Z"
+    expected:
+      status: FAIL

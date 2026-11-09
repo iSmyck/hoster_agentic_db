@@ -1,0 +1,769 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "scenarios.yaml loaded",
+      "details": {
+        "fixture": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml"
+      },
+      "expected": "synthetic fixtures load",
+      "fixture_path": null,
+      "id": "harness.fixture_loaded",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "harness",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "error": null,
+        "task_id": "00000000-0000-0000-0000-000000000003"
+      },
+      "expected": "sample open correction task is schema valid",
+      "fixture_path": null,
+      "id": "schema.correction_task_open.valid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "61 patterns compiled",
+      "details": {
+        "bad_regex_count": 0
+      },
+      "expected": "all schema regex patterns compile",
+      "fixture_path": null,
+      "id": "schema.regex_compile",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "143 refs resolved",
+      "details": {
+        "unresolved_count": 0
+      },
+      "expected": "all schema $ref resolve",
+      "fixture_path": null,
+      "id": "schema.refs_resolve",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "clean restore valid",
+      "details": {
+        "activation_before_validation": false,
+        "assets_closure_validated": true,
+        "decisions_validated": true,
+        "hashes_verified": true,
+        "kb_authz_rebuilt": true,
+        "kb_index_new_validated_snapshot": true,
+        "kb_ops_global_merge_freeze": true,
+        "kb_ops_per_target_barriers": true,
+        "mr_note_audit_metadata_validated": true,
+        "refs_validated": true
+      },
+      "expected": "clean restore validates refs/metadata/decisions/assets/hashes, rebuilds kb_authz, kb_ops under freeze, kb_index snapshot before activation",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "clean_restore.clean_restore_ready.valid",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "clean_restore",
+      "status": "PASS"
+    },
+    {
+      "actual": "clean restore problem detected",
+      "details": {
+        "activation_before_validation": true,
+        "assets_closure_validated": true,
+        "decisions_validated": true,
+        "expected_negative": true,
+        "hashes_verified": true,
+        "kb_authz_rebuilt": true,
+        "kb_index_new_validated_snapshot": true,
+        "kb_ops_global_merge_freeze": true,
+        "kb_ops_per_target_barriers": true,
+        "mr_note_audit_metadata_validated": true,
+        "refs_validated": true
+      },
+      "expected": "invalid restore rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "clean_restore.activation_before_validation_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "clean_restore",
+      "status": "FAIL"
+    },
+    {
+      "actual": "clean restore problem detected",
+      "details": {
+        "activation_before_validation": false,
+        "assets_closure_validated": true,
+        "decisions_validated": true,
+        "expected_negative": true,
+        "hashes_verified": true,
+        "kb_authz_rebuilt": false,
+        "kb_index_new_validated_snapshot": true,
+        "kb_ops_global_merge_freeze": true,
+        "kb_ops_per_target_barriers": true,
+        "mr_note_audit_metadata_validated": true,
+        "refs_validated": true
+      },
+      "expected": "invalid restore rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "clean_restore.missing_kb_authz_rebuild_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "clean_restore",
+      "status": "FAIL"
+    },
+    {
+      "actual": "clean restore problem detected",
+      "details": {
+        "activation_before_validation": false,
+        "assets_closure_validated": false,
+        "decisions_validated": true,
+        "expected_negative": true,
+        "hashes_verified": true,
+        "kb_authz_rebuilt": true,
+        "kb_index_new_validated_snapshot": true,
+        "kb_ops_global_merge_freeze": true,
+        "kb_ops_per_target_barriers": true,
+        "mr_note_audit_metadata_validated": true,
+        "refs_validated": true
+      },
+      "expected": "invalid restore rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "clean_restore.missing_assets_closure_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "clean_restore",
+      "status": "FAIL"
+    },
+    {
+      "actual": "correction backup valid",
+      "details": {
+        "event_sequence_valid": true,
+        "linked_mr_verified": true,
+        "no_deleted_canonical_writes": true,
+        "no_fabricated_decisions": true,
+        "no_resolved_or_cancelled_tasks": true,
+        "no_second_canonical_write_path": true,
+        "perimeter_check_passed": true,
+        "projection_hash_valid": true
+      },
+      "expected": "correction backup validates hashes/event-sequence/perimeter and reconciles without fabricating/deleting/resolving tasks or creating second write path",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "correction_backup.correction_backup_reconciles_cleanly.valid",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "correction_backup",
+      "status": "PASS"
+    },
+    {
+      "actual": "correction backup problem detected",
+      "details": {
+        "event_sequence_valid": true,
+        "expected_negative": true,
+        "linked_mr_verified": true,
+        "no_deleted_canonical_writes": true,
+        "no_fabricated_decisions": false,
+        "no_resolved_or_cancelled_tasks": true,
+        "no_second_canonical_write_path": true,
+        "perimeter_check_passed": true,
+        "projection_hash_valid": true
+      },
+      "expected": "invalid correction backup reconciliation rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "correction_backup.fabricated_decision_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "correction_backup",
+      "status": "FAIL"
+    },
+    {
+      "actual": "correction backup problem detected",
+      "details": {
+        "event_sequence_valid": true,
+        "expected_negative": true,
+        "linked_mr_verified": true,
+        "no_deleted_canonical_writes": false,
+        "no_fabricated_decisions": true,
+        "no_resolved_or_cancelled_tasks": true,
+        "no_second_canonical_write_path": true,
+        "perimeter_check_passed": true,
+        "projection_hash_valid": true
+      },
+      "expected": "invalid correction backup reconciliation rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "correction_backup.deleted_canonical_write_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "correction_backup",
+      "status": "FAIL"
+    },
+    {
+      "actual": "correction backup problem detected",
+      "details": {
+        "event_sequence_valid": true,
+        "expected_negative": true,
+        "linked_mr_verified": true,
+        "no_deleted_canonical_writes": true,
+        "no_fabricated_decisions": true,
+        "no_resolved_or_cancelled_tasks": true,
+        "no_second_canonical_write_path": false,
+        "perimeter_check_passed": true,
+        "projection_hash_valid": true
+      },
+      "expected": "invalid correction backup reconciliation rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "correction_backup.second_canonical_write_path_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "correction_backup",
+      "status": "FAIL"
+    },
+    {
+      "actual": "quarantine valid",
+      "details": {
+        "auto_cleared_by_terminal_or_ttl": false,
+        "incomplete_closure": false,
+        "missing_assets": false,
+        "missing_correction_backup": false,
+        "quarantined": false,
+        "ready_claimed": true,
+        "unknown_merge_outcome": false
+      },
+      "expected": "unknown merge outcomes quarantined; missing assets/closure/correction backup blocks READY",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "unknown_merge_quarantine.known_outcome_ready.valid",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "unknown_merge_quarantine",
+      "status": "PASS"
+    },
+    {
+      "actual": "quarantine valid",
+      "details": {
+        "auto_cleared_by_terminal_or_ttl": false,
+        "incomplete_closure": false,
+        "missing_assets": false,
+        "missing_correction_backup": false,
+        "quarantined": true,
+        "ready_claimed": false,
+        "unknown_merge_outcome": true
+      },
+      "expected": "unknown merge outcomes quarantined; missing assets/closure/correction backup blocks READY",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "unknown_merge_quarantine.unknown_quarantined_not_ready.valid",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "unknown_merge_quarantine",
+      "status": "PASS"
+    },
+    {
+      "actual": "quarantine problem detected",
+      "details": {
+        "auto_cleared_by_terminal_or_ttl": true,
+        "expected_negative": true,
+        "incomplete_closure": false,
+        "missing_assets": false,
+        "missing_correction_backup": false,
+        "quarantined": true,
+        "ready_claimed": true,
+        "unknown_merge_outcome": true
+      },
+      "expected": "optimistic quarantine handling rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "unknown_merge_quarantine.unknown_auto_cleared_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "unknown_merge_quarantine",
+      "status": "FAIL"
+    },
+    {
+      "actual": "quarantine problem detected",
+      "details": {
+        "auto_cleared_by_terminal_or_ttl": false,
+        "expected_negative": true,
+        "incomplete_closure": false,
+        "missing_assets": true,
+        "missing_correction_backup": false,
+        "quarantined": false,
+        "ready_claimed": true,
+        "unknown_merge_outcome": false
+      },
+      "expected": "optimistic quarantine handling rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "unknown_merge_quarantine.missing_assets_blocks_ready.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "unknown_merge_quarantine",
+      "status": "FAIL"
+    },
+    {
+      "actual": "quarantine problem detected",
+      "details": {
+        "auto_cleared_by_terminal_or_ttl": false,
+        "expected_negative": true,
+        "incomplete_closure": false,
+        "missing_assets": false,
+        "missing_correction_backup": true,
+        "quarantined": false,
+        "ready_claimed": true,
+        "unknown_merge_outcome": false
+      },
+      "expected": "optimistic quarantine handling rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "unknown_merge_quarantine.missing_correction_backup_blocks_ready.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "unknown_merge_quarantine",
+      "status": "FAIL"
+    },
+    {
+      "actual": "metrics/alerts/runbooks valid",
+      "details": {
+        "missing_metrics": [],
+        "missing_runbooks": [],
+        "owner_approved_backup_cadence": true,
+        "owner_approved_retention": true,
+        "owner_approved_rpo_rto": true,
+        "raw_content_in_telemetry": false,
+        "secrets_in_telemetry": false
+      },
+      "expected": "runbooks/metrics/alerts cover required areas; telemetry redacted; owner-approved RPO/RTO/retention/cadence recorded",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "metrics_alerts_runbooks.coverage_complete_telemetry_clean.valid",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "metrics_alerts_runbooks",
+      "status": "PASS"
+    },
+    {
+      "actual": "metrics/alerts/runbooks problem detected",
+      "details": {
+        "expected_negative": true,
+        "missing_metrics": [],
+        "missing_runbooks": [
+          "merge_latency",
+          "locks_fencing_recovery",
+          "quarantine",
+          "decision_mismatch",
+          "ci_webhook_head_drift",
+          "revocation",
+          "source_cursors",
+          "export_backup_closure",
+          "source_sync",
+          "ttft_full_response",
+          "restore_upgrade"
+        ],
+        "owner_approved_backup_cadence": true,
+        "owner_approved_retention": true,
+        "owner_approved_rpo_rto": true,
+        "raw_content_in_telemetry": false,
+        "secrets_in_telemetry": false
+      },
+      "expected": "missing coverage or telemetry leak rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "metrics_alerts_runbooks.missing_runbook_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "metrics_alerts_runbooks",
+      "status": "FAIL"
+    },
+    {
+      "actual": "metrics/alerts/runbooks problem detected",
+      "details": {
+        "expected_negative": true,
+        "missing_metrics": [],
+        "missing_runbooks": [],
+        "owner_approved_backup_cadence": true,
+        "owner_approved_retention": true,
+        "owner_approved_rpo_rto": true,
+        "raw_content_in_telemetry": false,
+        "secrets_in_telemetry": true
+      },
+      "expected": "missing coverage or telemetry leak rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "metrics_alerts_runbooks.secrets_in_telemetry_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "metrics_alerts_runbooks",
+      "status": "FAIL"
+    },
+    {
+      "actual": "metrics/alerts/runbooks problem detected",
+      "details": {
+        "expected_negative": true,
+        "missing_metrics": [],
+        "missing_runbooks": [],
+        "owner_approved_backup_cadence": true,
+        "owner_approved_retention": true,
+        "owner_approved_rpo_rto": false,
+        "raw_content_in_telemetry": false,
+        "secrets_in_telemetry": false
+      },
+      "expected": "missing coverage or telemetry leak rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "metrics_alerts_runbooks.missing_rpo_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "metrics_alerts_runbooks",
+      "status": "FAIL"
+    },
+    {
+      "actual": "upgrade/rollback valid",
+      "details": {
+        "branding_notices_preserved": true,
+        "cold_offline_startup_rehearsed": true,
+        "dependency_pins_checked": true,
+        "external_migration_order_verified": true,
+        "failure_blocks_upgrade": true,
+        "registered_seams_exercised": true,
+        "rollback_path_preserved": true,
+        "sbom_license_diff_reviewed": true
+      },
+      "expected": "upgrade/rollback rehearsal checks pins, SBOM/license, branding, migration order, cold startup, seams and blocks upgrade on failure",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "upgrade_rollback.upgrade_rehearsal_complete.valid",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "upgrade_rollback",
+      "status": "PASS"
+    },
+    {
+      "actual": "upgrade/rollback problem detected",
+      "details": {
+        "branding_notices_preserved": true,
+        "cold_offline_startup_rehearsed": true,
+        "dependency_pins_checked": true,
+        "expected_negative": true,
+        "external_migration_order_verified": true,
+        "failure_blocks_upgrade": false,
+        "registered_seams_exercised": true,
+        "rollback_path_preserved": true,
+        "sbom_license_diff_reviewed": true
+      },
+      "expected": "incomplete upgrade/rollback rehearsal rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "upgrade_rollback.upgrade_failure_not_blocked_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "upgrade_rollback",
+      "status": "FAIL"
+    },
+    {
+      "actual": "upgrade/rollback problem detected",
+      "details": {
+        "branding_notices_preserved": true,
+        "cold_offline_startup_rehearsed": true,
+        "dependency_pins_checked": true,
+        "expected_negative": true,
+        "external_migration_order_verified": true,
+        "failure_blocks_upgrade": true,
+        "registered_seams_exercised": true,
+        "rollback_path_preserved": false,
+        "sbom_license_diff_reviewed": true
+      },
+      "expected": "incomplete upgrade/rollback rehearsal rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "upgrade_rollback.missing_rollback_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "upgrade_rollback",
+      "status": "FAIL"
+    },
+    {
+      "actual": "upgrade/rollback problem detected",
+      "details": {
+        "branding_notices_preserved": true,
+        "cold_offline_startup_rehearsed": true,
+        "dependency_pins_checked": true,
+        "expected_negative": true,
+        "external_migration_order_verified": true,
+        "failure_blocks_upgrade": true,
+        "registered_seams_exercised": false,
+        "rollback_path_preserved": true,
+        "sbom_license_diff_reviewed": true
+      },
+      "expected": "incomplete upgrade/rollback rehearsal rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "upgrade_rollback.missing_seams_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "upgrade_rollback",
+      "status": "FAIL"
+    },
+    {
+      "actual": "cross-client controls valid",
+      "details": {
+        "blocked": true,
+        "second_client_reads_first_client": false,
+        "second_client_writes_first_client": false
+      },
+      "expected": "cross-client negative controls fail closed",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "cross_client_negative.no_cross_client_access.fail_closed",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "cross_client_negative",
+      "status": "PASS"
+    },
+    {
+      "actual": "cross-client controls valid",
+      "details": {
+        "blocked": true,
+        "second_client_reads_first_client": true,
+        "second_client_writes_first_client": false
+      },
+      "expected": "cross-client negative controls fail closed",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "cross_client_negative.cross_client_read_blocked.fail_closed",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "cross_client_negative",
+      "status": "PASS"
+    },
+    {
+      "actual": "cross-client controls valid",
+      "details": {
+        "blocked": true,
+        "second_client_reads_first_client": false,
+        "second_client_writes_first_client": true
+      },
+      "expected": "cross-client negative controls fail closed",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "cross_client_negative.cross_client_write_blocked.fail_closed",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "cross_client_negative",
+      "status": "PASS"
+    },
+    {
+      "actual": "cross-client access detected",
+      "details": {
+        "blocked": false,
+        "expected_negative": true,
+        "second_client_reads_first_client": true,
+        "second_client_writes_first_client": false
+      },
+      "expected": "cross-client access allowed rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "cross_client_negative.cross_client_read_allowed_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "cross_client_negative",
+      "status": "FAIL"
+    },
+    {
+      "actual": "cross-client access detected",
+      "details": {
+        "blocked": false,
+        "expected_negative": true,
+        "second_client_reads_first_client": false,
+        "second_client_writes_first_client": true
+      },
+      "expected": "cross-client access allowed rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "cross_client_negative.cross_client_write_allowed_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "cross_client_negative",
+      "status": "FAIL"
+    },
+    {
+      "actual": "G3 acceptance criteria valid",
+      "details": {
+        "auto_merge_occurred": false,
+        "clean_restore_evidence": true,
+        "e08_2_real_connector_evidence": true,
+        "e08_4_second_client_deployed": true,
+        "external_source_update_go_merge": true,
+        "external_source_update_human_decision": true,
+        "independent_owner_review": true,
+        "upgrade_rehearsal_evidence": true
+      },
+      "expected": "full G3 acceptance requires E08.4, E08.2, clean restore, upgrade, independent review and external source update through human decision + GO merge",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "full_g3_acceptance.full_g3_criteria_met.valid",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "full_g3_acceptance",
+      "status": "PASS"
+    },
+    {
+      "actual": "G3 acceptance gap detected",
+      "details": {
+        "auto_merge_occurred": false,
+        "clean_restore_evidence": true,
+        "e08_2_real_connector_evidence": true,
+        "e08_4_second_client_deployed": false,
+        "expected_negative": true,
+        "external_source_update_go_merge": true,
+        "external_source_update_human_decision": true,
+        "independent_owner_review": true,
+        "upgrade_rehearsal_evidence": true
+      },
+      "expected": "G3 acceptance gap rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "full_g3_acceptance.missing_second_client_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "full_g3_acceptance",
+      "status": "FAIL"
+    },
+    {
+      "actual": "G3 acceptance gap detected",
+      "details": {
+        "auto_merge_occurred": false,
+        "clean_restore_evidence": true,
+        "e08_2_real_connector_evidence": false,
+        "e08_4_second_client_deployed": true,
+        "expected_negative": true,
+        "external_source_update_go_merge": true,
+        "external_source_update_human_decision": true,
+        "independent_owner_review": true,
+        "upgrade_rehearsal_evidence": true
+      },
+      "expected": "G3 acceptance gap rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "full_g3_acceptance.missing_real_connector_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "full_g3_acceptance",
+      "status": "FAIL"
+    },
+    {
+      "actual": "G3 acceptance gap detected",
+      "details": {
+        "auto_merge_occurred": true,
+        "clean_restore_evidence": true,
+        "e08_2_real_connector_evidence": true,
+        "e08_4_second_client_deployed": true,
+        "expected_negative": true,
+        "external_source_update_go_merge": true,
+        "external_source_update_human_decision": true,
+        "independent_owner_review": true,
+        "upgrade_rehearsal_evidence": true
+      },
+      "expected": "G3 acceptance gap rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "full_g3_acceptance.auto_merge_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "full_g3_acceptance",
+      "status": "FAIL"
+    },
+    {
+      "actual": "G3 acceptance gap detected",
+      "details": {
+        "auto_merge_occurred": false,
+        "clean_restore_evidence": true,
+        "e08_2_real_connector_evidence": true,
+        "e08_4_second_client_deployed": true,
+        "expected_negative": true,
+        "external_source_update_go_merge": true,
+        "external_source_update_human_decision": true,
+        "independent_owner_review": false,
+        "upgrade_rehearsal_evidence": true
+      },
+      "expected": "G3 acceptance gap rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18b/fixtures/scenarios.yaml",
+      "id": "full_g3_acceptance.missing_independent_review_rejected.rejected",
+      "input_sha256": "4e1c5d823729866007dba7e9ebad52d67db16b1bafd3d03194ca36b5e5fa5f5a",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "full_g3_acceptance",
+      "status": "FAIL"
+    },
+    {
+      "actual": "requires E08.4 second client, E08.2 real connector and independent owner review",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_second_client_restore",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires E08.4 second client, E08.2 real connector and independent owner review",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_correction_backup_restore",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires E08.4 second client, E08.2 real connector and independent owner review",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_upgrade_rehearsal",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires E08.4 second client, E08.2 real connector and independent owner review",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_independent_g3_review",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires E08.4 second client, E08.2 real connector and independent owner review",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_external_source_update",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+  "contracts_version": "g3-acceptance-v1",
+  "counts": {
+    "BLOCKED": 5,
+    "FAIL": 21,
+    "FAIL_EXPECTED": 21,
+    "FAIL_UNEXPECTED": 0,
+    "PASS": 14
+  },
+  "environment": {
+    "ad_available": false,
+    "ci_available": false,
+    "gitlab_available": false,
+    "hoster_available": false,
+    "idp_available": false,
+    "ldap_available": false,
+    "pinned_toolchain": {
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_local_no_gitlab"
+  },
+  "generated_at": "2026-11-09T00:01:34.568068+00:00",
+  "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
+  "schema_version": "t18b-g3-results-v1",
+  "sensitive_data_included": false,
+  "spec_baseline_commit": "d2c0d072a757808ea891fbf6414f00147679f7a7"
+}

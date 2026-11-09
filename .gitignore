@@ -20,7 +20,6 @@ build/
 .vscode/
 _bmad/config.user.toml
 _bmad/custom/*.user.toml
-_bmad-output/test-artifacts/
 .agents/skills/
-_bmad-output/
 _bmad/
+_bmad-output/test-artifacts/t00/

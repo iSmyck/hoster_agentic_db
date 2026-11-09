@@ -1,0 +1,29 @@
+# T04b accessibility/screen-reader fixtures.
+# HTML snippets are synthetic editor-render snapshots.
+
+fixtures:
+  - name: rich_editor_toolbar_exposed
+    html: |
+      <div role="toolbar" aria-label="Formatting controls">
+        <button aria-label="Bold" type="button"><strong>B</strong></button>
+        <button aria-label="Italic" type="button"><em>I</em></button>
+        <button aria-label="Insert link" type="button">Link</button>
+      </div>
+      <div contenteditable="true" role="textbox" aria-label="Document editor" tabindex="0">
+        <p>Editable content</p>
+      </div>
+    focusable_count: 4
+    labels_required: true
+    roles_required: true
+    expected_status: PASS
+
+  - name: editor_menu_with_labels
+    html: |
+      <nav aria-label="Editor menu">
+        <a href="#save" aria-label="Save draft">Save</a>
+        <a href="#preview" aria-label="Preview">Preview</a>
+      </nav>
+    focusable_count: 2
+    labels_required: true
+    roles_required: false
+    expected_status: PASS

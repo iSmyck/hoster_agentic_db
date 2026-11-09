@@ -1,0 +1,298 @@
+scenarios:
+  export_authorization:
+    fixtures:
+      - name: authorized_batches_proceed
+        input:
+          batches:
+            - batch_id: batch-1
+              authorized: true
+            - batch_id: batch-2
+              authorized: true
+        expected:
+          status: PASS
+      - name: unauthorized_batch_rejected
+        input:
+          batches:
+            - batch_id: batch-1
+              authorized: true
+            - batch_id: batch-2
+              authorized: false
+        expected:
+          status: FAIL
+          error: AUTHZ_GROUP_STALE
+      - name: all_batches_require_authorization
+        input:
+          batches:
+            - batch_id: batch-1
+              authorized: false
+        expected:
+          status: FAIL
+          error: AUTHZ_GROUP_STALE
+
+  git_clone_refs:
+    fixtures:
+      - name: explicit_full_shas_and_refs
+        input:
+          refs:
+            - ref_name: refs/heads/main
+              object_type: commit
+              object_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              peeled_sha: null
+              object_content_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              protected: true
+            - ref_name: refs/tags/kb-decisions/11111111-1111-4111-8111-111111111111
+              object_type: tag
+              object_sha: "cccccccccccccccccccccccccccccccccccccccc"
+              peeled_sha: "dddddddddddddddddddddddddddddddddddddddd"
+              object_content_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+              protected: true
+          all_full_sha: true
+          missing_refs: []
+        expected:
+          status: PASS
+      - name: short_sha_rejected
+        input:
+          refs:
+            - ref_name: refs/heads/main
+              object_type: commit
+              object_sha: "aaaaaaaaaa"
+              peeled_sha: null
+              object_content_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              protected: true
+          all_full_sha: false
+          missing_refs: []
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+      - name: missing_ref_rejected
+        input:
+          refs:
+            - ref_name: refs/heads/main
+              object_type: commit
+              object_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              peeled_sha: null
+              object_content_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              protected: true
+          all_full_sha: true
+          missing_refs:
+            - refs/tags/kb-cutover/sales
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  decisions_manifest:
+    fixtures:
+      - name: accepted_decision_with_exact_refs
+        input:
+          decisions:
+            - decision_id: "11111111-1111-4111-8111-111111111111"
+              proposal_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              record_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              note_record_sha256_match: true
+              tag_proposal_sha_match: true
+              outcome: merged
+              merge_first_parent: "cccccccccccccccccccccccccccccccccccccccc"
+              merge_second_parent: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        expected:
+          status: PASS
+      - name: rejected_decision_with_closure
+        input:
+          decisions:
+            - decision_id: "11111111-1111-4111-8111-111111111111"
+              proposal_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              record_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              note_record_sha256_match: true
+              tag_proposal_sha_match: true
+              outcome: rejected
+              has_merge_evidence: false
+        expected:
+          status: PASS
+      - name: note_record_hash_mismatch_rejected
+        input:
+          decisions:
+            - decision_id: "11111111-1111-4111-8111-111111111111"
+              proposal_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              record_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              note_record_sha256_match: false
+              tag_proposal_sha_match: true
+              outcome: merged
+        expected:
+          status: FAIL
+          error: DECISION_INVALID
+      - name: fabricated_merge_rejected
+        input:
+          decisions:
+            - decision_id: "11111111-1111-4111-8111-111111111111"
+              proposal_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              record_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              note_record_sha256_match: true
+              tag_proposal_sha_match: true
+              outcome: rejected
+              has_merge_evidence: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  assets_manifest:
+    fixtures:
+      - name: immutable_assets_hash_verified
+        input:
+          assets:
+            - object_id: diagram.png
+              version: "1"
+              sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              size: 1234
+              media_type: image/png
+              source_ref: s3://bucket/object?v=1
+              exported_object_sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              export_status: exported
+        expected:
+          status: PASS
+      - name: hash_mismatch_rejected
+        input:
+          assets:
+            - object_id: diagram.png
+              version: "1"
+              sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              size: 1234
+              media_type: image/png
+              source_ref: s3://bucket/object?v=1
+              exported_object_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              export_status: exported
+        expected:
+          status: FAIL
+          error: DECISION_INVALID
+      - name: mutable_url_rejected
+        input:
+          assets:
+            - object_id: diagram.png
+              version: "1"
+              sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              size: 1234
+              media_type: image/png
+              source_ref: https://example.com/diagram.png
+              exported_object_sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              export_status: exported
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: missing_asset_rejected
+        input:
+          assets:
+            - object_id: diagram.png
+              version: "1"
+              sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              size: 1234
+              media_type: image/png
+              source_ref: s3://bucket/object?v=1
+              export_status: missing
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  policy_bundle:
+    fixtures:
+      - name: complete_policy_closure
+        input:
+          policy_bundle_id: sales-policy-bundle
+          access_policy_revision: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          approval_policy_revision: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          access_policy_content_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          approval_policy_content_sha256: "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          grants_mapping_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+          all_present: true
+        expected:
+          status: PASS
+      - name: missing_policy_revision_rejected
+        input:
+          policy_bundle_id: sales-policy-bundle
+          access_policy_revision: null
+          approval_policy_revision: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          access_policy_content_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          approval_policy_content_sha256: "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          grants_mapping_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+          all_present: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  grants_mapping:
+    fixtures:
+      - name: stable_identity_group_mapping
+        input:
+          grants:
+            - stable_id: "user-1"
+              issuer: ldap
+              groups:
+                - sales-readers
+          includes_secrets: false
+        expected:
+          status: PASS
+      - name: secrets_in_grants_rejected
+        input:
+          grants:
+            - stable_id: "user-1"
+              issuer: ldap
+              token: "super-secret-token"
+          includes_secrets: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  closure:
+    fixtures:
+      - name: complete_closure
+        input:
+          closure:
+            complete: true
+            decisions_complete: true
+            assets_complete: true
+            authorization_complete: true
+            missing: []
+            refs_manifest_sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            decisions_manifest_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            assets_manifest_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            documents_manifest_sha256: "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+            policies_manifest_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            repository_tree_sha256: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+          all_checks_pass: true
+        expected:
+          status: PASS
+      - name: incomplete_assets_block_complete
+        input:
+          closure:
+            complete: true
+            decisions_complete: true
+            assets_complete: false
+            authorization_complete: true
+            missing:
+              - assets/diagram.png
+            refs_manifest_sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            decisions_manifest_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            assets_manifest_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            documents_manifest_sha256: "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+            policies_manifest_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            repository_tree_sha256: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+          all_checks_pass: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: unauthorized_batch_block_complete
+        input:
+          closure:
+            complete: true
+            decisions_complete: true
+            assets_complete: true
+            authorization_complete: false
+            missing:
+              - authorization/batch-2
+            refs_manifest_sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            decisions_manifest_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            assets_manifest_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            documents_manifest_sha256: "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+            policies_manifest_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            repository_tree_sha256: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+          all_checks_pass: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE

@@ -1,0 +1,35 @@
+fixtures:
+  - name: same_payload_replay
+    description: Replaying the same idempotency key with the same payload returns the existing draft.
+    input:
+      author_stable_id: user-sales-1
+      base_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      document_path: playbook.md
+      idempotency_key: draft-sales-1
+      payload_hash: "1111111111111111111111111111111111111111111111111111111111111111"
+      target_branch: main
+    state:
+      existing_drafts:
+        - idempotency_key: draft-sales-1
+          payload_hash: "1111111111111111111111111111111111111111111111111111111111111111"
+          proposal_sha: "dddddddddddddddddddddddddddddddddddddddd"
+    expected:
+      duplicate_commit: false
+      status: PASS
+
+  - name: different_payload_reused_key
+    description: Reusing an idempotency key with a different payload is rejected.
+    input:
+      author_stable_id: user-sales-1
+      base_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      document_path: playbook.md
+      idempotency_key: draft-sales-1
+      payload_hash: "2222222222222222222222222222222222222222222222222222222222222222"
+      target_branch: main
+    state:
+      existing_drafts:
+        - idempotency_key: draft-sales-1
+          payload_hash: "1111111111111111111111111111111111111111111111111111111111111111"
+          proposal_sha: "dddddddddddddddddddddddddddddddddddddddd"
+    expected:
+      status: IDEMPOTENCY_KEY_REUSED

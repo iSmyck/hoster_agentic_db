@@ -1,0 +1,36 @@
+fixtures:
+  - name: target_advanced_before_save
+    description: A second save anchored to an old base_sha must surface STALE_BASE with a diff view.
+    input:
+      author_stable_id: user-sales-2
+      base_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      document_path: playbook.md
+      idempotency_key: draft-sales-2
+      target_branch: main
+    state:
+      target_head: ffffffffffffffffffffffffffffffffffffffff
+      target_history:
+        - ffffffffffffffffffffffffffffffffffffffff
+        - eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+        - dddddddddddddddddddddddddddddddddddddddd
+    expected:
+      diff_view: true
+      silent_overwrite: false
+      status: STALE_BASE
+
+  - name: no_silent_overwrite
+    description: Even when the target advanced, the system must refuse to overwrite silently.
+    input:
+      author_stable_id: user-sales-2
+      base_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      document_path: playbook.md
+      idempotency_key: draft-sales-2-overwrite
+      target_branch: main
+    state:
+      target_head: ffffffffffffffffffffffffffffffffffffffff
+      target_history:
+        - ffffffffffffffffffffffffffffffffffffffff
+        - eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+    expected:
+      silent_overwrite: false
+      status: FAIL

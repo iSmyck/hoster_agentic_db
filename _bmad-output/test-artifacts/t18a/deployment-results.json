@@ -1,0 +1,583 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "scenarios.yaml loaded",
+      "details": {
+        "fixture": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml"
+      },
+      "expected": "synthetic fixtures load",
+      "fixture_path": null,
+      "id": "harness.fixture_loaded",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "harness",
+      "status": "PASS"
+    },
+    {
+      "actual": "61 patterns compiled",
+      "details": {
+        "bad_regex_count": 0
+      },
+      "expected": "all schema regex patterns compile",
+      "fixture_path": null,
+      "id": "schema.regex_compile",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "143 refs resolved",
+      "details": {
+        "unresolved_count": 0
+      },
+      "expected": "all schema $ref resolve",
+      "fixture_path": null,
+      "id": "schema.refs_resolve",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "resource isolation valid",
+      "details": {
+        "cross_client_blocked": true,
+        "cross_client_read_attempt": false,
+        "cross_client_write_attempt": false,
+        "resources_separate": {
+          "backups": true,
+          "config": true,
+          "egress_allowlist": true,
+          "index": true,
+          "mirrors": true,
+          "network_perimeter": true,
+          "objects": true,
+          "postgresql": true,
+          "repositories": true,
+          "secrets": true
+        }
+      },
+      "expected": "second client has separate repositories, config, DB, index, objects, secrets, backups, mirrors, perimeter and egress",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "resource_isolation.second_client_fully_isolated.valid",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "resource_isolation",
+      "status": "PASS"
+    },
+    {
+      "actual": "resource isolation valid",
+      "details": {
+        "cross_client_blocked": true,
+        "cross_client_read_attempt": true,
+        "cross_client_write_attempt": false,
+        "resources_separate": {
+          "backups": true,
+          "config": true,
+          "egress_allowlist": true,
+          "index": true,
+          "mirrors": true,
+          "network_perimeter": true,
+          "objects": true,
+          "postgresql": true,
+          "repositories": true,
+          "secrets": true
+        }
+      },
+      "expected": "second client has separate repositories, config, DB, index, objects, secrets, backups, mirrors, perimeter and egress",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "resource_isolation.cross_client_read_blocked.valid",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "resource_isolation",
+      "status": "PASS"
+    },
+    {
+      "actual": "resource isolation problem detected",
+      "details": {
+        "cross_client_blocked": true,
+        "cross_client_read_attempt": false,
+        "cross_client_write_attempt": false,
+        "expected_negative": true,
+        "resources_separate": {
+          "backups": true,
+          "config": true,
+          "egress_allowlist": true,
+          "index": true,
+          "mirrors": true,
+          "network_perimeter": true,
+          "objects": true,
+          "postgresql": false,
+          "repositories": true,
+          "secrets": true
+        }
+      },
+      "expected": "shared resource or cross-client access rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "resource_isolation.shared_database_rejected.rejected",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "resource_isolation",
+      "status": "FAIL"
+    },
+    {
+      "actual": "resource isolation problem detected",
+      "details": {
+        "cross_client_blocked": false,
+        "cross_client_read_attempt": true,
+        "cross_client_write_attempt": false,
+        "expected_negative": true,
+        "resources_separate": {
+          "backups": true,
+          "config": true,
+          "egress_allowlist": true,
+          "index": true,
+          "mirrors": true,
+          "network_perimeter": true,
+          "objects": true,
+          "postgresql": true,
+          "repositories": true,
+          "secrets": true
+        }
+      },
+      "expected": "shared resource or cross-client access rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "resource_isolation.cross_client_read_not_blocked_rejected.rejected",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "resource_isolation",
+      "status": "FAIL"
+    },
+    {
+      "actual": "config-only delivery valid",
+      "details": {
+        "client_branch_created": false,
+        "client_config_adapters": true,
+        "code_edit_required": false,
+        "same_pinned_core": true
+      },
+      "expected": "second client deployed from same pinned core plus config/adapters without code edits or client branch",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "config_only_delivery.config_only_second_client.valid",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "config_only_delivery",
+      "status": "PASS"
+    },
+    {
+      "actual": "config-only delivery problem detected",
+      "details": {
+        "client_branch_created": false,
+        "client_config_adapters": true,
+        "code_edit_required": true,
+        "expected_negative": true,
+        "same_pinned_core": true
+      },
+      "expected": "code edit or client branch rejected with INVALID_CONFIG",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "config_only_delivery.code_edit_rejected.rejected",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "config_only_delivery",
+      "status": "FAIL"
+    },
+    {
+      "actual": "config-only delivery problem detected",
+      "details": {
+        "client_branch_created": true,
+        "client_config_adapters": true,
+        "code_edit_required": false,
+        "expected_negative": true,
+        "same_pinned_core": true
+      },
+      "expected": "code edit or client branch rejected with INVALID_CONFIG",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "config_only_delivery.client_branch_rejected.rejected",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "config_only_delivery",
+      "status": "FAIL"
+    },
+    {
+      "actual": "migration ownership valid",
+      "details": {
+        "authorized_external_migrator": true,
+        "cross_schema_write": false,
+        "empty_db_treated_as_proof": false,
+        "enable_db_migrations_false": true,
+        "expected_head_verified_before_traffic": true,
+        "runtime_ddl": false,
+        "runtime_non_ddl_role": true
+      },
+      "expected": "runtime workers have migrations disabled and non-DDL roles; only authorized migrator verifies heads before traffic",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "migration_ownership.runtime_non_ddl_migrations_disabled.valid",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "migration_ownership",
+      "status": "PASS"
+    },
+    {
+      "actual": "migration ownership problem detected",
+      "details": {
+        "authorized_external_migrator": true,
+        "cross_schema_write": false,
+        "empty_db_treated_as_proof": false,
+        "enable_db_migrations_false": true,
+        "expected_head_verified_before_traffic": true,
+        "expected_negative": true,
+        "runtime_ddl": true,
+        "runtime_non_ddl_role": true
+      },
+      "expected": "migration ownership violation rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "migration_ownership.runtime_ddl_rejected.rejected",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "migration_ownership",
+      "status": "FAIL"
+    },
+    {
+      "actual": "migration ownership problem detected",
+      "details": {
+        "authorized_external_migrator": true,
+        "cross_schema_write": true,
+        "empty_db_treated_as_proof": false,
+        "enable_db_migrations_false": true,
+        "expected_head_verified_before_traffic": true,
+        "expected_negative": true,
+        "runtime_ddl": false,
+        "runtime_non_ddl_role": true
+      },
+      "expected": "migration ownership violation rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "migration_ownership.cross_schema_write_rejected.rejected",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "migration_ownership",
+      "status": "FAIL"
+    },
+    {
+      "actual": "migration ownership problem detected",
+      "details": {
+        "authorized_external_migrator": true,
+        "cross_schema_write": false,
+        "empty_db_treated_as_proof": true,
+        "enable_db_migrations_false": true,
+        "expected_head_verified_before_traffic": true,
+        "expected_negative": true,
+        "runtime_ddl": false,
+        "runtime_non_ddl_role": true
+      },
+      "expected": "migration ownership violation rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "migration_ownership.empty_db_as_proof_rejected.rejected",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "migration_ownership",
+      "status": "FAIL"
+    },
+    {
+      "actual": "cold startup valid",
+      "details": {
+        "config_verified": true,
+        "offline_assets_ready": true,
+        "sbom_verified": true,
+        "unapproved_download_attempted": false,
+        "unapproved_fallback": false
+      },
+      "expected": "cold startup verifies offline assets, SBOM and config; no unapproved download or fallback",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "cold_startup.cold_startup_ready.valid",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "cold_startup",
+      "status": "PASS"
+    },
+    {
+      "actual": "cold startup problem detected",
+      "details": {
+        "config_verified": true,
+        "expected_negative": true,
+        "offline_assets_ready": true,
+        "sbom_verified": true,
+        "unapproved_download_attempted": true,
+        "unapproved_fallback": false
+      },
+      "expected": "unapproved download/fallback rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "cold_startup.unapproved_download_rejected.rejected",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "cold_startup",
+      "status": "FAIL"
+    },
+    {
+      "actual": "cold startup problem detected",
+      "details": {
+        "config_verified": true,
+        "expected_negative": true,
+        "offline_assets_ready": true,
+        "sbom_verified": true,
+        "unapproved_download_attempted": false,
+        "unapproved_fallback": true
+      },
+      "expected": "unapproved download/fallback rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "cold_startup.unapproved_fallback_rejected.rejected",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "cold_startup",
+      "status": "FAIL"
+    },
+    {
+      "actual": "cold startup problem detected",
+      "details": {
+        "config_verified": true,
+        "expected_negative": true,
+        "offline_assets_ready": false,
+        "sbom_verified": true,
+        "unapproved_download_attempted": false,
+        "unapproved_fallback": false
+      },
+      "expected": "unapproved download/fallback rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "cold_startup.missing_offline_assets_rejected.rejected",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "cold_startup",
+      "status": "FAIL"
+    },
+    {
+      "actual": "credential/egress separation valid",
+      "details": {
+        "approved_egress_routes_only": true,
+        "credential_separation": {
+          "ci_index": true,
+          "connector": true,
+          "proposal_merge": true,
+          "retrieval": true
+        },
+        "default_egress_closed": true,
+        "merge_credential_leaked": false
+      },
+      "expected": "proposal/merge, connector, CI/index and retrieval credentials separated; default egress closed except approved routes",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "credential_egress_separation.credentials_separated_egress_closed.valid",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "credential_egress_separation",
+      "status": "PASS"
+    },
+    {
+      "actual": "credential/egress problem detected",
+      "details": {
+        "approved_egress_routes_only": true,
+        "credential_separation": {
+          "ci_index": true,
+          "connector": true,
+          "proposal_merge": true,
+          "retrieval": true
+        },
+        "default_egress_closed": true,
+        "expected_negative": true,
+        "merge_credential_leaked": true
+      },
+      "expected": "credential leak or open egress rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "credential_egress_separation.merge_credential_leaked_rejected.rejected",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "credential_egress_separation",
+      "status": "FAIL"
+    },
+    {
+      "actual": "credential/egress problem detected",
+      "details": {
+        "approved_egress_routes_only": true,
+        "credential_separation": {
+          "ci_index": true,
+          "connector": true,
+          "proposal_merge": true,
+          "retrieval": true
+        },
+        "default_egress_closed": false,
+        "expected_negative": true,
+        "merge_credential_leaked": false
+      },
+      "expected": "credential leak or open egress rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "credential_egress_separation.open_default_egress_rejected.rejected",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "credential_egress_separation",
+      "status": "FAIL"
+    },
+    {
+      "actual": "credential/egress problem detected",
+      "details": {
+        "approved_egress_routes_only": false,
+        "credential_separation": {
+          "ci_index": true,
+          "connector": true,
+          "proposal_merge": true,
+          "retrieval": true
+        },
+        "default_egress_closed": true,
+        "expected_negative": true,
+        "merge_credential_leaked": false
+      },
+      "expected": "credential leak or open egress rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "credential_egress_separation.unapproved_route_used_rejected.rejected",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "credential_egress_separation",
+      "status": "FAIL"
+    },
+    {
+      "actual": "readiness states valid",
+      "details": {
+        "inactive_preflight_reported_as_published": false,
+        "indexed": false,
+        "published": true,
+        "readiness_state": "published",
+        "unavailable": false
+      },
+      "expected": "readiness distinguishes published, indexed and unavailable; inactive preflight not masked",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "readiness_states.published_state.valid",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "readiness_states",
+      "status": "PASS"
+    },
+    {
+      "actual": "readiness states valid",
+      "details": {
+        "inactive_preflight_reported_as_published": false,
+        "indexed": true,
+        "published": false,
+        "readiness_state": "indexed",
+        "unavailable": false
+      },
+      "expected": "readiness distinguishes published, indexed and unavailable; inactive preflight not masked",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "readiness_states.indexed_state.valid",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "readiness_states",
+      "status": "PASS"
+    },
+    {
+      "actual": "readiness states valid",
+      "details": {
+        "inactive_preflight_reported_as_published": false,
+        "indexed": false,
+        "published": false,
+        "readiness_state": "unavailable",
+        "unavailable": true
+      },
+      "expected": "readiness distinguishes published, indexed and unavailable; inactive preflight not masked",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "readiness_states.unavailable_state.valid",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "readiness_states",
+      "status": "PASS"
+    },
+    {
+      "actual": "readiness state problem detected",
+      "details": {
+        "expected_negative": true,
+        "inactive_preflight_reported_as_published": true,
+        "indexed": false,
+        "published": false,
+        "readiness_state": "unavailable",
+        "unavailable": true
+      },
+      "expected": "readiness state lie rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t18a/fixtures/scenarios.yaml",
+      "id": "readiness_states.preflight_masked_as_published_rejected.rejected",
+      "input_sha256": "1b6049b81feccd4ea01422e67c9979aadbeae2db421ad449fd518203bdaa6e51",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "readiness_states",
+      "status": "FAIL"
+    },
+    {
+      "actual": "requires owner-authorized second-client infrastructure",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_second_client_environment",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires owner-authorized second-client infrastructure",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_object_store",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires owner-authorized second-client infrastructure",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_ci_runner",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires owner-authorized second-client infrastructure",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_network_perimeter",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+  "contracts_version": "dedicated-deployment-v1",
+  "counts": {
+    "BLOCKED": 4,
+    "FAIL": 14,
+    "FAIL_EXPECTED": 14,
+    "FAIL_UNEXPECTED": 0,
+    "PASS": 12
+  },
+  "environment": {
+    "ad_available": false,
+    "ci_available": false,
+    "gitlab_available": false,
+    "hoster_available": false,
+    "idp_available": false,
+    "ldap_available": false,
+    "pinned_toolchain": {
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_local_no_gitlab"
+  },
+  "generated_at": "2026-11-09T00:01:34.191506+00:00",
+  "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
+  "schema_version": "t18a-deployment-results-v1",
+  "sensitive_data_included": false,
+  "spec_baseline_commit": "d2c0d072a757808ea891fbf6414f00147679f7a7"
+}

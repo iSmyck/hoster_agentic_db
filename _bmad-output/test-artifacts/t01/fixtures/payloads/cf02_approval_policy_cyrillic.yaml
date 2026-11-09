@@ -1,0 +1,17 @@
+schema_version: approval-policy-v1
+policy_bundle_id: bundle-pricing-v1
+repository_id: repo-sales-pricing
+space_id: sales-pricing
+rules:
+  - rule_id: cyrillic-nfc
+    path_prefix: /цена
+    external_group_ids:
+      - pricing-approvers
+    approvers_required: 1
+    self_approval_allowed: false
+  - rule_id: cyrillic-nfd
+    path_prefix: /цена
+    external_group_ids:
+      - pricing-approvers
+    approvers_required: 1
+    self_approval_allowed: false

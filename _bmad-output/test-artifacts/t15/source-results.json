@@ -1,0 +1,621 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "scenarios.yaml loaded",
+      "details": {
+        "fixture": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml"
+      },
+      "expected": "synthetic fixtures load",
+      "fixture_path": null,
+      "id": "harness.fixture_loaded",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "harness",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "error": null,
+        "proposal_id": "prop-source-001"
+      },
+      "expected": "sample source proposal record is schema valid",
+      "fixture_path": null,
+      "id": "schema.proposal_record.valid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "61 patterns compiled",
+      "details": {
+        "bad_regex_count": 0
+      },
+      "expected": "all schema regex patterns compile",
+      "fixture_path": null,
+      "id": "schema.regex_compile",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "143 refs resolved",
+      "details": {
+        "unresolved_count": 0
+      },
+      "expected": "all schema $ref resolve",
+      "fixture_path": null,
+      "id": "schema.refs_resolve",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "registry entry valid",
+      "details": {
+        "origin_mode_matches": true,
+        "origin_present": true,
+        "ownership_mode": "migrated",
+        "repository_id": "repo-sales",
+        "source_id": "sharepoint-docs",
+        "space_id": "sales"
+      },
+      "expected": "source registry records stable binding with mode-appropriate origin",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "source_registry.migrated_with_origin.valid",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "source_registry",
+      "status": "PASS"
+    },
+    {
+      "actual": "registry entry valid",
+      "details": {
+        "origin_mode_matches": true,
+        "origin_present": true,
+        "ownership_mode": "source_managed",
+        "repository_id": "repo-sales",
+        "source_id": "bitrix-wiki",
+        "space_id": "sales"
+      },
+      "expected": "source registry records stable binding with mode-appropriate origin",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "source_registry.source_managed_with_origin.valid",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "source_registry",
+      "status": "PASS"
+    },
+    {
+      "actual": "registry entry valid",
+      "details": {
+        "origin_mode_matches": false,
+        "origin_present": false,
+        "ownership_mode": "curated",
+        "repository_id": "repo-sales",
+        "source_id": "kayako-faq",
+        "space_id": "sales"
+      },
+      "expected": "source registry records stable binding with mode-appropriate origin",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "source_registry.curated_without_origin.valid",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "source_registry",
+      "status": "PASS"
+    },
+    {
+      "actual": "registry entry valid",
+      "details": {
+        "origin_mode_matches": false,
+        "origin_present": false,
+        "ownership_mode": "live_operational",
+        "repository_id": "repo-pricing",
+        "source_id": "confluence-ops",
+        "space_id": "pricing"
+      },
+      "expected": "source registry records stable binding with mode-appropriate origin",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "source_registry.live_operational_read_only.valid",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "source_registry",
+      "status": "PASS"
+    },
+    {
+      "actual": "registry entry problem detected",
+      "details": {
+        "expected_negative": true,
+        "origin_mode_matches": false,
+        "origin_present": false,
+        "ownership_mode": "migrated",
+        "repository_id": "repo-sales",
+        "source_id": "sharepoint-docs",
+        "space_id": "sales"
+      },
+      "expected": "invalid registry entry rejected with VALIDATION_ERROR",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "source_registry.migrated_missing_origin_rejected.rejected",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "source_registry",
+      "status": "FAIL"
+    },
+    {
+      "actual": "registry entry problem detected",
+      "details": {
+        "expected_negative": true,
+        "origin_mode_matches": false,
+        "origin_present": true,
+        "ownership_mode": "source_managed",
+        "repository_id": "repo-sales",
+        "source_id": "bitrix-wiki",
+        "space_id": "sales"
+      },
+      "expected": "invalid registry entry rejected with VALIDATION_ERROR",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "source_registry.source_managed_origin_mode_mismatch_rejected.rejected",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "source_registry",
+      "status": "FAIL"
+    },
+    {
+      "actual": "cursor durable",
+      "details": {
+        "cursor_sequence": "seen->seen->seen",
+        "merged_verified": false,
+        "proposed_durable": false,
+        "seen_durable": true
+      },
+      "expected": "cursor advances only after durable evidence",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "cursor_durability.seen_after_durable_metadata.valid",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "cursor_durability",
+      "status": "PASS"
+    },
+    {
+      "actual": "cursor durable",
+      "details": {
+        "cursor_sequence": "seen->proposed->proposed",
+        "merged_verified": false,
+        "proposed_durable": true,
+        "seen_durable": true
+      },
+      "expected": "cursor advances only after durable evidence",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "cursor_durability.proposed_after_durable_mr_and_record.valid",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "cursor_durability",
+      "status": "PASS"
+    },
+    {
+      "actual": "cursor durable",
+      "details": {
+        "cursor_sequence": "seen->proposed->merged",
+        "merged_verified": true,
+        "proposed_durable": true,
+        "seen_durable": true
+      },
+      "expected": "cursor advances only after durable evidence",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "cursor_durability.merged_after_verified_git_merge.valid",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "cursor_durability",
+      "status": "PASS"
+    },
+    {
+      "actual": "cursor durability problem detected",
+      "details": {
+        "cursor_sequence": "seen->seen->merged",
+        "expected_negative": true,
+        "merged_verified": true,
+        "proposed_durable": false,
+        "seen_durable": true
+      },
+      "expected": "cursor advance without durable evidence rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "cursor_durability.merged_without_proposal_durability_rejected.rejected",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "cursor_durability",
+      "status": "FAIL"
+    },
+    {
+      "actual": "cursor durability problem detected",
+      "details": {
+        "cursor_sequence": "seen->proposed->proposed",
+        "expected_negative": true,
+        "merged_verified": false,
+        "proposed_durable": false,
+        "seen_durable": true
+      },
+      "expected": "cursor advance without durable evidence rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "cursor_durability.proposed_without_durable_mr_rejected.rejected",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "cursor_durability",
+      "status": "FAIL"
+    },
+    {
+      "actual": "same-hash no-op honored",
+      "details": {
+        "created_new_proposal": false,
+        "existing_proposal_open": true,
+        "same_source_hash": true
+      },
+      "expected": "same source hash is a no-op or returns existing proposal",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "same_hash_noop.same_hash_returns_existing.noop",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "same_hash_noop",
+      "status": "PASS"
+    },
+    {
+      "actual": "same-hash no-op honored",
+      "details": {
+        "created_new_proposal": false,
+        "existing_proposal_open": false,
+        "same_source_hash": true
+      },
+      "expected": "same source hash is a no-op or returns existing proposal",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "same_hash_noop.same_hash_no_existing_no_new.noop",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "same_hash_noop",
+      "status": "PASS"
+    },
+    {
+      "actual": "duplicate proposal detected",
+      "details": {
+        "created_new_proposal": true,
+        "existing_proposal_open": true,
+        "expected_negative": true,
+        "same_source_hash": true
+      },
+      "expected": "duplicate proposal rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "same_hash_noop.same_hash_duplicate_proposal_rejected.rejected",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "same_hash_noop",
+      "status": "FAIL"
+    },
+    {
+      "actual": "one-proposal rule honored",
+      "details": {
+        "new_observation": true,
+        "outstanding_proposal_count": 1,
+        "updated_seen_only": true
+      },
+      "expected": "at most one outstanding proposal per source object; new observations update seen only",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "one_outstanding_proposal.new_observation_updates_seen_only.valid",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "one_outstanding_proposal",
+      "status": "PASS"
+    },
+    {
+      "actual": "one-proposal rule honored",
+      "details": {
+        "new_observation": true,
+        "outstanding_proposal_count": 0,
+        "updated_seen_only": false
+      },
+      "expected": "at most one outstanding proposal per source object; new observations update seen only",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "one_outstanding_proposal.no_open_new_observation_creates_proposal.valid",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "one_outstanding_proposal",
+      "status": "PASS"
+    },
+    {
+      "actual": "multiple outstanding proposals detected",
+      "details": {
+        "expected_negative": true,
+        "new_observation": true,
+        "outstanding_proposal_count": 1,
+        "updated_seen_only": false
+      },
+      "expected": "second outstanding proposal rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "one_outstanding_proposal.second_outstanding_proposal_rejected.rejected",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "one_outstanding_proposal",
+      "status": "FAIL"
+    },
+    {
+      "actual": "ownership mode valid",
+      "details": {
+        "local_edit_attempted": false,
+        "ownership_mode": "migrated",
+        "three_way_proposal_created": false,
+        "write_attempted": false
+      },
+      "expected": "ownership mode rules enforced",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "ownership_modes.migrated_ignores_old_source.valid",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "ownership_modes",
+      "status": "PASS"
+    },
+    {
+      "actual": "ownership mode valid",
+      "details": {
+        "local_edit_attempted": false,
+        "ownership_mode": "source_managed",
+        "three_way_proposal_created": false,
+        "write_attempted": false
+      },
+      "expected": "ownership mode rules enforced",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "ownership_modes.source_managed_local_edit_denied.valid",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "ownership_modes",
+      "status": "PASS"
+    },
+    {
+      "actual": "ownership mode valid",
+      "details": {
+        "local_edit_attempted": false,
+        "ownership_mode": "curated",
+        "three_way_proposal_created": true,
+        "write_attempted": false
+      },
+      "expected": "ownership mode rules enforced",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "ownership_modes.curated_three_way_proposal.valid",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "ownership_modes",
+      "status": "PASS"
+    },
+    {
+      "actual": "ownership mode valid",
+      "details": {
+        "local_edit_attempted": false,
+        "ownership_mode": "live_operational",
+        "three_way_proposal_created": false,
+        "write_attempted": false
+      },
+      "expected": "ownership mode rules enforced",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "ownership_modes.live_operational_no_write.valid",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "ownership_modes",
+      "status": "PASS"
+    },
+    {
+      "actual": "ownership mode violation detected",
+      "details": {
+        "expected_negative": true,
+        "local_edit_attempted": true,
+        "ownership_mode": "source_managed",
+        "three_way_proposal_created": false,
+        "write_attempted": false
+      },
+      "expected": "ownership mode violation rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "ownership_modes.source_managed_local_edit_rejected.rejected",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "ownership_modes",
+      "status": "FAIL"
+    },
+    {
+      "actual": "ownership mode violation detected",
+      "details": {
+        "expected_negative": true,
+        "local_edit_attempted": false,
+        "ownership_mode": "live_operational",
+        "three_way_proposal_created": false,
+        "write_attempted": true
+      },
+      "expected": "ownership mode violation rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "ownership_modes.live_operational_write_rejected.rejected",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "ownership_modes",
+      "status": "FAIL"
+    },
+    {
+      "actual": "tombstone created",
+      "details": {
+        "silent_delete": false,
+        "source_deleted": true,
+        "source_inaccessible": false,
+        "tombstone_mr_created": true
+      },
+      "expected": "source deletion creates tombstone/obsolete review MR; silent delete forbidden",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "source_deletion_tombstone.deletion_creates_tombstone.tombstone",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "source_deletion_tombstone",
+      "status": "PASS"
+    },
+    {
+      "actual": "tombstone created",
+      "details": {
+        "silent_delete": false,
+        "source_deleted": false,
+        "source_inaccessible": true,
+        "tombstone_mr_created": true
+      },
+      "expected": "source deletion creates tombstone/obsolete review MR; silent delete forbidden",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "source_deletion_tombstone.inaccessible_creates_tombstone.tombstone",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "source_deletion_tombstone",
+      "status": "PASS"
+    },
+    {
+      "actual": "silent deletion detected",
+      "details": {
+        "expected_negative": true,
+        "silent_delete": true,
+        "source_deleted": true,
+        "source_inaccessible": false,
+        "tombstone_mr_created": false
+      },
+      "expected": "silent deletion rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "source_deletion_tombstone.silent_deletion_rejected.rejected",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "source_deletion_tombstone",
+      "status": "FAIL"
+    },
+    {
+      "actual": "replay reconstructs",
+      "details": {
+        "durable_evidence": {
+          "merged": "v1-merged",
+          "proposed": "v1-prop",
+          "seen": "v1"
+        },
+        "fabricated_state": false,
+        "reconstructed_state": {
+          "merged": "v1-merged",
+          "proposed": "v1-prop",
+          "seen": "v1"
+        }
+      },
+      "expected": "crash replay reconstructs cursor from durable evidence without fabrication",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "crash_replay.replay_reconstructs_seen_proposed_merged.reconstructs",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "crash_replay",
+      "status": "PASS"
+    },
+    {
+      "actual": "replay reconstructs",
+      "details": {
+        "durable_evidence": {
+          "merged": null,
+          "proposed": "v1-prop",
+          "seen": "v1"
+        },
+        "fabricated_state": false,
+        "reconstructed_state": {
+          "merged": null,
+          "proposed": "v1-prop",
+          "seen": "v1"
+        }
+      },
+      "expected": "crash replay reconstructs cursor from durable evidence without fabrication",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "crash_replay.replay_unknown_stays_quarantined.reconstructs",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "crash_replay",
+      "status": "PASS"
+    },
+    {
+      "actual": "replay problem detected",
+      "details": {
+        "durable_evidence": {
+          "merged": null,
+          "proposed": null,
+          "seen": "v1"
+        },
+        "expected_negative": true,
+        "fabricated_state": true,
+        "reconstructed_state": {
+          "merged": null,
+          "proposed": "v1-fabricated",
+          "seen": "v1"
+        }
+      },
+      "expected": "fabricated or unrecoverable cursor rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t15/fixtures/scenarios.yaml",
+      "id": "crash_replay.fabricated_replay_rejected.rejected",
+      "input_sha256": "71b83f2052cc922c346048a7fb19df4f9990d342bd432136fd09617b67814385",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "crash_replay",
+      "status": "FAIL"
+    },
+    {
+      "actual": "requires live source sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_source_connector",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live source sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_gitlab_merge",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live source sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_object_store_cursor",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+  "contracts_version": "source-registry-v1",
+  "counts": {
+    "BLOCKED": 3,
+    "FAIL": 10,
+    "FAIL_EXPECTED": 10,
+    "FAIL_UNEXPECTED": 0,
+    "PASS": 23
+  },
+  "environment": {
+    "ad_available": false,
+    "ci_available": false,
+    "gitlab_available": false,
+    "hoster_available": false,
+    "idp_available": false,
+    "ldap_available": false,
+    "pinned_toolchain": {
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_local_no_gitlab"
+  },
+  "generated_at": "2026-11-09T00:01:33.079434+00:00",
+  "rerun_cmd": "uv run python _bmad-output/test-artifacts/t15/run_t15_tests.py",
+  "schema_version": "t15-source-results-v1",
+  "sensitive_data_included": false,
+  "spec_baseline_commit": "d2c0d072a757808ea891fbf6414f00147679f7a7"
+}

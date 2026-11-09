@@ -1,0 +1,33 @@
+# T04b Russian IME composition-ordering fixtures.
+# Sequences are synthetic keystroke/code-point inputs.
+
+fixtures:
+  - name: cyrillic_word_pricing
+    sequence:
+      - "Ц"
+      - "е"
+      - "н"
+      - "ы"
+    expected_text: "Цены"
+    expected_status: PASS
+
+  - name: cyrillic_sentence
+    sequence:
+      - "С"
+      - "т"
+      - "о"
+      - "и"
+      - "м"
+      - "о"
+      - "с"
+      - "т"
+      - "ь"
+      - " "
+      - "1"
+      - "0"
+      - "0"
+      - "0"
+      - " "
+      - "₽"
+    expected_text: "Стоимость 1000 ₽"
+    expected_status: PASS

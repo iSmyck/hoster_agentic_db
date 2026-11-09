@@ -1,0 +1,36 @@
+schema_version: index-snapshot-v1
+snapshot_id: 11111111-1111-4111-8111-111111111111
+space_id: sales
+repository_id: repo-sales
+target_branch: main
+snapshot_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+main_generation:
+  generation_id: gen-1
+  ancestry_root_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  parent_generation_id: null
+  history_rewrite_detected: false
+index_profile_version: profile-v1
+run_type: full
+purpose: cutover_preflight
+state: requested
+preflight:
+  is_preflight: true
+  serving_allowed: true
+  cutover_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+exact_projection:
+  status: ready
+  projection_sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+semantic_projection:
+  status: ready
+  projection_sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+documents: []
+closure:
+  complete: true
+  closure_sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  incremental_base_snapshot_sha: null
+  full_snapshot_equivalence: not_applicable
+  missing_inputs: []
+policy_bundle_id: bundle-sales-v1
+access_policy_revision: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+approval_policy_revision: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+created_at: "2026-11-08T00:00:00Z"

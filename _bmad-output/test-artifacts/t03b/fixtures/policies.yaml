@@ -1,0 +1,152 @@
+fixtures:
+  - name: sales_approval_valid
+    type: approval
+    expected_valid: true
+    policy:
+      schema_version: approval-policy-v1
+      policy_bundle_id: bundle-sales-v1
+      repository_id: repo-sales
+      space_id: sales
+      rules:
+        - rule_id: root-rule
+          path_prefix: /
+          external_group_ids:
+            - sales-authors
+          approvers_required: 1
+          self_approval_allowed: false
+        - rule_id: pricing-rule
+          path_prefix: /pricing
+          external_group_ids:
+            - pricing-approvers
+          approvers_required: 1
+          self_approval_allowed: false
+
+  - name: sales_access_valid
+    type: access
+    expected_valid: true
+    policy:
+      schema_version: access-policy-v1
+      policy_bundle_id: bundle-sales-v1
+      repository_id: repo-sales
+      space_id: sales
+      access_policy_path: /access-policy.yaml
+      approval_policy_path: /approval-policy.yaml
+      default_private: true
+      group_grants:
+        - grant_id: sales-readers
+          external_group_ids:
+            - sales-all
+          role: reader
+      personal_grants:
+        - grant_id: personal-sales-owner
+          stable_id: user-sales-owner
+          role: owner
+          justification: Synthetic owner grant for policy fixture.
+          approval_evidence:
+            - kind: validation_report
+              ref: synthetic-evidence-ref
+              sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+  - name: pricing_approval_valid
+    type: approval
+    expected_valid: true
+    policy:
+      schema_version: approval-policy-v1
+      policy_bundle_id: bundle-sales-pricing-v1
+      repository_id: repo-sales-pricing
+      space_id: sales-pricing
+      rules:
+        - rule_id: root-rule
+          path_prefix: /
+          external_group_ids:
+            - pricing-authors
+          approvers_required: 1
+          self_approval_allowed: false
+
+  - name: pricing_access_valid
+    type: access
+    expected_valid: true
+    policy:
+      schema_version: access-policy-v1
+      policy_bundle_id: bundle-sales-pricing-v1
+      repository_id: repo-sales-pricing
+      space_id: sales-pricing
+      access_policy_path: /access-policy.yaml
+      approval_policy_path: /approval-policy.yaml
+      default_private: true
+      group_grants:
+        - grant_id: pricing-readers
+          external_group_ids:
+            - pricing-all
+          role: reader
+      personal_grants:
+        - grant_id: personal-pricing-owner
+          stable_id: user-pricing-owner
+          role: owner
+          justification: Synthetic owner grant for policy fixture.
+          approval_evidence:
+            - kind: validation_report
+              ref: synthetic-evidence-ref
+              sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+
+  - name: invalid_space_id
+    type: approval
+    expected_valid: false
+    policy:
+      schema_version: approval-policy-v1
+      policy_bundle_id: bundle-invalid
+      repository_id: repo-invalid
+      space_id: INVALID_SPACE
+      rules:
+        - rule_id: root-rule
+          path_prefix: /
+          external_group_ids:
+            - group-a
+          approvers_required: 1
+          self_approval_allowed: false
+
+  - name: duplicate_prefix
+    type: approval
+    expected_valid: true
+    expected_duplicate_prefixes: true
+    policy:
+      schema_version: approval-policy-v1
+      policy_bundle_id: bundle-dup
+      repository_id: repo-dup
+      space_id: dup-space
+      rules:
+        - rule_id: rule-a
+          path_prefix: /pricing
+          external_group_ids:
+            - group-a
+          approvers_required: 1
+          self_approval_allowed: false
+        - rule_id: rule-b
+          path_prefix: /pricing
+          external_group_ids:
+            - group-b
+          approvers_required: 1
+          self_approval_allowed: false
+
+  - name: duplicate_prefix_trailing_slash
+    type: approval
+    expected_valid: true
+    expected_duplicate_prefixes: true
+    policy:
+      schema_version: approval-policy-v1
+      policy_bundle_id: bundle-dup-trailing
+      repository_id: repo-dup-trailing
+      space_id: dup-trailing-space
+      rules:
+        - rule_id: rule-a
+          path_prefix: /pricing
+          external_group_ids:
+            - group-a
+          approvers_required: 1
+          self_approval_allowed: false
+        - rule_id: rule-b
+          path_prefix: /pricing/
+          external_group_ids:
+            - group-b
+          approvers_required: 1
+          self_approval_allowed: false

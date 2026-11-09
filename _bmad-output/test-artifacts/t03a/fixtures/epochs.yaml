@@ -1,0 +1,70 @@
+# Synthetic epoch ordering fixtures.
+# Each event represents a group/policy sync with a monotonic epoch.
+# Older epochs arriving after newer ones must be rejected.
+fixtures:
+  - name: stale_rejected
+    description: Older sync arriving after newer sync must be rejected; newer snapshot is preserved.
+    expected_final_epoch: 3
+    expected_rejected_events:
+      - sync-older
+    events:
+      - event_id: sync-1
+        received_at: "2026-11-08T10:00:00Z"
+        epoch: 1
+        snapshot:
+          snapshot_id: 11111111-1111-4111-8111-111111111111
+          captured_at: "2026-11-08T10:00:00Z"
+      - event_id: sync-3
+        received_at: "2026-11-08T10:02:00Z"
+        epoch: 3
+        snapshot:
+          snapshot_id: 33333333-3333-4333-8333-333333333333
+          captured_at: "2026-11-08T10:02:00Z"
+      - event_id: sync-older
+        received_at: "2026-11-08T10:03:00Z"
+        epoch: 2
+        snapshot:
+          snapshot_id: 22222222-2222-4222-8222-222222222222
+          captured_at: "2026-11-08T10:01:00Z"
+
+  - name: monotonic_accepted
+    description: In-order monotonic epochs are all accepted; final is the latest.
+    expected_final_epoch: 4
+    expected_rejected_events: []
+    events:
+      - event_id: sync-1
+        received_at: "2026-11-08T10:00:00Z"
+        epoch: 1
+        snapshot:
+          snapshot_id: 11111111-1111-4111-8111-111111111111
+          captured_at: "2026-11-08T10:00:00Z"
+      - event_id: sync-2
+        received_at: "2026-11-08T10:01:00Z"
+        epoch: 2
+        snapshot:
+          snapshot_id: 22222222-2222-4222-8222-222222222222
+          captured_at: "2026-11-08T10:01:00Z"
+      - event_id: sync-4
+        received_at: "2026-11-08T10:03:00Z"
+        epoch: 4
+        snapshot:
+          snapshot_id: 44444444-4444-4444-8444-444444444444
+          captured_at: "2026-11-08T10:03:00Z"
+
+  - name: duplicate_epoch_accepted
+    description: An event with the same epoch as current overwrites; final epoch remains the same.
+    expected_final_epoch: 5
+    expected_rejected_events: []
+    events:
+      - event_id: sync-5a
+        received_at: "2026-11-08T10:00:00Z"
+        epoch: 5
+        snapshot:
+          snapshot_id: 55555555-5555-4555-8555-555555555555
+          captured_at: "2026-11-08T10:00:00Z"
+      - event_id: sync-5b
+        received_at: "2026-11-08T10:01:00Z"
+        epoch: 5
+        snapshot:
+          snapshot_id: 55555555-5555-4555-8555-555555555555
+          captured_at: "2026-11-08T10:00:00Z"

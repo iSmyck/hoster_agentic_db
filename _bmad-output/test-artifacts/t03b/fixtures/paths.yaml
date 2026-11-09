@@ -1,0 +1,40 @@
+fixtures:
+  - name: root_empty_prefix
+    absolute: /
+    relative: ""
+    expected_valid: true
+
+  - name: pricing_absolute
+    absolute: /pricing
+    relative: pricing
+    expected_valid: true
+
+  - name: pricing_without_leading_slash
+    absolute: pricing
+    relative: pricing
+    expected_valid: true
+
+  - name: nested_path
+    absolute: /pricing/tiers/enterprise
+    relative: pricing/tiers/enterprise
+    expected_valid: true
+
+  - name: trailing_slash_rejected
+    absolute: /pricing/
+    relative: pricing
+    expected_valid: false
+
+  - name: parent_traversal_rejected
+    absolute: /pricing/../other
+    relative: other
+    expected_valid: false
+
+  - name: dot_segment_rejected
+    absolute: /pricing/./current
+    relative: pricing/current
+    expected_valid: false
+
+  - name: backslash_rejected
+    absolute: /pricing\\current
+    relative: pricing/current
+    expected_valid: false

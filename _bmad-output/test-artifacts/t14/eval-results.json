@@ -1,0 +1,560 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "scenarios.yaml loaded",
+      "details": {
+        "fixture": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml"
+      },
+      "expected": "synthetic fixtures load",
+      "fixture_path": null,
+      "id": "harness.fixture_loaded",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "harness",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "error": null,
+        "proposal_id": "prop-eval-001"
+      },
+      "expected": "sample proposal record is schema valid",
+      "fixture_path": null,
+      "id": "schema.proposal_record.valid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "61 patterns compiled",
+      "details": {
+        "bad_regex_count": 0
+      },
+      "expected": "all schema regex patterns compile",
+      "fixture_path": null,
+      "id": "schema.regex_compile",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "143 refs resolved",
+      "details": {
+        "unresolved_count": 0
+      },
+      "expected": "all schema $ref resolve",
+      "fixture_path": null,
+      "id": "schema.refs_resolve",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "versioning complete",
+      "details": {
+        "code_version": "0.1.0",
+        "config_version": "kb-config-2026-11-09",
+        "corpus_sha_valid": true,
+        "dataset_version": "russian-golden-001",
+        "expected_evidence": [
+          "exact_recall",
+          "semantic_recall",
+          "citation_correctness"
+        ],
+        "grader_config_approved": true,
+        "model_version": "approved-model-chat-v1",
+        "same_data_barrier": true,
+        "scope": "pilot_sales",
+        "tool_schema_version": "agent-tools-v2"
+      },
+      "expected": "eval case records corpus/code/config/model/tool-schema/dataset versions, scope and expected evidence with approved local grader and production data barrier",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "eval_case_versioning.complete_eval_case.complete",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "eval_case_versioning",
+      "status": "PASS"
+    },
+    {
+      "actual": "versioning problem detected",
+      "details": {
+        "code_version": "0.1.0",
+        "config_version": "kb-config-2026-11-09",
+        "corpus_sha_valid": false,
+        "dataset_version": "russian-golden-001",
+        "expected_evidence": [
+          "exact_recall"
+        ],
+        "expected_negative": true,
+        "grader_config_approved": true,
+        "model_version": "approved-model-chat-v1",
+        "same_data_barrier": true,
+        "scope": "pilot_sales",
+        "tool_schema_version": "agent-tools-v2"
+      },
+      "expected": "incomplete eval case rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "eval_case_versioning.missing_corpus_sha_rejected.rejected",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "eval_case_versioning",
+      "status": "FAIL"
+    },
+    {
+      "actual": "versioning problem detected",
+      "details": {
+        "code_version": "0.1.0",
+        "config_version": "kb-config-2026-11-09",
+        "corpus_sha_valid": true,
+        "dataset_version": "russian-golden-001",
+        "expected_evidence": [
+          "exact_recall"
+        ],
+        "expected_negative": true,
+        "grader_config_approved": false,
+        "model_version": "approved-model-chat-v1",
+        "same_data_barrier": true,
+        "scope": "pilot_sales",
+        "tool_schema_version": "agent-tools-v2"
+      },
+      "expected": "incomplete eval case rejected with APPROVER_CONFLICT",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "eval_case_versioning.unapproved_grader_rejected.rejected",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "eval_case_versioning",
+      "status": "FAIL"
+    },
+    {
+      "actual": "quality metrics valid",
+      "details": {
+        "metrics_separated_by_category": true,
+        "required_categories_present": true,
+        "undifferentiated_score": false
+      },
+      "expected": "quality metrics cover exact/semantic recall, factual support, citation correctness and abstention/no-answer per category",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "quality_metrics.all_categories_separated.complete",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "quality_metrics",
+      "status": "PASS"
+    },
+    {
+      "actual": "quality metrics problem detected",
+      "details": {
+        "expected_negative": true,
+        "metrics_separated_by_category": false,
+        "required_categories_present": false,
+        "undifferentiated_score": true
+      },
+      "expected": "incomplete or undifferentiated metrics rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "quality_metrics.undifferentiated_score_rejected.rejected",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "quality_metrics",
+      "status": "FAIL"
+    },
+    {
+      "actual": "quality metrics problem detected",
+      "details": {
+        "expected_negative": true,
+        "metrics_separated_by_category": false,
+        "required_categories_present": false,
+        "undifferentiated_score": false
+      },
+      "expected": "incomplete or undifferentiated metrics rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "quality_metrics.missing_abstention_rejected.rejected",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "quality_metrics",
+      "status": "FAIL"
+    },
+    {
+      "actual": "groundedness valid",
+      "details": {
+        "citations_match_evidence": true,
+        "llm_judge_sole_arbiter": false,
+        "silent_stale_substitution": false,
+        "threshold_recorded": true,
+        "unsupported_answer": false
+      },
+      "expected": "citations checked against canonical evidence; unsupported/stale answers fail visibly; thresholds recorded; LLM judge not sole arbiter",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "citation_groundedness.citations_match_canonical_evidence.grounded",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "citation_groundedness",
+      "status": "PASS"
+    },
+    {
+      "actual": "groundedness problem detected",
+      "details": {
+        "citations_match_evidence": true,
+        "expected_negative": true,
+        "llm_judge_sole_arbiter": false,
+        "silent_stale_substitution": false,
+        "threshold_recorded": true,
+        "unsupported_answer": true
+      },
+      "expected": "ungrounded answer rejected with CITATION_MISMATCH",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "citation_groundedness.unsupported_answer_rejected.rejected",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "citation_groundedness",
+      "status": "FAIL"
+    },
+    {
+      "actual": "groundedness problem detected",
+      "details": {
+        "citations_match_evidence": false,
+        "expected_negative": true,
+        "llm_judge_sole_arbiter": false,
+        "silent_stale_substitution": true,
+        "threshold_recorded": true,
+        "unsupported_answer": false
+      },
+      "expected": "ungrounded answer rejected with CITATION_MISMATCH",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "citation_groundedness.silent_stale_substitution_rejected.rejected",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "citation_groundedness",
+      "status": "FAIL"
+    },
+    {
+      "actual": "groundedness problem detected",
+      "details": {
+        "citations_match_evidence": true,
+        "expected_negative": true,
+        "llm_judge_sole_arbiter": true,
+        "silent_stale_substitution": false,
+        "threshold_recorded": true,
+        "unsupported_answer": false
+      },
+      "expected": "ungrounded answer rejected with APPROVER_CONFLICT",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "citation_groundedness.llm_judge_sole_arbiter_rejected.rejected",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "citation_groundedness",
+      "status": "FAIL"
+    },
+    {
+      "actual": "deterministic adversarial valid",
+      "details": {
+        "deterministic_result": true,
+        "probabilistic_score_only": false,
+        "suite_type": "merge_boundary",
+        "zero_unauthorized_disclosure": true
+      },
+      "expected": "adversarial/regression suite is deterministic and requires zero unauthorized disclosures",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "deterministic_adversarial.merge_boundary_suite.safe",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "deterministic_adversarial",
+      "status": "PASS"
+    },
+    {
+      "actual": "deterministic adversarial valid",
+      "details": {
+        "deterministic_result": true,
+        "probabilistic_score_only": false,
+        "suite_type": "acl_isolation",
+        "zero_unauthorized_disclosure": true
+      },
+      "expected": "adversarial/regression suite is deterministic and requires zero unauthorized disclosures",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "deterministic_adversarial.acl_isolation_suite.safe",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "deterministic_adversarial",
+      "status": "PASS"
+    },
+    {
+      "actual": "deterministic adversarial valid",
+      "details": {
+        "deterministic_result": true,
+        "probabilistic_score_only": false,
+        "suite_type": "prompt_injection",
+        "zero_unauthorized_disclosure": true
+      },
+      "expected": "adversarial/regression suite is deterministic and requires zero unauthorized disclosures",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "deterministic_adversarial.prompt_injection_suite.safe",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "deterministic_adversarial",
+      "status": "PASS"
+    },
+    {
+      "actual": "adversarial suite problem detected",
+      "details": {
+        "deterministic_result": false,
+        "expected_negative": true,
+        "probabilistic_score_only": true,
+        "suite_type": "quality_score_only",
+        "zero_unauthorized_disclosure": true
+      },
+      "expected": "non-deterministic or disclosing suite rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "deterministic_adversarial.probabilistic_only_rejected.rejected",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "deterministic_adversarial",
+      "status": "FAIL"
+    },
+    {
+      "actual": "adversarial suite problem detected",
+      "details": {
+        "deterministic_result": true,
+        "expected_negative": true,
+        "probabilistic_score_only": false,
+        "suite_type": "acl_isolation",
+        "zero_unauthorized_disclosure": false
+      },
+      "expected": "non-deterministic or disclosing suite rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "deterministic_adversarial.unauthorized_disclosure_rejected.rejected",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "deterministic_adversarial",
+      "status": "FAIL"
+    },
+    {
+      "actual": "operational metrics valid",
+      "details": {
+        "cost_drivers_present": true,
+        "outcomes_present": true,
+        "required_latency_metrics_present": true
+      },
+      "expected": "operational metrics separate TTFT/full response, Git read/merge latency, merge→index freshness, CI queue lag with outcomes and cost drivers",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "operational_measurements.metrics_separated.complete",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "operational_measurements",
+      "status": "PASS"
+    },
+    {
+      "actual": "operational metrics problem detected",
+      "details": {
+        "cost_drivers_present": false,
+        "expected_negative": true,
+        "outcomes_present": false,
+        "required_latency_metrics_present": false
+      },
+      "expected": "incomplete operational metrics rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "operational_measurements.missing_git_merge_latency_rejected.rejected",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "operational_measurements",
+      "status": "FAIL"
+    },
+    {
+      "actual": "observability valid",
+      "details": {
+        "correlation_present": true,
+        "required_telemetry_present": true
+      },
+      "expected": "observability covers required dimensions with request/run/proposal correlation",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "observability.telemetry_complete_and_correlated.complete",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "observability",
+      "status": "PASS"
+    },
+    {
+      "actual": "observability problem detected",
+      "details": {
+        "correlation_present": false,
+        "expected_negative": true,
+        "required_telemetry_present": true
+      },
+      "expected": "incomplete observability rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "observability.missing_correlation_rejected.rejected",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "observability",
+      "status": "FAIL"
+    },
+    {
+      "actual": "golden set structure valid",
+      "details": {
+        "golden_answers_complete": true,
+        "has_russian_cases": true,
+        "local_grader": true,
+        "no_live_inference_claim": true
+      },
+      "expected": "Russian golden set has complete golden answers, local grader and does not claim live inference PASS",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "russian_golden_set.russian_set_ready.ready",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "russian_golden_set",
+      "status": "PASS"
+    },
+    {
+      "actual": "golden set problem detected",
+      "details": {
+        "expected_negative": true,
+        "golden_answers_complete": false,
+        "has_russian_cases": true,
+        "local_grader": true,
+        "no_live_inference_claim": true
+      },
+      "expected": "invalid golden set rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "russian_golden_set.missing_golden_answer_rejected.rejected",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "russian_golden_set",
+      "status": "FAIL"
+    },
+    {
+      "actual": "golden set problem detected",
+      "details": {
+        "expected_negative": true,
+        "golden_answers_complete": true,
+        "has_russian_cases": true,
+        "local_grader": false,
+        "no_live_inference_claim": false
+      },
+      "expected": "invalid golden set rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "russian_golden_set.live_inference_claim_rejected.rejected",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "russian_golden_set",
+      "status": "FAIL"
+    },
+    {
+      "actual": "human-in-the-loop valid",
+      "details": {
+        "automated_only_disposition": false,
+        "human_disposition_recorded": true
+      },
+      "expected": "refusal/groundedness disposition requires human-in-the-loop review",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "human_in_the_loop.refusal_with_human_disposition.reviewed",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "human_in_the_loop",
+      "status": "PASS"
+    },
+    {
+      "actual": "human-in-the-loop valid",
+      "details": {
+        "automated_only_disposition": false,
+        "human_disposition_recorded": true
+      },
+      "expected": "refusal/groundedness disposition requires human-in-the-loop review",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "human_in_the_loop.groundedness_with_human_disposition.reviewed",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "human_in_the_loop",
+      "status": "PASS"
+    },
+    {
+      "actual": "human review missing",
+      "details": {
+        "automated_only_disposition": true,
+        "expected_negative": true,
+        "human_disposition_recorded": false
+      },
+      "expected": "automated-only disposition rejected with APPROVER_CONFLICT",
+      "fixture_path": "_bmad-output/test-artifacts/t14/fixtures/scenarios.yaml",
+      "id": "human_in_the_loop.automated_only_disposition_rejected.rejected",
+      "input_sha256": "0b9b0b44cf23af31e934c7bb42dd953a63786fb1a07a2192e35c50c234d80404",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "human_in_the_loop",
+      "status": "FAIL"
+    },
+    {
+      "actual": "requires live hoster.ai sandbox, model outputs and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_hoster_quality_inference",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live hoster.ai sandbox, model outputs and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_russian_golden_set_grading",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live hoster.ai sandbox, model outputs and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_human_expert_review",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires live hoster.ai sandbox, model outputs and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_operational_measurement_collection",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+  "contracts_version": "eval-harness-v1",
+  "counts": {
+    "BLOCKED": 4,
+    "FAIL": 14,
+    "FAIL_EXPECTED": 14,
+    "FAIL_UNEXPECTED": 0,
+    "PASS": 15
+  },
+  "environment": {
+    "ad_available": false,
+    "ci_available": false,
+    "gitlab_available": false,
+    "hoster_available": false,
+    "idp_available": false,
+    "ldap_available": false,
+    "pinned_toolchain": {
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_local_no_gitlab"
+  },
+  "generated_at": "2026-11-08T23:50:40.937983+00:00",
+  "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
+  "schema_version": "t14-eval-results-v1",
+  "sensitive_data_included": false,
+  "spec_baseline_commit": "d2c0d072a757808ea891fbf6414f00147679f7a7"
+}

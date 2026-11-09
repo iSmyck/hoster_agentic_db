@@ -1,0 +1,308 @@
+scenarios:
+  source_registry:
+    fixtures:
+      - name: migrated_with_origin
+        input:
+          space_id: sales
+          source_id: sharepoint-docs
+          repository_id: repo-sales
+          ownership_mode: migrated
+          origin:
+            source_id: sharepoint-docs
+            ownership_mode: migrated
+        expected:
+          status: PASS
+      - name: source_managed_with_origin
+        input:
+          space_id: sales
+          source_id: bitrix-wiki
+          repository_id: repo-sales
+          ownership_mode: source_managed
+          origin:
+            source_id: bitrix-wiki
+            ownership_mode: source_managed
+        expected:
+          status: PASS
+      - name: curated_without_origin
+        input:
+          space_id: sales
+          source_id: kayako-faq
+          repository_id: repo-sales
+          ownership_mode: curated
+          origin: {}
+        expected:
+          status: PASS
+      - name: live_operational_read_only
+        input:
+          space_id: pricing
+          source_id: confluence-ops
+          repository_id: repo-pricing
+          ownership_mode: live_operational
+          origin: {}
+        expected:
+          status: PASS
+      - name: migrated_missing_origin_rejected
+        input:
+          space_id: sales
+          source_id: sharepoint-docs
+          repository_id: repo-sales
+          ownership_mode: migrated
+          origin: {}
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+      - name: source_managed_origin_mode_mismatch_rejected
+        input:
+          space_id: sales
+          source_id: bitrix-wiki
+          repository_id: repo-sales
+          ownership_mode: source_managed
+          origin:
+            source_id: bitrix-wiki
+            ownership_mode: curated
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+
+  cursor_durability:
+    fixtures:
+      - name: seen_after_durable_metadata
+        input:
+          seen:
+            cursor: seen
+            metadata_durable: true
+          proposed:
+            cursor: seen
+          merged:
+            cursor: seen
+        expected:
+          status: PASS
+      - name: proposed_after_durable_mr_and_record
+        input:
+          seen:
+            cursor: seen
+            metadata_durable: true
+          proposed:
+            cursor: proposed
+            mr_durable: true
+            proposal_record_durable: true
+          merged:
+            cursor: proposed
+        expected:
+          status: PASS
+      - name: merged_after_verified_git_merge
+        input:
+          seen:
+            cursor: seen
+            metadata_durable: true
+          proposed:
+            cursor: proposed
+            mr_durable: true
+            proposal_record_durable: true
+          merged:
+            cursor: merged
+            git_merge_verified: true
+            source_mapping_reconciled: true
+        expected:
+          status: PASS
+      - name: merged_without_proposal_durability_rejected
+        input:
+          seen:
+            cursor: seen
+            metadata_durable: true
+          proposed:
+            cursor: seen
+          merged:
+            cursor: merged
+            git_merge_verified: true
+            source_mapping_reconciled: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: proposed_without_durable_mr_rejected
+        input:
+          seen:
+            cursor: seen
+            metadata_durable: true
+          proposed:
+            cursor: proposed
+            mr_durable: false
+            proposal_record_durable: true
+          merged:
+            cursor: proposed
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  same_hash_noop:
+    fixtures:
+      - name: same_hash_returns_existing
+        input:
+          same_source_hash: true
+          existing_proposal_open: true
+          created_new_proposal: false
+        expected:
+          status: PASS
+      - name: same_hash_no_existing_no_new
+        input:
+          same_source_hash: true
+          existing_proposal_open: false
+          created_new_proposal: false
+        expected:
+          status: PASS
+      - name: same_hash_duplicate_proposal_rejected
+        input:
+          same_source_hash: true
+          existing_proposal_open: true
+          created_new_proposal: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  one_outstanding_proposal:
+    fixtures:
+      - name: new_observation_updates_seen_only
+        input:
+          outstanding_proposal_count: 1
+          new_observation: true
+          updated_seen_only: true
+        expected:
+          status: PASS
+      - name: no_open_new_observation_creates_proposal
+        input:
+          outstanding_proposal_count: 0
+          new_observation: true
+          updated_seen_only: false
+        expected:
+          status: PASS
+      - name: second_outstanding_proposal_rejected
+        input:
+          outstanding_proposal_count: 1
+          new_observation: true
+          updated_seen_only: false
+          created_second_proposal: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  ownership_modes:
+    fixtures:
+      - name: migrated_ignores_old_source
+        input:
+          ownership_mode: migrated
+          old_source_still_writer: false
+        expected:
+          status: PASS
+      - name: source_managed_local_edit_denied
+        input:
+          ownership_mode: source_managed
+          local_edit_attempted: false
+          three_way_proposal_created: false
+          write_attempted: false
+        expected:
+          status: PASS
+      - name: curated_three_way_proposal
+        input:
+          ownership_mode: curated
+          local_edit_attempted: false
+          three_way_proposal_created: true
+          write_attempted: false
+        expected:
+          status: PASS
+      - name: live_operational_no_write
+        input:
+          ownership_mode: live_operational
+          local_edit_attempted: false
+          three_way_proposal_created: false
+          write_attempted: false
+        expected:
+          status: PASS
+      - name: source_managed_local_edit_rejected
+        input:
+          ownership_mode: source_managed
+          local_edit_attempted: true
+          three_way_proposal_created: false
+          write_attempted: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: live_operational_write_rejected
+        input:
+          ownership_mode: live_operational
+          local_edit_attempted: false
+          three_way_proposal_created: false
+          write_attempted: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  source_deletion_tombstone:
+    fixtures:
+      - name: deletion_creates_tombstone
+        input:
+          source_deleted: true
+          source_inaccessible: false
+          tombstone_mr_created: true
+          silent_delete: false
+        expected:
+          status: PASS
+      - name: inaccessible_creates_tombstone
+        input:
+          source_deleted: false
+          source_inaccessible: true
+          tombstone_mr_created: true
+          silent_delete: false
+        expected:
+          status: PASS
+      - name: silent_deletion_rejected
+        input:
+          source_deleted: true
+          source_inaccessible: false
+          tombstone_mr_created: false
+          silent_delete: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  crash_replay:
+    fixtures:
+      - name: replay_reconstructs_seen_proposed_merged
+        input:
+          durable_evidence:
+            seen: v1
+            proposed: v1-prop
+            merged: v1-merged
+          reconstructed_state:
+            seen: v1
+            proposed: v1-prop
+            merged: v1-merged
+          fabricated_state: false
+        expected:
+          status: PASS
+      - name: replay_unknown_stays_quarantined
+        input:
+          durable_evidence:
+            seen: v1
+            proposed: v1-prop
+            merged: null
+          reconstructed_state:
+            seen: v1
+            proposed: v1-prop
+            merged: null
+          fabricated_state: false
+        expected:
+          status: PASS
+      - name: fabricated_replay_rejected
+        input:
+          durable_evidence:
+            seen: v1
+            proposed: null
+            merged: null
+          reconstructed_state:
+            seen: v1
+            proposed: v1-fabricated
+            merged: null
+          fabricated_state: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE

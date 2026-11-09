@@ -1,0 +1,607 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "scenarios.yaml loaded",
+      "details": {
+        "fixture": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml"
+      },
+      "expected": "synthetic fixtures load",
+      "fixture_path": null,
+      "id": "harness.fixture_loaded",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "harness",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema valid",
+      "details": {
+        "error": null,
+        "proposal_id": "prop-connector-001"
+      },
+      "expected": "sample connector proposal record is schema valid",
+      "fixture_path": null,
+      "id": "schema.proposal_record.valid",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "61 patterns compiled",
+      "details": {
+        "bad_regex_count": 0
+      },
+      "expected": "all schema regex patterns compile",
+      "fixture_path": null,
+      "id": "schema.regex_compile",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "143 refs resolved",
+      "details": {
+        "unresolved_count": 0
+      },
+      "expected": "all schema $ref resolve",
+      "fixture_path": null,
+      "id": "schema.refs_resolve",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "inventory complete",
+      "details": {
+        "inventory_fields_present": {
+          "api": true,
+          "authentication": true,
+          "edition": true,
+          "rate_limits": true,
+          "sandbox": true,
+          "scopes": true
+        },
+        "others_claimed_ready": [],
+        "selected_connector": "SharePoint"
+      },
+      "expected": "selected source inventory complete; other connectors not claimed ready",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "feasibility_inventory.sharepoint_selected_inventory_complete.complete",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "feasibility_inventory",
+      "status": "PASS"
+    },
+    {
+      "actual": "inventory problem detected",
+      "details": {
+        "expected_negative": true,
+        "inventory_fields_present": {
+          "api": true,
+          "authentication": true,
+          "edition": true,
+          "rate_limits": false,
+          "sandbox": true,
+          "scopes": true
+        },
+        "others_claimed_ready": [],
+        "selected_connector": "SharePoint"
+      },
+      "expected": "incomplete inventory or unselected connector claim rejected with INVALID_CONFIG",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "feasibility_inventory.missing_rate_limits_rejected.rejected",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "feasibility_inventory",
+      "status": "FAIL"
+    },
+    {
+      "actual": "inventory problem detected",
+      "details": {
+        "expected_negative": true,
+        "inventory_fields_present": {
+          "api": true,
+          "authentication": true,
+          "edition": true,
+          "rate_limits": true,
+          "sandbox": true,
+          "scopes": true
+        },
+        "others_claimed_ready": [
+          "Bitrix24"
+        ],
+        "selected_connector": "SharePoint"
+      },
+      "expected": "incomplete inventory or unselected connector claim rejected with INVALID_CONFIG",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "feasibility_inventory.unselected_connector_claimed_ready_rejected.rejected",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "feasibility_inventory",
+      "status": "FAIL"
+    },
+    {
+      "actual": "identity/provenance valid",
+      "details": {
+        "immutable_version_or_hash": true,
+        "maps_to_configured_space": true,
+        "provenance": true,
+        "source_owner": true,
+        "stable_remote_id": true
+      },
+      "expected": "connector preserves stable remote ID, immutable version/hash, source owner and provenance; maps to configured Space",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "connector_identity_provenance.stable_identity_and_provenance.valid",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "connector_identity_provenance",
+      "status": "PASS"
+    },
+    {
+      "actual": "identity/provenance problem detected",
+      "details": {
+        "expected_negative": true,
+        "immutable_version_or_hash": true,
+        "maps_to_configured_space": true,
+        "provenance": true,
+        "source_owner": true,
+        "stable_remote_id": false
+      },
+      "expected": "identity/provenance violation rejected with VALIDATION_ERROR",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "connector_identity_provenance.missing_stable_remote_id_rejected.rejected",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "connector_identity_provenance",
+      "status": "FAIL"
+    },
+    {
+      "actual": "identity/provenance problem detected",
+      "details": {
+        "expected_negative": true,
+        "immutable_version_or_hash": true,
+        "maps_to_configured_space": false,
+        "provenance": true,
+        "source_owner": true,
+        "stable_remote_id": true
+      },
+      "expected": "identity/provenance violation rejected with VALIDATION_ERROR",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "connector_identity_provenance.wrong_space_mapping_rejected.rejected",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "connector_identity_provenance",
+      "status": "FAIL"
+    },
+    {
+      "actual": "capabilities valid",
+      "details": {
+        "capabilities": [
+          "fetch",
+          "list",
+          "propose",
+          "changes"
+        ],
+        "forbidden_present": [],
+        "proposal_only_to_go": true
+      },
+      "expected": "connector sends proposal-only requests to GO and has no forbidden capabilities",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "connector_capabilities.proposal_only_no_forbidden.valid",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "connector_capabilities",
+      "status": "PASS"
+    },
+    {
+      "actual": "forbidden capability detected",
+      "details": {
+        "capabilities": [
+          "propose",
+          "changes",
+          "fetch",
+          "auto_merge",
+          "list"
+        ],
+        "expected_negative": true,
+        "forbidden_present": [
+          "auto_merge"
+        ],
+        "proposal_only_to_go": true
+      },
+      "expected": "forbidden connector capability rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "connector_capabilities.auto_merge_capability_rejected.rejected",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "connector_capabilities",
+      "status": "FAIL"
+    },
+    {
+      "actual": "forbidden capability detected",
+      "details": {
+        "capabilities": [
+          "fetch",
+          "index_pointer",
+          "list",
+          "propose"
+        ],
+        "expected_negative": true,
+        "forbidden_present": [
+          "index_pointer"
+        ],
+        "proposal_only_to_go": true
+      },
+      "expected": "forbidden connector capability rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "connector_capabilities.index_pointer_capability_rejected.rejected",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "connector_capabilities",
+      "status": "FAIL"
+    },
+    {
+      "actual": "revocation handling valid",
+      "details": {
+        "changed_acl_hint": false,
+        "credentials_revoked": false,
+        "failed_closed": false,
+        "hint_only": true,
+        "revoked_group_membership": false
+      },
+      "expected": "revoked credentials, changed ACL hints or revoked group membership fail closed; hints treated as hints only",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "access_revocation.healthy_access.fail_closed",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "access_revocation",
+      "status": "PASS"
+    },
+    {
+      "actual": "revocation handling valid",
+      "details": {
+        "changed_acl_hint": false,
+        "credentials_revoked": true,
+        "failed_closed": true,
+        "hint_only": true,
+        "revoked_group_membership": false
+      },
+      "expected": "revoked credentials, changed ACL hints or revoked group membership fail closed; hints treated as hints only",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "access_revocation.revoked_credentials_fail_closed.fail_closed",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "access_revocation",
+      "status": "PASS"
+    },
+    {
+      "actual": "revocation handling valid",
+      "details": {
+        "changed_acl_hint": true,
+        "credentials_revoked": false,
+        "failed_closed": true,
+        "hint_only": true,
+        "revoked_group_membership": false
+      },
+      "expected": "revoked credentials, changed ACL hints or revoked group membership fail closed; hints treated as hints only",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "access_revocation.acl_hint_not_authority.fail_closed",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "access_revocation",
+      "status": "PASS"
+    },
+    {
+      "actual": "revocation handling problem detected",
+      "details": {
+        "changed_acl_hint": true,
+        "credentials_revoked": false,
+        "expected_negative": true,
+        "failed_closed": true,
+        "hint_only": false,
+        "revoked_group_membership": false
+      },
+      "expected": "revocation not fail-closed rejected with AUTHZ_GROUP_STALE",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "access_revocation.hint_treated_as_authority_rejected.rejected",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "access_revocation",
+      "status": "FAIL"
+    },
+    {
+      "actual": "deletion/retry/dedupe valid",
+      "details": {
+        "bounded_retry_preserves_identity": true,
+        "duplicate_event": false,
+        "outstanding_proposal_count": 1,
+        "poison_reached_dead_letter": true,
+        "source_deleted": true,
+        "tombstone_mr_created": true
+      },
+      "expected": "deletion produces tombstone, retry preserves identity, duplicates dedupe and poison reaches dead-letter",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "deletion_retry_dedupe.deletion_creates_tombstone.valid",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "deletion_retry_dedupe",
+      "status": "PASS"
+    },
+    {
+      "actual": "deletion/retry/dedupe valid",
+      "details": {
+        "bounded_retry_preserves_identity": true,
+        "duplicate_event": true,
+        "outstanding_proposal_count": 1,
+        "poison_reached_dead_letter": true,
+        "source_deleted": false,
+        "tombstone_mr_created": false
+      },
+      "expected": "deletion produces tombstone, retry preserves identity, duplicates dedupe and poison reaches dead-letter",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "deletion_retry_dedupe.duplicate_event_deduped.valid",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "deletion_retry_dedupe",
+      "status": "PASS"
+    },
+    {
+      "actual": "deletion/retry/dedupe problem detected",
+      "details": {
+        "bounded_retry_preserves_identity": true,
+        "duplicate_event": true,
+        "expected_negative": true,
+        "outstanding_proposal_count": 2,
+        "poison_reached_dead_letter": true,
+        "source_deleted": false,
+        "tombstone_mr_created": false
+      },
+      "expected": "deletion/retry/dedupe violation rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "deletion_retry_dedupe.duplicate_creates_second_proposal_rejected.rejected",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "deletion_retry_dedupe",
+      "status": "FAIL"
+    },
+    {
+      "actual": "deletion/retry/dedupe problem detected",
+      "details": {
+        "bounded_retry_preserves_identity": true,
+        "duplicate_event": false,
+        "expected_negative": true,
+        "outstanding_proposal_count": 0,
+        "poison_reached_dead_letter": false,
+        "source_deleted": false,
+        "tombstone_mr_created": false
+      },
+      "expected": "deletion/retry/dedupe violation rejected with INVALID_STATE",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "deletion_retry_dedupe.poison_missing_dead_letter_rejected.rejected",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "deletion_retry_dedupe",
+      "status": "FAIL"
+    },
+    {
+      "actual": "attachments valid",
+      "details": {
+        "all_immutable": true,
+        "all_media_type": true,
+        "all_sha256": true,
+        "all_size": true,
+        "all_source_ref": true,
+        "attachment_count": 1,
+        "missing_object": false,
+        "mutable_url_used": false,
+        "object_acl_failed": false
+      },
+      "expected": "attachments immutable/versioned with SHA-256, size, media type and source reference; mutable URL/missing/ACL-fail blocked",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "attachments_object_acl.immutable_versioned_attachments.valid",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "attachments_object_acl",
+      "status": "PASS"
+    },
+    {
+      "actual": "attachment/object problem detected",
+      "details": {
+        "all_immutable": true,
+        "all_media_type": true,
+        "all_sha256": true,
+        "all_size": true,
+        "all_source_ref": true,
+        "attachment_count": 1,
+        "expected_negative": true,
+        "missing_object": false,
+        "mutable_url_used": true,
+        "object_acl_failed": false
+      },
+      "expected": "attachment/object problem rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "attachments_object_acl.mutable_url_rejected.rejected",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "attachments_object_acl",
+      "status": "FAIL"
+    },
+    {
+      "actual": "attachment/object problem detected",
+      "details": {
+        "all_immutable": true,
+        "all_media_type": true,
+        "all_sha256": true,
+        "all_size": true,
+        "all_source_ref": true,
+        "attachment_count": 1,
+        "expected_negative": true,
+        "missing_object": true,
+        "mutable_url_used": false,
+        "object_acl_failed": false
+      },
+      "expected": "attachment/object problem rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "attachments_object_acl.missing_object_rejected.rejected",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "attachments_object_acl",
+      "status": "FAIL"
+    },
+    {
+      "actual": "attachment/object problem detected",
+      "details": {
+        "all_immutable": true,
+        "all_media_type": true,
+        "all_sha256": true,
+        "all_size": true,
+        "all_source_ref": true,
+        "attachment_count": 1,
+        "expected_negative": true,
+        "missing_object": false,
+        "mutable_url_used": false,
+        "object_acl_failed": true
+      },
+      "expected": "attachment/object problem rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "attachments_object_acl.object_acl_fail_rejected.rejected",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "attachments_object_acl",
+      "status": "FAIL"
+    },
+    {
+      "actual": "secrets hygiene clean",
+      "details": {
+        "secret_leak_locations": []
+      },
+      "expected": "source secrets, raw payloads, signed URLs and tokens do not enter documents/MR evidence/model args/logs/reports",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "secrets_hygiene.no_secret_leaks.clean",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "secrets_hygiene",
+      "status": "PASS"
+    },
+    {
+      "actual": "secret leak detected",
+      "details": {
+        "expected_negative": true,
+        "secret_leak_locations": [
+          "logs"
+        ]
+      },
+      "expected": "secret leak rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "secrets_hygiene.token_in_log_rejected.rejected",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "secrets_hygiene",
+      "status": "FAIL"
+    },
+    {
+      "actual": "secret leak detected",
+      "details": {
+        "expected_negative": true,
+        "secret_leak_locations": [
+          "documents"
+        ]
+      },
+      "expected": "secret leak rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t16/fixtures/scenarios.yaml",
+      "id": "secrets_hygiene.signed_url_in_document_rejected.rejected",
+      "input_sha256": "e6119ae31cdf7f3f616193fd05aec610072aa6f17f6922c3d6f710f021140000",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "secrets_hygiene",
+      "status": "FAIL"
+    },
+    {
+      "actual": "requires owner-selected source, sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_sharepoint_connector",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires owner-selected source, sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_bitrix_connector",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires owner-selected source, sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_kayako_connector",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires owner-selected source, sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_source_sandbox",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires owner-selected source, sandbox and credentials",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_object_store_acl",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+  "contracts_version": "connector-design-v1",
+  "counts": {
+    "BLOCKED": 5,
+    "FAIL": 14,
+    "FAIL_EXPECTED": 14,
+    "FAIL_UNEXPECTED": 0,
+    "PASS": 14
+  },
+  "environment": {
+    "ad_available": false,
+    "ci_available": false,
+    "gitlab_available": false,
+    "hoster_available": false,
+    "idp_available": false,
+    "ldap_available": false,
+    "pinned_toolchain": {
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_local_no_gitlab"
+  },
+  "generated_at": "2026-11-09T00:01:33.448814+00:00",
+  "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
+  "schema_version": "t16-connector-results-v1",
+  "sensitive_data_included": false,
+  "spec_baseline_commit": "d2c0d072a757808ea891fbf6414f00147679f7a7"
+}

@@ -1,0 +1,104 @@
+# Synthetic AuthzContext payloads for contract schema validation.
+# These demonstrate stable identity + per-Space group snapshot carrying nested membership.
+fixtures:
+  - name: human_with_nested_groups
+    description: A human actor with nested group membership resolved into a groupSnapshot.
+    expected_valid: true
+    payload:
+      schema_version: authz-context-v2
+      context_id: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+      issuer: https://idp.t03a.invalid/realms/corporate-kb
+      stable_id: https://idp.t03a.invalid/realms/corporate-kb:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+      actor_type: human
+      evaluated_at: "2026-11-08T10:00:00Z"
+      expires_at: "2026-11-08T11:00:00Z"
+      revocation_epoch: 1
+      space_scopes:
+        - space_id: sales
+          repository_id: repo-sales
+          capabilities:
+            - read
+            - search
+            - propose
+          policy_bundle_id: sales-bundle
+          access_policy_revision: "0000000000000000000000000000000000000001"
+          approval_policy_revision: "0000000000000000000000000000000000000002"
+          revocation_epoch: 1
+          group_snapshot:
+            snapshot_id: bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
+            captured_at: "2026-11-08T10:00:00Z"
+            membership_sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+            groups:
+              - group_id: org-all
+                membership_source: nested
+              - group_id: sales-authors
+                membership_source: direct
+      path_scopes:
+        - space_id: sales
+          path_prefix: /pricing
+          capabilities:
+            - propose
+
+  - name: agent_restricted_capabilities
+    description: An agent actor must carry only allowed capabilities.
+    expected_valid: true
+    payload:
+      schema_version: authz-context-v2
+      context_id: cccccccc-cccc-4ccc-8ccc-cccccccccccc
+      issuer: https://idp.t03a.invalid/realms/corporate-kb
+      stable_id: https://idp.t03a.invalid/realms/corporate-kb:cccccccc-cccc-4ccc-8ccc-cccccccccccc
+      actor_type: agent
+      evaluated_at: "2026-11-08T10:00:00Z"
+      expires_at: "2026-11-08T11:00:00Z"
+      revocation_epoch: 1
+      space_scopes:
+        - space_id: sales
+          repository_id: repo-sales
+          capabilities:
+            - read
+            - search
+            - propose
+            - source_read
+          policy_bundle_id: sales-bundle
+          access_policy_revision: "0000000000000000000000000000000000000001"
+          approval_policy_revision: "0000000000000000000000000000000000000002"
+          revocation_epoch: 1
+          group_snapshot:
+            snapshot_id: dddddddd-dddd-4ddd-8ddd-dddddddddddd
+            captured_at: "2026-11-08T10:00:00Z"
+            membership_sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+            groups:
+              - group_id: kb-agents
+                membership_source: direct
+      path_scopes:
+        - space_id: sales
+          path_prefix: /pricing
+          capabilities:
+            - propose
+
+  - name: missing_stable_id
+    description: AuthzContext without stable_id must fail schema validation.
+    expected_valid: false
+    payload:
+      schema_version: authz-context-v2
+      context_id: eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee
+      issuer: https://idp.t03a.invalid/realms/corporate-kb
+      actor_type: human
+      evaluated_at: "2026-11-08T10:00:00Z"
+      expires_at: "2026-11-08T11:00:00Z"
+      revocation_epoch: 1
+      space_scopes:
+        - space_id: sales
+          repository_id: repo-sales
+          capabilities:
+            - read
+          policy_bundle_id: sales-bundle
+          access_policy_revision: "0000000000000000000000000000000000000001"
+          approval_policy_revision: "0000000000000000000000000000000000000002"
+          revocation_epoch: 1
+          group_snapshot:
+            snapshot_id: ffffffff-ffff-4fff-8fff-ffffffffffff
+            captured_at: "2026-11-08T10:00:00Z"
+            membership_sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+            groups: []
+      path_scopes: []

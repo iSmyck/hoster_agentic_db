@@ -1,0 +1,455 @@
+scenarios:
+  pilot_isolation:
+    fixtures:
+      - name: fully_isolated_pilot
+        input:
+          components:
+            repositories_spaces: true
+            config_adapters: true
+            postgresql_index: true
+            object_storage: true
+            secrets: true
+            backups: true
+            egress: true
+          runtime_migrations_disabled: true
+          runtime_non_ddl_role: true
+          migrators_only_rehearsed_upgrades: true
+        expected:
+          status: PASS
+      - name: shared_object_storage_rejected
+        input:
+          components:
+            repositories_spaces: true
+            config_adapters: true
+            postgresql_index: true
+            object_storage: false
+            secrets: true
+            backups: true
+            egress: true
+          runtime_migrations_disabled: true
+          runtime_non_ddl_role: true
+          migrators_only_rehearsed_upgrades: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: runtime_ddl_role_rejected
+        input:
+          components:
+            repositories_spaces: true
+            config_adapters: true
+            postgresql_index: true
+            object_storage: true
+            secrets: true
+            backups: true
+            egress: true
+          runtime_migrations_disabled: true
+          runtime_non_ddl_role: false
+          migrators_only_rehearsed_upgrades: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  credential_egress_separation:
+    fixtures:
+      - name: credentials_and_egress_separated
+        input:
+          credentials_separated:
+            proposal_merge: true
+            connector: true
+            ci_index: true
+            retrieval: true
+          default_egress_closed: true
+          approved_routes_only: true
+          client_code_branch: false
+          production_resource_created_without_authorization: false
+        expected:
+          status: PASS
+      - name: merge_credential_exposed_to_ci_rejected
+        input:
+          credentials_separated:
+            proposal_merge: false
+            connector: true
+            ci_index: true
+            retrieval: true
+          default_egress_closed: true
+          approved_routes_only: true
+          client_code_branch: false
+          production_resource_created_without_authorization: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: default_egress_open_rejected
+        input:
+          credentials_separated:
+            proposal_merge: true
+            connector: true
+            ci_index: true
+            retrieval: true
+          default_egress_closed: false
+          approved_routes_only: true
+          client_code_branch: false
+          production_resource_created_without_authorization: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: unauthorized_production_resource_rejected
+        input:
+          credentials_separated:
+            proposal_merge: true
+            connector: true
+            ci_index: true
+            retrieval: true
+          default_egress_closed: true
+          approved_routes_only: true
+          client_code_branch: false
+          production_resource_created_without_authorization: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  runbook_rehearsal:
+    fixtures:
+      - name: all_runbooks_rehearsed
+        input:
+          runbooks:
+            startup:
+              exact_versions_refs: true
+              commands: true
+              sanitized_outputs: true
+              failure_handling: true
+              blocked_items_recorded: true
+              independently_reviewed: true
+            cutover:
+              exact_versions_refs: true
+              commands: true
+              sanitized_outputs: true
+              failure_handling: true
+              blocked_items_recorded: true
+              independently_reviewed: true
+            merge_recovery_quarantine:
+              exact_versions_refs: true
+              commands: true
+              sanitized_outputs: true
+              failure_handling: true
+              blocked_items_recorded: true
+              independently_reviewed: true
+            export:
+              exact_versions_refs: true
+              commands: true
+              sanitized_outputs: true
+              failure_handling: true
+              blocked_items_recorded: true
+              independently_reviewed: true
+            backup:
+              exact_versions_refs: true
+              commands: true
+              sanitized_outputs: true
+              failure_handling: true
+              blocked_items_recorded: true
+              independently_reviewed: true
+            restore:
+              exact_versions_refs: true
+              commands: true
+              sanitized_outputs: true
+              failure_handling: true
+              blocked_items_recorded: true
+              independently_reviewed: true
+            upgrade:
+              exact_versions_refs: true
+              commands: true
+              sanitized_outputs: true
+              failure_handling: true
+              blocked_items_recorded: true
+              independently_reviewed: true
+            rollback:
+              exact_versions_refs: true
+              commands: true
+              sanitized_outputs: true
+              failure_handling: true
+              blocked_items_recorded: true
+              independently_reviewed: true
+        expected:
+          status: PASS
+      - name: missing_upgrade_runbook_rejected
+        input:
+          runbooks:
+            startup:
+              exact_versions_refs: true
+              commands: true
+              sanitized_outputs: true
+              failure_handling: true
+              blocked_items_recorded: true
+              independently_reviewed: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: unreviewed_runbook_rejected
+        input:
+          runbooks:
+            startup:
+              exact_versions_refs: true
+              commands: true
+              sanitized_outputs: true
+              failure_handling: true
+              blocked_items_recorded: true
+              independently_reviewed: false
+        expected:
+          status: FAIL
+          error: APPROVER_CONFLICT
+
+  backup_restore_drill:
+    fixtures:
+      - name: restore_drill_valid
+        input:
+          decisions_assets_authorization_closure: true
+          kb_authz_rebuilt: true
+          kb_ops_global_merge_freeze: true
+          per_target_barriers: true
+          kb_index_new_validated_snapshot: true
+          activation_after_snapshot_pointer: true
+        expected:
+          status: PASS
+      - name: activation_before_snapshot_rejected
+        input:
+          decisions_assets_authorization_closure: true
+          kb_authz_rebuilt: true
+          kb_ops_global_merge_freeze: true
+          per_target_barriers: true
+          kb_index_new_validated_snapshot: true
+          activation_after_snapshot_pointer: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: missing_closure_rejected
+        input:
+          decisions_assets_authorization_closure: false
+          kb_authz_rebuilt: true
+          kb_ops_global_merge_freeze: true
+          per_target_barriers: true
+          kb_index_new_validated_snapshot: true
+          activation_after_snapshot_pointer: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  security_regression:
+    fixtures:
+      - name: all_non_privileged_denials
+        input:
+          non_privileged_write_denials:
+            business:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+            engineering:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+            bot:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+            connector:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+            ci:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+            source_managed:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+          component_schema_isolation: true
+          runtime_ddl_denied: true
+          cross_client_resource_access_denied: true
+          secret_redaction_canary_clean: true
+        expected:
+          status: PASS
+      - name: auto_merge_allowed_for_engineering_rejected
+        input:
+          non_privileged_write_denials:
+            business:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+            engineering:
+              direct_push: true
+              direct_merge: true
+              auto_merge: false
+            bot:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+            connector:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+            ci:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+            source_managed:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+          component_schema_isolation: true
+          runtime_ddl_denied: true
+          cross_client_resource_access_denied: true
+          secret_redaction_canary_clean: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: secret_canary_disclosure_rejected
+        input:
+          non_privileged_write_denials:
+            business:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+            engineering:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+            bot:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+            connector:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+            ci:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+            source_managed:
+              direct_push: true
+              direct_merge: true
+              auto_merge: true
+          component_schema_isolation: true
+          runtime_ddl_denied: true
+          cross_client_resource_access_denied: true
+          secret_redaction_canary_clean: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  privileged_bypass_governance:
+    fixtures:
+      - name: owner_bypass_handled_as_incident
+        input:
+          owner_bypass_attempted: true
+          detected: true
+          quarantined: true
+          g0_d3_runbook_invoked: true
+          treated_as_managed_path: false
+        expected:
+          status: PASS
+      - name: undetected_bypass_rejected
+        input:
+          owner_bypass_attempted: true
+          detected: false
+          quarantined: false
+          g0_d3_runbook_invoked: false
+          treated_as_managed_path: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: bypass_treated_as_managed_path_rejected
+        input:
+          owner_bypass_attempted: true
+          detected: true
+          quarantined: true
+          g0_d3_runbook_invoked: true
+          treated_as_managed_path: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  business_user_acceptance:
+    fixtures:
+      - name: two_business_users_complete_scenario
+        input:
+          users:
+            - role: business_approver
+              engineering: false
+            - role: business_author
+              engineering: false
+          completed_steps:
+            - pending_queue
+            - read_edit
+            - diff_rationale_evidence
+            - accept_reject_cancel
+            - history_restore
+          used_git_cli: false
+          canonical_decisions: true
+          history_cursor: true
+          reviewed_revert_mr: true
+          self_approval: false
+        expected:
+          status: PASS
+      - name: engineering_user_participation_rejected
+        input:
+          users:
+            - role: business_approver
+              engineering: false
+            - role: engineer
+              engineering: true
+          completed_steps:
+            - pending_queue
+            - read_edit
+            - diff_rationale_evidence
+            - accept_reject_cancel
+            - history_restore
+          used_git_cli: false
+          canonical_decisions: true
+          history_cursor: true
+          reviewed_revert_mr: true
+          self_approval: false
+        expected:
+          status: FAIL
+          error: APPROVER_CONFLICT
+      - name: git_cli_used_rejected
+        input:
+          users:
+            - role: business_approver
+              engineering: false
+            - role: business_author
+              engineering: false
+          completed_steps:
+            - pending_queue
+            - read_edit
+            - diff_rationale_evidence
+            - accept_reject_cancel
+            - history_restore
+          used_git_cli: true
+          canonical_decisions: true
+          history_cursor: true
+          reviewed_revert_mr: true
+          self_approval: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: self_approval_rejected
+        input:
+          users:
+            - role: business_approver
+              engineering: false
+            - role: business_author
+              engineering: false
+          completed_steps:
+            - pending_queue
+            - read_edit
+            - diff_rationale_evidence
+            - accept_reject_cancel
+            - history_restore
+          used_git_cli: false
+          canonical_decisions: true
+          history_cursor: true
+          reviewed_revert_mr: true
+          self_approval: true
+        expected:
+          status: FAIL
+          error: APPROVER_CONFLICT

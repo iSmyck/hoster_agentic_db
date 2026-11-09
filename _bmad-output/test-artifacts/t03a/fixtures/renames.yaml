@@ -1,0 +1,74 @@
+# Synthetic rename scenarios.
+# The same stable_id with a changed email/login must keep the same identity.
+fixtures:
+  - name: oidc_email_rename
+    description: OIDC user changes email; sub stays the same.
+    expected_stable: true
+    before:
+      source: oidc
+      issuer: https://idp.t03a.invalid/realms/corporate-kb
+      sub: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+      email: alice.old@t03a.invalid
+      login: alice
+      actor_type: human
+    after:
+      source: oidc
+      issuer: https://idp.t03a.invalid/realms/corporate-kb
+      sub: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+      email: alice.new@t03a.invalid
+      login: alice
+      actor_type: human
+
+  - name: ad_login_rename
+    description: AD user changes login (SAMAccountName); objectGUID stays the same.
+    expected_stable: true
+    before:
+      source: ad
+      directory: ad.corp.t03a.invalid
+      object_guid: bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
+      email: bob@t03a.invalid
+      login: bob.smith
+      actor_type: human
+    after:
+      source: ad
+      directory: ad.corp.t03a.invalid
+      object_guid: bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
+      email: bob@t03a.invalid
+      login: bob.smith.new
+      actor_type: human
+
+  - name: ldap_entry_uuid_rename
+    description: LDAP user changes email and login; entryUUID stays the same.
+    expected_stable: true
+    before:
+      source: ldap
+      directory: ldap.corp.t03a.invalid
+      entry_uuid: cccccccc-cccc-4ccc-8ccc-cccccccccccc
+      email: carol.old@t03a.invalid
+      login: carol.old
+      actor_type: human
+    after:
+      source: ldap
+      directory: ldap.corp.t03a.invalid
+      entry_uuid: cccccccc-cccc-4ccc-8ccc-cccccccccccc
+      email: carol.new@t03a.invalid
+      login: carol.new
+      actor_type: human
+
+  - name: different_sub_new_identity
+    description: A different sub must produce a different identity, even with same email.
+    expected_stable: false
+    before:
+      source: oidc
+      issuer: https://idp.t03a.invalid/realms/corporate-kb
+      sub: dddddddd-dddd-4ddd-8ddd-dddddddddddd
+      email: shared@t03a.invalid
+      login: shared
+      actor_type: human
+    after:
+      source: oidc
+      issuer: https://idp.t03a.invalid/realms/corporate-kb
+      sub: eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee
+      email: shared@t03a.invalid
+      login: shared
+      actor_type: human

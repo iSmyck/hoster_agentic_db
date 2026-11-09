@@ -1,0 +1,84 @@
+fixtures:
+  - name: space_epoch_stale
+    expected_stale: true
+    policy_epoch: 10
+    context:
+      schema_version: authz-context-v2
+      context_id: 55555555-5555-4555-8555-555555555555
+      issuer: synthetic-identity-adapter
+      stable_id: user-stale-1
+      actor_type: human
+      space_scopes:
+        - space_id: sales
+          repository_id: repo-sales
+          capabilities:
+            - read
+          policy_bundle_id: bundle-sales-v1
+          access_policy_revision: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          approval_policy_revision: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          group_snapshot:
+            snapshot_id: 21111111-1111-4111-8111-111111111111
+            captured_at: "2026-11-08T10:00:00Z"
+            membership_sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+            groups: []
+          revocation_epoch: 5
+      path_scopes: []
+      evaluated_at: "2026-11-08T10:00:00Z"
+      expires_at: "2026-11-08T11:00:00Z"
+      revocation_epoch: 12
+
+  - name: top_level_epoch_stale
+    expected_stale: true
+    policy_epoch: 10
+    context:
+      schema_version: authz-context-v2
+      context_id: 66666666-6666-4666-8666-666666666666
+      issuer: synthetic-identity-adapter
+      stable_id: user-stale-2
+      actor_type: human
+      space_scopes:
+        - space_id: sales
+          repository_id: repo-sales
+          capabilities:
+            - read
+          policy_bundle_id: bundle-sales-v1
+          access_policy_revision: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          approval_policy_revision: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          group_snapshot:
+            snapshot_id: 21111111-1111-4111-8111-111111111111
+            captured_at: "2026-11-08T10:00:00Z"
+            membership_sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+            groups: []
+          revocation_epoch: 15
+      path_scopes: []
+      evaluated_at: "2026-11-08T10:00:00Z"
+      expires_at: "2026-11-08T11:00:00Z"
+      revocation_epoch: 8
+
+  - name: epoch_fresh
+    expected_stale: false
+    policy_epoch: 10
+    context:
+      schema_version: authz-context-v2
+      context_id: 77777777-7777-4777-8777-777777777777
+      issuer: synthetic-identity-adapter
+      stable_id: user-fresh-1
+      actor_type: human
+      space_scopes:
+        - space_id: sales
+          repository_id: repo-sales
+          capabilities:
+            - read
+          policy_bundle_id: bundle-sales-v1
+          access_policy_revision: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          approval_policy_revision: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          group_snapshot:
+            snapshot_id: 21111111-1111-4111-8111-111111111111
+            captured_at: "2026-11-08T10:00:00Z"
+            membership_sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+            groups: []
+          revocation_epoch: 10
+      path_scopes: []
+      evaluated_at: "2026-11-08T10:00:00Z"
+      expires_at: "2026-11-08T11:00:00Z"
+      revocation_epoch: 10

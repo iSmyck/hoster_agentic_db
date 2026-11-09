@@ -1,0 +1,226 @@
+scenarios:
+  decision:
+    fixtures:
+      - name: valid_accept
+        input:
+          decision_id: dddddddd-dddd-4ddd-addd-dddddddddddd
+          proposal_id: prop-001
+          repository_id: repo-sales
+          space_id: sales
+          target_branch: main
+          target: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          action: accepted
+          actor_stable_id: user-sales-approver-1
+          author_stable_id: user-sales-1
+          version_author_stable_id: user-sales-1
+          requester_stable_id: user-sales-1
+          policy_bundle_id: sales-policy-bundle
+          access_policy_revision: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          approval_policy_revision: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          record_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+          note_body_record_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+          tag_record_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+        expected:
+          status: PASS
+      - name: valid_reject
+        input:
+          decision_id: dddddddd-dddd-4ddd-addd-ddddddddddde
+          proposal_id: prop-001
+          repository_id: repo-sales
+          space_id: sales
+          target_branch: main
+          target: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          action: rejected
+          actor_stable_id: user-sales-approver-1
+          author_stable_id: user-sales-1
+          version_author_stable_id: user-sales-1
+          requester_stable_id: user-sales-1
+          policy_bundle_id: sales-policy-bundle
+          access_policy_revision: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          approval_policy_revision: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          record_sha256: "2222222222222222222222222222222222222222222222222222222222222222"
+          note_body_record_sha256: "2222222222222222222222222222222222222222222222222222222222222222"
+          tag_record_sha256: "2222222222222222222222222222222222222222222222222222222222222222"
+        expected:
+          status: PASS
+      - name: self_approval_author
+        input:
+          decision_id: dddddddd-dddd-4ddd-addd-dddddddddddf
+          proposal_id: prop-001
+          repository_id: repo-sales
+          space_id: sales
+          target_branch: main
+          target: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          action: accepted
+          actor_stable_id: user-sales-1
+          author_stable_id: user-sales-1
+          version_author_stable_id: agent-1
+          requester_stable_id: user-sales-2
+          policy_bundle_id: sales-policy-bundle
+          access_policy_revision: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          approval_policy_revision: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          record_sha256: "3333333333333333333333333333333333333333333333333333333333333333"
+          note_body_record_sha256: "3333333333333333333333333333333333333333333333333333333333333333"
+          tag_record_sha256: "3333333333333333333333333333333333333333333333333333333333333333"
+        expected:
+          status: FAIL
+          error: APPROVER_CONFLICT
+      - name: self_approval_version_author
+        input:
+          decision_id: dddddddd-dddd-4ddd-addd-ddddddddddd0
+          proposal_id: prop-001
+          repository_id: repo-sales
+          space_id: sales
+          target_branch: main
+          target: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          action: accepted
+          actor_stable_id: agent-1
+          author_stable_id: user-sales-1
+          version_author_stable_id: agent-1
+          requester_stable_id: user-sales-2
+          policy_bundle_id: sales-policy-bundle
+          access_policy_revision: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          approval_policy_revision: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          record_sha256: "4444444444444444444444444444444444444444444444444444444444444444"
+          note_body_record_sha256: "4444444444444444444444444444444444444444444444444444444444444444"
+          tag_record_sha256: "4444444444444444444444444444444444444444444444444444444444444444"
+        expected:
+          status: FAIL
+          error: APPROVER_CONFLICT
+      - name: self_approval_requester
+        input:
+          decision_id: dddddddd-dddd-4ddd-addd-ddddddddddd1
+          proposal_id: prop-001
+          repository_id: repo-sales
+          space_id: sales
+          target_branch: main
+          target: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          action: accepted
+          actor_stable_id: user-sales-2
+          author_stable_id: user-sales-1
+          version_author_stable_id: agent-1
+          requester_stable_id: user-sales-2
+          policy_bundle_id: sales-policy-bundle
+          access_policy_revision: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          approval_policy_revision: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          record_sha256: "5555555555555555555555555555555555555555555555555555555555555555"
+          note_body_record_sha256: "5555555555555555555555555555555555555555555555555555555555555555"
+          tag_record_sha256: "5555555555555555555555555555555555555555555555555555555555555555"
+        expected:
+          status: FAIL
+          error: APPROVER_CONFLICT
+      - name: note_tag_hash_mismatch
+        input:
+          decision_id: dddddddd-dddd-4ddd-addd-ddddddddddd2
+          proposal_id: prop-001
+          repository_id: repo-sales
+          space_id: sales
+          target_branch: main
+          target: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          action: accepted
+          actor_stable_id: user-sales-approver-1
+          author_stable_id: user-sales-1
+          version_author_stable_id: agent-1
+          requester_stable_id: user-sales-2
+          policy_bundle_id: sales-policy-bundle
+          access_policy_revision: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          approval_policy_revision: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          record_sha256: "6666666666666666666666666666666666666666666666666666666666666666"
+          note_body_record_sha256: "6666666666666666666666666666666666666666666666666666666666666666"
+          tag_record_sha256: "7777777777777777777777777777777777777777777777777777777777777777"
+        expected:
+          status: FAIL
+          error: DECISION_INVALID
+  merge_proof:
+    fixtures:
+      - name: valid_merge_proof
+        input:
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          decision_id: dddddddd-dddd-4ddd-addd-dddddddddddd
+          parents:
+            - ffffffffffffffffffffffffffffffffffffffff
+            - aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          trailers:
+            Decision-Id: dddddddd-dddd-4ddd-addd-dddddddddddd
+          main_writes: 1
+        expected:
+          status: PASS
+      - name: wrong_first_parent
+        input:
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          decision_id: dddddddd-dddd-4ddd-addd-dddddddddddd
+          parents:
+            - bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+            - aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          trailers:
+            Decision-Id: dddddddd-dddd-4ddd-addd-dddddddddddd
+          main_writes: 1
+        expected:
+          status: FAIL
+      - name: missing_trailer
+        input:
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          decision_id: dddddddd-dddd-4ddd-addd-dddddddddddd
+          parents:
+            - ffffffffffffffffffffffffffffffffffffffff
+            - aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          trailers: {}
+          main_writes: 1
+        expected:
+          status: FAIL
+      - name: concurrent_loser_zero_writes
+        input:
+          base_sha: ffffffffffffffffffffffffffffffffffffffff
+          proposal_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          decision_id: dddddddd-dddd-4ddd-addd-dddddddddddd
+          parents: []
+          trailers: {}
+          main_writes: 0
+        expected:
+          status: FAIL
+  recovery:
+    fixtures:
+      - name: conclusive_failed_retry
+        input:
+          merge_attempted: true
+          recovery_required: true
+          conclusive_failed: true
+          retry_allowed: true
+          outcome: failed
+          attempt_id: attempt-001
+          new_attempt_id: attempt-002
+        expected:
+          status: PASS
+      - name: timeout_not_conclusive
+        input:
+          merge_attempted: true
+          recovery_required: true
+          conclusive_failed: false
+          retry_allowed: false
+          outcome: timeout
+        expected:
+          status: FAIL
+      - name: conflicted_terminal
+        input:
+          merge_attempted: true
+          recovery_required: true
+          conclusive_failed: false
+          retry_allowed: false
+          outcome: conflicted
+        expected:
+          status: FAIL

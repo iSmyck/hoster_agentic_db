@@ -1,0 +1,125 @@
+scenarios:
+  propose_create:
+    fixtures:
+      - name: valid_single_page_body_create
+        input:
+          body_only: true
+        expected:
+          status: PASS
+      - name: create_with_origin_rejected
+        input:
+          body_only: true
+          origin:
+            ownership_mode: curated
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: create_with_archive_rejected
+        input:
+          body_only: true
+          archive:
+            replaced_by_id: 99999999-9999-4999-8999-999999999999
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+  propose_edit:
+    fixtures:
+      - name: valid_agent_anchored_patch
+        input:
+          anchored_section: "## Pricing"
+          whole_document: false
+          front_matter_change: false
+          ambiguous_patch: false
+        expected:
+          status: PASS
+      - name: whole_document_replacement_rejected
+        input:
+          anchored_section: ""
+          whole_document: true
+          front_matter_change: false
+          ambiguous_patch: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: front_matter_change_rejected
+        input:
+          anchored_section: ""
+          whole_document: false
+          front_matter_change: true
+          ambiguous_patch: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: ambiguous_patch_rejected
+        input:
+          anchored_section: "## Pricing"
+          whole_document: false
+          front_matter_change: false
+          ambiguous_patch: true
+        expected:
+          status: FAIL
+          error: PATCH_AMBIGUOUS
+  forbidden_capabilities:
+    fixtures:
+      - name: merge_forbidden
+        input:
+          capability: merge
+        expected:
+          status: FAIL
+      - name: accept_forbidden
+        input:
+          capability: accept
+        expected:
+          status: FAIL
+      - name: bulk_forbidden
+        input:
+          capability: bulk
+        expected:
+          status: FAIL
+      - name: subtree_forbidden
+        input:
+          capability: subtree
+        expected:
+          status: FAIL
+      - name: read_allowed
+        input:
+          capability: read
+        expected:
+          status: PASS
+      - name: search_allowed
+        input:
+          capability: search
+        expected:
+          status: PASS
+      - name: propose_allowed
+        input:
+          capability: propose
+        expected:
+          status: PASS
+  prompt_injection:
+    fixtures:
+      - name: rationale_injection_no_authority_change
+        input:
+          injection_changed_actor: false
+          injection_changed_scope: false
+          injection_changed_tools: false
+          request_rejected: false
+        expected:
+          status: PASS
+      - name: evidence_injection_no_authority_change
+        input:
+          injection_changed_actor: false
+          injection_changed_scope: false
+          injection_changed_tools: false
+          request_rejected: false
+        expected:
+          status: PASS
+      - name: injection_attempting_role_change
+        input:
+          injection_changed_actor: true
+          injection_changed_scope: false
+          injection_changed_tools: false
+          request_rejected: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED

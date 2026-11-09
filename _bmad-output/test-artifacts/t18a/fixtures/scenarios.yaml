@@ -1,0 +1,288 @@
+scenarios:
+  resource_isolation:
+    fixtures:
+      - name: second_client_fully_isolated
+        input:
+          resources:
+            repositories: { separate: true }
+            config: { separate: true }
+            postgresql: { separate: true }
+            index: { separate: true }
+            objects: { separate: true }
+            secrets: { separate: true }
+            backups: { separate: true }
+            mirrors: { separate: true }
+            network_perimeter: { separate: true }
+            egress_allowlist: { separate: true }
+          cross_client_read_attempt: false
+          cross_client_write_attempt: false
+          cross_client_blocked: true
+        expected:
+          status: PASS
+      - name: cross_client_read_blocked
+        input:
+          resources:
+            repositories: { separate: true }
+            config: { separate: true }
+            postgresql: { separate: true }
+            index: { separate: true }
+            objects: { separate: true }
+            secrets: { separate: true }
+            backups: { separate: true }
+            mirrors: { separate: true }
+            network_perimeter: { separate: true }
+            egress_allowlist: { separate: true }
+          cross_client_read_attempt: true
+          cross_client_write_attempt: false
+          cross_client_blocked: true
+        expected:
+          status: PASS
+      - name: shared_database_rejected
+        input:
+          resources:
+            repositories: { separate: true }
+            config: { separate: true }
+            postgresql: { separate: false }
+            index: { separate: true }
+            objects: { separate: true }
+            secrets: { separate: true }
+            backups: { separate: true }
+            mirrors: { separate: true }
+            network_perimeter: { separate: true }
+            egress_allowlist: { separate: true }
+          cross_client_read_attempt: false
+          cross_client_write_attempt: false
+          cross_client_blocked: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: cross_client_read_not_blocked_rejected
+        input:
+          resources:
+            repositories: { separate: true }
+            config: { separate: true }
+            postgresql: { separate: true }
+            index: { separate: true }
+            objects: { separate: true }
+            secrets: { separate: true }
+            backups: { separate: true }
+            mirrors: { separate: true }
+            network_perimeter: { separate: true }
+            egress_allowlist: { separate: true }
+          cross_client_read_attempt: true
+          cross_client_write_attempt: false
+          cross_client_blocked: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  config_only_delivery:
+    fixtures:
+      - name: config_only_second_client
+        input:
+          same_pinned_core: true
+          client_config_adapters: true
+          code_edit_required: false
+          client_branch_created: false
+        expected:
+          status: PASS
+      - name: code_edit_rejected
+        input:
+          same_pinned_core: true
+          client_config_adapters: true
+          code_edit_required: true
+          client_branch_created: false
+        expected:
+          status: FAIL
+          error: INVALID_CONFIG
+      - name: client_branch_rejected
+        input:
+          same_pinned_core: true
+          client_config_adapters: true
+          code_edit_required: false
+          client_branch_created: true
+        expected:
+          status: FAIL
+          error: INVALID_CONFIG
+
+  migration_ownership:
+    fixtures:
+      - name: runtime_non_ddl_migrations_disabled
+        input:
+          enable_db_migrations_false: true
+          runtime_non_ddl_role: true
+          authorized_external_migrator: true
+          expected_head_verified_before_traffic: true
+          cross_schema_write: false
+          runtime_ddl: false
+          empty_db_treated_as_proof: false
+        expected:
+          status: PASS
+      - name: runtime_ddl_rejected
+        input:
+          enable_db_migrations_false: true
+          runtime_non_ddl_role: true
+          authorized_external_migrator: true
+          expected_head_verified_before_traffic: true
+          cross_schema_write: false
+          runtime_ddl: true
+          empty_db_treated_as_proof: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: cross_schema_write_rejected
+        input:
+          enable_db_migrations_false: true
+          runtime_non_ddl_role: true
+          authorized_external_migrator: true
+          expected_head_verified_before_traffic: true
+          cross_schema_write: true
+          runtime_ddl: false
+          empty_db_treated_as_proof: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: empty_db_as_proof_rejected
+        input:
+          enable_db_migrations_false: true
+          runtime_non_ddl_role: true
+          authorized_external_migrator: true
+          expected_head_verified_before_traffic: true
+          cross_schema_write: false
+          runtime_ddl: false
+          empty_db_treated_as_proof: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  cold_startup:
+    fixtures:
+      - name: cold_startup_ready
+        input:
+          offline_assets_ready: true
+          sbom_verified: true
+          config_verified: true
+          unapproved_download_attempted: false
+          unapproved_fallback: false
+        expected:
+          status: PASS
+      - name: unapproved_download_rejected
+        input:
+          offline_assets_ready: true
+          sbom_verified: true
+          config_verified: true
+          unapproved_download_attempted: true
+          unapproved_fallback: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: unapproved_fallback_rejected
+        input:
+          offline_assets_ready: true
+          sbom_verified: true
+          config_verified: true
+          unapproved_download_attempted: false
+          unapproved_fallback: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: missing_offline_assets_rejected
+        input:
+          offline_assets_ready: false
+          sbom_verified: true
+          config_verified: true
+          unapproved_download_attempted: false
+          unapproved_fallback: false
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+
+  credential_egress_separation:
+    fixtures:
+      - name: credentials_separated_egress_closed
+        input:
+          credential_separation:
+            proposal_merge: { separate_identity: true, leaked_to_ui_or_agent: false }
+            connector: { separate_identity: true }
+            ci_index: { separate_identity: true }
+            retrieval: { separate_identity: true }
+          default_egress_closed: true
+          approved_egress_routes_only: true
+        expected:
+          status: PASS
+      - name: merge_credential_leaked_rejected
+        input:
+          credential_separation:
+            proposal_merge: { separate_identity: true, leaked_to_ui_or_agent: true }
+            connector: { separate_identity: true }
+            ci_index: { separate_identity: true }
+            retrieval: { separate_identity: true }
+          default_egress_closed: true
+          approved_egress_routes_only: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: open_default_egress_rejected
+        input:
+          credential_separation:
+            proposal_merge: { separate_identity: true, leaked_to_ui_or_agent: false }
+            connector: { separate_identity: true }
+            ci_index: { separate_identity: true }
+            retrieval: { separate_identity: true }
+          default_egress_closed: false
+          approved_egress_routes_only: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: unapproved_route_used_rejected
+        input:
+          credential_separation:
+            proposal_merge: { separate_identity: true, leaked_to_ui_or_agent: false }
+            connector: { separate_identity: true }
+            ci_index: { separate_identity: true }
+            retrieval: { separate_identity: true }
+          default_egress_closed: true
+          approved_egress_routes_only: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  readiness_states:
+    fixtures:
+      - name: published_state
+        input:
+          readiness_state: published
+          published: true
+          indexed: false
+          unavailable: false
+          inactive_preflight_reported_as_published: false
+        expected:
+          status: PASS
+      - name: indexed_state
+        input:
+          readiness_state: indexed
+          published: false
+          indexed: true
+          unavailable: false
+          inactive_preflight_reported_as_published: false
+        expected:
+          status: PASS
+      - name: unavailable_state
+        input:
+          readiness_state: unavailable
+          published: false
+          indexed: false
+          unavailable: true
+          inactive_preflight_reported_as_published: false
+        expected:
+          status: PASS
+      - name: preflight_masked_as_published_rejected
+        input:
+          readiness_state: unavailable
+          published: false
+          indexed: false
+          unavailable: true
+          inactive_preflight_reported_as_published: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE

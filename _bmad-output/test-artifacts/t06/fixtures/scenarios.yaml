@@ -1,0 +1,99 @@
+scenarios:
+  enforcement:
+    fixtures:
+      - name: go_merge_after_decision
+        input:
+          identity: go-merge-service
+          action: merge
+          has_canonical_decision: true
+        expected:
+          status: PASS
+      - name: direct_push_human
+        input:
+          identity: user-sales-1
+          action: push
+          has_canonical_decision: false
+          main_writes: 0
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: direct_merge_human
+        input:
+          identity: user-sales-1
+          action: merge
+          has_canonical_decision: false
+          main_writes: 0
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: ci_bot_merge
+        input:
+          identity: ci-bot
+          action: merge
+          has_canonical_decision: false
+          main_writes: 0
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: connector_merge
+        input:
+          identity: connector-1
+          action: merge
+          has_canonical_decision: false
+          main_writes: 0
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: go_merge_without_decision
+        input:
+          identity: go-merge-service
+          action: merge
+          has_canonical_decision: false
+          main_writes: 0
+        expected:
+          status: FAIL
+          error: DECISION_INVALID
+      - name: owner_bypass
+        input:
+          identity: gitlab-owner
+          action: push
+          has_canonical_decision: false
+          main_writes: 0
+          integrity_incident: true
+          target_quarantined: true
+        expected:
+          status: FAIL
+          error: INTEGRITY_INCIDENT
+  fencing:
+    fixtures:
+      - name: valid_fencing_token
+        input:
+          fencing_token_valid: true
+          recovery_required: false
+          quarantine: false
+        expected:
+          status: PASS
+      - name: invalid_fencing_token
+        input:
+          fencing_token_valid: false
+          recovery_required: false
+          quarantine: false
+        expected:
+          status: FAIL
+          error: RECOVERY_REQUIRED
+      - name: recovery_required_flag
+        input:
+          fencing_token_valid: true
+          recovery_required: true
+          quarantine: false
+        expected:
+          status: FAIL
+          error: RECOVERY_REQUIRED
+      - name: target_quarantine
+        input:
+          fencing_token_valid: true
+          recovery_required: true
+          quarantine: true
+        expected:
+          status: FAIL
+          error: RECOVERY_REQUIRED

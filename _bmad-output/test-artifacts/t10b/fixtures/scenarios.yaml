@@ -1,0 +1,432 @@
+scenarios:
+  publication_lifecycle:
+    fixtures:
+      - name: preflight_to_published_new_ids_same_sha
+        input:
+          preflight:
+            snapshot_id: "11111111-1111-4111-8111-111111111111"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            closure_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            policy_bundle_id: sales-policy-bundle
+            access_policy_revision: "dddddddddddddddddddddddddddddddddddddddd"
+            approval_policy_revision: "ffffffffffffffffffffffffffffffffffffffff"
+            exact_projection_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            semantic_projection_sha256: "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
+            is_preflight: true
+            serving_allowed: false
+          published:
+            snapshot_id: "22222222-2222-4222-8222-222222222222"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            closure_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            policy_bundle_id: sales-policy-bundle
+            access_policy_revision: "dddddddddddddddddddddddddddddddddddddddd"
+            approval_policy_revision: "ffffffffffffffffffffffffffffffffffffffff"
+            exact_projection_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            semantic_projection_sha256: "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
+            is_preflight: false
+            serving_allowed: true
+            full_validation_repeated: true
+        expected:
+          status: PASS
+      - name: reused_snapshot_id_rejected
+        input:
+          preflight:
+            snapshot_id: "11111111-1111-4111-8111-111111111111"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            closure_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            policy_bundle_id: sales-policy-bundle
+            access_policy_revision: "dddddddddddddddddddddddddddddddddddddddd"
+            approval_policy_revision: "ffffffffffffffffffffffffffffffffffffffff"
+            exact_projection_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            semantic_projection_sha256: "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
+            is_preflight: true
+            serving_allowed: false
+          published:
+            snapshot_id: "11111111-1111-4111-8111-111111111111"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            closure_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            policy_bundle_id: sales-policy-bundle
+            access_policy_revision: "dddddddddddddddddddddddddddddddddddddddd"
+            approval_policy_revision: "ffffffffffffffffffffffffffffffffffffffff"
+            exact_projection_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            semantic_projection_sha256: "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
+            is_preflight: false
+            serving_allowed: true
+            full_validation_repeated: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: preflight_activated_rejected
+        input:
+          preflight:
+            snapshot_id: "11111111-1111-4111-8111-111111111111"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            closure_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            policy_bundle_id: sales-policy-bundle
+            access_policy_revision: "dddddddddddddddddddddddddddddddddddddddd"
+            approval_policy_revision: "ffffffffffffffffffffffffffffffffffffffff"
+            exact_projection_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            semantic_projection_sha256: "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
+            is_preflight: true
+            serving_allowed: true
+          published:
+            snapshot_id: "22222222-2222-4222-8222-222222222222"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            closure_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            policy_bundle_id: sales-policy-bundle
+            access_policy_revision: "dddddddddddddddddddddddddddddddddddddddd"
+            approval_policy_revision: "ffffffffffffffffffffffffffffffffffffffff"
+            exact_projection_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            semantic_projection_sha256: "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
+            is_preflight: false
+            serving_allowed: true
+            full_validation_repeated: true
+        expected:
+          status: FAIL
+          error: INVALID_STATE
+      - name: validation_not_repeated_rejected
+        input:
+          preflight:
+            snapshot_id: "11111111-1111-4111-8111-111111111111"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            closure_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            policy_bundle_id: sales-policy-bundle
+            access_policy_revision: "dddddddddddddddddddddddddddddddddddddddd"
+            approval_policy_revision: "ffffffffffffffffffffffffffffffffffffffff"
+            exact_projection_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            semantic_projection_sha256: "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
+            is_preflight: true
+            serving_allowed: false
+          published:
+            snapshot_id: "22222222-2222-4222-8222-222222222222"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            closure_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            policy_bundle_id: sales-policy-bundle
+            access_policy_revision: "dddddddddddddddddddddddddddddddddddddddd"
+            approval_policy_revision: "ffffffffffffffffffffffffffffffffffffffff"
+            exact_projection_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            semantic_projection_sha256: "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
+            is_preflight: false
+            serving_allowed: true
+            full_validation_repeated: false
+        expected:
+          status: FAIL
+          error: INDEX_NOT_READY
+
+  pointer_cas_fencing:
+    fixtures:
+      - name: single_writer_cas_succeeds
+        input:
+          current_pointer:
+            fence: "00000000-0000-4000-8000-000000000000"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            generation_id: gen-sales-1
+            profile_version: pgvector-fts-v1
+          publisher:
+            expected_fence: "00000000-0000-4000-8000-000000000000"
+            latest_ancestry: true
+            validated_snapshot: true
+            single_writer: true
+          result:
+            pointer_rows_updated: 1
+            stale_job_marked_superseded: false
+        expected:
+          status: PASS
+      - name: stale_fence_rejected
+        input:
+          current_pointer:
+            fence: "11111111-1111-4111-8111-111111111111"
+            snapshot_sha: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            generation_id: gen-sales-2
+            profile_version: pgvector-fts-v1
+          publisher:
+            expected_fence: "00000000-0000-4000-8000-000000000000"
+            latest_ancestry: true
+            validated_snapshot: true
+            single_writer: true
+          result:
+            pointer_rows_updated: 0
+            stale_job_marked_superseded: true
+        expected:
+          status: PASS
+      - name: old_generation_overwrite_rejected
+        input:
+          current_pointer:
+            fence: "22222222-2222-4222-8222-222222222222"
+            snapshot_sha: "cccccccccccccccccccccccccccccccccccccccc"
+            generation_id: gen-sales-3
+            profile_version: pgvector-fts-v1
+          publisher:
+            expected_fence: "22222222-2222-4222-8222-222222222222"
+            latest_ancestry: false
+            validated_snapshot: true
+            single_writer: true
+          result:
+            pointer_rows_updated: 0
+            stale_job_marked_superseded: true
+        expected:
+          status: PASS
+      - name: non_writer_publisher_rejected
+        input:
+          current_pointer:
+            fence: "00000000-0000-4000-8000-000000000000"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            generation_id: gen-sales-1
+            profile_version: pgvector-fts-v1
+          publisher:
+            expected_fence: "00000000-0000-4000-8000-000000000000"
+            latest_ancestry: true
+            validated_snapshot: true
+            single_writer: false
+          result:
+            pointer_rows_updated: 0
+            stale_job_marked_superseded: false
+        expected:
+          status: PASS
+      - name: cas_succeeds_but_rows_zero_rejected
+        input:
+          current_pointer:
+            fence: "00000000-0000-4000-8000-000000000000"
+            snapshot_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            generation_id: gen-sales-1
+            profile_version: pgvector-fts-v1
+          publisher:
+            expected_fence: "00000000-0000-4000-8000-000000000000"
+            latest_ancestry: true
+            validated_snapshot: true
+            single_writer: true
+          result:
+            pointer_rows_updated: 0
+            stale_job_marked_superseded: false
+        expected:
+          status: FAIL
+          error: INDEX_GENERATION_CONFLICT
+
+  per_space_retrieval:
+    fixtures:
+      - name: active_published_snapshot_returns_citations
+        input:
+          snapshots:
+            - state: active
+              serving_allowed: true
+              included: true
+          candidates:
+            - returned: true
+              reauthorized: true
+          citations:
+            - space_id: sales
+              document_id: "11111111-1111-4111-8111-111111111111"
+              revision_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              range: "section-1"
+          cross_space_leak: false
+        expected:
+          status: PASS
+      - name: inactive_preflight_no_results
+        input:
+          snapshots:
+            - state: ready
+              serving_allowed: false
+              inactive: true
+              included: true
+          candidates: []
+          citations: []
+          cross_space_leak: false
+        expected:
+          status: PASS
+      - name: stale_snapshot_rejected
+        input:
+          snapshots:
+            - state: superseded
+              serving_allowed: false
+              included: true
+          candidates:
+            - returned: true
+              reauthorized: true
+          citations: []
+          cross_space_leak: false
+        expected:
+          status: FAIL
+          error: STALE_INDEX_CANDIDATE
+      - name: unauthorized_candidate_rejected
+        input:
+          snapshots:
+            - state: active
+              serving_allowed: true
+              included: true
+          candidates:
+            - returned: true
+              reauthorized: false
+          citations: []
+          cross_space_leak: false
+        expected:
+          status: FAIL
+          error: AUTHZ_GROUP_STALE
+      - name: cross_space_leak_rejected
+        input:
+          snapshots:
+            - state: active
+              serving_allowed: true
+              included: true
+          candidates:
+            - returned: true
+              reauthorized: true
+          citations:
+            - space_id: hr
+              document_id: "11111111-1111-4111-8111-111111111111"
+              revision_sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              range: "section-1"
+          cross_space_leak: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: missing_citation_fields_rejected
+        input:
+          snapshots:
+            - state: active
+              serving_allowed: true
+              included: true
+          candidates:
+            - returned: true
+              reauthorized: true
+          citations:
+            - space_id: sales
+              document_id: "11111111-1111-4111-8111-111111111111"
+          cross_space_leak: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  cursor_binding:
+    fixtures:
+      - name: complete_binding_continuation
+        input:
+          cursor_binding:
+            snapshot_ids:
+              - "11111111-1111-4111-8111-111111111111"
+              - "22222222-2222-4222-8222-222222222222"
+            profile_version: pgvector-fts-v1
+            policy_bundle_id: sales-policy-bundle
+            access_policy_revision: "dddddddddddddddddddddddddddddddddddddddd"
+            approval_policy_revision: "ffffffffffffffffffffffffffffffffffffffff"
+            group_epoch: 7
+            revocation_epoch: 42
+            actor_epoch: 3
+          stale_binding: false
+          continuation:
+            limit_exceeded: true
+            has_more: true
+            next_cursor: "cursor-page-2"
+        expected:
+          status: PASS
+      - name: missing_actor_epoch_rejected
+        input:
+          cursor_binding:
+            snapshot_ids:
+              - "11111111-1111-4111-8111-111111111111"
+            profile_version: pgvector-fts-v1
+            policy_bundle_id: sales-policy-bundle
+            access_policy_revision: "dddddddddddddddddddddddddddddddddddddddd"
+            approval_policy_revision: "ffffffffffffffffffffffffffffffffffffffff"
+            group_epoch: 7
+            revocation_epoch: 42
+          stale_binding: false
+          continuation: {}
+        expected:
+          status: FAIL
+          error: STALE_INDEX_CANDIDATE
+      - name: stale_policy_revision_rejected
+        input:
+          cursor_binding:
+            snapshot_ids:
+              - "11111111-1111-4111-8111-111111111111"
+            profile_version: pgvector-fts-v1
+            policy_bundle_id: sales-policy-bundle
+            access_policy_revision: "dddddddddddddddddddddddddddddddddddddddd"
+            approval_policy_revision: "ffffffffffffffffffffffffffffffffffffffff"
+            group_epoch: 7
+            revocation_epoch: 42
+            actor_epoch: 3
+          stale_binding: true
+          continuation: {}
+        expected:
+          status: FAIL
+          error: STALE_INDEX_CANDIDATE
+      - name: limit_exceeded_without_next_cursor_rejected
+        input:
+          cursor_binding:
+            snapshot_ids:
+              - "11111111-1111-4111-8111-111111111111"
+            profile_version: pgvector-fts-v1
+            policy_bundle_id: sales-policy-bundle
+            access_policy_revision: "dddddddddddddddddddddddddddddddddddddddd"
+            approval_policy_revision: "ffffffffffffffffffffffffffffffffffffffff"
+            group_epoch: 7
+            revocation_epoch: 42
+            actor_epoch: 3
+          stale_binding: false
+          continuation:
+            limit_exceeded: true
+            has_more: true
+            next_cursor: null
+        expected:
+          status: FAIL
+          error: LIMIT_EXCEEDED
+
+  index_not_ready:
+    fixtures:
+      - name: no_active_snapshot_index_not_ready
+        input:
+          space_state: no_active_snapshot
+          result:
+            code: INDEX_NOT_READY
+            retryable: true
+        expected:
+          status: PASS
+      - name: inactive_preflight_index_not_ready
+        input:
+          space_state: inactive_preflight
+          result:
+            code: INDEX_NOT_READY
+            retryable: true
+        expected:
+          status: PASS
+      - name: upstream_failure_index_not_ready
+        input:
+          space_state: upstream_failure
+          result:
+            code: INDEX_NOT_READY
+            retryable: true
+        expected:
+          status: PASS
+      - name: limit_exceeded_with_cursor
+        input:
+          space_state: limit_exceeded
+          result:
+            code: LIMIT_EXCEEDED
+            retryable: true
+            effective_bounds:
+              limit: 10
+            next_cursor: "cursor-next"
+            truncated: true
+        expected:
+          status: PASS
+      - name: optimistic_success_rejected
+        input:
+          space_state: no_active_snapshot
+          result:
+            code: none
+            retryable: false
+        expected:
+          status: FAIL
+          error: INDEX_NOT_READY
+      - name: silent_truncation_rejected
+        input:
+          space_state: limit_exceeded
+          result:
+            code: none
+            retryable: false
+            truncated: true
+            next_cursor: null
+        expected:
+          status: FAIL
+          error: LIMIT_EXCEEDED

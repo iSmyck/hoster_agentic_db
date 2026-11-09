@@ -1,0 +1,23 @@
+schema_version: approval-policy-v1
+policy_bundle_id: bundle-sales-v1
+repository_id: repo-sales
+space_id: sales
+rules:
+  - rule_id: root-rule
+    path_prefix: /
+    external_group_ids:
+      - sales-approvers
+    approvers_required: 1
+    self_approval_allowed: false
+  - rule_id: dup-rule-a
+    path_prefix: /pricing
+    external_group_ids:
+      - group-a
+    approvers_required: 1
+    self_approval_allowed: false
+  - rule_id: dup-rule-b
+    path_prefix: /pricing/
+    external_group_ids:
+      - group-b
+    approvers_required: 1
+    self_approval_allowed: false

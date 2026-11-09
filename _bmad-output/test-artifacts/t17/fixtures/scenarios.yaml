@@ -1,0 +1,352 @@
+scenarios:
+  route_activation_gate:
+    fixtures:
+      - name: markdown_only_na
+        input:
+          markdown_only_workload: true
+          owner_authorized_samples: false
+          format_agreement: false
+          quality_review: false
+          data_media_profile: false
+        expected:
+          status: PASS
+      - name: non_markdown_activated
+        input:
+          markdown_only_workload: false
+          owner_authorized_samples: true
+          format_agreement: true
+          quality_review: true
+          data_media_profile: true
+        expected:
+          status: PASS
+      - name: missing_samples_blocked
+        input:
+          markdown_only_workload: false
+          owner_authorized_samples: false
+          format_agreement: true
+          quality_review: true
+          data_media_profile: true
+        expected:
+          status: FAIL
+          error: INVALID_CONFIG
+      - name: missing_format_agreement_blocked
+        input:
+          markdown_only_workload: false
+          owner_authorized_samples: true
+          format_agreement: false
+          quality_review: true
+          data_media_profile: true
+        expected:
+          status: FAIL
+          error: INVALID_CONFIG
+
+  docling_assessment:
+    fixtures:
+      - name: docling_only
+        input:
+          docling_assessed: true
+          second_pipeline_considered: false
+          documented_unmet_need: false
+          approved_adr: false
+          compatibility_license_rollback_assessed: false
+        expected:
+          status: PASS
+      - name: docling_plus_second_pipeline_with_adr
+        input:
+          docling_assessed: true
+          second_pipeline_considered: true
+          documented_unmet_need: true
+          approved_adr: true
+          compatibility_license_rollback_assessed: true
+        expected:
+          status: PASS
+      - name: second_pipeline_without_adr_rejected
+        input:
+          docling_assessed: true
+          second_pipeline_considered: true
+          documented_unmet_need: true
+          approved_adr: false
+          compatibility_license_rollback_assessed: false
+        expected:
+          status: FAIL
+          error: INVALID_CONFIG
+      - name: docling_not_assessed_rejected
+        input:
+          docling_assessed: false
+          second_pipeline_considered: true
+          documented_unmet_need: true
+          approved_adr: true
+          compatibility_license_rollback_assessed: true
+        expected:
+          status: FAIL
+          error: INVALID_CONFIG
+
+  golden_fixtures:
+    fixtures:
+      - name: pdf_golden_complete
+        input:
+          format_supported: true
+          metrics:
+            page_or_slide_count: 12
+            encoding: utf-8
+            reading_order_valid: true
+            table_structure_valid: true
+            numbers_preserved: true
+            links_anchors_preserved: true
+        expected:
+          status: PASS
+      - name: pptx_golden_complete
+        input:
+          format_supported: true
+          metrics:
+            page_or_slide_count: 8
+            encoding: utf-8
+            reading_order_valid: true
+            table_structure_valid: true
+            numbers_preserved: true
+            links_anchors_preserved: true
+        expected:
+          status: PASS
+      - name: unsupported_format_rejected
+        input:
+          format_supported: false
+          metrics:
+            page_or_slide_count: 0
+            encoding: ""
+            reading_order_valid: false
+            table_structure_valid: false
+            numbers_preserved: false
+            links_anchors_preserved: false
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+      - name: missing_reading_order_rejected
+        input:
+          format_supported: true
+          metrics:
+            page_or_slide_count: 12
+            encoding: utf-8
+            reading_order_valid: false
+            table_structure_valid: true
+            numbers_preserved: true
+            links_anchors_preserved: true
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+
+  loss_quarantine:
+    fixtures:
+      - name: clean_extraction
+        input:
+          extraction_loss: false
+          empty_or_garbled: false
+          unsupported_format: false
+          ocr_disagreement: false
+          quarantined: false
+          original_recoverable: true
+          source_merged: true
+          partial_index_published: false
+        expected:
+          status: PASS
+      - name: empty_output_quarantined
+        input:
+          extraction_loss: true
+          empty_or_garbled: true
+          unsupported_format: false
+          ocr_disagreement: false
+          quarantined: true
+          original_recoverable: true
+          source_merged: false
+          partial_index_published: false
+        expected:
+          status: PASS
+      - name: ocr_disagreement_quarantined
+        input:
+          extraction_loss: true
+          empty_or_garbled: false
+          unsupported_format: false
+          ocr_disagreement: true
+          quarantined: true
+          original_recoverable: true
+          source_merged: false
+          partial_index_published: false
+        expected:
+          status: PASS
+      - name: loss_partial_index_rejected
+        input:
+          extraction_loss: true
+          empty_or_garbled: true
+          unsupported_format: false
+          ocr_disagreement: false
+          quarantined: true
+          original_recoverable: true
+          source_merged: false
+          partial_index_published: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: loss_source_merged_rejected
+        input:
+          extraction_loss: true
+          empty_or_garbled: true
+          unsupported_format: false
+          ocr_disagreement: false
+          quarantined: true
+          original_recoverable: true
+          source_merged: true
+          partial_index_published: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  media_classes:
+    fixtures:
+      - name: decorative_excluded
+        input:
+          media_class: decorative
+          excluded: true
+          kept_with_caption: false
+          auto_description_labelled: false
+          cites_original_page: false
+          human_verified: false
+          indexed: false
+        expected:
+          status: PASS
+      - name: illustrative_kept_with_caption
+        input:
+          media_class: illustrative
+          excluded: false
+          kept_with_caption: true
+          auto_description_labelled: false
+          cites_original_page: false
+          human_verified: false
+          indexed: true
+        expected:
+          status: PASS
+      - name: substantive_labelled_cites
+        input:
+          media_class: substantive
+          excluded: false
+          kept_with_caption: false
+          auto_description_labelled: true
+          cites_original_page: true
+          human_verified: false
+          indexed: true
+        expected:
+          status: PASS
+      - name: critical_verified
+        input:
+          media_class: critical
+          excluded: false
+          kept_with_caption: false
+          auto_description_labelled: false
+          cites_original_page: false
+          human_verified: true
+          indexed: true
+        expected:
+          status: PASS
+      - name: critical_not_verified_rejected
+        input:
+          media_class: critical
+          excluded: false
+          kept_with_caption: false
+          auto_description_labelled: false
+          cites_original_page: false
+          human_verified: false
+          indexed: true
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+      - name: substantive_missing_cite_rejected
+        input:
+          media_class: substantive
+          excluded: false
+          kept_with_caption: false
+          auto_description_labelled: true
+          cites_original_page: false
+          human_verified: false
+          indexed: true
+        expected:
+          status: FAIL
+          error: VALIDATION_ERROR
+
+  malicious_malformed:
+    fixtures:
+      - name: executable_html_rejected
+        input:
+          sample_type: executable_html
+          rejected_before_corpus: true
+          reached_corpus_or_preview: false
+        expected:
+          status: PASS
+      - name: mdx_script_rejected
+        input:
+          sample_type: mdx_script
+          rejected_before_corpus: true
+          reached_corpus_or_preview: false
+        expected:
+          status: PASS
+      - name: secret_in_payload_rejected
+        input:
+          sample_type: secret_in_payload
+          rejected_before_corpus: true
+          reached_corpus_or_preview: false
+        expected:
+          status: PASS
+      - name: decompression_bomb_rejected
+        input:
+          sample_type: decompression_bomb
+          rejected_before_corpus: true
+          reached_corpus_or_preview: false
+        expected:
+          status: PASS
+      - name: malicious_allowed_rejected
+        input:
+          sample_type: executable_html
+          rejected_before_corpus: false
+          reached_corpus_or_preview: true
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+
+  provider_profile_egress:
+    fixtures:
+      - name: approved_route_strict
+        input:
+          approved_provider: true
+          approved_data_profile: true
+          approved_egress_route: true
+          unplanned_fallback: false
+          pii_egress: false
+        expected:
+          status: PASS
+      - name: unapproved_provider_rejected
+        input:
+          approved_provider: false
+          approved_data_profile: true
+          approved_egress_route: true
+          unplanned_fallback: false
+          pii_egress: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: unplanned_fallback_rejected
+        input:
+          approved_provider: true
+          approved_data_profile: true
+          approved_egress_route: true
+          unplanned_fallback: true
+          pii_egress: false
+        expected:
+          status: FAIL
+          error: SECURITY_REJECTED
+      - name: pii_egress_rejected
+        input:
+          approved_provider: true
+          approved_data_profile: true
+          approved_egress_route: true
+          unplanned_fallback: false
+          pii_egress: true
+        expected:
+          status: FAIL
+          error: PII_REVIEW_REQUIRED
