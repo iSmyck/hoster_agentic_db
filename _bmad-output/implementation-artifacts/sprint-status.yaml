@@ -104,9 +104,9 @@ development_status:
   10-2-i06-proposalrecord-and-decisionrecord-lifecycle: done
   epic-10-retrospective: done
 
-  epic-11: backlog
-  11-1-i07-open-webui-fork-setup-and-kb-api-client: backlog
-  epic-11-retrospective: optional
+  epic-11: done
+  11-1-i07-open-webui-fork-setup-and-kb-api-client: done
+  epic-11-retrospective: done
 
   epic-12: backlog
   12-1-i08-index-worker-and-pgvector-search: backlog

@@ -1,0 +1,15 @@
+# Open WebUI upstream checkout (large, pinned, not tracked)
+upstream/
+
+# Node / frontend build artifacts
+node_modules/
+.svelte-kit/
+build/
+dist/
+
+# Overlay merge staging
+.overlay-staging/
+
+# Logs / local state
+*.log
+.DS_Store
