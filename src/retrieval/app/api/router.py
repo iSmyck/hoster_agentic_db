@@ -18,6 +18,8 @@ from retrieval.app.schemas.retrieval import (
     IndexBuildRequest,
     IndexBuildResponse,
     IndexPointerResponse,
+    ReconcileIndexRequest,
+    ReconcileIndexResponse,
     SearchRequest,
     SearchResponse,
 )
@@ -162,6 +164,24 @@ def search_index(
             profile=request.profile,
             mode=request.mode,
             top_k=request.top_k,
+        )
+    except RetrievalServiceError as exc:
+        raise _handle_domain_error(exc) from exc
+
+
+@router.post("/api/kb/v1/index/reconcile", response_model=ReconcileIndexResponse)
+def reconcile_index(
+    request: ReconcileIndexRequest,
+    db: Annotated[Session, Depends(get_db)],
+    go_client: Annotated[GOClient, Depends(get_go_client)],
+) -> dict[str, Any]:
+    try:
+        return indexing.reconcile_index_with_head(
+            db,
+            go_client,
+            request.space_id,
+            request.profile,
+            request.branch,
         )
     except RetrievalServiceError as exc:
         raise _handle_domain_error(exc) from exc

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
@@ -218,3 +219,53 @@ def get_active_generation(
     if pointer is None:
         return None
     return db.get(IndexGeneration, pointer.generation_id)
+
+
+def reconcile_index_with_head(
+    db: Session,
+    go_client: GOClient,
+    space_id: str,
+    profile: str = "default",
+    branch: str = "main",
+) -> dict[str, Any]:
+    """Compare the active index snapshot with the current branch HEAD.
+
+    Returns a reconciliation report indicating whether the index is stale,
+    up-to-date, or no index is active.  Used by CI and operational runbooks
+    to detect drift between published content and retrieval state.
+    """
+    pointer = get_active_pointer(db, space_id, profile)
+    if pointer is None:
+        return {
+            "space_id": space_id,
+            "profile": profile,
+            "branch": branch,
+            "status": "no_active_index",
+            "index_snapshot_sha": None,
+            "head_sha": None,
+            "stale": False,
+        }
+
+    generation = db.get(IndexGeneration, pointer.generation_id)
+    if generation is None:
+        return {
+            "space_id": space_id,
+            "profile": profile,
+            "branch": branch,
+            "status": "generation_missing",
+            "index_snapshot_sha": None,
+            "head_sha": None,
+            "stale": True,
+        }
+
+    head_sha = go_client.get_branch_head(space_id, branch)
+    stale = generation.snapshot_sha != head_sha
+    return {
+        "space_id": space_id,
+        "profile": profile,
+        "branch": branch,
+        "status": "stale" if stale else "up_to_date",
+        "index_snapshot_sha": generation.snapshot_sha,
+        "head_sha": head_sha,
+        "stale": stale,
+    }

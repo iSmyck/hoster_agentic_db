@@ -94,3 +94,23 @@ class SearchResponse(BaseModel):
     snapshot_sha: str | None
     results: list[SearchResultItem]
     authorization_filtered_count: int = 0
+
+
+class ReconcileIndexRequest(BaseModel):
+    """POST /api/kb/v1/index/reconcile"""
+
+    space_id: str = Field(..., max_length=63)
+    profile: str = Field(default="default", max_length=128)
+    branch: str = Field(default="main", max_length=255)
+
+
+class ReconcileIndexResponse(BaseModel):
+    """Index-to-HEAD reconciliation report."""
+
+    space_id: str
+    profile: str
+    branch: str
+    status: str
+    index_snapshot_sha: str | None
+    head_sha: str | None
+    stale: bool

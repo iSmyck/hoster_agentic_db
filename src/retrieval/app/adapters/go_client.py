@@ -21,6 +21,10 @@ class GOClient(ABC):
     def read_document(self, space_id: str, path: str, sha: str) -> str:
         """Return decoded text content of ``path`` at exact ``sha``."""
 
+    @abstractmethod
+    def get_branch_head(self, space_id: str, branch: str = "main") -> str:
+        """Return the HEAD commit SHA of a branch for reconciliation."""
+
 
 class HttpGOClient(GOClient):
     """Production client calling the Git Orchestrator service over HTTP."""
@@ -52,6 +56,14 @@ class HttpGOClient(GOClient):
         response.raise_for_status()
         return response.json()["content"]
 
+    def get_branch_head(self, space_id: str, branch: str = "main") -> str:
+        import httpx
+
+        url = f"{self.base_url}/api/kb/v1/spaces/{space_id}/branches/{branch}"
+        response = httpx.get(url, timeout=30)
+        response.raise_for_status()
+        return response.json()["commit"]["id"]
+
 
 class StubGOClient(GOClient):
     """In-memory stub for unit tests."""
@@ -67,3 +79,10 @@ class StubGOClient(GOClient):
 
     def read_document(self, space_id: str, path: str, sha: str) -> str:
         return str(self._get(("doc", space_id, path, sha), ""))
+
+    def get_branch_head(self, space_id: str, branch: str = "main") -> str:
+        branch_data = self._get(
+            ("branch", space_id, branch),
+            {"commit": {"id": ""}},
+        )
+        return branch_data["commit"]["id"]
