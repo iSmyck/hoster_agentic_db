@@ -9,7 +9,6 @@ from datetime import UTC, datetime
 from typing import Any
 
 import httpx
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..adapters.gitlab import GitLabAdapter, GitLabAdapterError
@@ -27,7 +26,12 @@ class GitOrchestratorError(Exception):
 
 
 def _canonical_json(payload: dict[str, Any]) -> str:
-    """Serialize a DecisionRecord to deterministic canonical JSON bytes."""
+    """Serialize a DecisionRecord to deterministic canonical JSON bytes.
+
+    Uses compact separators and sorted keys for deterministic output.  For
+    G1 vertical slice this is sufficient; RFC 8785 JCS compliance is tracked
+    as a follow-up hardening item.
+    """
     return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
@@ -170,7 +174,9 @@ def record_decision(
             f"proposal is already {proposal.status}",
         )
 
-    decision_id = uuid.uuid4()
+    # Derive a stable decision UUID from the idempotency key so crash+retry
+    # recovers the same anchors instead of creating new ones.
+    decision_id = uuid.uuid5(uuid.NAMESPACE_URL, f"kb-decision:{request.idempotency_key}")
     now = datetime.now(UTC)
     canonical = {
         "decision_id": str(decision_id),
@@ -178,15 +184,17 @@ def record_decision(
         "proposal_sha": proposal.proposal_sha,
         "base_sha": proposal.base_sha,
         "action": request.action,
-        "actor_id": request.actor_id,
+        "actor_stable_id": request.actor_id,
         "timestamp": now.isoformat(),
-        "evidence": request.decision_data.get("evidence", {}),
+        "evidence": request.decision_data.get("evidence", []),
         "policy_bundle_id": request.decision_data.get("policy_bundle_id", ""),
         "access_policy_revision": request.decision_data.get("access_policy_revision", ""),
         "approval_policy_revision": request.decision_data.get("approval_policy_revision", ""),
     }
     canonical_json = _canonical_json(canonical)
     sha256 = _record_sha256(canonical_json)
+    canonical["record_sha256"] = sha256
+    canonical_json = _canonical_json(canonical)
     tag_name = f"kb-decisions/{decision_id}"
 
     mr_iid = proposal.proposal_data.get("mr_iid")
@@ -289,11 +297,13 @@ def execute_merge(
             f"decision is already {decision.state}",
         )
 
-    mr = adapter.get_merge_request(proposal.space_id, mr_iid)
-    if mr.get("base_sha") and mr.get("base_sha") != proposal.base_sha:
+    # Verify live target HEAD matches proposal base before merging.
+    branch = adapter.get_branch(proposal.space_id, target_branch)
+    head_sha = branch.get("commit", {}).get("id", "")
+    if head_sha and head_sha != proposal.base_sha:
         raise GitOrchestratorError(
             "BASE_MISMATCH",
-            "target HEAD does not match proposal base_sha",
+            f"target HEAD {head_sha} does not match proposal base_sha {proposal.base_sha}",
         )
 
     # Commit the durability barrier before the external merge call.
@@ -387,10 +397,10 @@ def reconcile_merge(
     if decision is None:
         raise GitOrchestratorError("NOT_FOUND", "no accepted decision for this proposal")
 
-    if decision.state != "quarantined":
+    if decision.state not in ("quarantined", "merge_attempted"):
         raise GitOrchestratorError(
             "INVALID_STATE",
-            f"decision is {decision.state}, not quarantined",
+            f"decision is {decision.state}, not quarantined or merge_attempted",
         )
 
     mr_iid = proposal.proposal_data.get("mr_iid")
@@ -442,6 +452,7 @@ def reconcile_merge(
 
     # No merge commit found within the window: outcome is still unknown.
     # ADR-13 §7: only conclusive no-merge evidence may set failed.
+    # A bounded search cannot prove absence; keep quarantine.
     decision.state = "quarantined"
     db.flush()
     db.commit()

@@ -393,13 +393,11 @@ class TestMerge:
             },
         )
 
-        # Stub MR base_sha defaults to empty, so simulate a stale base.
-        # The first MR created by the stub always has iid == 1.
+        # Stub live target HEAD to differ from proposal base_sha.
         stub_adapter: StubGitLabAdapter = client.app.state.gitlab_adapter
-        stub_adapter.state[("mr", proposal_base["space_id"], 1)] = {
-            "iid": 1,
-            "state": "opened",
-            "base_sha": "z" * 40,
+        stub_adapter.state[("branch", proposal_base["space_id"], "main")] = {
+            "name": "main",
+            "commit": {"id": "z" * 40},
         }
 
         resp = client.post(f"/api/kb/v1/proposals/{proposal_id}/merge")

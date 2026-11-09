@@ -182,30 +182,60 @@ def recheck_group_membership(
     space_id: str,
     access_token: str,
 ) -> dict[str, Any]:
-    """Recheck upstream groups and ingest a fresh snapshot for a Space.
+    """Recheck upstream groups and update the subject's membership in a Space.
 
     Used before sensitive operations (merge, export, closed-page read) to
-    enforce the revocation barrier.  Returns the new epoch and groups.
+    enforce the revocation barrier.  Only the token subject's memberships are
+    updated; other users' snapshots are preserved.  Empty membership revokes
+    the subject's previous groups and advances the Space epoch.
     """
-    groups = fetch_upstream_groups(access_token)
-    external_ref = _get_identity_adapter().resolve_external_refs(access_token)
+    adapter = _get_identity_adapter()
+    try:
+        external_ref = adapter.resolve_external_refs(access_token)
+        groups = adapter.fetch_groups(access_token)
+    except IdentityAdapterError as exc:
+        raise IdentityServiceError(
+            f"IDENTITY_ADAPTER_ERROR:{exc.code}",
+            exc.message,
+        ) from exc
 
-    # Build a snapshot with the current actor in each upstream group.
-    snapshot = {
-        "space_id": space_id,
-        "groups": [
-            {
-                "group_name": g,
-                "member_refs": [external_ref],
-                "parent_groups": [],
-            }
-            for g in groups
-        ],
-    }
-    rows = ingest_group_snapshot(db, space_id, snapshot)
+    epoch = _next_space_epoch(db, space_id)
+    now = _now()
+
+    # Expire only the subject's previous memberships, not the whole Space.
+    db.query(GroupSnapshot).filter(
+        and_(
+            GroupSnapshot.space_id == space_id,
+            GroupSnapshot.valid_until.is_(None),
+            GroupSnapshot.member_refs.contains([external_ref]),
+        )
+    ).update({"valid_until": now}, synchronize_session=False)
+
+    rows: list[GroupSnapshot] = []
+    for group_name in groups:
+        row = GroupSnapshot(
+            space_id=space_id,
+            group_name=group_name,
+            member_refs=[external_ref],
+            parent_groups=[],
+            epoch=epoch,
+        )
+        db.add(row)
+        rows.append(row)
+
+    # Always advance the epoch, even for empty membership, so revocation
+    # propagates and stale contexts are invalidated.
+    db.add(
+        Revocation(
+            space_id=space_id,
+            revoked_at_epoch=epoch,
+            reason="group_membership_recheck",
+        )
+    )
+    db.flush()
     return {
         "space_id": space_id,
-        "epoch": rows[0].epoch if rows else 0,
+        "epoch": epoch,
         "groups": groups,
         "groups_ingested": len(rows),
     }

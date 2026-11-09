@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from identity.app.repositories.db import get_db
@@ -26,6 +26,36 @@ from identity.app.services import identity_service
 from identity.app.services.identity_service import IdentityServiceError
 
 router = APIRouter()
+
+
+def _require_authz_context(request: Request, space_id: str) -> None:
+    """Require an authenticated principal with manage_grants capability.
+
+    The Open WebUI upstream session middleware sets ``request.state.actor_id``
+    and ``request.state.authz_context`` after resolving the bearer token.
+    Endpoints that mutate authorization state must verify the caller has the
+    ``manage_grants`` capability for the target Space.
+    """
+    actor_id = getattr(request.state, "actor_id", None)
+    if actor_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "UNAUTHENTICATED", "message": "authentication required"},
+        )
+    context = getattr(request.state, "authz_context", None)
+    if context is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "FORBIDDEN", "message": "authorization context missing"},
+        )
+    space_scopes = context.get("space_scopes", [])
+    for scope in space_scopes:
+        if scope.get("space_id") == space_id and "manage_grants" in scope.get("capabilities", []):
+            return
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail={"code": "FORBIDDEN", "message": "manage_grants required for this space"},
+    )
 
 
 def _handle_domain_error(exc: IdentityServiceError) -> HTTPException:
@@ -146,9 +176,11 @@ def policies_activate(
 @router.post("/api/kb/v1/groups/recheck", response_model=RecheckGroupsResponse)
 def groups_recheck(
     request: RecheckGroupsRequest,
+    http_request: Request,
     db: Annotated[Session, Depends(get_db)],
 ) -> Any:
     """Recheck upstream group membership before a sensitive operation."""
+    _require_authz_context(http_request, request.space_id)
     try:
         return identity_service.recheck_group_membership(
             db,
