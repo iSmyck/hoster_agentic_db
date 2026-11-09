@@ -17,6 +17,8 @@ from identity.app.schemas.authz import (
     PathCheckRequest,
     PathCheckResponse,
     PolicyBundleRequest,
+    RecheckGroupsRequest,
+    RecheckGroupsResponse,
     ResolveIdentityRequest,
     ResolveTokenRequest,
 )
@@ -139,6 +141,22 @@ def policies_activate(
         "bundle_id": request.bundle_id,
         "activation_epoch": bundle.activation_epoch,
     }
+
+
+@router.post("/api/kb/v1/groups/recheck", response_model=RecheckGroupsResponse)
+def groups_recheck(
+    request: RecheckGroupsRequest,
+    db: Annotated[Session, Depends(get_db)],
+) -> Any:
+    """Recheck upstream group membership before a sensitive operation."""
+    try:
+        return identity_service.recheck_group_membership(
+            db,
+            request.space_id,
+            request.access_token,
+        )
+    except IdentityServiceError as exc:
+        raise _handle_domain_error(exc) from exc
 
 
 @router.get("/health", response_model=HealthResponse)

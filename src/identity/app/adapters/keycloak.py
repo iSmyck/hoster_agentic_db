@@ -143,3 +143,27 @@ class KeycloakIdentityAdapter:
                 external_ref[key] = value
 
         return external_ref
+
+    def fetch_groups(self, access_token: str) -> list[str]:
+        """Return upstream group memberships for the token subject.
+
+        Uses the ``groups`` claim from introspection; falls back to userinfo
+        when the claim is absent.  Empty membership is returned as an empty
+        list, not an error, so revocation semantics can be applied.
+        """
+        introspection = self.introspect_token(access_token)
+        if not introspection.get("active"):
+            raise IdentityAdapterError("TOKEN_INVALID", "Access token is not active")
+
+        groups = introspection.get("groups")
+        if isinstance(groups, list):
+            return [str(g) for g in groups]
+
+        try:
+            info = self.userinfo(access_token)
+        except IdentityAdapterError:
+            return []
+        groups = info.get("groups")
+        if isinstance(groups, list):
+            return [str(g) for g in groups]
+        return []

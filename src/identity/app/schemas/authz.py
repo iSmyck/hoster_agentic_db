@@ -84,6 +84,22 @@ class PathCheckRequest(BaseModel):
     path: str = Field(..., max_length=513)
 
 
+class RecheckGroupsRequest(BaseModel):
+    """POST /api/kb/v1/groups/recheck"""
+
+    space_id: str = Field(..., max_length=63)
+    access_token: str = Field(..., min_length=1, max_length=8192)
+
+
+class RecheckGroupsResponse(BaseModel):
+    """Result of upstream group recheck."""
+
+    space_id: str
+    epoch: int
+    groups: list[str]
+    groups_ingested: int
+
+
 class AuthzContextResponse(BaseModel):
     """Server-issued AuthzContext aligned with authz-context-v2."""
 

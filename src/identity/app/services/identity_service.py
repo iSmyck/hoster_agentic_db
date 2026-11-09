@@ -160,6 +160,57 @@ def resolve_identity_from_token(
     return resolve_identity(db, external_ref)
 
 
+def fetch_upstream_groups(
+    access_token: str,
+) -> list[str]:
+    """Return upstream group memberships for a bearer token.
+
+    Raises IdentityServiceError on adapter failure or invalid token.
+    """
+    adapter = _get_identity_adapter()
+    try:
+        return adapter.fetch_groups(access_token)
+    except IdentityAdapterError as exc:
+        raise IdentityServiceError(
+            f"IDENTITY_ADAPTER_ERROR:{exc.code}",
+            exc.message,
+        ) from exc
+
+
+def recheck_group_membership(
+    db: Session,
+    space_id: str,
+    access_token: str,
+) -> dict[str, Any]:
+    """Recheck upstream groups and ingest a fresh snapshot for a Space.
+
+    Used before sensitive operations (merge, export, closed-page read) to
+    enforce the revocation barrier.  Returns the new epoch and groups.
+    """
+    groups = fetch_upstream_groups(access_token)
+    external_ref = _get_identity_adapter().resolve_external_refs(access_token)
+
+    # Build a snapshot with the current actor in each upstream group.
+    snapshot = {
+        "space_id": space_id,
+        "groups": [
+            {
+                "group_name": g,
+                "member_refs": [external_ref],
+                "parent_groups": [],
+            }
+            for g in groups
+        ],
+    }
+    rows = ingest_group_snapshot(db, space_id, snapshot)
+    return {
+        "space_id": space_id,
+        "epoch": rows[0].epoch if rows else 0,
+        "groups": groups,
+        "groups_ingested": len(rows),
+    }
+
+
 def _next_space_epoch(db: Session, space_id: str) -> int:
     """Return the next monotonic epoch for a Space."""
     max_epoch = db.query(func.max(GroupSnapshot.epoch)).filter(
