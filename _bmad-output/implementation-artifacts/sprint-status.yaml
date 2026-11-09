@@ -84,10 +84,10 @@ development_status:
   7-3-t18-necessary-pilot-part-pilot-hardening-protected-deploymen: done
   epic-7-retrospective: done
 
-  epic-8: backlog
-  8-1-t15-safe-source-registry-three-way-updates-and-durable-curso: backlog
-  8-2-t16-one-owner-selected-real-source-connector: backlog
-  8-3-t17-conditional-evidence-gated-extraction-media-and-ocr-qual: backlog
-  8-4-t18a-repeatable-config-only-dedicated-deployment: backlog
-  8-5-t18b-full-g3-backup-restore-upgrade-and-full-operational-acc: backlog
-  epic-8-retrospective: optional
+  epic-8: done
+  8-1-t15-safe-source-registry-three-way-updates-and-durable-curso: done
+  8-2-t16-one-owner-selected-real-source-connector: done
+  8-3-t17-conditional-evidence-gated-extraction-media-and-ocr-qual: done
+  8-4-t18a-repeatable-config-only-dedicated-deployment: done
+  8-5-t18b-full-g3-backup-restore-upgrade-and-full-operational-acc: done
+  epic-8-retrospective: done

@@ -1,0 +1,708 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "scenarios.yaml loaded",
+      "details": {
+        "fixture": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml"
+      },
+      "expected": "synthetic fixtures load",
+      "fixture_path": null,
+      "id": "harness.fixture_loaded",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "harness",
+      "status": "PASS"
+    },
+    {
+      "actual": "61 patterns compiled",
+      "details": {
+        "bad_regex_count": 0
+      },
+      "expected": "all schema regex patterns compile",
+      "fixture_path": null,
+      "id": "schema.regex_compile",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "143 refs resolved",
+      "details": {
+        "unresolved_count": 0
+      },
+      "expected": "all schema $ref resolve",
+      "fixture_path": null,
+      "id": "schema.refs_resolve",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "schema",
+      "status": "PASS"
+    },
+    {
+      "actual": "activation gate valid",
+      "details": {
+        "data_media_profile": false,
+        "format_agreement": false,
+        "markdown_only_workload": true,
+        "owner_authorized_samples": false,
+        "quality_review": false
+      },
+      "expected": "non-Markdown route activated only with owner samples, format agreement, quality review and data/media profile",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "route_activation_gate.markdown_only_na.valid",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "route_activation_gate",
+      "status": "PASS"
+    },
+    {
+      "actual": "activation gate valid",
+      "details": {
+        "data_media_profile": true,
+        "format_agreement": true,
+        "markdown_only_workload": false,
+        "owner_authorized_samples": true,
+        "quality_review": true
+      },
+      "expected": "non-Markdown route activated only with owner samples, format agreement, quality review and data/media profile",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "route_activation_gate.non_markdown_activated.valid",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "route_activation_gate",
+      "status": "PASS"
+    },
+    {
+      "actual": "activation gate problem detected",
+      "details": {
+        "data_media_profile": true,
+        "expected_negative": true,
+        "format_agreement": true,
+        "markdown_only_workload": false,
+        "owner_authorized_samples": false,
+        "quality_review": true
+      },
+      "expected": "activation without required inputs rejected with INVALID_CONFIG",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "route_activation_gate.missing_samples_blocked.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "route_activation_gate",
+      "status": "FAIL"
+    },
+    {
+      "actual": "activation gate problem detected",
+      "details": {
+        "data_media_profile": true,
+        "expected_negative": true,
+        "format_agreement": false,
+        "markdown_only_workload": false,
+        "owner_authorized_samples": true,
+        "quality_review": true
+      },
+      "expected": "activation without required inputs rejected with INVALID_CONFIG",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "route_activation_gate.missing_format_agreement_blocked.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "route_activation_gate",
+      "status": "FAIL"
+    },
+    {
+      "actual": "Docling assessment valid",
+      "details": {
+        "approved_adr": false,
+        "compatibility_license_rollback_assessed": false,
+        "docling_assessed": true,
+        "documented_unmet_need": false,
+        "second_pipeline_considered": false
+      },
+      "expected": "Docling assessed first; second pipeline requires documented need, approved ADR and compatibility/license/rollback assessment",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "docling_assessment.docling_only.valid",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "docling_assessment",
+      "status": "PASS"
+    },
+    {
+      "actual": "Docling assessment valid",
+      "details": {
+        "approved_adr": true,
+        "compatibility_license_rollback_assessed": true,
+        "docling_assessed": true,
+        "documented_unmet_need": true,
+        "second_pipeline_considered": true
+      },
+      "expected": "Docling assessed first; second pipeline requires documented need, approved ADR and compatibility/license/rollback assessment",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "docling_assessment.docling_plus_second_pipeline_with_adr.valid",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "docling_assessment",
+      "status": "PASS"
+    },
+    {
+      "actual": "Docling assessment problem detected",
+      "details": {
+        "approved_adr": false,
+        "compatibility_license_rollback_assessed": false,
+        "docling_assessed": true,
+        "documented_unmet_need": true,
+        "expected_negative": true,
+        "second_pipeline_considered": true
+      },
+      "expected": "undocumented second pipeline rejected with INVALID_CONFIG",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "docling_assessment.second_pipeline_without_adr_rejected.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "docling_assessment",
+      "status": "FAIL"
+    },
+    {
+      "actual": "Docling assessment problem detected",
+      "details": {
+        "approved_adr": true,
+        "compatibility_license_rollback_assessed": true,
+        "docling_assessed": false,
+        "documented_unmet_need": true,
+        "expected_negative": true,
+        "second_pipeline_considered": true
+      },
+      "expected": "undocumented second pipeline rejected with INVALID_CONFIG",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "docling_assessment.docling_not_assessed_rejected.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "docling_assessment",
+      "status": "FAIL"
+    },
+    {
+      "actual": "golden fixtures valid",
+      "details": {
+        "format_supported": true,
+        "metrics": {
+          "encoding": "utf-8",
+          "links_anchors_preserved": true,
+          "numbers_preserved": true,
+          "page_or_slide_count": 12,
+          "reading_order_valid": true,
+          "table_structure_valid": true
+        }
+      },
+      "expected": "golden fixtures measure page/slide counts, encoding, reading order, table/numbers, links/anchors",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "golden_fixtures.pdf_golden_complete.valid",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "golden_fixtures",
+      "status": "PASS"
+    },
+    {
+      "actual": "golden fixtures valid",
+      "details": {
+        "format_supported": true,
+        "metrics": {
+          "encoding": "utf-8",
+          "links_anchors_preserved": true,
+          "numbers_preserved": true,
+          "page_or_slide_count": 8,
+          "reading_order_valid": true,
+          "table_structure_valid": true
+        }
+      },
+      "expected": "golden fixtures measure page/slide counts, encoding, reading order, table/numbers, links/anchors",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "golden_fixtures.pptx_golden_complete.valid",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "golden_fixtures",
+      "status": "PASS"
+    },
+    {
+      "actual": "golden fixture problem detected",
+      "details": {
+        "expected_negative": true,
+        "format_supported": false,
+        "metrics": {
+          "encoding": "",
+          "links_anchors_preserved": false,
+          "numbers_preserved": false,
+          "page_or_slide_count": 0,
+          "reading_order_valid": false,
+          "table_structure_valid": false
+        }
+      },
+      "expected": "unsupported or incomplete golden fixture rejected with VALIDATION_ERROR",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "golden_fixtures.unsupported_format_rejected.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "golden_fixtures",
+      "status": "FAIL"
+    },
+    {
+      "actual": "golden fixture problem detected",
+      "details": {
+        "expected_negative": true,
+        "format_supported": true,
+        "metrics": {
+          "encoding": "utf-8",
+          "links_anchors_preserved": true,
+          "numbers_preserved": true,
+          "page_or_slide_count": 12,
+          "reading_order_valid": false,
+          "table_structure_valid": true
+        }
+      },
+      "expected": "unsupported or incomplete golden fixture rejected with VALIDATION_ERROR",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "golden_fixtures.missing_reading_order_rejected.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "golden_fixtures",
+      "status": "FAIL"
+    },
+    {
+      "actual": "loss/quarantine valid",
+      "details": {
+        "empty_or_garbled": false,
+        "extraction_loss": false,
+        "ocr_disagreement": false,
+        "original_recoverable": true,
+        "partial_index_published": false,
+        "quarantined": false,
+        "source_merged": true,
+        "unsupported_format": false
+      },
+      "expected": "loss/garbled/unsupported/OCR-disagreement quarantined with original recoverable; source not merged; no partial index",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "loss_quarantine.clean_extraction.valid",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "loss_quarantine",
+      "status": "PASS"
+    },
+    {
+      "actual": "loss/quarantine valid",
+      "details": {
+        "empty_or_garbled": true,
+        "extraction_loss": true,
+        "ocr_disagreement": false,
+        "original_recoverable": true,
+        "partial_index_published": false,
+        "quarantined": true,
+        "source_merged": false,
+        "unsupported_format": false
+      },
+      "expected": "loss/garbled/unsupported/OCR-disagreement quarantined with original recoverable; source not merged; no partial index",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "loss_quarantine.empty_output_quarantined.valid",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "loss_quarantine",
+      "status": "PASS"
+    },
+    {
+      "actual": "loss/quarantine valid",
+      "details": {
+        "empty_or_garbled": false,
+        "extraction_loss": true,
+        "ocr_disagreement": true,
+        "original_recoverable": true,
+        "partial_index_published": false,
+        "quarantined": true,
+        "source_merged": false,
+        "unsupported_format": false
+      },
+      "expected": "loss/garbled/unsupported/OCR-disagreement quarantined with original recoverable; source not merged; no partial index",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "loss_quarantine.ocr_disagreement_quarantined.valid",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "loss_quarantine",
+      "status": "PASS"
+    },
+    {
+      "actual": "loss/quarantine problem detected",
+      "details": {
+        "empty_or_garbled": true,
+        "expected_negative": true,
+        "extraction_loss": true,
+        "ocr_disagreement": false,
+        "original_recoverable": true,
+        "partial_index_published": true,
+        "quarantined": true,
+        "source_merged": false,
+        "unsupported_format": false
+      },
+      "expected": "unquarantined loss or partial index rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "loss_quarantine.loss_partial_index_rejected.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "loss_quarantine",
+      "status": "FAIL"
+    },
+    {
+      "actual": "loss/quarantine problem detected",
+      "details": {
+        "empty_or_garbled": true,
+        "expected_negative": true,
+        "extraction_loss": true,
+        "ocr_disagreement": false,
+        "original_recoverable": true,
+        "partial_index_published": false,
+        "quarantined": true,
+        "source_merged": true,
+        "unsupported_format": false
+      },
+      "expected": "unquarantined loss or partial index rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "loss_quarantine.loss_source_merged_rejected.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "loss_quarantine",
+      "status": "FAIL"
+    },
+    {
+      "actual": "media class handling valid",
+      "details": {
+        "auto_description_labelled": false,
+        "cites_original_page": false,
+        "excluded": true,
+        "human_verified": false,
+        "indexed": false,
+        "kept_with_caption": false,
+        "media_class": "decorative"
+      },
+      "expected": "decorative excluded; illustrative kept+caption; substantive labelled+cites original; critical/handwritten verified",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "media_classes.decorative_excluded.valid",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "media_classes",
+      "status": "PASS"
+    },
+    {
+      "actual": "media class handling valid",
+      "details": {
+        "auto_description_labelled": false,
+        "cites_original_page": false,
+        "excluded": false,
+        "human_verified": false,
+        "indexed": true,
+        "kept_with_caption": true,
+        "media_class": "illustrative"
+      },
+      "expected": "decorative excluded; illustrative kept+caption; substantive labelled+cites original; critical/handwritten verified",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "media_classes.illustrative_kept_with_caption.valid",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "media_classes",
+      "status": "PASS"
+    },
+    {
+      "actual": "media class handling valid",
+      "details": {
+        "auto_description_labelled": true,
+        "cites_original_page": true,
+        "excluded": false,
+        "human_verified": false,
+        "indexed": true,
+        "kept_with_caption": false,
+        "media_class": "substantive"
+      },
+      "expected": "decorative excluded; illustrative kept+caption; substantive labelled+cites original; critical/handwritten verified",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "media_classes.substantive_labelled_cites.valid",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "media_classes",
+      "status": "PASS"
+    },
+    {
+      "actual": "media class handling valid",
+      "details": {
+        "auto_description_labelled": false,
+        "cites_original_page": false,
+        "excluded": false,
+        "human_verified": true,
+        "indexed": true,
+        "kept_with_caption": false,
+        "media_class": "critical"
+      },
+      "expected": "decorative excluded; illustrative kept+caption; substantive labelled+cites original; critical/handwritten verified",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "media_classes.critical_verified.valid",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "media_classes",
+      "status": "PASS"
+    },
+    {
+      "actual": "media class problem detected",
+      "details": {
+        "auto_description_labelled": false,
+        "cites_original_page": false,
+        "excluded": false,
+        "expected_negative": true,
+        "human_verified": false,
+        "indexed": true,
+        "kept_with_caption": false,
+        "media_class": "critical"
+      },
+      "expected": "media class violation rejected with VALIDATION_ERROR",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "media_classes.critical_not_verified_rejected.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "media_classes",
+      "status": "FAIL"
+    },
+    {
+      "actual": "media class problem detected",
+      "details": {
+        "auto_description_labelled": true,
+        "cites_original_page": false,
+        "excluded": false,
+        "expected_negative": true,
+        "human_verified": false,
+        "indexed": true,
+        "kept_with_caption": false,
+        "media_class": "substantive"
+      },
+      "expected": "media class violation rejected with VALIDATION_ERROR",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "media_classes.substantive_missing_cite_rejected.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "media_classes",
+      "status": "FAIL"
+    },
+    {
+      "actual": "sample rejected",
+      "details": {
+        "reached_corpus_or_preview": false,
+        "rejected_before_corpus": true,
+        "sample_type": "executable_html"
+      },
+      "expected": "malicious or malformed samples rejected before corpus/preview",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "malicious_malformed.executable_html_rejected.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "malicious_malformed",
+      "status": "PASS"
+    },
+    {
+      "actual": "sample rejected",
+      "details": {
+        "reached_corpus_or_preview": false,
+        "rejected_before_corpus": true,
+        "sample_type": "mdx_script"
+      },
+      "expected": "malicious or malformed samples rejected before corpus/preview",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "malicious_malformed.mdx_script_rejected.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "malicious_malformed",
+      "status": "PASS"
+    },
+    {
+      "actual": "sample rejected",
+      "details": {
+        "reached_corpus_or_preview": false,
+        "rejected_before_corpus": true,
+        "sample_type": "secret_in_payload"
+      },
+      "expected": "malicious or malformed samples rejected before corpus/preview",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "malicious_malformed.secret_in_payload_rejected.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "malicious_malformed",
+      "status": "PASS"
+    },
+    {
+      "actual": "sample rejected",
+      "details": {
+        "reached_corpus_or_preview": false,
+        "rejected_before_corpus": true,
+        "sample_type": "decompression_bomb"
+      },
+      "expected": "malicious or malformed samples rejected before corpus/preview",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "malicious_malformed.decompression_bomb_rejected.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "malicious_malformed",
+      "status": "PASS"
+    },
+    {
+      "actual": "malicious/malformed sample allowed",
+      "details": {
+        "expected_negative": true,
+        "reached_corpus_or_preview": true,
+        "rejected_before_corpus": false,
+        "sample_type": "executable_html"
+      },
+      "expected": "malicious/malformed sample allowed into corpus rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "malicious_malformed.malicious_allowed_rejected.allowed",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "malicious_malformed",
+      "status": "FAIL"
+    },
+    {
+      "actual": "provider/profile/egress valid",
+      "details": {
+        "approved_data_profile": true,
+        "approved_egress_route": true,
+        "approved_provider": true,
+        "pii_egress": false,
+        "unplanned_fallback": false
+      },
+      "expected": "only approved provider/data profile/egress route used; unplanned fallback and PII egress blocked",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "provider_profile_egress.approved_route_strict.valid",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "provider_profile_egress",
+      "status": "PASS"
+    },
+    {
+      "actual": "provider/profile/egress problem detected",
+      "details": {
+        "approved_data_profile": true,
+        "approved_egress_route": true,
+        "approved_provider": false,
+        "expected_negative": true,
+        "pii_egress": false,
+        "unplanned_fallback": false
+      },
+      "expected": "unapproved route/fallback/PII egress rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "provider_profile_egress.unapproved_provider_rejected.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "provider_profile_egress",
+      "status": "FAIL"
+    },
+    {
+      "actual": "provider/profile/egress problem detected",
+      "details": {
+        "approved_data_profile": true,
+        "approved_egress_route": true,
+        "approved_provider": true,
+        "expected_negative": true,
+        "pii_egress": false,
+        "unplanned_fallback": true
+      },
+      "expected": "unapproved route/fallback/PII egress rejected with SECURITY_REJECTED",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "provider_profile_egress.unplanned_fallback_rejected.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "provider_profile_egress",
+      "status": "FAIL"
+    },
+    {
+      "actual": "provider/profile/egress problem detected",
+      "details": {
+        "approved_data_profile": true,
+        "approved_egress_route": true,
+        "approved_provider": true,
+        "expected_negative": true,
+        "pii_egress": true,
+        "unplanned_fallback": false
+      },
+      "expected": "unapproved route/fallback/PII egress rejected with PII_REVIEW_REQUIRED",
+      "fixture_path": "_bmad-output/test-artifacts/t17/fixtures/scenarios.yaml",
+      "id": "provider_profile_egress.pii_egress_rejected.rejected",
+      "input_sha256": "6c2894c5d819f98f51a66ad8bd0df9c734744e120359319487b2e83461cb6dee",
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "provider_profile_egress",
+      "status": "FAIL"
+    },
+    {
+      "actual": "requires owner-authorized real samples and extraction sandbox",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_docling_quality",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires owner-authorized real samples and extraction sandbox",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_ocr_golden_set",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires owner-authorized real samples and extraction sandbox",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_media_classification",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "requires owner-authorized real samples and extraction sandbox",
+      "details": {},
+      "expected": "live integration evidence",
+      "fixture_path": null,
+      "id": "runtime.live_owner_authorized_samples",
+      "input_sha256": null,
+      "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+      "scenario_id": "runtime",
+      "status": "BLOCKED"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+  "contracts_version": "extraction-gating-v1",
+  "counts": {
+    "BLOCKED": 4,
+    "FAIL": 14,
+    "FAIL_EXPECTED": 14,
+    "FAIL_UNEXPECTED": 0,
+    "PASS": 21
+  },
+  "environment": {
+    "ad_available": false,
+    "ci_available": false,
+    "gitlab_available": false,
+    "hoster_available": false,
+    "idp_available": false,
+    "ldap_available": false,
+    "pinned_toolchain": {
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_local_no_gitlab"
+  },
+  "generated_at": "2026-11-09T00:01:33.824456+00:00",
+  "rerun_cmd": "uv run python _bmad-output/test-artifacts/t17/run_t17_tests.py",
+  "schema_version": "t17-extraction-results-v1",
+  "sensitive_data_included": false,
+  "spec_baseline_commit": "d2c0d072a757808ea891fbf6414f00147679f7a7"
+}
