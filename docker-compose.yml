@@ -1,0 +1,73 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.7-pg18-trixie
+    container_name: corp_kb_postgres
+    environment:
+      POSTGRES_USER: corp_kb
+      POSTGRES_PASSWORD: corp_kb_dev
+      POSTGRES_DB: corp_kb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U corp_kb -d corp_kb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.2
+    container_name: corp_kb_keycloak
+    command: ["start-dev", "--http-port=8080"]
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/corp_kb
+      KC_DB_USERNAME: corp_kb
+      KC_DB_PASSWORD: corp_kb_dev
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  minio:
+    image: minio/minio:RELEASE.2024-11-07T00-52-20Z
+    container_name: corp_kb_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: corp_kb
+      MINIO_ROOT_PASSWORD: corp_kb_dev_minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  gitlab:
+    image: gitlab/gitlab-ce:19.5.3-ce.0
+    container_name: corp_kb_gitlab
+    hostname: gitlab.local
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://localhost:8081'
+        gitlab_rails['initial_root_password'] = 'corp_kb_gitlab_root'
+    ports:
+      - "8081:80"
+      - "2222:22"
+    volumes:
+      - gitlab_data:/var/opt/gitlab
+      - gitlab_logs:/var/log/gitlab
+      - gitlab_config:/etc/gitlab
+
+volumes:
+  postgres_data:
+  minio_data:
+  gitlab_data:
+  gitlab_logs:
+  gitlab_config:

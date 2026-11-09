@@ -1,0 +1,130 @@
+"""FastAPI routes for the Identity + AuthZ adapter."""
+
+from __future__ import annotations
+
+from typing import Annotated, Any
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from identity.app.repositories.db import get_db
+from identity.app.schemas.authz import (
+    AuthzContextRequest,
+    AuthzContextResponse,
+    GroupSnapshotRequest,
+    HealthResponse,
+    IdentityResponse,
+    PathCheckRequest,
+    PathCheckResponse,
+    PolicyBundleRequest,
+    ResolveIdentityRequest,
+)
+from identity.app.services import identity_service
+from identity.app.services.identity_service import IdentityServiceError
+
+router = APIRouter()
+
+
+def _handle_domain_error(exc: IdentityServiceError) -> HTTPException:
+    code_map = {
+        "NOT_FOUND": status.HTTP_404_NOT_FOUND,
+        "FORBIDDEN": status.HTTP_403_FORBIDDEN,
+        "GROUP_SNAPSHOT_STALE": status.HTTP_409_CONFLICT,
+        "POLICY_REVISION_MISMATCH": status.HTTP_409_CONFLICT,
+        "INVALID_POLICY": status.HTTP_422_UNPROCESSABLE_CONTENT,
+        "INVALID_SNAPSHOT": status.HTTP_422_UNPROCESSABLE_CONTENT,
+        "INVALID_PATH": status.HTTP_422_UNPROCESSABLE_CONTENT,
+        "INVALID_ACTOR_TYPE": status.HTTP_422_UNPROCESSABLE_CONTENT,
+        "INVALID_IDENTITY_REF": status.HTTP_422_UNPROCESSABLE_CONTENT,
+    }
+    return HTTPException(
+        status_code=code_map.get(exc.code, status.HTTP_400_BAD_REQUEST),
+        detail={"code": exc.code, "message": exc.message},
+    )
+
+
+@router.post("/api/kb/v1/identity/resolve", response_model=IdentityResponse)
+def resolve_identity(
+    request: ResolveIdentityRequest,
+    db: Annotated[Session, Depends(get_db)],
+) -> Any:
+    try:
+        identity = identity_service.resolve_identity(db, request.external_ref)
+    except IdentityServiceError as exc:
+        raise _handle_domain_error(exc) from exc
+    return identity
+
+
+@router.post("/api/kb/v1/authz/context", response_model=AuthzContextResponse)
+def authz_context(
+    request: AuthzContextRequest,
+    db: Annotated[Session, Depends(get_db)],
+) -> Any:
+    try:
+        context = identity_service.compute_authz_context(
+            db,
+            request.space_id,
+            request.actor_id,
+            request.actor_type,
+        )
+    except IdentityServiceError as exc:
+        raise _handle_domain_error(exc) from exc
+    return context.computed_context
+
+
+@router.post("/api/kb/v1/authz/check", response_model=PathCheckResponse)
+def authz_check(
+    request: PathCheckRequest,
+    db: Annotated[Session, Depends(get_db)],
+) -> Any:
+    try:
+        return identity_service.check_path_approval(
+            db,
+            request.space_id,
+            request.actor_id,
+            request.path,
+        )
+    except IdentityServiceError as exc:
+        raise _handle_domain_error(exc) from exc
+
+
+@router.post("/api/kb/v1/groups/snapshot", status_code=status.HTTP_201_CREATED)
+def groups_snapshot(
+    request: GroupSnapshotRequest,
+    db: Annotated[Session, Depends(get_db)],
+) -> dict[str, Any]:
+    try:
+        rows = identity_service.ingest_group_snapshot(
+            db,
+            request.space_id,
+            request,
+        )
+    except IdentityServiceError as exc:
+        raise _handle_domain_error(exc) from exc
+    return {
+        "space_id": request.space_id,
+        "snapshot_id": str(request.snapshot_id) if request.snapshot_id else None,
+        "epoch": rows[0].epoch if rows else 0,
+        "groups_ingested": len(rows),
+    }
+
+
+@router.post("/api/kb/v1/policies/activate", status_code=status.HTTP_201_CREATED)
+def policies_activate(
+    request: PolicyBundleRequest,
+    db: Annotated[Session, Depends(get_db)],
+) -> dict[str, Any]:
+    try:
+        bundle = identity_service.activate_policy_bundle(db, request.space_id, request)
+    except IdentityServiceError as exc:
+        raise _handle_domain_error(exc) from exc
+    return {
+        "space_id": request.space_id,
+        "bundle_id": request.bundle_id,
+        "activation_epoch": bundle.activation_epoch,
+    }
+
+
+@router.get("/health", response_model=HealthResponse)
+def health() -> dict[str, str]:
+    return {"status": "ok"}

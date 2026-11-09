@@ -138,7 +138,7 @@
 
 Все CF ссылаются на существующие schemas/OpenAPI/events/DBC через [T01]. Реальные GitLab/IdP/PostgreSQL/CI/hoster.ai checks не заменяются этими vectors и остаются предметом соответствующих integration tests.
 
-## 5. Полное T00–T20 и E00–E08 coverage
+## 5. Полное T00–T20, E00–E08 и implementation-phase E09–E13 coverage
 
 Acceptance IDs ниже — прямые ссылки из backlog spec v1.3, а не утверждение о выполненных проверках. Детальные dependencies и фактические состояния: [tasks.md](tasks.md).
 
@@ -166,9 +166,9 @@ Acceptance IDs ниже — прямые ссылки из backlog spec v1.3, а
 | T19 | R04,R11,R18 | Отдельные A не назначены; состав определяется после benchmark gate | Отдельный deferred epic после E08; ID не создан / DESIGN |
 | T20 | **В spec не указаны** | Отдельные A не назначены | Отдельный deferred epic после E08; ID не создан / DESIGN; R/I mapping требует подтверждения |
 
-### 5.1. Final-story R/I/A/F/S mapping
+### 5.1. Final-story and implementation-phase R/I/A/F/S/CF mapping
 
-**G0 APPROVED 2026-11-08; T00 DONE.** Ниже — окончательная story/split mapping после approved Sprint Change Proposal. Все rows остаются **DESIGN**, кроме завершённого baseline E00.1/T00; F (Full/direct) и S (Supporting) не означают VERIFIED/DONE. Parent T00–T20 navigation выше сохраняется, но не заменяет эту mapping. Полные story formulations — [epics.md](../../_bmad-output/planning-artifacts/epics.md).
+**G0 APPROVED 2026-11-08; T00 DONE.** Ниже — окончательная story/split mapping после approved Sprint Change Proposal и story-level mapping для implementation-phase E09–E13. Все rows остаются **DESIGN**, кроме завершённого baseline E00.1/T00; F (Full/direct) и S (Supporting) не означают VERIFIED/DONE. Parent T00–T20 navigation выше сохраняется, но не заменяет эту mapping. E09–E13 deliver implementation code и не заменяют T01–T18b. Полные story formulations — [epics.md](../../_bmad-output/planning-artifacts/epics.md).
 
 | Story / final task | R | I | Full/direct (F) | Supporting (S) | Contract / boundary |
 |---|---|---|---|---|---|
@@ -200,6 +200,15 @@ Acceptance IDs ниже — прямые ссылки из backlog spec v1.3, а
 | E08.3 / T17 conditional | R02,R04,R12,R13,R15,R18 | I01,I02,I03,I08,I09,I12,I13 | A16,A23 только при activated conditional scope | A22 | Evidence-gated extraction/media/OCR |
 | E08.4 / T18a | R05,R15,R17,R18 | I04,I07,I09,I10,I11,I12,I13,I14 | A19,A20,A33 | — | Second config-only client/resource isolation/no code fork |
 | E08.5 / T18b | R05,R06,R09,R10,R11,R13,R14,R15,R17,R18 | I01,I02,I03,I04,I05,I06,I07,I09,I10,I11,I12,I13,I14 | A15,A19,A20,A33 | A14,A28 | Full operational/G3 явно после T16/E08.2; отдельный non-Git-derived correction backup/restore и linked-MR reconciliation без второго canonical write path; [EXPORT],[DBC],[OPS],[CORR],[CORRSCHEMA] |
+| E09.1 / I01 | R01,R18 | I01,I09,I10 | A01 | — | CF-01; implementation-phase project/local infrastructure bootstrap |
+| E09.2 / I02 | R05,R16 | I05,I09,I10 | A04,A24,A25,A26 | A30,A32 | CF-02; identity models и `kb_authz` migrations |
+| E09.3 / I03 | R05,R16 | I05,I09 | A04,A24 | A25,A26,A30,A32 | CF-02; stable identity resolution и group snapshots |
+| E09.4 / I04 | R05,R16 | I05,I09 | A25,A26 | A04,A24,A30,A32,A33 | CF-02; policy activation, AuthzContext и path approval |
+| E10.1 / I05 | R02,R05,R06,R09 | I01,I02,I06,I08 | A08 | A05,A06,A09 | CF-03; read-only GO/GitLab bootstrap, write endpoints отсутствуют |
+| E10.2 / I06 | R06,R07,R08,R09 | I02,I06,I08,I09 | A05,A06,A07,A08,A09,A27,A28,A29,A30 | — | CF-03,CF-04; ProposalRecord = GitLab MR с `kb_ops` operational projection |
+| E11.1 / I07 | R01,R02,R03,R09 | I01,I02,I06 | A01,A08 | A10 | CF-01,CF-03; pinned Open WebUI fork и typed KB API client |
+| E12.1 / I08 | R04,R11,R16 | I03,I05,I06 | A03,A12,A21 | A02,A11,A25,A31,A32 | CF-05; index worker, exact/semantic search и per-payload AuthZ |
+| E13.1 / I09 | R12,R13,R16 | I06,I08,I09 | A13,A14,A23 | A31,A35 | CF-06; dry-run importer, source registry и durable cursors |
 
 Обязательные reverse assignments:
 
@@ -225,6 +234,11 @@ Acceptance IDs ниже — прямые ссылки из backlog spec v1.3, а
 | E06 | T12,T13 + минимальный T15 | Controlled import/cutover/export/rebuild; A13,A15,A23,A31,A35,A36 и связанные A |
 | E07 | T11,T14 + необходимая часть T18 | Internal pilot/quality/security/runbook acceptance; A03,A16,A18,A20,A21 |
 | E08 | T15,T16,T18 + условный T17 | Source/connector/repeatable dedicated delivery; A14–A16,A19,A20,A23,A28,A33 |
+| E09 | I01,I02,I03,I04 | Identity + AuthZ adapter implementation; story-level A01,A04,A24,A25,A26,A30,A32,A33; CF-01,CF-02 |
+| E10 | I05,I06 | Git Orchestrator read-only bootstrap и governed proposal/decision lifecycle; story-level A05,A06,A07,A08,A09,A27,A28,A29,A30; CF-03,CF-04 |
+| E11 | I07 | Open WebUI fork KB seams; A01,A08 Full/direct, A10 Supporting; CF-01,CF-03 |
+| E12 | I08 | Retrieval + indexing implementation; A03,A12,A21 Full/direct, A02,A11,A25,A31,A32 Supporting; CF-05 |
+| E13 | I09 | Dry-run importer и source registry; A13,A14,A23 Full/direct, A31,A35 Supporting; CF-06 |
 
 ## 6. Coverage audit и открытые пробелы
 
@@ -232,7 +246,7 @@ Acceptance IDs ниже — прямые ссылки из backlog spec v1.3, а
 - **I:** I01–I14 присутствуют; cutover, no-bypass, exact SHA, recovery, repository=Space, rebuild, index ordering, ACL и statuses имеют design owners/contracts. Test-plan больше не содержит независимый I-index.
 - **A:** A01–A36 перечислены по одному разу в acceptance-by-acceptance matrix; пропусков нет. Все DESIGN.
 - **T:** T00–T20 учтены без дублирования live states; фактический tracker — [tasks.md](tasks.md). T20 не имеет явных Requirements/Acceptance в spec и не должен получать их молча.
-- **E:** E00–E08 сохранены. T19/T20 намеренно относятся к отдельным будущим эпикам; новые IDs не созданы.
+- **E:** E00–E08 сохранены; implementation-phase E09–E13 и их stories I01–I09 имеют R/I/A/F/S/CF mapping в §5.1. T19/T20 намеренно относятся к отдельным будущим эпикам; новые deferred IDs не созданы.
 - **AD/ADR:** AD-1–AD-16 и существующие [ADR-03–ADR-16](adr/README.md) связаны с требованиями; withdrawn ADR-01/02 не используются. Наличие ADR не означает G0 approval.
 - **Contracts:** все JSON schemas, OpenAPI, agent tools, events, DB catalog, integration protocol docs, [MAP], [T01], [DOCOPS], [CORR] и [CORRSCHEMA] связаны хотя бы с одной строкой. V2 names, correction-task v1 и explicit state mappings зафиксированы как DESIGN output, не successful tests.
 - **Final-story coverage:** §5.1 содержит все split IDs T03a/b,T04a/b,T05a/b,T07b,T10a/b,T12a/b,T13a/b,T18a/b с R/I/A/F/S. A04 отсутствует в E02.1, A09 — в E03.1/E04.1, A19 — в E07.3; A28 primary — E04.2; A10 — Full/direct E03.1 и Supporting E04.2. E02 не заявляет published retrieval R04, а T02/R03 покрывает canonical direct read. Полный T12/T12b требует T05, full T18/G3 — T16; E06.4/E08.5 связаны с [CORR]/[CORRSCHEMA] для отдельного non-Git-derived restore без второго canonical write path.

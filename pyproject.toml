@@ -3,11 +3,22 @@ name = "corp-ai-db"
 version = "0.1.0"
 description = "Corporate Agentic Knowledge Base — implementation tracking and harness unit tests"
 requires-python = "==3.12.*"
-dependencies = []
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
+    "sqlalchemy>=2.0.36",
+    "alembic>=1.14.0",
+    "psycopg[binary]>=3.2.3",
+    "pgvector>=0.3.6",
+]
 
 [dependency-groups]
 dev = [
     "pytest",
+    "pytest-asyncio",
+    "httpx",
     "pyyaml",
     "jsonschema",
     "referencing",
@@ -15,4 +26,11 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "src/identity/tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

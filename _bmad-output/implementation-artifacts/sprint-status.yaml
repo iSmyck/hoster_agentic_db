@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 11-08-2026 18:17
-last_updated: 11-09-2026 23:28
+last_updated: 11-09-2026 10:06
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -91,3 +91,27 @@ development_status:
   8-4-t18a-repeatable-config-only-dedicated-deployment: done
   8-5-t18b-full-g3-backup-restore-upgrade-and-full-operational-acc: done
   epic-8-retrospective: done
+
+  epic-9: done
+  9-1-i01-project-bootstrap-and-local-infrastructure: done
+  9-2-i02-identity-domain-models-and-kb_authz-migrations: done
+  9-3-i03-identity-resolution-and-group-snapshot-ingestion: done
+  9-4-i04-policy-activation-authzcontext-and-path-approval: done
+  epic-9-retrospective: done
+
+  epic-10: backlog
+  10-1-i05-git-orchestrator-bootstrap-and-gitlab-client: backlog
+  10-2-i06-proposalrecord-and-decisionrecord-lifecycle: backlog
+  epic-10-retrospective: optional
+
+  epic-11: backlog
+  11-1-i07-open-webui-fork-setup-and-kb-api-client: backlog
+  epic-11-retrospective: optional
+
+  epic-12: backlog
+  12-1-i08-index-worker-and-pgvector-search: backlog
+  epic-12-retrospective: optional
+
+  epic-13: backlog
+  13-1-i09-dry-run-importer-and-source-registry: backlog
+  epic-13-retrospective: optional

@@ -1000,6 +1000,28 @@ Acceptance ownership: Full/direct — не назначены; Supporting — A0
 
 <!-- End story repeat -->
 
+### Story 3.3 (Tech-debt): Pytest baseline and harness unit tests
+
+As a maintainer,
+I want a pytest baseline and unit tests for the contract harnesses,
+So that harness logic is verified independently of the contracts it validates.
+
+Requirements: R18; I10; A01; CF-01.
+Acceptance ownership: Full/direct — A01.
+
+**Acceptance Criteria:**
+
+**Given** the existing harnesses under `_bmad-output/test-artifacts/`,
+**When** `uv run pytest -q` runs,
+**Then** unit tests cover the reporter/sanitize utilities and the core validators for T02, T03a, T03b, T04a and T04b.
+**And** tests pass and can be run in CI without external infrastructure.
+
+**Dependencies:** E03.1, E03.2 harnesses.
+
+**Evidence:** `pyproject.toml`, `uv.lock`, `tests/test_*_validators.py`, `tests/test_reporters.py`, 28 passed baseline.
+
+<!-- End story repeat -->
+
 ## Epic 4: Governed agent workflow
 
 MR proposal → полный review → canonical DecisionRecord → human decision → GO merge с ограниченными agent capabilities и recovery.
@@ -1910,5 +1932,239 @@ Acceptance ownership: Full/direct — A15,A19,A20,A33; Supporting — A14,A28. A
 
 - **T19 — Retrieval evolution:** deferred until T14 supplies measured ACL-aware quality/latency/cost benchmarks and a separate business gate approves the work. Only then may the baseline PG FTS+pgvector profile be compared with measured alternatives using shadow index/dual-read evaluation and a non-destructive migration plan; OpenSearch or another stack expansion is not pre-approved. This note creates no new epic or story ID.
 - **T20 — Fast/Trust/Scale policies:** deferred until T14 and full T18 are complete and a separate measured/business gate approves the work. Its R/I/A mapping must be clarified at that future planning point because `spec.md` has no explicit T20 Requirements row; existing design-derived links are not normative assignments. No cache, routing, threshold, capacity or client-profile commitment is created here, and no new epic or story ID is introduced.
+
+<!-- End story repeat -->
+
+---
+
+## Implementation Phase Epics
+
+The epics below deliver the actual application code described by the contracts and harnesses in E01–E08. They are not replacements for T01–T18b; they are the implementation work that makes those contracts executable.
+
+### Epic 9: Identity + AuthZ adapter implementation
+
+Реальный Python/FastAPI сервис Identity + AuthZ adapter с PostgreSQL хранилищем, миграциями и API.
+
+### Story 9.1 (I01): Project bootstrap and local infrastructure
+
+As a developer,
+I want a reproducible `src/` layout, Docker Compose for local dependencies and CI-ready Python tooling,
+So that implementation work starts from a stable, repeatable environment.
+
+Requirements: R01,R18; I01,I09,I10; A01; CF-01.
+Acceptance ownership: Full/direct — A01.
+
+**Acceptance Criteria:**
+
+**Given** the repository root,
+**When** `src/` layout is created,
+**Then** `src/identity/`, `src/git-orchestrator/`, `src/retrieval/`, `src/ingestion/`, `src/open-webui/`, `src/contracts/`, and `src/docker/` exist with clear package boundaries and no cross-service imports in domain code.
+**And** root `pyproject.toml` declares Python 3.12, FastAPI, SQLAlchemy, Alembic, Pydantic, psycopg, pgvector and dev tools, and `uv sync` completes without errors.
+
+**Given** Docker Compose,
+**When** `docker compose up -d postgres keycloak minio` runs,
+**Then** PostgreSQL 18 + pgvector starts with `kb_authz`, `kb_ops`, `kb_index` schemas, Keycloak 26.8.2 starts in dev mode, and MinIO starts with console accessible.
+**And** health checks pass and default credentials are documented in `.env.example`, not hardcoded in application code.
+
+**Dependencies:** none (implementation phase bootstrap).
+
+**Evidence:** `docker-compose.yml`, `src/docker/postgres-init/01-create-schemas.sql`, `src/*/pyproject.toml` or root package layout, `.env.example`, `uv sync` output.
+
+### Story 9.2 (I02): Identity domain models and `kb_authz` migrations
+
+As an identity engineer,
+I want SQLAlchemy models and Alembic migrations for identities, group snapshots, policy bundles, AuthzContext and revocations,
+So that `kb_authz` persists the data needed for authorization decisions.
+
+Requirements: R05,R16; I05,I09,I10; A04,A24,A25,A26,A30,A32; CF-02.
+Acceptance ownership: Full/direct — A04,A24,A25,A26; Supporting — A30,A32.
+
+**Acceptance Criteria:**
+
+**Given** the `src/identity/` package,
+**When** models are defined,
+**Then** `Identity`, `GroupSnapshot`, `PolicyBundle`, `AuthzContext`, and `Revocation` use SQLAlchemy 2.0 `Mapped[]`/`mapped_column`, target the `kb_authz` schema, and support PostgreSQL JSONB with SQLite fallback for tests.
+**And** each table has created_at/updated_at timestamps and appropriate indexes for space_id, actor_id, epoch, and external_ref lookups.
+
+**Given** Alembic,
+**When** `alembic upgrade head` runs,
+**Then** all five tables are created under `kb_authz`, and `alembic downgrade base` cleanly removes them.
+**And** migration head is recorded and versioned; runtime workers never run migrations automatically.
+
+**Dependencies:** I01.
+
+**Evidence:** model files, initial migration, `alembic history` output, unit tests for model constraints.
+
+### Story 9.3 (I03): Identity resolution and group snapshot ingestion
+
+As an identity engineer,
+I want stable identity resolution and nested group snapshot ingestion with epoch ordering,
+So that every request maps to a durable identity and current group membership.
+
+Requirements: R05,R16; I05,I09; A04,A24,A25,A26,A30,A32; CF-02.
+Acceptance ownership: Full/direct — A04,A24; Supporting — A25,A26,A30,A32.
+
+**Acceptance Criteria:**
+
+**Given** external identity references (LDAP DN, OIDC sub, objectGUID, entryUUID),
+**When** `POST /api/kb/v1/identity/resolve` is called,
+**Then** a stable `Identity` is returned or created, and renames do not change the internal identity key.
+**And** empty or conflicting external refs produce structured `{code,message,request_id,retryable}` errors.
+
+**Given** group snapshots with nested groups and epochs,
+**When** `POST /api/kb/v1/groups/snapshot` is called,
+**Then** nested memberships are flattened into member_refs, epochs are monotonically ordered per Space, and out-of-order snapshots are rejected or recorded as stale.
+**And** group rename preserves identity and historical snapshots remain queryable.
+
+**Dependencies:** I02.
+
+**Evidence:** service layer, API routes, T03a fixture-based contract tests, unit tests for rename and epoch ordering.
+
+### Story 9.4 (I04): Policy activation, AuthzContext and path approval
+
+As an authorization engineer,
+I want policy bundle activation, computed AuthzContext, and longest-prefix path approval,
+So that per-Space access decisions are deterministic and revocation-safe.
+
+Requirements: R05,R16; I05,I09; A04,A24,A25,A26,A30,A32,A33; CF-02.
+Acceptance ownership: Full/direct — A25,A26; Supporting — A04,A24,A30,A32,A33.
+
+**Acceptance Criteria:**
+
+**Given** a policy bundle with approvers and path patterns,
+**When** `POST /api/kb/v1/policies/activate` is called,
+**Then** the bundle is stored with activation_epoch and valid_until, and only one active policy per Space+epoch is allowed.
+**And** activation validates policy schema and rejects malformed or conflicting bundles.
+
+**Given** an actor, Space and group snapshot,
+**When** `POST /api/kb/v1/authz/context` is called,
+**Then** AuthzContext contains resolved groups, applicable policies, actor type, and epoch, and is cached or computed deterministically.
+**And** revoked epochs invalidate cached contexts.
+
+**Given** a document path and actor,
+**When** `POST /api/kb/v1/authz/check` is called,
+**Then** longest-prefix matching determines approval, path normalization prevents traversal, and unauthorized requests return structured errors.
+**And** cross-Space checks are denied and no cross-Space data leaks in error messages.
+
+**Dependencies:** I03.
+
+**Evidence:** service layer, API routes, T03b fixture-based contract tests, unit tests for longest-prefix and revocation.
+
+### Epic 10: Git Orchestrator implementation
+
+Реальный Git Orchestrator с GitLab client, canonical reads, ProposalRecord/DecisionRecord lifecycle.
+
+### Story 10.1 (I05): Git Orchestrator bootstrap and GitLab client
+
+As a backend engineer,
+I want a FastAPI service with GitLab client, connection pooling and exact-SHA read APIs,
+So that canonical document reads are served by GO instead of direct UI Git access.
+
+Requirements: R02,R05,R06,R09; I01,I02,I06,I08; A05,A06,A08,A09; CF-03.
+Acceptance ownership: Full/direct — A08; Supporting — A05,A06,A09.
+
+**Acceptance Criteria:**
+
+**Given** `src/git-orchestrator/`,
+**When** the service starts,
+**Then** it exposes `/health`, `/api/kb/v1/documents/read`, `/api/kb/v1/documents/tree`, and GitLab client configuration via environment variables.
+**And** reads are scoped to repository=Space and exact SHA; no write endpoints are exposed in this story.
+
+**Dependencies:** E09.I01 (implementation-phase bootstrap only).
+
+**Evidence:** service skeleton, GitLab adapter interface, read API, unit tests with mocked GitLab.
+
+### Story 10.2 (I06): ProposalRecord and DecisionRecord lifecycle
+
+As a backend engineer,
+I want ProposalRecord creation, review, DecisionRecord persistence and exact merge coordination,
+So that canonical changes follow the governed MR/human decision path.
+
+Requirements: R06,R07,R08,R09; I02,I06,I08,I09; A05,A06,A07,A08,A09,A27,A28,A29,A30; CF-03,CF-04.
+Acceptance ownership: Full/direct — A05,A06,A07,A08,A09,A27,A28,A29,A30.
+
+**Acceptance Criteria:**
+
+**Given** a ProposalRecord,
+**When** it is submitted,
+**Then** it is stored as a GitLab MR with a `kb_ops` operational projection, validated against schema, and linked to exact base SHA and idempotency key.
+**And** only authorized actors can create proposals, and self-approval is denied.
+
+**Given** a DecisionRecord and MR,
+**When** merge is requested,
+**Then** GO verifies HEAD matches proposal base, merge-only rules, and DecisionRecord before allowing GitLab merge.
+**And** direct push and auto-merge are denied; recovery and quarantine states are explicit.
+
+**Dependencies:** E10.I05.
+
+**Evidence:** ProposalRecord/DecisionRecord models, merge enforcement service, T05/T06 fixture-based contract tests.
+
+### Epic 11: Open WebUI fork KB seams
+
+Управляемые расширения Open WebUI для KB tree, direct read, TipTap editor и review UI.
+
+### Story 11.1 (I07): Open WebUI fork setup and KB API client
+
+As a frontend engineer,
+I want the pinned Open WebUI fork embedded under `src/open-webui/` with a typed KB API client,
+So that UI can call GO/Identity services without direct GitLab or DB access.
+
+Requirements: R01,R02,R03,R09; I01,I02,I06; A01,A08,A10; CF-01,CF-03.
+Acceptance ownership: Full/direct — A01,A08; Supporting — A10.
+
+**Acceptance Criteria:**
+
+**Given** `src/open-webui/`,
+**When** the fork is initialized,
+**Then** upstream v0.13.0 commit is preserved, `src/lib/api/kb.ts` or equivalent client exists, and UI routes for KB tree and document read are registered.
+**And** no direct GitLab API or `kb_*` DB access exists in UI code.
+
+**Dependencies:** E10.I05, E09.I04.
+
+**Evidence:** fork layout, KB API client, route registration, frontend build passes.
+
+### Epic 12: Retrieval + indexing implementation
+
+### Story 12.1 (I08): Index worker and pgvector search
+
+As a retrieval engineer,
+I want CI-triggered index builds, exact/semantic search and per-payload re-authorization,
+So that users can search within their authorized document set.
+
+Requirements: R04,R11,R16; I03,I05,I06; A02,A03,A11,A12,A21,A25,A31,A32; CF-05.
+Acceptance ownership: Full/direct — A03,A12,A21; Supporting — A02,A11,A25,A31,A32.
+
+**Acceptance Criteria:**
+
+**Given** canonical snapshots from GO,
+**When** index worker runs,
+**Then** `kb_index` stores generations, active pointers, and pgvector embeddings; search results are filtered by AuthzContext per payload.
+**And** exact search uses PostgreSQL FTS, semantic uses pgvector, and hybrid RRF is configurable.
+
+**Dependencies:** E10.I05, E09.I04.
+
+**Evidence:** index models, worker, search API, T10a/T10b fixture-based tests.
+
+### Epic 13: Ingestion + source connectors implementation
+
+### Story 13.1 (I09): Dry-run importer and source registry
+
+As an ingestion engineer,
+I want deterministic dry-run import, source registry and durable cursors,
+So that external sources can be onboarded without canonical writes until approved.
+
+Requirements: R12,R13,R16; I06,I08,I09; A13,A14,A23,A31,A35; CF-06.
+Acceptance ownership: Full/direct — A13,A14,A23; Supporting — A31,A35.
+
+**Acceptance Criteria:**
+
+**Given** a source configuration,
+**When** dry-run runs,
+**Then** it produces manifest, blockers and hash-stable preview without writing to canonical Git or product DB.
+**And** source cursors are durable and resumable; three-way updates detect conflicts.
+
+**Dependencies:** E10.I06, E09.I04.
+
+**Evidence:** importer, registry, T12a/T15 fixture-based tests.
 
 <!-- End story repeat -->
