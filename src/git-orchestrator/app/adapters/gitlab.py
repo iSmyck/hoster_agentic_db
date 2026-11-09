@@ -57,6 +57,33 @@ class GitLabAdapter(ABC):
     def branch_exists(self, space_id: str, branch: str) -> bool:
         """Return ``True`` if ``branch`` exists in the Space repository."""
 
+    @abstractmethod
+    def create_note(
+        self,
+        space_id: str,
+        mr_iid: int,
+        body: str,
+    ) -> dict[str, Any]:
+        """Create a structured MR note and return its metadata."""
+
+    @abstractmethod
+    def create_tag(
+        self,
+        space_id: str,
+        tag_name: str,
+        ref: str,
+        message: str,
+    ) -> dict[str, Any]:
+        """Create a protected annotated tag pointing at ``ref``."""
+
+    @abstractmethod
+    def get_commit(self, space_id: str, sha: str) -> dict[str, Any]:
+        """Return commit metadata including parent SHAs."""
+
+    @abstractmethod
+    def get_branch(self, space_id: str, branch: str) -> dict[str, Any]:
+        """Return branch metadata including HEAD commit SHA."""
+
 
 class HttpGitLabAdapter(GitLabAdapter):
     """Production adapter using the GitLab REST API via httpx.
@@ -205,6 +232,63 @@ class HttpGitLabAdapter(GitLabAdapter):
         response.raise_for_status()
         return True
 
+    def create_note(
+        self,
+        space_id: str,
+        mr_iid: int,
+        body: str,
+    ) -> dict[str, Any]:
+        import httpx
+
+        url = f"{self._project_url(space_id)}/merge_requests/{mr_iid}/notes"
+        response = httpx.post(
+            url,
+            headers=self._headers(),
+            json={"body": body},
+            timeout=30,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def create_tag(
+        self,
+        space_id: str,
+        tag_name: str,
+        ref: str,
+        message: str,
+    ) -> dict[str, Any]:
+        import httpx
+
+        url = f"{self._project_url(space_id)}/repository/tags"
+        response = httpx.post(
+            url,
+            headers=self._headers(),
+            json={
+                "tag_name": tag_name,
+                "ref": ref,
+                "message": message,
+            },
+            timeout=30,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def get_commit(self, space_id: str, sha: str) -> dict[str, Any]:
+        import httpx
+
+        url = f"{self._project_url(space_id)}/repository/commits/{sha}"
+        response = httpx.get(url, headers=self._headers(), timeout=30)
+        response.raise_for_status()
+        return response.json()
+
+    def get_branch(self, space_id: str, branch: str) -> dict[str, Any]:
+        import httpx
+
+        url = f"{self._project_url(space_id)}/repository/branches/{quote(branch, safe='')}"
+        response = httpx.get(url, headers=self._headers(), timeout=30)
+        response.raise_for_status()
+        return response.json()
+
 
 class StubGitLabAdapter(GitLabAdapter):
     """In-memory stub for unit tests. No external calls."""
@@ -275,3 +359,36 @@ class StubGitLabAdapter(GitLabAdapter):
 
     def branch_exists(self, space_id: str, branch: str) -> bool:
         return bool(self._get(("branch", space_id, branch), True))
+
+    def create_note(
+        self,
+        space_id: str,
+        mr_iid: int,
+        body: str,
+    ) -> dict[str, Any]:
+        note_id = len([k for k in self.state if k[0] == "note"]) + 1
+        note = {"id": note_id, "body": body, "mr_iid": mr_iid}
+        self.state[("note", space_id, mr_iid, note_id)] = note
+        return note
+
+    def create_tag(
+        self,
+        space_id: str,
+        tag_name: str,
+        ref: str,
+        message: str,
+    ) -> dict[str, Any]:
+        tag = {"name": tag_name, "target": ref, "message": message}
+        self.state[("tag", space_id, tag_name)] = tag
+        return tag
+
+    def get_commit(self, space_id: str, sha: str) -> dict[str, Any]:
+        commit = self._get(("commit", space_id, sha), {})
+        return dict(commit)
+
+    def get_branch(self, space_id: str, branch: str) -> dict[str, Any]:
+        branch_data = self._get(
+            ("branch", space_id, branch),
+            {"name": branch, "commit": {"id": ""}},
+        )
+        return dict(branch_data)

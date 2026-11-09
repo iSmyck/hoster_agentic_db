@@ -54,9 +54,19 @@ class ProposalRecord(Base):
         String(32),
         nullable=False,
         default="in_review",
-        comment="in_review | rejected | cancelled | merged | superseded",
+        comment="in_review | rejected | cancelled | merged | superseded | conflicted | quarantined",
     )
     idempotency_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    recovery_required: Mapped[bool] = mapped_column(
+        nullable=False,
+        default=False,
+        comment="Durable per-target merge barrier; blocks new merges until reconciled.",
+    )
+    merge_fence_token: Mapped[int] = mapped_column(
+        nullable=False,
+        default=0,
+        comment="Monotonic fencing token for per-target merge serialization.",
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -93,6 +103,32 @@ class DecisionRecord(Base):
         String(255),
         nullable=False,
         unique=True,
+    )
+    record_sha256: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        default="",
+        comment="SHA-256 of the canonical JSON DecisionRecord.",
+    )
+    note_id: Mapped[int | None] = mapped_column(
+        nullable=True,
+        comment="GitLab MR note ID containing the canonical record.",
+    )
+    tag_name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        default="",
+        comment="Protected annotated tag name kb-decisions/<decision_id>.",
+    )
+    supersedes_decision_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey(f"{_SCHEMA + '.' if _SCHEMA else ''}decisions.id"),
+        nullable=True,
+    )
+    state: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="recorded",
+        comment="recorded | merge_attempted | merged | failed | conflicted | invalid | quarantined",
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

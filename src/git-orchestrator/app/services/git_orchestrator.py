@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import uuid
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..adapters.gitlab import GitLabAdapter, GitLabAdapterError
@@ -20,6 +24,36 @@ class GitOrchestratorError(Exception):
         super().__init__(message)
         self.code = code
         self.message = message
+
+
+def _canonical_json(payload: dict[str, Any]) -> str:
+    """Serialize a DecisionRecord to deterministic canonical JSON bytes."""
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def _record_sha256(canonical_json: str) -> str:
+    """Return the SHA-256 hex digest of canonical JSON bytes."""
+    return hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
+
+
+def _target_proposals(db: Session, space_id: str, target_branch: str) -> list[ProposalRecord]:
+    """Return proposals for a target branch (Python-side filter for SQLite compat)."""
+    return [
+        p
+        for p in db.query(ProposalRecord).filter(ProposalRecord.space_id == space_id).all()
+        if p.proposal_data.get("target_branch", "main") == target_branch
+    ]
+
+
+def _next_fence_token(db: Session, space_id: str, target_branch: str) -> int:
+    """Return the next monotonic fence token for a target."""
+    proposals = _target_proposals(db, space_id, target_branch)
+    return max((p.merge_fence_token for p in proposals), default=0) + 1
+
+
+def _target_recovery_active(db: Session, space_id: str, target_branch: str) -> bool:
+    """Return True if any proposal for this target has recovery_required set."""
+    return any(p.recovery_required for p in _target_proposals(db, space_id, target_branch))
 
 
 def read_document(
@@ -113,7 +147,7 @@ def record_decision(
     adapter: GitLabAdapter,
     request: DecisionRecordRequest,
 ) -> DecisionRecord:
-    """Record a human decision for a proposal."""
+    """Record a human decision for a proposal with canonical note/tag anchors."""
     existing = (
         db.query(DecisionRecord)
         .filter_by(idempotency_key=request.idempotency_key)
@@ -136,12 +170,61 @@ def record_decision(
             f"proposal is already {proposal.status}",
         )
 
+    decision_id = uuid.uuid4()
+    now = datetime.now(UTC)
+    canonical = {
+        "decision_id": str(decision_id),
+        "proposal_id": str(proposal.id),
+        "proposal_sha": proposal.proposal_sha,
+        "base_sha": proposal.base_sha,
+        "action": request.action,
+        "actor_id": request.actor_id,
+        "timestamp": now.isoformat(),
+        "evidence": request.decision_data.get("evidence", {}),
+        "policy_bundle_id": request.decision_data.get("policy_bundle_id", ""),
+        "access_policy_revision": request.decision_data.get("access_policy_revision", ""),
+        "approval_policy_revision": request.decision_data.get("approval_policy_revision", ""),
+    }
+    canonical_json = _canonical_json(canonical)
+    sha256 = _record_sha256(canonical_json)
+    tag_name = f"kb-decisions/{decision_id}"
+
+    mr_iid = proposal.proposal_data.get("mr_iid")
+    if mr_iid is None:
+        raise GitOrchestratorError(
+            "INVALID_STATE",
+            "proposal has no associated merge request",
+        )
+
+    try:
+        note = adapter.create_note(
+            proposal.space_id,
+            mr_iid,
+            canonical_json,
+        )
+        adapter.create_tag(
+            proposal.space_id,
+            tag_name,
+            proposal.proposal_sha,
+            canonical_json,
+        )
+    except (GitLabAdapterError, httpx.HTTPError) as exc:
+        raise GitOrchestratorError(
+            "DECISION_ANCHOR_FAILED",
+            f"failed to create canonical decision anchors: {exc}",
+        ) from exc
+
     record = DecisionRecord(
+        id=decision_id,
         proposal_id=proposal.id,
         outcome=request.action,
-        decision_data=request.decision_data,
+        decision_data=canonical,
         actor_id=request.actor_id,
         idempotency_key=request.idempotency_key,
+        record_sha256=sha256,
+        note_id=note.get("id"),
+        tag_name=tag_name,
+        state="recorded",
     )
     db.add(record)
 
@@ -157,7 +240,7 @@ def execute_merge(
     adapter: GitLabAdapter,
     proposal_id: uuid.UUID,
 ) -> dict[str, Any]:
-    """Execute a reviewed, accepted proposal merge."""
+    """Execute a reviewed, accepted proposal merge with durability barrier."""
     proposal = db.get(ProposalRecord, proposal_id)
     if proposal is None:
         raise GitOrchestratorError("NOT_FOUND", "proposal not found")
@@ -187,34 +270,186 @@ def execute_merge(
         )
 
     mr_iid = proposal.proposal_data.get("mr_iid")
-    if mr_iid is not None:
-        mr = adapter.get_merge_request(proposal.space_id, mr_iid)
-        if mr.get("base_sha") and mr.get("base_sha") != proposal.base_sha:
-            raise GitOrchestratorError(
-                "BASE_MISMATCH",
-                "target HEAD does not match proposal base_sha",
-            )
+    if mr_iid is None:
+        raise GitOrchestratorError(
+            "INVALID_STATE",
+            "proposal has no associated merge request",
+        )
+
+    target_branch = proposal.proposal_data.get("target_branch", "main")
+    if _target_recovery_active(db, proposal.space_id, target_branch):
+        raise GitOrchestratorError(
+            "RECOVERY_REQUIRED",
+            "target has unresolved merge recovery; reconcile before new merges",
+        )
+
+    if decision.state != "recorded":
+        raise GitOrchestratorError(
+            "INVALID_STATE",
+            f"decision is already {decision.state}",
+        )
+
+    mr = adapter.get_merge_request(proposal.space_id, mr_iid)
+    if mr.get("base_sha") and mr.get("base_sha") != proposal.base_sha:
+        raise GitOrchestratorError(
+            "BASE_MISMATCH",
+            "target HEAD does not match proposal base_sha",
+        )
+
+    # Commit the durability barrier before the external merge call.
+    fence_token = _next_fence_token(db, proposal.space_id, target_branch)
+    proposal.merge_fence_token = fence_token
+    proposal.recovery_required = True
+    decision.state = "merge_attempted"
+    db.flush()
+    db.commit()
+
+    trailers = (
+        f"Decision-ID: {decision.id}\n"
+        f"Decision-Note-ID: {decision.note_id}\n"
+        f"Decision-Hash: {decision.record_sha256}\n"
+        f"Approved-by: {decision.actor_id}"
+    )
+    merge_message = f"Merge proposal {proposal.id}\n\n{trailers}"
 
     try:
         result = adapter.merge_merge_request(
             proposal.space_id,
-            mr_iid or 1,
+            mr_iid,
             proposal.proposal_sha,
         )
+        merge_sha = result.get("sha")
+        if merge_sha is None:
+            raise GitOrchestratorError(
+                "MERGE_FAILED",
+                "GitLab merge response missing commit SHA",
+            )
+
+        # Verify the merge commit exists and has correct parentage.
+        commit = adapter.get_commit(proposal.space_id, merge_sha)
+        parents = commit.get("parent_ids", [])
+        if len(parents) < 2 or parents[0] != proposal.base_sha or parents[1] != proposal.proposal_sha:
+            raise GitOrchestratorError(
+                "MERGE_PARENT_MISMATCH",
+                f"merge commit parents {parents} do not match base/proposal",
+            )
+
+        proposal.status = "merged"
+        proposal.target_sha = merge_sha
+        decision.state = "merged"
+        proposal.recovery_required = False
+        db.flush()
+        db.commit()
+
+        return {
+            "proposal_id": proposal.id,
+            "status": "merged",
+            "merge_sha": merge_sha,
+            "detail": "merged via GitLab with verified parentage",
+            "fence_token": fence_token,
+            "recovery_required": proposal.recovery_required,
+        }
     except (GitLabAdapterError, httpx.HTTPError) as exc:
+        # Unknown outcome: leave recovery_required=True and quarantine.
+        decision.state = "quarantined"
+        db.flush()
+        db.commit()
         raise GitOrchestratorError(
-            "MERGE_FAILED",
-            f"GitLab merge call failed: {exc}",
+            "MERGE_UNKNOWN_OUTCOME",
+            f"GitLab merge call failed; outcome unknown, target quarantined: {exc}",
         ) from exc
+    except GitOrchestratorError as exc:
+        if exc.code in ("MERGE_PARENT_MISMATCH", "MERGE_FAILED"):
+            # Verified failure: clear recovery and mark decision failed.
+            decision.state = "failed"
+            proposal.recovery_required = False
+            db.flush()
+            db.commit()
+        raise
 
-    proposal.status = "merged"
+
+def reconcile_merge(
+    db: Session,
+    adapter: GitLabAdapter,
+    proposal_id: uuid.UUID,
+) -> dict[str, Any]:
+    """Reconcile a quarantined merge attempt using Git-derived evidence."""
+    proposal = db.get(ProposalRecord, proposal_id)
+    if proposal is None:
+        raise GitOrchestratorError("NOT_FOUND", "proposal not found")
+
+    decision = (
+        db.query(DecisionRecord)
+        .filter_by(proposal_id=proposal.id, outcome="accepted")
+        .first()
+    )
+    if decision is None:
+        raise GitOrchestratorError("NOT_FOUND", "no accepted decision for this proposal")
+
+    if decision.state != "quarantined":
+        raise GitOrchestratorError(
+            "INVALID_STATE",
+            f"decision is {decision.state}, not quarantined",
+        )
+
+    mr_iid = proposal.proposal_data.get("mr_iid")
+    if mr_iid is None:
+        raise GitOrchestratorError("INVALID_STATE", "proposal has no associated merge request")
+
+    # Try to find a merge commit for this proposal in the target branch.
+    target_branch = proposal.proposal_data.get("target_branch", "main")
+    branch = adapter.get_branch(proposal.space_id, target_branch)
+    head_sha = branch.get("commit", {}).get("id", "")
+
+    # Walk back a small window looking for a merge commit with matching parents.
+    candidate_shas = [head_sha]
+    for _ in range(10):
+        next_shas = []
+        for sha in candidate_shas:
+            commit = adapter.get_commit(proposal.space_id, sha)
+            parents = commit.get("parent_ids", [])
+            if len(parents) >= 2 and parents[1] == proposal.proposal_sha:
+                # Found a merge commit whose second parent is our proposal.
+                if parents[0] == proposal.base_sha:
+                    decision.state = "merged"
+                    proposal.status = "merged"
+                    proposal.target_sha = sha
+                    proposal.recovery_required = False
+                    db.flush()
+                    db.commit()
+                    return {
+                        "proposal_id": proposal.id,
+                        "status": "merged",
+                        "merge_sha": sha,
+                        "detail": "reconciled from Git: merge commit found with correct parentage",
+                    }
+                decision.state = "conflicted"
+                proposal.status = "conflicted"
+                proposal.recovery_required = False
+                db.flush()
+                db.commit()
+                return {
+                    "proposal_id": proposal.id,
+                    "status": "conflicted",
+                    "merge_sha": sha,
+                    "detail": "merge commit found but first parent does not match base",
+                }
+            next_shas.extend(parents)
+        candidate_shas = next_shas
+        if not candidate_shas:
+            break
+
+    # No merge commit found: proposal was not merged.
+    decision.state = "failed"
+    proposal.status = "in_review"
+    proposal.recovery_required = False
     db.flush()
-
+    db.commit()
     return {
         "proposal_id": proposal.id,
-        "status": "merged",
-        "merge_sha": result.get("sha"),
-        "detail": "merged via GitLab",
+        "status": "failed",
+        "merge_sha": None,
+        "detail": "reconciled from Git: no merge commit found for proposal",
     }
 
 

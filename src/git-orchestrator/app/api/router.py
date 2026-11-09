@@ -43,6 +43,10 @@ def _handle_domain_error(exc: GitOrchestratorError) -> HTTPException:
         "SELF_APPROVAL": status.HTTP_403_FORBIDDEN,
         "BASE_MISMATCH": status.HTTP_409_CONFLICT,
         "MERGE_FAILED": status.HTTP_502_BAD_GATEWAY,
+        "MERGE_UNKNOWN_OUTCOME": status.HTTP_502_BAD_GATEWAY,
+        "MERGE_PARENT_MISMATCH": status.HTTP_502_BAD_GATEWAY,
+        "DECISION_ANCHOR_FAILED": status.HTTP_502_BAD_GATEWAY,
+        "RECOVERY_REQUIRED": status.HTTP_409_CONFLICT,
         "DIRECT_PUSH_BLOCKED": status.HTTP_403_FORBIDDEN,
         "SOURCE_BRANCH_NOT_FOUND": status.HTTP_404_NOT_FOUND,
         "MR_CREATE_FAILED": status.HTTP_502_BAD_GATEWAY,
@@ -183,6 +187,21 @@ def execute_merge(
 ) -> dict[str, Any]:
     try:
         return git_orchestrator.execute_merge(db, adapter, proposal_id)
+    except GitOrchestratorError as exc:
+        raise _handle_domain_error(exc) from exc
+
+
+@router.post(
+    "/api/kb/v1/proposals/{proposal_id}/reconcile",
+    response_model=MergeResponse,
+)
+def reconcile_merge(
+    proposal_id: uuid.UUID,
+    db: Annotated[Session, Depends(get_db)],
+    adapter: Annotated[GitLabAdapter, Depends(get_gitlab_adapter)],
+) -> dict[str, Any]:
+    try:
+        return git_orchestrator.reconcile_merge(db, adapter, proposal_id)
     except GitOrchestratorError as exc:
         raise _handle_domain_error(exc) from exc
 

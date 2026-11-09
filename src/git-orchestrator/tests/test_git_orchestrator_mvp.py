@@ -282,7 +282,7 @@ class TestMerge:
         proposal_resp = client.post("/api/kb/v1/proposals", json=proposal_base)
         proposal_id = proposal_resp.json()["id"]
 
-        client.post(
+        decision_resp = client.post(
             "/api/kb/v1/decisions",
             json={
                 "proposal_id": proposal_id,
@@ -291,12 +291,33 @@ class TestMerge:
                 "idempotency_key": "decision-merge-ok",
             },
         )
+        assert decision_resp.status_code == 201
+        decision_id = decision_resp.json()["id"]
+
+        # Stub a verified merge commit with correct parentage.
+        merge_sha = "m" * 40
+        stub_adapter: StubGitLabAdapter = client.app.state.gitlab_adapter
+        stub_adapter.state[("commit", proposal_base["space_id"], merge_sha)] = {
+            "id": merge_sha,
+            "parent_ids": [proposal_base["base_sha"], proposal_base["proposal_sha"]],
+        }
+        # Make the stub return the verified merge SHA.
+        original_merge = stub_adapter.merge_merge_request
+
+        def _verified_merge(space_id: str, mr_iid: int, sha: str) -> dict[str, Any]:
+            mr = original_merge(space_id, mr_iid, sha)
+            mr["sha"] = merge_sha
+            return mr
+
+        stub_adapter.merge_merge_request = _verified_merge  # type: ignore[assignment]
 
         resp = client.post(f"/api/kb/v1/proposals/{proposal_id}/merge")
         assert resp.status_code == 200, resp.text
         body = resp.json()
         assert body["status"] == "merged"
-        assert body["merge_sha"] == proposal_base["proposal_sha"]
+        assert body["merge_sha"] == merge_sha
+        assert body["recovery_required"] is False
+        assert body["fence_token"] is not None
 
     def test_merge_fails_without_decision(
         self,
@@ -408,7 +429,36 @@ class TestMerge:
 
         resp = client.post(f"/api/kb/v1/proposals/{proposal_id}/merge")
         assert resp.status_code == 502
-        assert resp.json()["detail"]["code"] == "MERGE_FAILED"
+        assert resp.json()["detail"]["code"] == "MERGE_UNKNOWN_OUTCOME"
+
+    def test_merge_recovery_required_blocks_subsequent(
+        self,
+        client: TestClient,
+        proposal_base: dict[str, Any],
+    ) -> None:
+        proposal_resp = client.post("/api/kb/v1/proposals", json=proposal_base)
+        proposal_id = proposal_resp.json()["id"]
+
+        client.post(
+            "/api/kb/v1/decisions",
+            json={
+                "proposal_id": proposal_id,
+                "action": "accepted",
+                "actor_id": "approver-1",
+                "idempotency_key": "decision-recovery-1",
+            },
+        )
+
+        stub_adapter: StubGitLabAdapter = client.app.state.gitlab_adapter
+        stub_adapter.state[("merge_fail", proposal_base["space_id"], 1)] = True
+
+        resp = client.post(f"/api/kb/v1/proposals/{proposal_id}/merge")
+        assert resp.status_code == 502
+
+        # Second merge attempt is blocked by recovery barrier.
+        resp2 = client.post(f"/api/kb/v1/proposals/{proposal_id}/merge")
+        assert resp2.status_code == 409
+        assert resp2.json()["detail"]["code"] == "RECOVERY_REQUIRED"
 
     def test_remerge_rejected(
         self,
@@ -427,6 +477,21 @@ class TestMerge:
                 "idempotency_key": "decision-remerge",
             },
         )
+
+        merge_sha = "m" * 40
+        stub_adapter: StubGitLabAdapter = client.app.state.gitlab_adapter
+        stub_adapter.state[("commit", proposal_base["space_id"], merge_sha)] = {
+            "id": merge_sha,
+            "parent_ids": [proposal_base["base_sha"], proposal_base["proposal_sha"]],
+        }
+        original_merge = stub_adapter.merge_merge_request
+
+        def _verified_merge(space_id: str, mr_iid: int, sha: str) -> dict[str, Any]:
+            mr = original_merge(space_id, mr_iid, sha)
+            mr["sha"] = merge_sha
+            return mr
+
+        stub_adapter.merge_merge_request = _verified_merge  # type: ignore[assignment]
 
         r1 = client.post(f"/api/kb/v1/proposals/{proposal_id}/merge")
         assert r1.status_code == 200

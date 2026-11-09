@@ -103,6 +103,11 @@ class DecisionResponse(BaseModel):
     outcome: str
     actor_id: str
     idempotency_key: str
+    record_sha256: str
+    note_id: int | None
+    tag_name: str
+    state: str
+    supersedes_decision_id: uuid.UUID | None
     created_at: datetime
 
 
@@ -113,6 +118,8 @@ class MergeResponse(BaseModel):
     status: str
     merge_sha: str | None
     detail: str
+    fence_token: int | None = None
+    recovery_required: bool | None = None
 
 
 class MergeRulesResponse(BaseModel):
