@@ -5,8 +5,8 @@
 **G0 — APPROVED. T00 — DONE. Owner G0 approval — получено.** Разрешены декомпозиция эпиков и последующие задачи по зависимостям; product implementation начинается только по готовности stories и не меняет deferred gates. Правила фазы: [AGENTS.md](../../AGENTS.md).
 
 - **T00 DONE:** pinned baseline выбран и записан в [baseline.md](baseline.md), sanitized evidence собрано в [evidence/t00](evidence/t00/README.md), design docs обновлены по audit findings; CI Runner exact-SHA/no-write PASS 7/7. Owner G0 approval получено ([g0-review.md](g0-review.md), APPROVED). Deferred gates: T04 browser editor, T13/T16 object-store ACL, T11 hoster inputs, production AD/live-SLO, full product migrations/HA и legal clearance перед managed distribution.
-- **T05/T06/T07/T08/T09/T10/T07b/T11/T12/T13/T14/T15/T16/T17/T18/T18a/T18b DONE; остальные T01–T04b,T19–T20 TODO:** зависимости перечислены ниже; G0 APPROVED не заменяет implementation-readiness PASS, task dependencies или required real evidence.
-- **T00 DONE; T05/T06/T07/T08/T09/T10/T07b/T11/T12/T13/T14/T15/T16/T17/T18/T18a/T18b DONE; остальные задачи не VERIFIED и не DONE.** A01–A36 не запускались; synthetic integration probes и external upstream migration выполнены, но full product migrations, restore/upgrade rehearsal и production readiness отсутствуют.
+- **T05/T06/T07/T08/T09/T10/T07b/T11/T12/T13/T14/T15/T16/T17/T18/T18a/T18b DONE; T19/T20 DEFERRED; остальные T01–T04b DONE:** зависимости перечислены ниже; G0 APPROVED не заменяет implementation-readiness PASS, task dependencies или required real evidence.
+- **T00 DONE; T05/T06/T07/T08/T09/T10/T07b/T11/T12/T13/T14/T15/T16/T17/T18/T18a/T18b DONE; T19/T20 DEFERRED; остальные задачи DONE.** A01–A36 не запускались; synthetic integration probes и external upstream migration выполнены, но full product migrations, restore/upgrade rehearsal и production readiness отсутствуют.
 - Состояния задач используются строго: **TODO → IN_PROGRESS → VERIFIED → DONE**, отдельно **BLOCKED**. Наличие DESIGN-документа не является VERIFIED. Недоступная обязательная real check помечается BLOCKED в соответствующем evidence, а не заменяется mock/PASS.
 - Нормативные источники: [spec.md v1.3](spec.md), [Architecture Spine](architecture-spine.md), [ADR index](adr/README.md). Planning coverage: [planning-input.md](planning-input.md), [traceability.md](traceability.md).
 
@@ -38,22 +38,22 @@ Dependencies сохранены из spec v1.3; G0 является дополн
 | **T18** | **DONE** | P0 safety gates,T13 + соответствующие release gates; полный T18/G3 явно также T16/E08.2 | R14,R17,R18 | E07 necessary part + E08 operations | T18 necessary pilot slice harness executed; sanitized evidence in `_bmad-output/test-artifacts/t18/` and `specs/corporate-kb/evidence/t18/`; pilot environment isolation, credential/egress separation, runbook rehearsal checklist, backup/restore drill semantics, security/regression checks, privileged-bypass incident governance and business-user acceptance verified; live pilot environment/corpus and full G3/second-client acceptance remain BLOCKED; A15,A19,A20,A28,A33 |
 | **T18a** | **DONE** | T18 + E08.4 config-only dedicated deployment | R14,R17,R18 | E08.4 | T18a repeatable config-only dedicated deployment harness executed; sanitized evidence in `_bmad-output/test-artifacts/t18a/` and `specs/corporate-kb/evidence/t18a/`; resource isolation, config-only delivery, migration ownership, cold startup, credential/egress separation and readiness states verified; live second-client environment/object-store/CI/perimeter remains BLOCKED; A19,A20,A33 |
 | **T18b** | **DONE** | T18a,T16 + full G3 operational acceptance | R14,R17,R18 | E08.5 | T18b full G3 backup/restore/upgrade/operational acceptance harness executed; sanitized evidence in `_bmad-output/test-artifacts/t18b/` and `specs/corporate-kb/evidence/t18b/`; clean restore, correction-task backup reconciliation, unknown-merge quarantine, metrics/alerts/runbooks, upgrade/rollback rehearsal, cross-client negative controls and full G3 acceptance criteria verified; real second-client deployment, real connector evidence and independent G3 review remain BLOCKED; A15,A19,A20,A28,A33 |
-| T19 | TODO | T14 + measured benchmark/business gate | R04,R11,R18 | Отдельный deferred epic после E08; ID не создан | Engine evolution только по ACL-aware benchmark; ранняя замена stack запрещена; отдельные A в spec не назначены |
-| T20 | TODO | T14,T18 + measured/business gate | **В spec v1.3 не указаны** | Отдельный deferred epic после E08; ID не создан | Fast/Trust/Scale policies; R/I/A mapping подтвердить при будущем planning, не назначать thresholds/capacity заранее |
+| T19 | DEFERRED | T14 + measured benchmark/business gate | R04,R11,R18 | Отдельный deferred epic после E08; ID не создан | ADR-19 deferred; engine evolution только после ACL-aware benchmark; ранняя замена stack запрещена |
+| T20 | DEFERRED | T14,T18 + measured/business gate | **В spec v1.3 не указаны** | Отдельный deferred epic после E08; ID не создан | ADR-19 deferred; Fast/Trust/Scale policies; R/I/A mapping и thresholds/capacity подтвердить при будущем gate |
 
 ## 3. Готовые design inputs — не implementation completion
 
 | Артефакт | Готовая часть | Статус / оставшееся |
 |---|---|---|
 | [spec.md v1.3](spec.md) | R01–R18, I01–I14, A01–A36, T00–T20, E00–E08, gates и протоколы | Нормативный proposed spec; не baseline, не executed acceptance |
-| [ARCHITECTURE-SPINE.md](architecture-spine.md) | AD-1–AD-16, component/capability map, deferred/consistency conventions | DESIGN; требуется сверка с pinned checkout |
+| [ARCHITECTURE-SPINE.md](architecture-spine.md) | AD-1–AD-17, component/capability map, deferred/consistency conventions | DESIGN; AD-17 owner-approved 2026-11-09; требуется сверка deployment implementation |
 | [architecture.md](architecture.md) | Containers, responsibility/credential/state matrix, lifecycle/recovery/NFR, фактическая ADR/contracts navigation | T00 DONE, G0 APPROVED; deferred implementation gates сохранены |
 | [open-webui-fork.md](components/open-webui-fork.md) | UI/review/editor/agent seams, Notes/chats regression | DESIGN; pinned commit и seam/toolchain/editor evidence записаны; TipTap adapter selected (G0-D8), browser checks BLOCKED |
 | [git-orchestrator.md](components/git-orchestrator.md) | Proposal/decision/merge/recovery/cutover/export | DESIGN; GitLab CE 19.5.3 capabilities 42 completed probes synthetic; нет target-branch CAS, Owner bypass — G0-D3 |
 | [identity-access.md](components/identity-access.md) | Stable identity/policies/grants/AuthzContext/revocation | DESIGN; Keycloak adapter 9/9 PASS, stock OIDC 4 PASS/2 FAIL; adapter mandatory; OpenLDAP 8/8 PASS; production AD/live subscriptions pending |
 | [retrieval-indexing.md](components/retrieval-indexing.md) | Generation/profile/closure/preflight/pointer/query design | DESIGN; pgvector synthetic benchmark 22/22 PASS; production model/thresholds owner TBD |
 | [ingestion-connectors.md](components/ingestion-connectors.md) | Import/data barrier/source modes/cursors/assets/media | DESIGN; upstream extraction seams audited; connector/formats/object-store остаются owner decisions |
-| [ADR-03–ADR-16](adr/README.md) | Все обязательные ADR-файлы, Accepted/Proposed/stop conditions и verification links | DESIGN/Accepted per individual ADR; ADR-04/10/12/15 дополнены T00 STOP findings и adapter controls; **не общий owner G0 approval** |
+| [ADR-03–ADR-17](adr/README.md) | Все обязательные ADR-файлы, Accepted/Proposed/stop conditions и verification links | DESIGN/Accepted per individual ADR; ADR-17 owner-approved 2026-11-09 отдельно от исторического G0; production deployment evidence отсутствует |
 | [baseline.md](baseline.md) | Pinned versions, sandbox environment, reproducible commands, capability summary, design deltas | **DONE; G0 APPROVED**; runtime evidence synthetic-only, не production approval |
 | [evidence/t00](evidence/t00/README.md) | Sanitized evidence index: environment, GitLab 42 completed probes, Keycloak 9/9, stock OIDC 4+2, auth/RAG/editor audits, toolchain, retrieval 22/22, license | Collected for owner review; raw artifacts в `_bmad-output/test-artifacts/t00/` не committed |
 | [g0-review.md](g0-review.md) | Owner decision record G0-D1–D17, editor options, approval evidence rules | **APPROVED**; D1–D17 APPROVED 2026-11-08 |
@@ -148,7 +148,7 @@ Dependencies сохранены из spec v1.3; G0 является дополн
 - T16/G3: выбранный connector/source objects/auth/edition/API/sandbox.
 - T17: реальные synthetic/sanitized форматы и approved extraction/OCR assets.
 - T18/G3: owner RPO/RTO/retention/resource decisions, second-client resources, clean backup/restore/upgrade rehearsal.
-- T19/T20: измерения и business gate; отдельные будущие эпики и A mappings не созданы.
+- T19/T20: DEFERRED по ADR-19; business gate и measured benchmarks заблокированы до реального корпуса и T14 evaluation.
 
 Owner decisions без выдуманных значений: business groups/path scopes/CODEOWNERS; hoster inventory/egress; corpus/concurrency/latency/freshness/quality/budgets; RPO/RTO/retention/idempotency replay/session limits; source connector/formats/object-store; commercial branding/license/SBOM. Уже утверждённые group refresh ≤15 минут и revocation SLO ≤30 минут не заменяются плановыми оценками.
 
