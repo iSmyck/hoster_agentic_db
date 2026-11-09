@@ -122,4 +122,4 @@ def downgrade() -> None:
         "identities",
     ):
         op.drop_table(table, schema=SCHEMA)
-    op.execute(f"DROP SCHEMA IF EXISTS {SCHEMA}")
+

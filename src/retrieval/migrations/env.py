@@ -7,7 +7,7 @@ from logging.config import fileConfig
 from pathlib import Path
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config, pool, text
 
 # Make the retrieval package importable from the repository root.
 _SRC = Path(__file__).resolve().parents[2]  # src/retrieval/migrations -> src
@@ -43,6 +43,8 @@ def run_migrations_offline() -> None:
     )
 
     with context.begin_transaction():
+        if settings.KB_INDEX_SCHEMA:
+            context.execute(f"CREATE SCHEMA IF NOT EXISTS {settings.KB_INDEX_SCHEMA};")
         context.run_migrations()
 
 
@@ -55,6 +57,10 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        if settings.KB_INDEX_SCHEMA:
+            connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {settings.KB_INDEX_SCHEMA}"))
+            connection.commit()
+
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

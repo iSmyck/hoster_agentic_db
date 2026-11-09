@@ -40,7 +40,19 @@ class Settings(BaseSettings):
     )
     EMBEDDING_MODEL: str = Field(
         default="stub-deterministic",
-        description="Embedding model identifier; 'stub-deterministic' uses the test stub.",
+        description="Embedding model identifier; 'stub-deterministic' uses the test stub, 'kimi' uses kimi.ai.",
+    )
+    KIMI_API_BASE_URL: str = Field(
+        default="https://api.kimi.com/coding/v1",
+        description="Base URL for the kimi.ai API.",
+    )
+    KIMI_API_KEY: str = Field(
+        default="",
+        description="API key for kimi.ai. Never log or expose this value.",
+    )
+    KIMI_EMBEDDING_MODEL: str = Field(
+        default="text-embedding-v2",
+        description="Model identifier passed to the kimi.ai embeddings endpoint.",
     )
     SEARCH_TOP_K: int = Field(
         default=10,

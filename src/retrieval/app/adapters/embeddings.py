@@ -87,4 +87,12 @@ def build_embedding_adapter(settings: Any) -> EmbeddingAdapter:
     """Factory returning the configured embedding adapter."""
     if settings.EMBEDDING_MODEL == "stub-deterministic":
         return StubEmbeddingAdapter(settings.EMBEDDING_DIMENSIONS)
+    if settings.EMBEDDING_MODEL == "kimi":
+        from retrieval.app.adapters.kimi_embeddings import KimiEmbeddingAdapter
+
+        return KimiEmbeddingAdapter(
+            api_base_url=settings.KIMI_API_BASE_URL,
+            api_key=settings.KIMI_API_KEY,
+            model=settings.KIMI_EMBEDDING_MODEL,
+        )
     return ProductionEmbeddingAdapter(settings.EMBEDDING_MODEL, settings.EMBEDDING_DIMENSIONS)

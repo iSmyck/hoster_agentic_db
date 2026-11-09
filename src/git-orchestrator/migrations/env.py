@@ -9,7 +9,7 @@ from logging.config import fileConfig
 from pathlib import Path
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config, pool, text
 
 # Make the git-orchestrator package importable under a valid Python identifier
 # so that Alembic can reference its models and settings.
@@ -49,6 +49,8 @@ def run_migrations_offline() -> None:
     )
 
     with context.begin_transaction():
+        if settings.KB_OPS_SCHEMA:
+            context.execute(f"CREATE SCHEMA IF NOT EXISTS {settings.KB_OPS_SCHEMA};")
         context.run_migrations()
 
 
@@ -61,6 +63,10 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        if settings.KB_OPS_SCHEMA:
+            connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {settings.KB_OPS_SCHEMA}"))
+            connection.commit()
+
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

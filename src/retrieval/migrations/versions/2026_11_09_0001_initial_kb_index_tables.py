@@ -146,4 +146,4 @@ def upgrade() -> None:
 def downgrade() -> None:
     for table in ("search_logs", "chunks", "index_pointers", "index_generations"):
         op.drop_table(table, schema=SCHEMA)
-    op.execute(f"DROP SCHEMA IF EXISTS {SCHEMA}")
+

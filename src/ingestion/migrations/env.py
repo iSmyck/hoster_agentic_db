@@ -6,7 +6,7 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config, pool, text
 
 from ingestion.app.core.config import settings
 from ingestion.app.models.ingestion import Base
@@ -35,6 +35,8 @@ def run_migrations_offline() -> None:
     )
 
     with context.begin_transaction():
+        if settings.KB_OPS_SCHEMA:
+            context.execute(f"CREATE SCHEMA IF NOT EXISTS {settings.KB_OPS_SCHEMA};")
         context.run_migrations()
 
 
@@ -47,6 +49,10 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        if settings.KB_OPS_SCHEMA:
+            connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {settings.KB_OPS_SCHEMA}"))
+            connection.commit()
+
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

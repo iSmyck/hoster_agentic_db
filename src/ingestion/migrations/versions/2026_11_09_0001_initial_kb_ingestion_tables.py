@@ -155,4 +155,4 @@ def downgrade() -> None:
         "source_registries",
     ):
         op.drop_table(table, schema=SCHEMA)
-    op.execute(f"DROP SCHEMA IF EXISTS {SCHEMA}")
+
