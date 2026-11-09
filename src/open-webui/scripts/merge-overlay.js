@@ -111,6 +111,18 @@ async function main() {
 
 	await writeManifest(copied);
 
+	// Copy overlay root-level configuration files (e.g. vite.config.ts) on top
+	// of upstream. These are intentionally few and replace upstream defaults.
+	const root_files_to_sync = ["vite.config.ts"];
+	for (const name of root_files_to_sync) {
+		const source = join(root, name);
+		const target = join(upstream, name);
+		if (await exists(source)) {
+			await copyFile(source, target);
+			copied.add(relative(upstream, target));
+		}
+	}
+
 	console.log(
 		`[merge-overlay] Overlay merged into ${relative(root, upstream)}. KB routes mapped to upstream/src/routes.`,
 	);
