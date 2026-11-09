@@ -7,18 +7,19 @@
  *   - src/lib/*      -> copied to upstream/src/lib/*
  *   - src/lib/routes -> copied to upstream/src/routes (SvelteKit route tree)
  *
- * The script is idempotent: it overwrites files from the overlay, removes
- * overlay-managed files that no longer exist, and keeps routes out of
- * upstream/src/lib/routes.
+ * The script is idempotent: it copies overlay files on top of upstream and
+ * records a manifest so previously-copied overlay files can be removed when
+ * they no longer exist in the overlay.
  */
 
-import { cp, mkdir, readdir, rm, stat, unlink } from 'node:fs/promises';
-import { dirname, join, relative } from 'node:path';
+import { cp, mkdir, readdir, readFile, rm, stat, unlink, writeFile } from 'node:fs/promises';
+import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
 const upstream = join(root, 'upstream');
+const manifestPath = join(root, '.overlay-manifest.json');
 
 async function exists(p) {
 	try {
@@ -41,27 +42,21 @@ async function* walk(dir) {
 	}
 }
 
-async function copyDir(source, target) {
-	await mkdir(target, { recursive: true });
-	await cp(source, target, { recursive: true, force: true, preserveTimestamps: true });
+async function copyFile(source, target) {
+	await mkdir(dirname(target), { recursive: true });
+	await cp(source, target, { force: true, preserveTimestamps: true });
 }
 
-/**
- * Remove files from `target` whose relative paths are not present in `source`.
- * Only walks files that exist under target; directories are left empty.
- */
-async function cleanStaleFiles(source, target) {
-	if (!(await exists(target))) return;
-	const sourceFiles = new Set();
-	for await (const file of walk(source)) {
-		sourceFiles.add(relative(source, file));
+async function readManifest() {
+	try {
+		return JSON.parse(await readFile(manifestPath, 'utf-8'));
+	} catch {
+		return [];
 	}
-	for await (const file of walk(target)) {
-		const rel = relative(target, file);
-		if (!sourceFiles.has(rel)) {
-			await unlink(file);
-		}
-	}
+}
+
+async function writeManifest(files) {
+	await writeFile(manifestPath, JSON.stringify(Array.from(files), null, 2));
 }
 
 async function main() {
@@ -78,22 +73,43 @@ async function main() {
 	const upstreamLib = join(upstream, 'src', 'lib');
 	const overlayRoutes = join(overlayLib, 'routes');
 	const upstreamRoutes = join(upstream, 'src', 'routes');
-	const upstreamLibRoutes = join(upstreamLib, 'routes');
 
-	// Clean stale overlay files before copying, then sync lib contents.
-	await cleanStaleFiles(overlayLib, upstreamLib);
-	await copyDir(overlayLib, upstreamLib);
+	const copied = new Set();
+
+	// Copy overlay lib files individually so upstream-only files are preserved.
+	for await (const file of walk(overlayLib)) {
+		const rel = relative(overlayLib, file);
+		// Routes are handled separately below.
+		if (rel.startsWith('routes' + sep)) continue;
+		const target = join(upstreamLib, rel);
+		await copyFile(file, target);
+		copied.add(relative(upstream, target));
+	}
 
 	// SvelteKit expects routes under src/routes, not src/lib/routes.
-	// Remove any duplicate routes left under upstream/src/lib/routes and sync
-	// the canonical route tree separately.
-	if (await exists(upstreamLibRoutes)) {
-		await rm(upstreamLibRoutes, { recursive: true, force: true });
-	}
 	if (await exists(overlayRoutes)) {
-		await cleanStaleFiles(overlayRoutes, upstreamRoutes);
-		await copyDir(overlayRoutes, upstreamRoutes);
+		for await (const file of walk(overlayRoutes)) {
+			const rel = relative(overlayRoutes, file);
+			const target = join(upstreamRoutes, rel);
+			await copyFile(file, target);
+			copied.add(relative(upstream, target));
+		}
 	}
+
+	// Remove previously-copied overlay files that no longer exist.
+	const previous = await readManifest();
+	const current = new Set(copied);
+	for (const rel of previous) {
+		if (!current.has(rel)) {
+			try {
+				await unlink(join(upstream, rel));
+			} catch {
+				// ignore if already gone
+			}
+		}
+	}
+
+	await writeManifest(copied);
 
 	console.log(
 		`[merge-overlay] Overlay merged into ${relative(root, upstream)}. KB routes mapped to upstream/src/routes.`,
