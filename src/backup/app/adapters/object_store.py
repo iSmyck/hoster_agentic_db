@@ -77,6 +77,26 @@ class ObjectStoreAdapter(ABC):
     def list_object_versions(self, space_id: str, object_id: str) -> list[ObjectStoreEntry]:
         """List all versions of an object."""
 
+    @abstractmethod
+    def create_bucket(self, bucket: str) -> None:
+        """Create the target bucket if it does not exist."""
+
+    @abstractmethod
+    def put_object(
+        self,
+        space_id: str,
+        object_id: str,
+        data: bytes,
+        version: str | None = None,
+        media_type: str | None = None,
+        source_ref: str | None = None,
+    ) -> ObjectStoreEntry:
+        """Store an object in the target Space bucket.
+
+        ``version`` is advisory metadata from the backup manifest; the actual
+        version identifier is returned in the resulting ``ObjectStoreEntry``.
+        """
+
 
 class MinioObjectStoreAdapter(ObjectStoreAdapter):
     """MinIO/S3-backed object-store adapter.
@@ -109,8 +129,11 @@ class MinioObjectStoreAdapter(ObjectStoreAdapter):
         return f"{space_id}/{object_id}"
 
     def _ensure_bucket(self) -> None:
-        if not self.client.bucket_exists(self.bucket):
-            self.client.make_bucket(self.bucket)
+        self.create_bucket(self.bucket)
+
+    def create_bucket(self, bucket: str) -> None:
+        if not self.client.bucket_exists(bucket):
+            self.client.make_bucket(bucket)
 
     def upload(
         self,
@@ -162,6 +185,52 @@ class MinioObjectStoreAdapter(ObjectStoreAdapter):
         try:
             objects = self.client.list_objects(self.bucket, prefix=prefix, recursive=True)
             return [self._entry_from_object(obj) for obj in objects]
+        except S3Error as exc:
+            raise ObjectStoreAdapterError(
+                str(exc), status_code=getattr(exc, "http_status", None), s3_code=exc.code
+            ) from exc
+        except Exception as exc:
+            raise ObjectStoreAdapterError(str(exc)) from exc
+
+    def put_object(
+        self,
+        space_id: str,
+        object_id: str,
+        data: bytes,
+        version: str | None = None,
+        media_type: str | None = None,
+        source_ref: str | None = None,
+    ) -> ObjectStoreEntry:
+        from io import BytesIO
+
+        from minio.error import S3Error
+
+        key = self._object_key(space_id, object_id)
+        sha256 = hashlib.sha256(data).hexdigest()
+        metadata: dict[str, str] = {
+            "sha256": sha256,
+            "backup_version": version or "null",
+        }
+        if source_ref is not None:
+            metadata["source_ref"] = source_ref
+        try:
+            self.client.put_object(
+                self.bucket,
+                key,
+                BytesIO(data),
+                length=len(data),
+                content_type=media_type or "application/octet-stream",
+                metadata=metadata,
+            )
+            stat = self.client.stat_object(self.bucket, key)
+            return ObjectStoreEntry(
+                object_id=object_id,
+                version=stat.version_id or stat.etag or "null",
+                sha256=sha256,
+                size=len(data),
+                media_type=media_type,
+                source_ref=source_ref,
+            )
         except S3Error as exc:
             raise ObjectStoreAdapterError(
                 str(exc), status_code=getattr(exc, "http_status", None), s3_code=exc.code
@@ -269,6 +338,32 @@ class StubObjectStoreAdapter(ObjectStoreAdapter):
 
     def list_objects(self, space_id: str) -> list[ObjectStoreEntry]:
         return list(self._store.get(space_id, {}).values())
+
+    def create_bucket(self, bucket: str) -> None:
+        return
+
+    def put_object(
+        self,
+        space_id: str,
+        object_id: str,
+        data: bytes,
+        version: str | None = None,
+        media_type: str | None = None,
+        source_ref: str | None = None,
+    ) -> ObjectStoreEntry:
+        sha256 = hashlib.sha256(data).hexdigest()
+        next_version = f"v{len(self._content) + 1}"
+        entry = ObjectStoreEntry(
+            object_id=object_id,
+            version=next_version,
+            sha256=sha256,
+            size=len(data),
+            media_type=media_type,
+            source_ref=source_ref,
+        )
+        self._store.setdefault(space_id, {})[object_id] = entry
+        self._content[(space_id, object_id, next_version)] = data
+        return entry
 
     def get_object(self, space_id: str, object_id: str, version: str | None = None) -> bytes:
         candidates = [

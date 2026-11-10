@@ -45,6 +45,14 @@ from backup.app.main import create_app
 from backup.app.services.backup import BackupService
 from backup.app.services.object_store import ObjectStoreService
 from backup.app.services.postgres_backup import PostgresBackupService
+from backup.app.services.restore import RestoreService
+
+
+class CountingPostgresService(PostgresBackupService):
+    """PostgresBackupService stub that reports a matching decision count."""
+
+    def count_decisions(self, space_id: str) -> int:
+        return 1
 
 
 @pytest.fixture
@@ -171,13 +179,14 @@ def postgres_backup_service() -> PostgresBackupService:
         class Result:
             returncode = 0
             stderr = b""
+            stdout = b"-- synthetic pg_dump\n"
 
         stdout = kwargs.get("stdout")
-        if stdout is not None:
+        if stdout is not None and hasattr(stdout, "write"):
             stdout.write(b"-- synthetic pg_dump\n")
         return Result()
 
-    return PostgresBackupService(
+    return CountingPostgresService(
         host="localhost",
         port=5432,
         user="u",
@@ -226,7 +235,16 @@ def client(
         object_store_adapter=object_store_adapter,
         postgres_backup_service=postgres_backup_service,
     )
-    app = create_app(service=service)
+    restore_service = RestoreService(
+        adapter=stub_adapter,
+        storage_path=str(tmp_storage_path / "backups"),
+        gitlab_url=str(synthetic_git_repo.parent),
+        gitlab_token="",
+        project_path_prefix="",
+        object_store_adapter=object_store_adapter,
+        postgres_backup_service=postgres_backup_service,
+    )
+    app = create_app(service=service, restore_service=restore_service)
 
     app.dependency_overrides.clear()
     with TestClient(app) as c:

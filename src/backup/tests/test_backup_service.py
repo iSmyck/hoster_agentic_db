@@ -387,7 +387,7 @@ def test_full_backup_includes_postgres_and_object_store(
             stderr = b""
 
         stdout = kwargs.get("stdout")
-        if stdout is not None:
+        if stdout is not None and hasattr(stdout, "write"):
             stdout.write(b"-- synthetic pg_dump\n")
         return Result()
 
@@ -459,13 +459,19 @@ def test_full_backup_object_store_hash_mismatch_fails(
         def list_object_versions(self, space_id: str, object_id: str) -> list[ObjectStoreEntry]:
             return [self.entry]
 
+        def create_bucket(self, bucket: str) -> None:
+            return
+
+        def put_object(self, *args: Any, **kwargs: Any) -> ObjectStoreEntry:
+            return self.entry
+
     def fake_run(*args: Any, **kwargs: Any) -> Any:
         class Result:
             returncode = 0
             stderr = b""
 
         stdout = kwargs.get("stdout")
-        if stdout is not None:
+        if stdout is not None and hasattr(stdout, "write"):
             stdout.write(b"-- synthetic pg_dump\n")
         return Result()
 
@@ -553,6 +559,12 @@ def test_upload_object_endpoint_missing_bucket_returns_502(client: Any) -> None:
             raise ObjectStoreAdapterError("bucket missing", s3_code="NoSuchBucket")
 
         def list_object_versions(self, *args: Any, **kwargs: Any) -> Any:
+            raise ObjectStoreAdapterError("bucket missing", s3_code="NoSuchBucket")
+
+        def create_bucket(self, bucket: str) -> None:
+            raise ObjectStoreAdapterError("bucket missing", s3_code="NoSuchBucket")
+
+        def put_object(self, *args: Any, **kwargs: Any) -> Any:
             raise ObjectStoreAdapterError("bucket missing", s3_code="NoSuchBucket")
 
     adapter = MissingBucketAdapter()

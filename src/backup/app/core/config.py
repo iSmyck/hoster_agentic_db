@@ -113,6 +113,67 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("BACKUP_POSTGRES_SCHEMAS", "BACKUP_SCHEMAS"),
     )
 
+    # Restore target environment credentials (separate from source backup settings).
+    BACKUP_RESTORE_GITLAB_URL: str = Field(
+        default="http://localhost:8081",
+        description="GitLab instance base URL for restore target.",
+        validation_alias=AliasChoices("BACKUP_RESTORE_GITLAB_URL"),
+    )
+    BACKUP_RESTORE_GITLAB_TOKEN: str = Field(
+        default="",
+        description="GitLab API token for the restore target identity.",
+        validation_alias=AliasChoices("BACKUP_RESTORE_GITLAB_TOKEN"),
+    )
+    BACKUP_RESTORE_GITLAB_PROJECT_PATH_PREFIX: str = Field(
+        default="",
+        description="Optional prefix when mapping target space_id to a GitLab project path.",
+        validation_alias=AliasChoices("BACKUP_RESTORE_GITLAB_PROJECT_PATH_PREFIX"),
+    )
+    BACKUP_RESTORE_POSTGRES_HOST: str = Field(
+        default="localhost",
+        validation_alias=AliasChoices("BACKUP_RESTORE_POSTGRES_HOST"),
+    )
+    BACKUP_RESTORE_POSTGRES_PORT: int = Field(
+        default=5432,
+        validation_alias=AliasChoices("BACKUP_RESTORE_POSTGRES_PORT"),
+    )
+    BACKUP_RESTORE_POSTGRES_USER: str = Field(
+        default="corp_kb_restore",
+        validation_alias=AliasChoices("BACKUP_RESTORE_POSTGRES_USER"),
+    )
+    BACKUP_RESTORE_POSTGRES_PASSWORD: str = Field(
+        default="",
+        validation_alias=AliasChoices("BACKUP_RESTORE_POSTGRES_PASSWORD"),
+    )
+    BACKUP_RESTORE_POSTGRES_DB: str = Field(
+        default="corp_kb_restore",
+        validation_alias=AliasChoices("BACKUP_RESTORE_POSTGRES_DB"),
+    )
+    BACKUP_RESTORE_MINIO_ENDPOINT: str = Field(
+        default="localhost:9000",
+        validation_alias=AliasChoices("BACKUP_RESTORE_MINIO_ENDPOINT"),
+    )
+    BACKUP_RESTORE_MINIO_ACCESS_KEY: str = Field(
+        default="",
+        validation_alias=AliasChoices("BACKUP_RESTORE_MINIO_ACCESS_KEY"),
+    )
+    BACKUP_RESTORE_MINIO_SECRET_KEY: str = Field(
+        default="",
+        validation_alias=AliasChoices("BACKUP_RESTORE_MINIO_SECRET_KEY"),
+    )
+    BACKUP_RESTORE_MINIO_USE_SSL: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("BACKUP_RESTORE_MINIO_USE_SSL"),
+    )
+    BACKUP_RESTORE_MINIO_BUCKET: str = Field(
+        default="kb-restores",
+        validation_alias=AliasChoices("BACKUP_RESTORE_MINIO_BUCKET"),
+    )
+    RUN_LIVE_RESTORE_TESTS: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("RUN_LIVE_RESTORE_TESTS"),
+    )
+
     LOG_LEVEL: str = Field(
         default="INFO",
         validation_alias=AliasChoices("BACKUP_LOG_LEVEL", "LOG_LEVEL"),

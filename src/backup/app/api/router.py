@@ -9,24 +9,32 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from backup.app.adapters.gitlab import BackupGitLabAdapterError
 from backup.app.adapters.object_store import ObjectStoreAdapterError
 from backup.app.core.config import settings
+from backup.app.models.restore import RestoreRequest
 from backup.app.schemas.backup import (
     BackupCreateResponse,
     BackupLatestResponse,
     ErrorResponse,
     HealthResponse,
+    IntegrityResponse,
     ObjectUploadResponse,
+    RestoreResponse,
 )
 from backup.app.services.backup import BackupService, BackupServiceError
 from backup.app.services.object_store import ObjectStoreService, ObjectStoreServiceError
+from backup.app.services.restore import RestoreService, RestoreServiceError
 
 router = APIRouter()
-
 _SPACE_ID_RE = __import__("re").compile(r"^[a-zA-Z0-9_-]+$")
 
 
 def get_backup_service(request: Request) -> BackupService:
     """Return the BackupService stored on the application instance."""
     return request.app.state.backup_service
+
+
+def get_restore_service(request: Request) -> RestoreService:
+    """Return the RestoreService stored on the application instance."""
+    return request.app.state.restore_service
 
 
 def get_object_store_service(request: Request) -> ObjectStoreService:
@@ -57,6 +65,39 @@ def _handle_backup_error(exc: BackupServiceError) -> HTTPException:
                 status_code = status.HTTP_403_FORBIDDEN
             elif cause.status_code == 404:
                 status_code = status.HTTP_404_NOT_FOUND
+    return HTTPException(
+        status_code=status_code,
+        detail={"code": exc.code, "message": exc.message},
+    )
+
+
+def _handle_restore_error(exc: RestoreServiceError) -> HTTPException:
+    code_map = {
+        "INVALID_SPACE_ID": status.HTTP_400_BAD_REQUEST,
+        "PACKAGE_NOT_FOUND": status.HTTP_404_NOT_FOUND,
+        "MANIFEST_MISSING": status.HTTP_404_NOT_FOUND,
+        "MANIFEST_INVALID": status.HTTP_400_BAD_REQUEST,
+        "TARGET_EXISTS": status.HTTP_409_CONFLICT,
+        "MIRROR_MISSING": status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "GIT_RESTORE_ERROR": status.HTTP_502_BAD_GATEWAY,
+        "POSTGRES_NOT_CONFIGURED": status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "OBJECT_STORE_NOT_CONFIGURED": status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "ASSETS_MANIFEST_MISSING": status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "OBJECT_FILE_MISSING": status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "OBJECT_HASH_MISMATCH": status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "OBJECT_STORE_ERROR": status.HTTP_502_BAD_GATEWAY,
+        "RESTORE_FAILED": status.HTTP_500_INTERNAL_SERVER_ERROR,
+    }
+    status_code = code_map.get(exc.code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+    if exc.code == "GIT_RESTORE_ERROR":
+        cause = exc.__cause__
+        if isinstance(cause, BackupGitLabAdapterError) and cause.status_code is not None:
+            if cause.status_code == 403:
+                status_code = status.HTTP_403_FORBIDDEN
+            elif cause.status_code == 404:
+                status_code = status.HTTP_404_NOT_FOUND
+            elif cause.status_code == 409:
+                status_code = status.HTTP_409_CONFLICT
     return HTTPException(
         status_code=status_code,
         detail={"code": exc.code, "message": exc.message},
@@ -214,3 +255,65 @@ def create_full_backup(
         "status": package.status.value,
         "package_path": package.package_path,
     }
+
+
+@router.post(
+    "/api/kb/v1/backups/{space_id}/restore",
+    status_code=status.HTTP_200_OK,
+    response_model=RestoreResponse,
+    responses={
+        400: {"model": ErrorResponse},
+        403: {"model": ErrorResponse},
+        404: {"model": ErrorResponse},
+        409: {"model": ErrorResponse},
+        502: {"model": ErrorResponse},
+        500: {"model": ErrorResponse},
+    },
+)
+def restore_backup(
+    space_id: str,
+    request: RestoreRequest,
+    service: Annotated[RestoreService, Depends(get_restore_service)],
+) -> dict[str, Any]:
+    if not space_id or not _SPACE_ID_RE.fullmatch(space_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "INVALID_SPACE_ID", "message": "invalid space_id"},
+        )
+    try:
+        result = service.restore(space_id, request.backup_id or "", request)
+    except RestoreServiceError as exc:
+        raise _handle_restore_error(exc) from exc
+    return result.model_dump(mode="json")
+
+
+@router.post(
+    "/api/kb/v1/backups/{space_id}/verify-integrity",
+    status_code=status.HTTP_200_OK,
+    response_model=IntegrityResponse,
+    responses={
+        400: {"model": ErrorResponse},
+        404: {"model": ErrorResponse},
+        500: {"model": ErrorResponse},
+    },
+)
+def verify_backup_integrity(
+    space_id: str,
+    backup_id: Annotated[str, Form()],
+    service: Annotated[RestoreService, Depends(get_restore_service)],
+) -> dict[str, Any]:
+    if not space_id or not _SPACE_ID_RE.fullmatch(space_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "INVALID_SPACE_ID", "message": "invalid space_id"},
+        )
+    if not backup_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "INVALID_BACKUP_ID", "message": "backup_id is required"},
+        )
+    try:
+        report = service.verify_integrity(space_id, backup_id)
+    except RestoreServiceError as exc:
+        raise _handle_restore_error(exc) from exc
+    return report.model_dump(mode="json")

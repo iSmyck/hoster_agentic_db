@@ -50,6 +50,132 @@ class PostgresBackupService:
         self.pg_dump_command = pg_dump_command or ["pg_dump"]
         self._run_command = run_command if run_command is not None else subprocess.run
 
+    def restore_schemas(
+        self,
+        export_dir: Path,
+        run_command: Any | None = None,
+    ) -> None:
+        """Restore operational schemas from pg_dump SQL files.
+
+        Runs ``psql -f {schema}_schema.sql`` then ``psql -f {schema}_data.sql``
+        for each schema found in ``export_dir``.  The subprocess runner can be
+        overridden in tests to avoid a real PostgreSQL dependency.
+        """
+        runner = run_command if run_command is not None else self._run_command
+        env = {**os.environ, "PGPASSWORD": self.password}
+        base_command = [
+            "psql",
+            "--host",
+            self.host,
+            "--port",
+            str(self.port),
+            "--username",
+            self.user,
+            "--dbname",
+            self.db,
+            "--no-password",
+            "--quiet",
+        ]
+
+        for schema in self.schemas:
+            schema_file = export_dir / f"{schema}_schema.sql"
+            data_file = export_dir / f"{schema}_data.sql"
+            for sql_file in [schema_file, data_file]:
+                if not sql_file.exists():
+                    continue
+                command = [*base_command, "--file", str(sql_file)]
+                try:
+                    result = runner(
+                        command,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        env=env,
+                        check=False,
+                        timeout=300,
+                    )
+                    if result.returncode != 0:
+                        stderr = (
+                            result.stderr.decode("utf-8", errors="replace")
+                            if result.stderr
+                            else ""
+                        )
+                        logger.error("psql restore failed for %s: %s", sql_file, stderr)
+                        raise PostgresBackupServiceError(
+                            "PSQL_FAILED",
+                            f"psql restore failed for {sql_file}: {stderr}",
+                        )
+                except FileNotFoundError as exc:
+                    raise PostgresBackupServiceError(
+                        "PSQL_NOT_FOUND",
+                        f"psql not found: {exc}",
+                    ) from exc
+                except PostgresBackupServiceError:
+                    raise
+                except Exception as exc:
+                    raise PostgresBackupServiceError(
+                        "POSTGRES_RESTORE_ERROR",
+                        f"unexpected error restoring {sql_file}: {exc}",
+                    ) from exc
+
+    def count_decisions(self, space_id: str) -> int:
+        """Count decisions for a Space in the restored kb_ops schema.
+
+        Uses ``psql`` subprocess by default.  The subprocess runner can be
+        overridden in tests to avoid a real PostgreSQL dependency.
+        """
+        env = {**os.environ, "PGPASSWORD": self.password}
+        schema = "kb_ops"
+        if self.schemas and "kb_ops" not in self.schemas:
+            schema = self.schemas[0]
+        command = [
+            "psql",
+            "--host",
+            self.host,
+            "--port",
+            str(self.port),
+            "--username",
+            self.user,
+            "--dbname",
+            self.db,
+            "--no-password",
+            "--quiet",
+            "--tuples-only",
+            "--command",
+            f"SELECT COUNT(*) FROM {schema}.decisions WHERE space_id = '{space_id}'",
+        ]
+        try:
+            result = self._run_command(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=env,
+                check=False,
+                timeout=60,
+            )
+            if result.returncode != 0:
+                stderr = (
+                    result.stderr.decode("utf-8", errors="replace") if result.stderr else ""
+                )
+                logger.error("psql count_decisions failed for %s: %s", space_id, stderr)
+                raise PostgresBackupServiceError(
+                    "PSQL_FAILED",
+                    f"psql count_decisions failed for {space_id}: {stderr}",
+                )
+            stdout = result.stdout.decode("utf-8", errors="replace").strip() if result.stdout else "0"
+            return int(stdout)
+        except FileNotFoundError as exc:
+            raise PostgresBackupServiceError(
+                "PSQL_NOT_FOUND",
+                f"psql not found: {exc}",
+            ) from exc
+        except PostgresBackupServiceError:
+            raise
+        except Exception as exc:
+            raise PostgresBackupServiceError(
+                "POSTGRES_RESTORE_ERROR",
+                f"unexpected error counting decisions for {space_id}: {exc}",
+            ) from exc
+
     def dump_schemas(
         self,
         space_id: str,

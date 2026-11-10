@@ -20,7 +20,7 @@ def _fake_run(returncode: int = 0, stderr: bytes = b"") -> Any:
 
     def run(*args: Any, **kwargs: Any) -> Any:
         stdout = kwargs.get("stdout")
-        if stdout is not None:
+        if stdout is not None and hasattr(stdout, "write"):
             stdout.write(b"-- synthetic pg_dump output\n")
         return Result()
 

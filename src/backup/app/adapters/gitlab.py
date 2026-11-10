@@ -38,6 +38,13 @@ class BackupGitLabAdapter(ABC):
     def get_branch(self, space_id: str, branch: str) -> dict[str, Any]:
         """Return branch metadata including HEAD commit SHA."""
 
+    @abstractmethod
+    def push_mirror(self, space_id: str, mirror_dir: str) -> dict[str, Any]:
+        """Push a local bare mirror to the target Space repository.
+
+        Returns a summary dict with at least ``status`` and ``output`` keys.
+        """
+
 
 class HttpBackupGitLabAdapter(BackupGitLabAdapter):
     """Production adapter using the GitLab REST API via httpx.
@@ -130,6 +137,32 @@ class HttpBackupGitLabAdapter(BackupGitLabAdapter):
     def get_project_url(self, space_id: str) -> str:
         return f"{self.base_url}/{self._project_path(space_id)}"
 
+    def push_mirror(self, space_id: str, mirror_dir: str) -> dict[str, Any]:
+        import subprocess
+        from urllib.parse import quote
+
+        project_path = self._project_path(space_id)
+        base = self.base_url.rstrip("/")
+        if self.token:
+            quoted_token = quote(self.token, safe="")
+            url = f"{base.replace('://', f'://oauth2:{quoted_token}@', 1)}/{project_path}.git"
+        else:
+            url = f"{base}/{project_path}.git"
+        result = subprocess.run(
+            ["git", "push", "--mirror", url],
+            cwd=mirror_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=300,
+        )
+        if result.returncode != 0:
+            raise BackupGitLabAdapterError(
+                f"git push --mirror failed for {space_id}: {result.stderr}",
+                status_code=500,
+            )
+        return {"status": "ok", "output": result.stdout, "target_url": url}
+
 
 class StubBackupGitLabAdapter(BackupGitLabAdapter):
     """In-memory stub for unit tests. No external calls."""
@@ -158,3 +191,9 @@ class StubBackupGitLabAdapter(BackupGitLabAdapter):
 
     def get_project_url(self, space_id: str) -> str:
         return f"http://stub.example.com/{space_id}"
+
+    def push_mirror(self, space_id: str, mirror_dir: str) -> dict[str, Any]:
+        pushed = self.state.get(("push_mirror", space_id), True)
+        if pushed is True:
+            return {"status": "ok", "output": "stub push mirror", "target_url": self.get_project_url(space_id)}
+        raise BackupGitLabAdapterError(f"push mirror rejected for {space_id}", status_code=409)

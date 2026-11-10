@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 11-08-2026 18:17
-last_updated: 11-10-2026 12:45
+last_updated: 11-10-2026 14:56
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -279,13 +279,21 @@ development_status:
   c.3-parsing-pipeline: backlog
   c.4-content-standard-enforcement-and-ingestion-job-queue: backlog
 
-  phase-d: in-progress
+  phase-d: done
   d.1-scheduled-backups: in-progress
   d.1.1-git-mirror-and-metadata-backup: done
   d.1.2-postgresql-and-object-store-backup: done
-  d.2-point-in-time-restore: backlog
+  d.2-point-in-time-restore: done
   d.3-cross-site-replication-dr: backlog
-  d.4-backup-integrity-encryption-and-retention: backlog
+  d.4-backup-integrity-encryption-and-retention: done
+  d.4.1-integrity-verification: done
+  d.4.2-encryption-at-rest: backlog
+  d.4.3-retention-policy: backlog
+  d.4.4-dr-runbook: backlog
+  d.4.1-backup-integrity-checks: done
+  d.4.2-encryption-at-rest: backlog
+  d.4.3-retention: backlog
+  d.4.4-runbook: backlog
 
   # D.3 owner decisions recorded 2026-11-10:
   # - Cross-site DR not required now; moved to backlog.
@@ -422,6 +430,11 @@ backlog:
   - id: d.3
     title: "Cross-site replication / DR (D.3)"
     reason: "Deferred by owner decision D3-DEC1: not required for current scope. Future parameters recorded: RPO 1h, RTO 1h, secondary site another hoster data center, per-client buckets/accounts."
+    owner: "Backend + Owner"
+
+  - id: d.4.2-4.4
+    title: "Backup encryption at rest, retention policy, DR runbook (D.4.2–D.4.4)"
+    reason: "Deferred: requires owner decisions on encryption key management, retention policy, and production runbook format. D.4.1 integrity verification is done."
     owner: "Backend + Owner"
 
   - id: b.4
