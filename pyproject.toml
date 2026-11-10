@@ -29,7 +29,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "src/identity/tests", "src/git-orchestrator/tests", "src/retrieval/tests", "src/ingestion/tests", "src/session/tests"]
+testpaths = ["tests", "src/identity/tests", "src/git-orchestrator/tests", "src/retrieval/tests", "src/ingestion/tests", "src/session/tests", "src/backup/tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 pythonpath = ["src"]

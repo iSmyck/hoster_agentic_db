@@ -36,7 +36,7 @@ tracking_system: file-system
 story_location: 
   /Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/implementation-artifacts
 
-current_phase: "G1 vertical slice implementation — DONE; preparing for phase B"
+current_phase: "Phase D — Backup/restore and disaster recovery"
 roadmap:
   - id: A
     name: "G1 vertical slice implementation"
@@ -48,11 +48,11 @@ roadmap:
     target_milestone: "Estimate TBC — 2026-12 (pending T04/T05 live closure)"
   - id: C
     name: "Ingestion/source connectors"
-    status: TODO
+    status: backlog
     target_milestone: "Estimate TBC — 2026-12/2027-01 (pending owner source selection)"
   - id: D
     name: "Backup/restore and disaster recovery"
-    status: TODO
+    status: in-progress
     target_milestone: "Estimate TBC — 2027-01 (pending RPO/RTO owner decision)"
   - id: E
     name: "Production hardening, Hoster evaluation, second-client deployment"
@@ -271,6 +271,19 @@ development_status:
   b.3-retrieval-service-live-integration: done
   b.4-index-management-and-relevance-tuning: backlog
 
+  phase-c: backlog
+  c.1-file-upload-and-media-handling: backlog
+  c.2-connector-framework: backlog
+  c.3-parsing-pipeline: backlog
+  c.4-content-standard-enforcement-and-ingestion-job-queue: backlog
+
+  phase-d: in-progress
+  d.1-scheduled-backups: in-progress
+  d.1.1-git-mirror-and-metadata-backup: done
+  d.2-point-in-time-restore: backlog
+  d.3-cross-site-replication-dr: backlog
+  d.4-backup-integrity-encryption-and-retention: backlog
+
 action_items:
   - epic: 1
     action: "G2: execute live acceptance A01–A36 on sandbox GitLab + PostgreSQL +
@@ -354,7 +367,11 @@ decisions:
     status: accepted
   - id: "G1-D4"
     decision: "No corpus/connector work now; no data migration"
+    status: superseded
+  - id: "G1-D4-rev1"
+    decision: "Move Phase C (ingestion/source connectors) to backlog; proceed with Phase D backup/restore and disaster recovery instead"
     status: accepted
+    supersedes: "G1-D4"
   - id: "G1-D5"
     decision: "MinIO is sufficient for object storage"
     status: accepted
@@ -367,6 +384,11 @@ decisions:
     status: accepted
 
 backlog:
+  - id: c.all
+    title: "Ingestion/source connectors (all C.1–C.4)"
+    reason: "Moved to backlog by owner decision 2026-11-10: no corpus/connector work or data migration needed now; proceed with Phase D backup/restore instead."
+    owner: "Backend + Owner"
+
   - id: b.4
     title: "Index management and relevance tuning"
     reason: "Deferred by owner decision: current Markdown-based knowledge base is sufficient for launch; full index worker, CI builds, incremental/full equivalence, profile shadow builds and Russian-aware chunking/embedding tuning are not required now."
