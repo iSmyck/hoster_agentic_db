@@ -39,6 +39,11 @@ class Settings(BaseSettings):
         description="Base URL of the Git Orchestrator service.",
         validation_alias=AliasChoices("RETRIEVAL_GO_SERVICE_URL", "GO_SERVICE_URL"),
     )
+    GO_CLIENT_MODE: str = Field(
+        default="http",
+        description="GO client mode: 'http' for HttpGOClient, 'stub' for in-memory synthetic fixture.",
+        validation_alias=AliasChoices("RETRIEVAL_GO_CLIENT_MODE", "GO_CLIENT_MODE"),
+    )
     EMBEDDING_DIMENSIONS: int = Field(
         default=384,
         description="Dimensionality of embedding vectors.",

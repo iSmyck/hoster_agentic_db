@@ -71,6 +71,11 @@ class SearchRequest(BaseModel):
     profile: str = Field(default="default", max_length=128)
     mode: Literal["semantic", "exact", "hybrid"] = "hybrid"
     top_k: int = Field(default=10, ge=1, le=100)
+    cursor: str | None = Field(
+        default=None,
+        description="Client-supplied snapshot or generation bound. "
+        "If present, the active generation must match it or STALE_SNAPSHOT is returned.",
+    )
 
 
 class SearchResultItem(BaseModel):

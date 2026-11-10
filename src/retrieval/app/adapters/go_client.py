@@ -86,3 +86,60 @@ class StubGOClient(GOClient):
             {"commit": {"id": ""}},
         )
         return branch_data["commit"]["id"]
+
+
+SMOKE_SNAPSHOT_SHA = "a" * 40
+
+
+def _synthetic_documents(space_id: str, snapshot_sha: str) -> dict[tuple[str, ...], object]:
+    """Return synthetic GO state for ``space_id``/``snapshot_sha``."""
+    return {
+        ("tree", space_id, snapshot_sha): [
+            {"path": "docs/public.md", "type": "blob", "sha": "b" * 40},
+            {"path": "docs/restricted.md", "type": "blob", "sha": "c" * 40},
+            {"path": "secret/internal.md", "type": "blob", "sha": "d" * 40},
+        ],
+        ("doc", space_id, "docs/public.md", snapshot_sha): (
+            "Public retrieval documentation for authorized readers. "
+            "This page describes how semantic search returns relevant chunks."
+        ),
+        ("doc", space_id, "docs/restricted.md", snapshot_sha): (
+            "Restricted retrieval documentation. "
+            "Only approvers should see this page in search results."
+        ),
+        ("doc", space_id, "secret/internal.md", snapshot_sha): (
+            "Internal secret retrieval documentation. "
+            "This must never appear in search results for regular readers."
+        ),
+        ("branch", space_id, "main"): {"commit": {"id": snapshot_sha}},
+    }
+
+
+class SyntheticStubGOClient(StubGOClient):
+    """Stub GO client that serves the same synthetic snapshot for any space."""
+
+    def __init__(self, snapshot_sha: str = SMOKE_SNAPSHOT_SHA) -> None:
+        self._snapshot_sha = snapshot_sha
+        super().__init__()
+
+    def get_tree(self, space_id: str, sha: str) -> list[dict[str, Any]]:
+        return list(_synthetic_documents(space_id, self._snapshot_sha).get(("tree", space_id, sha), []))
+
+    def read_document(self, space_id: str, path: str, sha: str) -> str:
+        return str(
+            _synthetic_documents(space_id, self._snapshot_sha).get(("doc", space_id, path, sha), "")
+        )
+
+    def get_branch_head(self, space_id: str, branch: str = "main") -> str:
+        return self._snapshot_sha
+
+
+def build_synthetic_stub_go_client() -> SyntheticStubGOClient:
+    """Return a GO client populated with a small synthetic snapshot.
+
+    Used for live smoke/integration tests when no real Git Orchestrator is
+    running. The fixture contains public and restricted documents so ACL
+    filtering can be exercised end-to-end. The synthetic snapshot is returned
+    for any space id, keeping concurrent smoke and live-test runs isolated.
+    """
+    return SyntheticStubGOClient()

@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from retrieval.app.adapters.embeddings import EmbeddingAdapter, build_embedding_adapter
-from retrieval.app.adapters.go_client import GOClient, HttpGOClient
+from retrieval.app.adapters.go_client import GOClient, HttpGOClient, build_synthetic_stub_go_client
 from retrieval.app.adapters.identity_client import HttpIdentityClient, IdentityClient
 from retrieval.app.api.router import router as retrieval_router
 from retrieval.app.core.config import settings
@@ -27,7 +27,10 @@ def create_app(
     if identity_client is None:
         identity_client = HttpIdentityClient(settings.IDENTITY_SERVICE_URL)
     if go_client is None:
-        go_client = HttpGOClient(settings.GO_SERVICE_URL)
+        if settings.GO_CLIENT_MODE.lower() == "stub":
+            go_client = build_synthetic_stub_go_client()
+        else:
+            go_client = HttpGOClient(settings.GO_SERVICE_URL)
     if embedding_adapter is None:
         embedding_adapter = build_embedding_adapter(settings)
 

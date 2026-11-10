@@ -86,15 +86,25 @@ def search(
     profile: str = "default",
     mode: str = "hybrid",
     top_k: int = 10,
+    cursor: str | None = None,
 ) -> dict[str, Any]:
     """Execute an authorized search against the active published index.
 
     Per-payload re-authorization is performed for every candidate chunk via
     the Identity/AuthZ service before it is returned.
+
+    A ``cursor`` bound to a stale generation or snapshot causes
+    ``STALE_SNAPSHOT`` so callers cannot silently read from a superseded index.
     """
     generation = indexing.get_active_generation(db, space_id, profile)
     if generation is None:
         raise RetrievalServiceError("INDEX_NOT_READY", "no active index for space/profile")
+
+    if cursor is not None and cursor not in (str(generation.id), generation.snapshot_sha):
+        raise RetrievalServiceError(
+            "STALE_SNAPSHOT",
+            "cursor is bound to a generation that is no longer active",
+        )
 
     query_embedding: list[float] = []
     if mode in ("semantic", "hybrid"):

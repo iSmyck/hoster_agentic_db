@@ -51,6 +51,7 @@ def _handle_domain_error(exc: RetrievalServiceError) -> HTTPException:
         "INDEX_NOT_READY": status.HTTP_503_SERVICE_UNAVAILABLE,
         "INDEX_GENERATION_CONFLICT": status.HTTP_409_CONFLICT,
         "INVALID_STATE": status.HTTP_409_CONFLICT,
+        "STALE_SNAPSHOT": status.HTTP_409_CONFLICT,
         "UPSTREAM_UNAVAILABLE": status.HTTP_502_BAD_GATEWAY,
     }
     return HTTPException(
@@ -164,6 +165,7 @@ def search_index(
             profile=request.profile,
             mode=request.mode,
             top_k=request.top_k,
+            cursor=request.cursor,
         )
     except RetrievalServiceError as exc:
         raise _handle_domain_error(exc) from exc
