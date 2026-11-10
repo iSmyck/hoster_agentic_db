@@ -100,6 +100,30 @@ warnings:
 - Given valid session, when GO protected route called, then request allowed with correct stable_id.
 - Given revoked session, when GO protected route called, then 401.
 
+### Review Findings (code review of B.2 group A — session service code + tests)
+
+**decision-needed:**
+(none)
+
+**patch:**
+- [x] [Review][Patch] `logout` endpoint with `-> None` and `from __future__ import annotations` could trigger FastAPI 204-body assertion on some versions — `src/session/app/api/router.py:150`. Fixed by adding `response_model=None`.
+- [x] [Review][Patch] `extra_claims` column has inconsistent nullability/default between model and migration — `src/session/app/models/session.py:73` and `src/session/migrations/versions/2026_11_10_0001_initial_kb_sessions_tables.py:38`. Fixed: model `nullable=False`, migration `server_default='{}'::jsonb` and quoted schema identifier.
+- [x] [Review][Patch] Spec intent requires global revocation, but only per-user `revoke-all` existed — `src/session/app/api/router.py:162`. Fixed by adding `POST /api/kb/v1/session/revoke-all/global` backed by `revoke_all_sessions`.
+- [x] [Review][Patch] Invalid `external_ref` could return HTTP 422 from Pydantic before custom 401 handling — `src/session/app/schemas/session.py:22` and `src/session/app/api/router.py:70`. Fixed: changed `external_ref` type to permissive `dict[str, Any] | None` and rely on `_derive_stable_id` for 401.
+- [x] [Review][Patch] Missing HTTP-level tests for empty Bearer, non-Bearer scheme, invalid `external_ref`, logout with refresh token, and global revoke-all — `src/session/tests/test_session_live.py`. Added corresponding tests.
+
+**defer:**
+- [x] [Review][Defer] Refresh tokens are not rotated on refresh — `src/session/app/services/session_service.py:208`. Deferred: current design invalidates old access token via JTI rotation; refresh-token rotation is a future hardening.
+- [x] [Review][Defer] No rate limiting, brute-force protection, or structured audit logging on session endpoints — `src/session/app/api/router.py`. Deferred: out of scope for initial Session service.
+- [x] [Review][Defer] No automated cleanup of expired sessions — `src/session/app/models/session.py`. Deferred: requires background job design.
+- [x] [Review][Defer] `revoke_all_for_user` loads rows into memory — `src/session/app/services/session_service.py:286`. Deferred: acceptable for expected scale; can switch to bulk UPDATE later.
+
+**rejected:**
+- Default `SECRET_KEY` shorter than 32 bytes — false; default is 35 bytes and tests use 48-byte secret.
+- No dependency manifest for Session service — false; `pyproject.toml` includes `pyjwt` and testpaths.
+- JWT tokens omit `aud` claim — deferred security hardening, not a defect in this scope.
+- `.env.example`, `pyproject.toml`, GO auth changes missing from diff — false; this review chunk was scoped to `src/session/`.
+
 ## Design Notes
 
 - Token format: signed JWT (HS256) with `session_id`, `stable_id`, `type` (`access`/`refresh`), `exp`. Validation checks signature, expiry, and DB revocation state.
@@ -136,7 +160,7 @@ warnings:
   - `pyproject.toml` — added `pyjwt`, included `src/session/tests` in testpaths, added ruff per-file ignores.
   - `_bmad-output/implementation-artifacts/sprint-status.yaml` — marked `b.2-session-service: done`.
   - Evidence in `_bmad-output/test-artifacts/b2/` and `specs/corporate-kb/evidence/b2/`.
-- Patches applied: 1 medium (secret key length).
+- Patches applied: 1 medium (secret key length) + 5 post-review patch findings (logout response_model, extra_claims consistency, global revoke-all endpoint, 422→401 for invalid ref, missing HTTP-level tests).
 - Rejected findings: 1 low (role hardcoding).
 - Follow-up review recommended: `false`.
 - Verification performed:

@@ -106,6 +106,27 @@ warnings:
 - `uv run pytest -q src/retrieval/tests` -- expected: all pass.
 - `uv run ruff check src/retrieval` -- expected: clean.
 
+### Review Findings (code review of B.3 group A — retrieval code + tests)
+
+**decision-needed:**
+(none)
+
+**patch:**
+- [x] [Review][Patch] `GO_CLIENT_MODE` accepted arbitrary strings and silently fell back to HTTP mode — `src/retrieval/app/core/config.py:42`. Fixed by changing type to `Literal["http", "stub"]`.
+- [x] [Review][Patch] Empty `cursor` string was incorrectly rejected as stale snapshot — `src/retrieval/app/services/search.py:103`. Fixed by treating empty string as no cursor.
+- [x] [Review][Patch] No unit test for `STALE_SNAPSHOT` cursor behavior — `src/retrieval/tests/test_retrieval_mvp.py`. Added `TestCursorAndClientMode.test_stale_cursor_returns_conflict`.
+- [x] [Review][Patch] `GO_CLIENT_MODE` wiring untested — `src/retrieval/tests/test_retrieval_mvp.py`. Added tests for stub mode selection and invalid mode rejection.
+- [x] [Review][Patch] `SPACE_ID` fixed in `smoke_retrieval.py` and short random suffix in `test_retrieval_live.py` could collide across runs — `src/retrieval/scripts/smoke_retrieval.py:33`, `src/retrieval/tests/test_retrieval_live.py:18`. Fixed by using UUID-derived and longer random space ids.
+
+**defer:**
+- [x] [Review][Defer] `SearchLog` writes into `kb_index` schema, violating ADR-015 single-writer matrix — `src/retrieval/app/services/search.py`. Deferred: pre-existing issue, not introduced by B.3; requires separate refactoring.
+- [x] [Review][Defer] Retrieval AuthZ only exercises path-approver check, not full `AuthzContext` epoch/policy contract — `src/retrieval/app/services/search.py`. Deferred: out of B.3 scope; depends on hardened AuthZ contract.
+- [x] [Review][Defer] Smoke/live tests do not assert approver access to `/secret` documents or verify `docs/restricted.md` is returned to readers — `src/retrieval/scripts/smoke_retrieval.py`, `src/retrieval/tests/test_retrieval_live.py`. Deferred: coverage gap, not a defect.
+
+**rejected:**
+- Evidence pytest logs contain absolute venv paths — false/acceptable; generated test output naturally includes interpreter paths and does not expose secrets.
+- `.env.example` / `pyproject.toml` / GO auth integration missing from diff — false; this review chunk was scoped to `src/retrieval/`.
+
 ## Review Triage Log
 
 ### 2026-11-10 — Review pass
@@ -130,7 +151,7 @@ warnings:
   - `.env.example` — added `RETRIEVAL_GO_CLIENT_MODE`.
   - `_bmad-output/implementation-artifacts/sprint-status.yaml` — marked `b.3-retrieval-service-live-integration: done`.
   - Evidence in `_bmad-output/test-artifacts/b3/` and `specs/corporate-kb/evidence/b3/`.
-- Patches applied: 1 medium (move synthetic stub out of `main.py`).
+- Patches applied: 1 medium (move synthetic stub out of `main.py`) + 5 post-review patch findings (`GO_CLIENT_MODE` Literal, empty cursor handling, STALE_SNAPSHOT unit test, GO_CLIENT_MODE wiring tests, random SPACE_ID).
 - Rejected findings: 2 low (fixture scope, cursor serialization).
 - Follow-up review recommended: `false`.
 - Verification performed:

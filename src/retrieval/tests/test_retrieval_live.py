@@ -15,7 +15,7 @@ from typing import Any
 import httpx
 import pytest
 
-SPACE_ID = f"live-test-{secrets.token_hex(4)}"
+SPACE_ID = f"live-test-{secrets.token_hex(16)}"
 SNAPSHOT_SHA = "a" * 40
 STALE_SHA = "b" * 40
 

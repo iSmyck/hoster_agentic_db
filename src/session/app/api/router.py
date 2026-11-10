@@ -147,7 +147,7 @@ def refresh_session(
     }
 
 
-@router.post("/api/kb/v1/session/logout", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/api/kb/v1/session/logout", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 def logout(
     request: LogoutRequest,
     db: Annotated[Session, Depends(get_db)],
@@ -171,6 +171,19 @@ def revoke_all(
         raise _handle_domain_error(exc) from exc
 
     return {"stable_id": request.stable_id, "revoked_count": revoked_count}
+
+
+@router.post("/api/kb/v1/session/revoke-all/global", status_code=status.HTTP_200_OK)
+def revoke_all_global(
+    db: Annotated[Session, Depends(get_db)],
+) -> dict[str, Any]:
+    """Revoke all active sessions globally."""
+    try:
+        revoked_count = session_service.revoke_all_sessions(db)
+    except SessionServiceError as exc:
+        raise _handle_domain_error(exc) from exc
+
+    return {"revoked_count": revoked_count}
 
 
 @router.get("/health", response_model=HealthResponse)

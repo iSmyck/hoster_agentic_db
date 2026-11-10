@@ -292,18 +292,31 @@ def revoke_all_for_user(db: Session, stable_id: str) -> int:
         raise SessionServiceError("INVALID_IDENTITY", "stable_id is required")
 
     now = _now()
-    rows = (
+    count = (
         db.query(SessionRecord)
         .filter(
             SessionRecord.stable_id == stable_id,
             SessionRecord.revoked_at.is_(None),
         )
-        .all()
+        .update({"revoked_at": now}, synchronize_session=False)
     )
-    for record in rows:
-        record.revoked_at = now
     db.flush()
-    return len(rows)
+    return count
+
+
+def revoke_all_sessions(db: Session) -> int:
+    """Revoke all active sessions globally.
+
+    Returns the number of sessions revoked.
+    """
+    now = _now()
+    count = (
+        db.query(SessionRecord)
+        .filter(SessionRecord.revoked_at.is_(None))
+        .update({"revoked_at": now}, synchronize_session=False)
+    )
+    db.flush()
+    return count
 
 
 def logout(db: Session, token: str) -> None:

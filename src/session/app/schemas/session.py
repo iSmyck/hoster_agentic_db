@@ -19,7 +19,7 @@ class ExternalRef(BaseModel):
 class CreateSessionRequest(BaseModel):
     """POST /api/kb/v1/session/create"""
 
-    external_ref: ExternalRef | dict[str, Any] | None = None
+    external_ref: dict[str, Any] | None = None
     stable_id: str | None = None
     access_policy_revision: str | None = Field(default=None, pattern=r"^[0-9a-f]{40}$")
     approval_policy_revision: str | None = Field(default=None, pattern=r"^[0-9a-f]{40}$")

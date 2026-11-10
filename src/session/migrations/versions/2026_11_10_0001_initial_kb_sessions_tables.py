@@ -23,7 +23,7 @@ SCHEMA = "kb_sessions"
 
 
 def upgrade() -> None:
-    op.execute(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}")
+    op.execute(f'CREATE SCHEMA IF NOT EXISTS "{SCHEMA}"')
 
     op.create_table(
         "sessions",
@@ -35,7 +35,7 @@ def upgrade() -> None:
         sa.Column("revoked_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("access_policy_revision", sa.String(length=40), nullable=False),
         sa.Column("approval_policy_revision", sa.String(length=40), nullable=False),
-        sa.Column("extra_claims", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("extra_claims", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
         sa.PrimaryKeyConstraint("session_id"),
         schema=SCHEMA,
     )

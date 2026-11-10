@@ -30,7 +30,7 @@ from typing import Any
 import httpx
 
 # Synthetic fixture identifiers. These are public test values, not secrets.
-SPACE_ID = "smoke-space"
+SPACE_ID = f"smoke-space-{uuid.uuid4().hex[:8]}"
 SNAPSHOT_SHA = "a" * 40
 STALE_SHA = "b" * 40
 

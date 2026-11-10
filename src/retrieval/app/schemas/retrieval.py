@@ -73,6 +73,8 @@ class SearchRequest(BaseModel):
     top_k: int = Field(default=10, ge=1, le=100)
     cursor: str | None = Field(
         default=None,
+        min_length=1,
+        max_length=40,
         description="Client-supplied snapshot or generation bound. "
         "If present, the active generation must match it or STALE_SNAPSHOT is returned.",
     )

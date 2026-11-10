@@ -72,6 +72,7 @@ class SessionRecord(Base):
     )
     extra_claims: Mapped[dict[str, Any]] = mapped_column(
         JSONB if _SCHEMA else JSON,
+        nullable=False,
         default=dict,
         comment="Optional provider-specific claims preserved at issuance.",
     )

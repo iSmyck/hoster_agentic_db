@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -39,7 +41,7 @@ class Settings(BaseSettings):
         description="Base URL of the Git Orchestrator service.",
         validation_alias=AliasChoices("RETRIEVAL_GO_SERVICE_URL", "GO_SERVICE_URL"),
     )
-    GO_CLIENT_MODE: str = Field(
+    GO_CLIENT_MODE: Literal["http", "stub"] = Field(
         default="http",
         description="GO client mode: 'http' for HttpGOClient, 'stub' for in-memory synthetic fixture.",
         validation_alias=AliasChoices("RETRIEVAL_GO_CLIENT_MODE", "GO_CLIENT_MODE"),

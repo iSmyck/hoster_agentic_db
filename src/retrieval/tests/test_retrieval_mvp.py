@@ -857,3 +857,66 @@ class TestSearchChunkLimit:
             top_k=10,
         )
         assert len(response["results"]) <= 2
+
+
+class TestCursorAndClientMode:
+    def test_stale_cursor_returns_conflict(
+        self,
+        client: TestClient,
+        go_client: StubGOClient,
+        identity_client: StubIdentityClient,
+        space_id: str,
+        snapshot_sha: str,
+        actor_id: uuid.UUID,
+    ) -> None:
+        go_client.state[("tree", space_id, snapshot_sha)] = [
+            {"path": "docs/public.md", "type": "blob", "sha": "b" * 40},
+        ]
+        go_client.state[("doc", space_id, "docs/public.md", snapshot_sha)] = "Public docs."
+
+        build_resp = client.post(
+            "/api/kb/v1/index/build",
+            json={"space_id": space_id, "snapshot_sha": snapshot_sha},
+        )
+        generation_id = build_resp.json()["generation_id"]
+
+        client.post(
+            "/api/kb/v1/index/activate",
+            json={
+                "space_id": space_id,
+                "profile": "default",
+                "generation_id": str(generation_id),
+                "fence_token": 0,
+            },
+        )
+
+        resp = client.post(
+            "/api/kb/v1/search",
+            json={
+                "space_id": space_id,
+                "query": "public",
+                "actor_id": str(actor_id),
+                "profile": "default",
+                "cursor": "stale-cursor",
+            },
+        )
+        assert resp.status_code == 409
+        assert resp.json()["detail"]["code"] == "STALE_SNAPSHOT"
+
+    def test_go_client_mode_stub_selects_synthetic_stub(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv("RETRIEVAL_GO_CLIENT_MODE", "stub")
+        # Re-import settings to pick up the env change.
+        from retrieval.app.core.config import Settings
+
+        settings = Settings()
+        assert settings.GO_CLIENT_MODE == "stub"
+
+    def test_go_client_mode_invalid_rejected(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("RETRIEVAL_GO_CLIENT_MODE", "invalid")
+        from retrieval.app.core.config import Settings
+
+        with pytest.raises(ValueError):
+            Settings()

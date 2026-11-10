@@ -59,6 +59,35 @@ class TestCreateAndValidate:
         assert resp.status_code == 401
         assert resp.json()["detail"]["code"] == "AUTH_REQUIRED"
 
+    def test_empty_bearer_rejected(self, client: TestClient) -> None:
+        resp = client.get(
+            "/api/kb/v1/session/validate",
+            headers={"Authorization": "Bearer "},
+        )
+        assert resp.status_code == 401
+        assert resp.json()["detail"]["code"] == "AUTH_REQUIRED"
+
+    def test_non_bearer_scheme_rejected(self, client: TestClient) -> None:
+        resp = client.get(
+            "/api/kb/v1/session/validate",
+            headers={"Authorization": "Basic dXNlcjpwYXNz"},
+        )
+        assert resp.status_code == 401
+        assert resp.json()["detail"]["code"] == "AUTH_REQUIRED"
+
+    def test_create_missing_identity_returns_401(self, client: TestClient) -> None:
+        resp = client.post("/api/kb/v1/session/create", json={})
+        assert resp.status_code == 401
+        assert resp.json()["detail"]["code"] == "INVALID_REF"
+
+    def test_create_invalid_external_ref_returns_401(self, client: TestClient) -> None:
+        resp = client.post(
+            "/api/kb/v1/session/create",
+            json={"external_ref": {"sub": "only-sub"}},
+        )
+        assert resp.status_code == 401
+        assert resp.json()["detail"]["code"] == "INVALID_REF"
+
 
 class TestRefreshAndRevoke:
     def test_refresh_rotates_access_token(self, client: TestClient) -> None:
@@ -108,6 +137,20 @@ class TestRefreshAndRevoke:
         )
         assert validate.status_code == 401
 
+    def test_logout_with_refresh_token_rejected(self, client: TestClient) -> None:
+        create = client.post(
+            "/api/kb/v1/session/create",
+            json={"stable_id": "test:alice"},
+        )
+        refresh_token = create.json()["refresh_token"]
+
+        logout = client.post(
+            "/api/kb/v1/session/logout",
+            json={"access_token": refresh_token},
+        )
+        assert logout.status_code == 401
+        assert logout.json()["detail"]["code"] == "TOKEN_INVALID"
+
     def test_revoke_all_for_user(self, client: TestClient) -> None:
         c1 = client.post("/api/kb/v1/session/create", json={"stable_id": "test:alice"})
         c2 = client.post("/api/kb/v1/session/create", json={"stable_id": "test:alice"})
@@ -132,3 +175,18 @@ class TestRefreshAndRevoke:
             headers={"Authorization": f"Bearer {c3.json()['access_token']}"},
         )
         assert bob_valid.status_code == 200
+
+    def test_revoke_all_global(self, client: TestClient) -> None:
+        c1 = client.post("/api/kb/v1/session/create", json={"stable_id": "test:alice"})
+        c2 = client.post("/api/kb/v1/session/create", json={"stable_id": "test:bob"})
+
+        revoke = client.post("/api/kb/v1/session/revoke-all/global")
+        assert revoke.status_code == 200
+        assert revoke.json()["revoked_count"] == 2
+
+        for token in (c1.json()["access_token"], c2.json()["access_token"]):
+            resp = client.get(
+                "/api/kb/v1/session/validate",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            assert resp.status_code == 401

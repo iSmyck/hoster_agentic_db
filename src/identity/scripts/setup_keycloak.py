@@ -305,9 +305,8 @@ def _get_client_secret(
         headers={"Authorization": f"Bearer {token}"},
         timeout=30.0,
     )
-    if resp.status_code == 200:
-        return resp.json().get("value")
-    return None
+    resp.raise_for_status()
+    return resp.json().get("value")
 
 
 def main() -> int:

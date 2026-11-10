@@ -69,6 +69,22 @@ def _ref_matches(stored: dict[str, Any], requested: dict[str, Any]) -> bool:
     return all(requested.get(k) == v for k, v in stored.items())
 
 
+def _member_ref_matches(stored: dict[str, Any], requested: dict[str, Any]) -> bool:
+    """Check whether two member refs identify the same subject.
+
+    Group membership is keyed by ``issuer`` + ``sub`` only. Extra claims
+    that an adapter may add or remove over time (email, preferred_username,
+    etc.) must not break matching of previously ingested snapshots.
+    """
+    if not isinstance(stored, dict) or not isinstance(requested, dict):
+        return False
+    if "issuer" not in stored or "sub" not in stored:
+        return False
+    if "issuer" not in requested or "sub" not in requested:
+        return False
+    return stored["issuer"] == requested["issuer"] and stored["sub"] == requested["sub"]
+
+
 _VALID_ACTOR_TYPES = {"human", "agent", "connector", "internal_ci"}
 
 
@@ -218,7 +234,7 @@ def recheck_group_membership(
     snapshot_ids_to_expire = [
         snap.id
         for snap in active_snapshots
-        if any(_ref_matches(member, external_ref) for member in (snap.member_refs or []))
+        if any(_member_ref_matches(member, external_ref) for member in (snap.member_refs or []))
     ]
     if snapshot_ids_to_expire:
         db.query(GroupSnapshot).filter(GroupSnapshot.id.in_(snapshot_ids_to_expire)).update(
@@ -407,7 +423,7 @@ def _resolve_groups_for_actor(
     direct: set[str] = set()
     for snap in snapshots:
         for member in snap.member_refs or []:
-            if _ref_matches(member, actor_ref):
+            if _member_ref_matches(member, actor_ref):
                 direct.add(snap.group_name)
 
     # Build parent -> children map and compute transitive closure.

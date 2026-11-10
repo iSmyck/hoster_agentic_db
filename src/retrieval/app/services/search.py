@@ -100,7 +100,7 @@ def search(
     if generation is None:
         raise RetrievalServiceError("INDEX_NOT_READY", "no active index for space/profile")
 
-    if cursor is not None and cursor not in (str(generation.id), generation.snapshot_sha):
+    if cursor is not None and cursor != "" and cursor not in (str(generation.id), generation.snapshot_sha):
         raise RetrievalServiceError(
             "STALE_SNAPSHOT",
             "cursor is bound to a generation that is no longer active",

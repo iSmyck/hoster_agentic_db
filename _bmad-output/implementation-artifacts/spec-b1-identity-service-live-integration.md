@@ -85,6 +85,27 @@ warnings:
 - Given user removed from group, when `recheck_group_membership` runs, then Space epoch advances and previous memberships expire.
 - Given completed run, evidence contains no real production secrets or absolute paths under repo root.
 
+### Review Findings (code review of B.1 group A — identity code + tests)
+
+**decision-needed:**
+(none)
+
+**patch:**
+- [x] [Review][Patch] `_ref_matches` group-membership semantics drops snapshots with extra keys — `src/identity/app/services/identity_service.py:52` and `src/identity/tests/test_identity_service.py`. Fixed by introducing `_member_ref_matches` that compares only `issuer` + `sub`; used in `recheck_group_membership` and `_resolve_groups_for_actor`. Added synthetic test `test_expires_snapshot_with_extra_claims`.
+- [x] [Review][Patch] `test_identity_service.py` manually creates `pytest.MonkeyPatch()` and calls `.undo()` after assertions — `src/identity/tests/test_identity_service.py`. Fixed by using the built-in `monkeypatch` fixture.
+- [x] [Review][Patch] `setup_keycloak.py` `_get_client_secret` silently returns `None` on any non-200 response — `src/identity/scripts/setup_keycloak.py:308-310`. Fixed by calling `resp.raise_for_status()`.
+
+**defer:**
+- [x] [Review][Defer] `recheck_group_membership` has a race window between SELECT and UPDATE — `src/identity/app/services/identity_service.py:208-226`. A concurrent insert of a matching snapshot between read and expire would remain valid. Deferred: requires `SELECT ... FOR UPDATE` or an atomic DB-level operation; pre-existing concurrency concern not introduced by this change.
+- [x] [Review][Defer] `setup_keycloak.py` re-fetches IDs with a second GET after POST instead of using the `Location` header — `src/identity/scripts/setup_keycloak.py:154-178`, `:186-217`. Deferred: current approach is idempotent and works; optimization is low value.
+- [x] [Review][Defer] `test_keycloak_live.py` falls back to hardcoded `admin`/`admin` Keycloak admin credentials — `src/identity/tests/test_keycloak_live.py:206-219`. Deferred: sandbox-only test fixture; acceptable for local smoke but should be removed before production test hardening.
+
+**rejected:**
+- `test_identity_service.py` indexes `member_refs[0]` without checking — false; the code checks `if s.member_refs and s.member_refs[0].get("sub") == "bob"`.
+- `test_keycloak_live.py` `live_db` does not reset sequences — false; SQLite in-memory engines are created per fixture and sequences do not leak.
+- `_add_user_to_group` hard-codes the printed group name `'sales'` — low/cosmetic; the helper is only called with the sales group in this script.
+- `.env.example`, evidence files, `sprint-status.yaml` missing from diff — false; this review chunk was scoped to `src/identity/` code + tests.
+
 ## Design Notes
 
 - Keycloak direct-access grant используется только для synthetic sandbox testing.
@@ -127,7 +148,7 @@ warnings:
   - `.env` — added live admin/test credentials and client secret (gitignored).
   - `_bmad-output/implementation-artifacts/sprint-status.yaml` — marked `phase-b: in-progress` and `b.1-identity-service-live-integration: done`.
   - Evidence reports and test output in `_bmad-output/test-artifacts/b1/` and `specs/corporate-kb/evidence/b1/`.
-- Patches applied: 2 medium (sprint-status YAML fix, synthetic unit-test coverage).
+- Patches applied: 2 medium (sprint-status YAML fix, synthetic unit-test coverage) + 3 post-review patch findings (_ref_matches semantics, monkeypatch fixture, setup_keycloak _get_client_secret raise_for_status).
 - Rejected findings: 6 low/cosmetic items that are either intentional per the intent or acceptable sandbox defaults.
 - Follow-up review recommended: `false`.
 - Verification performed:

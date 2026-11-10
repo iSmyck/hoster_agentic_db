@@ -30,9 +30,9 @@ class TestRecheckGroupMembership:
         db_session: Session,
         mock_adapter: MagicMock,
         external_ref: dict[str, str],
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         mock_adapter.fetch_groups.return_value = ["authors"]
-        monkeypatch = pytest.MonkeyPatch()
         monkeypatch.setattr(
             identity_service, "_get_identity_adapter", lambda: mock_adapter
         )
@@ -107,16 +107,69 @@ class TestRecheckGroupMembership:
         assert revocation.revoked_at_epoch == result["epoch"]
         assert revocation.revoked_at_epoch > 0
 
-        monkeypatch.undo()
+    def test_expires_snapshot_with_extra_claims(
+        self,
+        db_session: Session,
+        mock_adapter: MagicMock,
+        external_ref: dict[str, str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Membership matching is keyed by issuer+sub; extra claims must not break expiration."""
+        mock_adapter.fetch_groups.return_value = ["authors"]
+        monkeypatch.setattr(
+            identity_service, "_get_identity_adapter", lambda: mock_adapter
+        )
+
+        space_id = f"space-{uuid.uuid4().hex[:8]}"
+        # Stored snapshot includes extra claims that the current adapter output may omit.
+        stored_ref = {**external_ref, "email": "alice@example.com", "preferred_username": "alice"}
+
+        db_session.add(
+            GroupSnapshot(
+                space_id=space_id,
+                group_name="readers",
+                member_refs=[stored_ref],
+                parent_groups=[],
+            )
+        )
+        db_session.commit()
+
+        result = identity_service.recheck_group_membership(
+            db_session, space_id, "token"
+        )
+
+        assert result["groups"] == ["authors"]
+
+        active = (
+            db_session.query(GroupSnapshot)
+            .filter(
+                GroupSnapshot.space_id == space_id,
+                GroupSnapshot.valid_until.is_(None),
+            )
+            .all()
+        )
+        active_names = {s.group_name for s in active}
+        # Only the new authors snapshot remains; the readers snapshot with extra claims expired.
+        assert active_names == {"authors"}
+
+        expired = (
+            db_session.query(GroupSnapshot)
+            .filter(
+                GroupSnapshot.space_id == space_id,
+                GroupSnapshot.valid_until.is_not(None),
+            )
+            .all()
+        )
+        assert len(expired) == 1
 
     def test_advances_epoch_even_for_empty_groups(
         self,
         db_session: Session,
         mock_adapter: MagicMock,
         external_ref: dict[str, str],
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         mock_adapter.fetch_groups.return_value = []
-        monkeypatch = pytest.MonkeyPatch()
         monkeypatch.setattr(
             identity_service, "_get_identity_adapter", lambda: mock_adapter
         )
@@ -146,5 +199,3 @@ class TestRecheckGroupMembership:
         )
         assert revocation is not None
         assert revocation.revoked_at_epoch == result["epoch"]
-
-        monkeypatch.undo()
