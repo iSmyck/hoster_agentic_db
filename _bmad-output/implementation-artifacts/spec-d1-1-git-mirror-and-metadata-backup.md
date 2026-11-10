@@ -2,7 +2,7 @@
 title: 'D.1.1 Git mirror and metadata backup'
 type: 'feature'
 created: '2026-11-10'
-status: 'in-review'
+status: 'done'
 review_loop_iteration: 0
 followup_review_recommended: false
 baseline_commit: '763bb67'
@@ -119,9 +119,41 @@ warnings:
 
 ## Review Triage Log
 
-### 2026-11-10 — Initial draft
-- (none)
+### 2026-11-10 — Review pass
+- verdicts: 9 findings — high 0, medium 6, low 3, false 0, maybe-false 0
+- findings:
+  - `[medium]` `[patch]` `HttpBackupGitLabAdapter` lacked `get_branch`, so `_resolve_head` fell back to `"0" * 40` and live idempotency broke. Added `get_branch` to adapter interface and both implementations; refactored `_resolve_head` to use it first.
+  - `[medium]` `[patch]` `BackupServiceError("KB_OPS_ERROR", ...)` raised in `_export_kb_ops` was rewrapped as `BACKUP_FAILED` by the catch-all in `create_mirror_backup`. Changed exception handling to preserve the original `BackupServiceError.code`.
+  - `[medium]` `[patch]` `_export_kb_ops` copied raw SQLAlchemy rows containing `uuid.UUID`/`datetime` into JSON fields, which would fail serialization against PostgreSQL. Added `_serialize_row` converting UUIDs to strings and datetimes to ISO format.
+  - `[medium]` `[patch]` `space_id` path parameter was used directly in filesystem paths, allowing traversal outside `BACKUP_STORAGE_PATH`. Added `_sanitize_space_id` rejecting any characters outside `[a-zA-Z0-9_-]`.
+  - `[medium]` `[patch]` `_export_metadata` logged and continued when `list_notes`/`list_tags` failed, allowing incomplete backups to be marked COMPLETE. Changed the code to propagate the failure and mark the backup FAILED.
+  - `[medium]` `[patch]` GitLab token was embedded unquoted in the clone URL and `result.stderr` was surfaced in exceptions, risking token leakage. Now URL-quotes the token and omits stderr from the public error message.
+  - `[low]` `[patch]` `smoke_backup.py` caught all exceptions and exited 0 even when `RUN_LIVE_BACKUP_TESTS=1`. Now exits 1 on failure when the env var is set, skip-with-exit-0 only when unset.
+  - `[low]` `[patch]` `create_mirror_backup` endpoint declared only 502/500 responses, but `_handle_backup_error` can return 403/404. Added 403/404 to the endpoint responses dict.
+  - `[low]` `[patch]` `MergeRequestSummary`/`TagSummary` were unused dead models; `_override_get_db` in conftest was dead code. Removed the dead models/code and added tests for branch HEAD resolution, KB_OPS_ERROR preservation, invalid `space_id`, and metadata-export failure.
 
 ## Auto Run Result
 
-- (pending)
+- Summary: Implemented a new `src/backup/` FastAPI service that creates per-Space immutable backup packages. Each package contains a `git clone --mirror` of the Space repository, exported GitLab MR/notes/tags metadata, read-only `kb_ops.proposals`/`decisions` export, and a SHA-256 manifest. Added REST endpoints, stub/HTTP GitLab adapters, unit tests with synthetic git repos, a live smoke script, and evidence artifacts.
+- Files changed:
+  - New `src/backup/` module: config, models, schemas, GitLab adapter, service, router, main, tests, scripts.
+  - `.env.example` — added backup-related variables.
+  - `pyproject.toml` — added `src/backup/tests` to testpaths.
+  - `_bmad-output/implementation-artifacts/sprint-status.yaml` — moved Phase C to backlog, set Phase D in-progress, marked `d.1.1-git-mirror-and-metadata-backup: done`.
+  - Evidence in `_bmad-output/test-artifacts/d1/` and `specs/corporate-kb/evidence/d1/`.
+- Patches applied: 9 review findings (6 medium, 3 low).
+- Rejected findings: (none)
+- Deferred items:
+  - Token embedded in clone URL is a sandbox shortcut; production should use SSH deploy keys or a credential helper.
+  - Object-store backup is out of scope for D.1.1 (Phase C backlog).
+  - Live runtime acceptance is BLOCKED until a GitLab sandbox is provisioned and `RUN_LIVE_BACKUP_TESTS=1` is exercised.
+  - Port 8005 binding and `docker-compose.yml` service wiring are left to deployment/launch commands per spec verification.
+- Follow-up review recommended: `false`.
+- Verification performed:
+  - `uv run pytest -q src/backup/tests` — 15 passed, 1 skipped, 1 warning.
+  - `uv run pytest -q` — 271 passed, 5 skipped, 1 warning.
+  - `uv run ruff check src/backup` — clean.
+- Residual risks:
+  - Live GitLab HEAD resolution, pagination, and HTTP error translation are tested only via stubs; real behavior requires sandbox validation.
+  - The mirror URL embeds the token for sandbox convenience.
+  - Protected-tag metadata (e.g., which tags are protected) is not exported separately; all tags are exported and protected tags are included.
