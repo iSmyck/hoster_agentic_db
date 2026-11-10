@@ -40,8 +40,11 @@ for _original in list(sys.modules):
 from git_orchestrator.app.models.ops import Base as OpsBase
 
 from backup.app.adapters.gitlab import StubBackupGitLabAdapter
+from backup.app.adapters.object_store import StubObjectStoreAdapter
 from backup.app.main import create_app
 from backup.app.services.backup import BackupService
+from backup.app.services.object_store import ObjectStoreService
+from backup.app.services.postgres_backup import PostgresBackupService
 
 
 @pytest.fixture
@@ -153,6 +156,39 @@ def synthetic_git_repo(tmp_storage_path: Path) -> Path:
 
 
 @pytest.fixture
+def object_store_adapter() -> StubObjectStoreAdapter:
+    return StubObjectStoreAdapter()
+
+
+@pytest.fixture
+def object_store_service(object_store_adapter: StubObjectStoreAdapter) -> ObjectStoreService:
+    return ObjectStoreService(object_store_adapter)
+
+
+@pytest.fixture
+def postgres_backup_service() -> PostgresBackupService:
+    def fake_run(*args: Any, **kwargs: Any) -> Any:
+        class Result:
+            returncode = 0
+            stderr = b""
+
+        stdout = kwargs.get("stdout")
+        if stdout is not None:
+            stdout.write(b"-- synthetic pg_dump\n")
+        return Result()
+
+    return PostgresBackupService(
+        host="localhost",
+        port=5432,
+        user="u",
+        password="p",
+        db="db",
+        schemas=["kb_authz", "kb_ops", "kb_index"],
+        run_command=fake_run,
+    )
+
+
+@pytest.fixture
 def backup_service(
     engine: Any,
     stub_adapter: StubBackupGitLabAdapter,
@@ -176,6 +212,8 @@ def client(
     stub_adapter: StubBackupGitLabAdapter,
     tmp_storage_path: Path,
     synthetic_git_repo: Path,
+    object_store_adapter: StubObjectStoreAdapter,
+    postgres_backup_service: PostgresBackupService,
 ) -> Generator[TestClient, None, None]:
     service = BackupService(
         adapter=stub_adapter,
@@ -185,6 +223,8 @@ def client(
         gitlab_token="",
         project_path_prefix="",
         kb_ops_schema=None,
+        object_store_adapter=object_store_adapter,
+        postgres_backup_service=postgres_backup_service,
     )
     app = create_app(service=service)
 

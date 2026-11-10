@@ -17,8 +17,10 @@ from urllib.parse import quote
 from sqlalchemy import Engine, create_engine, text
 
 from backup.app.adapters.gitlab import BackupGitLabAdapter, BackupGitLabAdapterError
+from backup.app.adapters.object_store import ObjectStoreAdapter, ObjectStoreAdapterError
 from backup.app.core.config import settings
 from backup.app.models.backup import (
+    AssetsManifest,
     BackupManifest,
     BackupPackage,
     BackupStatus,
@@ -26,7 +28,12 @@ from backup.app.models.backup import (
     KbOpsExport,
     MetadataExport,
     NoteSummary,
+    ObjectStoreEntry,
+    ObjectStoreExport,
+    PostgresExport,
 )
+from backup.app.services.object_store import ObjectStoreService, ObjectStoreServiceError
+from backup.app.services.postgres_backup import PostgresBackupService, PostgresBackupServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +72,8 @@ class BackupService:
         gitlab_token: str | None = None,
         project_path_prefix: str | None = None,
         kb_ops_schema: str | None = None,
+        object_store_adapter: ObjectStoreAdapter | None = None,
+        postgres_backup_service: PostgresBackupService | None = None,
     ) -> None:
         self.adapter = adapter
         self.engine = engine or create_engine(settings.BACKUP_DATABASE_URL)
@@ -72,9 +81,17 @@ class BackupService:
         self.gitlab_url = gitlab_url or settings.BACKUP_GITLAB_URL
         self.gitlab_token = gitlab_token or settings.BACKUP_GITLAB_TOKEN
         self.project_path_prefix = (
-            project_path_prefix if project_path_prefix is not None else settings.BACKUP_GITLAB_PROJECT_PATH_PREFIX
+            project_path_prefix
+            if project_path_prefix is not None
+            else settings.BACKUP_GITLAB_PROJECT_PATH_PREFIX
         )
-        self.kb_ops_schema = kb_ops_schema if kb_ops_schema is not None else settings.BACKUP_KB_OPS_SCHEMA
+        self.kb_ops_schema = (
+            kb_ops_schema if kb_ops_schema is not None else settings.BACKUP_KB_OPS_SCHEMA
+        )
+        self.object_store_service = (
+            ObjectStoreService(object_store_adapter) if object_store_adapter else None
+        )
+        self.postgres_backup_service = postgres_backup_service
 
     def _table(self, name: str) -> str:
         if self.kb_ops_schema:
@@ -96,14 +113,23 @@ class BackupService:
         base = self.gitlab_url.rstrip("/")
         if self.gitlab_token:
             quoted_token = quote(self.gitlab_token, safe="")
-            return (
-                f"{base.replace('://', f'://oauth2:{quoted_token}@', 1)}/"
-                f"{project_path}.git"
-            )
+            return f"{base.replace('://', f'://oauth2:{quoted_token}@', 1)}/{project_path}.git"
         return f"{base}/{project_path}.git"
 
     def create_mirror_backup(self, space_id: str) -> BackupPackage:
         """Create a per-Space backup package containing a git mirror + metadata."""
+        return self._create_backup(space_id, include_postgres=False, include_object_store=False)
+
+    def create_full_backup(self, space_id: str) -> BackupPackage:
+        """Create a per-Space backup package with git, metadata, PostgreSQL and object store."""
+        return self._create_backup(space_id, include_postgres=True, include_object_store=True)
+
+    def _create_backup(
+        self,
+        space_id: str,
+        include_postgres: bool,
+        include_object_store: bool,
+    ) -> BackupPackage:
         space_id = _sanitize_space_id(space_id)
         status_marker = BackupStatus.IN_PROGRESS
         head_sha = ""
@@ -135,6 +161,12 @@ class BackupService:
             kb_ops_path = package_path / "kb_ops_export.json"
             self._write_json(kb_ops_path, kb_ops.model_dump(mode="json"))
 
+            if include_postgres:
+                self._backup_postgres(space_id, package_path)
+
+            if include_object_store:
+                self._backup_object_store(space_id, package_path)
+
             manifest = self._assemble_package(
                 space_id,
                 backup_id,
@@ -165,12 +197,12 @@ class BackupService:
                         error=str(exc),
                     )
                 except Exception as write_exc:  # noqa: BLE001
-                    logger.warning(
-                        "failed to write failed status for %s: %s", space_id, write_exc
-                    )
+                    logger.warning("failed to write failed status for %s: %s", space_id, write_exc)
             if isinstance(exc, BackupGitLabAdapterError):
                 code = "GITLAB_ERROR"
-            elif isinstance(exc, BackupServiceError):
+            elif isinstance(exc, ObjectStoreAdapterError):
+                code = "OBJECT_STORE_ERROR"
+            elif isinstance(exc, (PostgresBackupServiceError, BackupServiceError)):
                 code = exc.code
             else:
                 code = "BACKUP_FAILED"
@@ -293,8 +325,10 @@ class BackupService:
                     proposals.append(_serialize_row(row))
 
                 result = conn.execute(
-                    text(f"SELECT * FROM {self._table('decisions')} WHERE proposal_id IN ("
-                         f"SELECT id FROM {self._table('proposals')} WHERE space_id = :space_id)"),
+                    text(
+                        f"SELECT * FROM {self._table('decisions')} WHERE proposal_id IN ("
+                        f"SELECT id FROM {self._table('proposals')} WHERE space_id = :space_id)"
+                    ),
                     {"space_id": space_id},
                 )
                 for row in result.mappings():
@@ -308,6 +342,82 @@ class BackupService:
             decisions=decisions,
         )
 
+    def _backup_postgres(self, space_id: str, package_path: Path) -> PostgresExport:
+        if self.postgres_backup_service is None:
+            raise BackupServiceError(
+                "POSTGRES_NOT_CONFIGURED",
+                "postgres backup service not configured",
+            )
+        export_dir = package_path / "postgres_export"
+        try:
+            export = self.postgres_backup_service.dump_schemas(space_id, export_dir)
+        except PostgresBackupServiceError as exc:
+            raise BackupServiceError(exc.code, exc.message) from exc
+        return export
+
+    def _backup_object_store(self, space_id: str, package_path: Path) -> ObjectStoreExport:
+        if self.object_store_service is None:
+            raise BackupServiceError(
+                "OBJECT_STORE_NOT_CONFIGURED",
+                "object store service not configured",
+            )
+        export_dir = package_path / "object_store_export"
+        export_dir.mkdir(parents=True, exist_ok=True)
+
+        try:
+            current_objects = self.object_store_service.build_assets_manifest(space_id)
+        except (ObjectStoreServiceError, ObjectStoreAdapterError) as exc:
+            raise BackupServiceError("OBJECT_STORE_ERROR", str(exc)) from exc
+
+        all_versions: list[ObjectStoreEntry] = []
+        for current in current_objects.objects:
+            try:
+                versions = self.object_store_service.adapter.list_object_versions(
+                    space_id, current.object_id
+                )
+            except (ObjectStoreServiceError, ObjectStoreAdapterError) as exc:
+                raise BackupServiceError("OBJECT_STORE_ERROR", str(exc)) from exc
+            if not versions:
+                versions = [current]
+            for entry in versions:
+                try:
+                    content = self.object_store_service.adapter.get_object(
+                        space_id, entry.object_id, entry.version
+                    )
+                except (ObjectStoreServiceError, ObjectStoreAdapterError) as exc:
+                    raise BackupServiceError("OBJECT_STORE_ERROR", str(exc)) from exc
+                actual_sha = hashlib.sha256(content).hexdigest()
+                if actual_sha != entry.sha256:
+                    raise BackupServiceError(
+                        "HASH_MISMATCH",
+                        f"object store hash mismatch for {entry.object_id}@{entry.version}",
+                    )
+                safe_object_id = re.sub(r"[^a-zA-Z0-9_.-]", "_", entry.object_id)
+                safe_version = re.sub(r"[^a-zA-Z0-9_.-]", "_", entry.version)
+                dest = export_dir / f"{safe_object_id}_{safe_version}.bin"
+                if dest.exists():
+                    raise BackupServiceError(
+                        "DUPLICATE_OBJECT_VERSION",
+                        f"duplicate object version destination: {dest.name}",
+                    )
+                dest.write_bytes(content)
+                all_versions.append(
+                    ObjectStoreEntry(
+                        object_id=entry.object_id,
+                        version=entry.version,
+                        sha256=entry.sha256,
+                        size=entry.size,
+                        media_type=entry.media_type,
+                        source_ref=entry.source_ref,
+                    )
+                )
+
+        assets_manifest = AssetsManifest(space_id=space_id, objects=all_versions)
+        assets_path = package_path / "assets_manifest.json"
+        self._write_json(assets_path, assets_manifest.model_dump(mode="json"))
+
+        return ObjectStoreExport(space_id=space_id, objects=all_versions)
+
     def _assemble_package(
         self,
         space_id: str,
@@ -316,9 +426,7 @@ class BackupService:
         hour_bucket: str,
         package_path: Path,
     ) -> BackupManifest:
-        manifest = self._compute_manifest(
-            space_id, backup_id, head_sha, hour_bucket, package_path
-        )
+        manifest = self._compute_manifest(space_id, backup_id, head_sha, hour_bucket, package_path)
         manifest_path = package_path / "manifest.json"
         self._write_json(manifest_path, manifest.model_dump(mode="json"))
 
@@ -343,12 +451,12 @@ class BackupService:
         package_path: Path,
     ) -> BackupManifest:
         files: list[FileHash] = []
-        for path in sorted([p.relative_to(package_path) for p in package_path.rglob("*") if p.is_file()]):
+        for path in sorted(
+            [p.relative_to(package_path) for p in package_path.rglob("*") if p.is_file()]
+        ):
             if path.name in ("manifest.json", "status.json"):
                 continue
-            files.append(
-                FileHash(path=str(path), sha256=_sha256_file(package_path / path))
-            )
+            files.append(FileHash(path=str(path), sha256=_sha256_file(package_path / path)))
         return BackupManifest(
             space_id=space_id,
             backup_id=backup_id,
@@ -386,8 +494,7 @@ class BackupService:
         if not space_dir.exists():
             return None
         candidates = [
-            d for d in space_dir.iterdir()
-            if d.is_dir() and (d / "manifest.json").exists()
+            d for d in space_dir.iterdir() if d.is_dir() and (d / "manifest.json").exists()
         ]
         if not candidates:
             return None

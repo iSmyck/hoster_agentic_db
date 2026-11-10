@@ -53,6 +53,66 @@ class Settings(BaseSettings):
         "Empty/unset disables schema qualification (useful for SQLite tests).",
         validation_alias=AliasChoices("BACKUP_KB_OPS_SCHEMA", "GO_KB_OPS_SCHEMA", "KB_OPS_SCHEMA"),
     )
+
+    # Object store (MinIO/S3) staging settings.
+    BACKUP_MINIO_ENDPOINT: str = Field(
+        default="localhost:9000",
+        description="MinIO/S3 endpoint (host:port).",
+        validation_alias=AliasChoices("BACKUP_MINIO_ENDPOINT", "MINIO_ENDPOINT"),
+    )
+    BACKUP_MINIO_ACCESS_KEY: str = Field(
+        default="",
+        description="MinIO/S3 access key.",
+        validation_alias=AliasChoices("BACKUP_MINIO_ACCESS_KEY", "MINIO_ACCESS_KEY"),
+    )
+    BACKUP_MINIO_SECRET_KEY: str = Field(
+        default="",
+        description="MinIO/S3 secret key.",
+        validation_alias=AliasChoices("BACKUP_MINIO_SECRET_KEY", "MINIO_SECRET_KEY"),
+    )
+    BACKUP_MINIO_USE_SSL: bool = Field(
+        default=False,
+        description="Use HTTPS for MinIO/S3 requests.",
+        validation_alias=AliasChoices("BACKUP_MINIO_USE_SSL", "MINIO_USE_SSL"),
+    )
+    BACKUP_MINIO_BUCKET: str = Field(
+        default="kb-backups",
+        description="Single MinIO/S3 bucket used with space_id prefixes.",
+        validation_alias=AliasChoices("BACKUP_MINIO_BUCKET", "MINIO_BUCKET"),
+    )
+    BACKUP_MAX_UPLOAD_SIZE_BYTES: int = Field(
+        default=100 * 1024 * 1024,
+        description="Maximum allowed object upload size in bytes.",
+        validation_alias=AliasChoices("BACKUP_MAX_UPLOAD_SIZE_BYTES", "MAX_UPLOAD_SIZE_BYTES"),
+    )
+
+    # PostgreSQL backup settings (read-only pg_dump source).
+    BACKUP_POSTGRES_HOST: str = Field(
+        default="localhost",
+        validation_alias=AliasChoices("BACKUP_POSTGRES_HOST", "POSTGRES_HOST"),
+    )
+    BACKUP_POSTGRES_PORT: int = Field(
+        default=5432,
+        validation_alias=AliasChoices("BACKUP_POSTGRES_PORT", "POSTGRES_PORT"),
+    )
+    BACKUP_POSTGRES_USER: str = Field(
+        default="corp_kb",
+        validation_alias=AliasChoices("BACKUP_POSTGRES_USER", "POSTGRES_USER"),
+    )
+    BACKUP_POSTGRES_PASSWORD: str = Field(
+        default="corp_kb_dev",
+        validation_alias=AliasChoices("BACKUP_POSTGRES_PASSWORD", "POSTGRES_PASSWORD"),
+    )
+    BACKUP_POSTGRES_DB: str = Field(
+        default="corp_kb",
+        validation_alias=AliasChoices("BACKUP_POSTGRES_DB", "POSTGRES_DB"),
+    )
+    BACKUP_POSTGRES_SCHEMAS: str = Field(
+        default="kb_authz,kb_ops,kb_index",
+        description="Comma-separated operational schemas to back up.",
+        validation_alias=AliasChoices("BACKUP_POSTGRES_SCHEMAS", "BACKUP_SCHEMAS"),
+    )
+
     LOG_LEVEL: str = Field(
         default="INFO",
         validation_alias=AliasChoices("BACKUP_LOG_LEVEL", "LOG_LEVEL"),

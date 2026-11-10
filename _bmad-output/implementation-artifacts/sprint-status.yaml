@@ -271,8 +271,10 @@ development_status:
   b.3-retrieval-service-live-integration: done
   b.4-index-management-and-relevance-tuning: backlog
 
-  phase-c: backlog
-  c.1-file-upload-and-media-handling: backlog
+  phase-c: in-progress
+  c.1-file-upload-and-media-handling: in-progress
+  c.1.1-minio-object-store-staging: done
+  c.1.2-media-classification-and-critical-media-gating: backlog
   c.2-connector-framework: backlog
   c.3-parsing-pipeline: backlog
   c.4-content-standard-enforcement-and-ingestion-job-queue: backlog
@@ -280,6 +282,7 @@ development_status:
   phase-d: in-progress
   d.1-scheduled-backups: in-progress
   d.1.1-git-mirror-and-metadata-backup: done
+  d.1.2-postgresql-and-object-store-backup: done
   d.2-point-in-time-restore: backlog
   d.3-cross-site-replication-dr: backlog
   d.4-backup-integrity-encryption-and-retention: backlog
@@ -370,8 +373,12 @@ decisions:
     status: superseded
   - id: "G1-D4-rev1"
     decision: "Move Phase C (ingestion/source connectors) to backlog; proceed with Phase D backup/restore and disaster recovery instead"
-    status: accepted
+    status: superseded
     supersedes: "G1-D4"
+  - id: "G1-D4-rev2"
+    decision: "Pull the MinIO/object-store staging slice (C.1.1) out of backlog in order to implement D.1.2 PostgreSQL and object-store backup fully"
+    status: accepted
+    supersedes: "G1-D4-rev1"
   - id: "G1-D5"
     decision: "MinIO is sufficient for object storage"
     status: accepted
@@ -384,9 +391,14 @@ decisions:
     status: accepted
 
 backlog:
-  - id: c.all
-    title: "Ingestion/source connectors (all C.1–C.4)"
-    reason: "Moved to backlog by owner decision 2026-11-10: no corpus/connector work or data migration needed now; proceed with Phase D backup/restore instead."
+  - id: c.1.2
+    title: "Media classification and critical-media gating (C.1.2)"
+    reason: "Remaining part of C.1; object-store staging is now in progress for D.1.2 dependency."
+    owner: "Backend + Owner"
+
+  - id: c.2-c.4
+    title: "Connector framework, parsing pipeline, content-standard enforcement (C.2–C.4)"
+    reason: "Deferred by owner decision G1-D4-rev2: no corpus/connector work or data migration beyond MinIO staging needed now."
     owner: "Backend + Owner"
 
   - id: b.4

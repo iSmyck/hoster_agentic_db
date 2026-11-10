@@ -29,3 +29,10 @@ class BackupLatestResponse(BaseModel):
     status: str
     package_path: str
     manifest: dict[str, Any] | None = None
+
+
+class ObjectUploadResponse(BaseModel):
+    object_id: str
+    version: str
+    sha256: str
+    size: int

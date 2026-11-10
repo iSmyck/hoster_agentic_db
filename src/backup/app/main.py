@@ -5,9 +5,12 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from backup.app.adapters.gitlab import BackupGitLabAdapter, HttpBackupGitLabAdapter
+from backup.app.adapters.object_store import MinioObjectStoreAdapter
 from backup.app.api.router import router as backup_router
 from backup.app.core.config import settings
 from backup.app.services.backup import BackupService
+from backup.app.services.object_store import ObjectStoreService
+from backup.app.services.postgres_backup import PostgresBackupService
 
 
 def create_app(
@@ -25,9 +28,29 @@ def create_app(
 
     if service is not None:
         app.state.backup_service = service
+        app.state.object_store_service = (
+            service.object_store_service
+            if getattr(service, "object_store_service", None) is not None
+            else None
+        )
+        if app.state.object_store_service is None:
+            default_adapter = _default_object_store_adapter()
+            app.state.object_store_service = (
+                ObjectStoreService(default_adapter) if default_adapter else None
+            )
     else:
+        default_object_store_adapter = _default_object_store_adapter()
         adapter = adapter or _default_adapter()
-        app.state.backup_service = BackupService(adapter=adapter)
+        app.state.backup_service = BackupService(
+            adapter=adapter,
+            object_store_adapter=default_object_store_adapter,
+            postgres_backup_service=_default_postgres_backup_service(),
+        )
+        app.state.object_store_service = (
+            ObjectStoreService(default_object_store_adapter)
+            if default_object_store_adapter is not None
+            else None
+        )
     return app
 
 
@@ -36,6 +59,30 @@ def _default_adapter() -> HttpBackupGitLabAdapter:
         settings.BACKUP_GITLAB_URL,
         settings.BACKUP_GITLAB_TOKEN,
         settings.BACKUP_GITLAB_PROJECT_PATH_PREFIX,
+    )
+
+
+def _default_object_store_adapter() -> MinioObjectStoreAdapter | None:
+    if not settings.BACKUP_MINIO_ACCESS_KEY or not settings.BACKUP_MINIO_SECRET_KEY:
+        return None
+    return MinioObjectStoreAdapter(
+        endpoint=settings.BACKUP_MINIO_ENDPOINT,
+        access_key=settings.BACKUP_MINIO_ACCESS_KEY,
+        secret_key=settings.BACKUP_MINIO_SECRET_KEY,
+        bucket=settings.BACKUP_MINIO_BUCKET,
+        use_ssl=settings.BACKUP_MINIO_USE_SSL,
+    )
+
+
+def _default_postgres_backup_service() -> PostgresBackupService:
+    schemas = [s.strip() for s in settings.BACKUP_POSTGRES_SCHEMAS.split(",") if s.strip()]
+    return PostgresBackupService(
+        host=settings.BACKUP_POSTGRES_HOST,
+        port=settings.BACKUP_POSTGRES_PORT,
+        user=settings.BACKUP_POSTGRES_USER,
+        password=settings.BACKUP_POSTGRES_PASSWORD,
+        db=settings.BACKUP_POSTGRES_DB,
+        schemas=schemas,
     )
 
 

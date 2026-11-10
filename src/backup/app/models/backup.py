@@ -71,3 +71,44 @@ class KbOpsExport(BaseModel):
     space_id: str
     proposals: list[dict[str, Any]] = Field(default_factory=list)
     decisions: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class ObjectStoreEntry(BaseModel):
+    """Immutable object-store asset reference per content-standard.md."""
+
+    object_id: str
+    version: str
+    sha256: str
+    size: int
+    media_type: str | None = None
+    source_ref: str | None = None
+
+
+class AssetsManifest(BaseModel):
+    """Manifest of staged object-store assets for a Space."""
+
+    space_id: str
+    objects: list[ObjectStoreEntry] = Field(default_factory=list)
+
+
+class PostgresExportFile(BaseModel):
+    """Single pg_dump file produced for a schema."""
+
+    schema_name: str
+    kind: str  # "schema" or "data"
+    path: str
+    sha256: str
+
+
+class PostgresExport(BaseModel):
+    """PostgreSQL operational-schema export for a Space."""
+
+    space_id: str
+    files: list[PostgresExportFile] = Field(default_factory=list)
+
+
+class ObjectStoreExport(BaseModel):
+    """Object-store backup export: copied versions for a Space."""
+
+    space_id: str
+    objects: list[ObjectStoreEntry] = Field(default_factory=list)
