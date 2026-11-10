@@ -287,6 +287,12 @@ development_status:
   d.3-cross-site-replication-dr: backlog
   d.4-backup-integrity-encryption-and-retention: backlog
 
+  # D.3 owner decisions recorded 2026-11-10:
+  # - Cross-site DR not required now; moved to backlog.
+  # - Future RPO: 1 hour, RTO: 1 hour.
+  # - Secondary site: another hoster data center.
+  # - Tenant isolation: separate buckets/accounts per client.
+
 action_items:
   - epic: 1
     action: "G2: execute live acceptance A01–A36 on sandbox GitLab + PostgreSQL +
@@ -389,6 +395,18 @@ decisions:
     decision: "White-label branding under hoster.by is allowed; per-client rebranding
       required; commercial distribution planned"
     status: accepted
+  - id: "D3-DEC1"
+    decision: "Cross-site DR / replication is not required for the current scope; moved to backlog as future improvement"
+    status: accepted
+  - id: "D3-DEC2"
+    decision: "Target RPO: 1 hour; target RTO: 1 hour (for future DR implementation)"
+    status: accepted
+  - id: "D3-DEC3"
+    decision: "Secondary site for future DR: another hoster data center"
+    status: accepted
+  - id: "D3-DEC4"
+    decision: "Tenant isolation for future DR: separate buckets/accounts per client"
+    status: accepted
 
 backlog:
   - id: c.1.2
@@ -399,6 +417,11 @@ backlog:
   - id: c.2-c.4
     title: "Connector framework, parsing pipeline, content-standard enforcement (C.2–C.4)"
     reason: "Deferred by owner decision G1-D4-rev2: no corpus/connector work or data migration beyond MinIO staging needed now."
+    owner: "Backend + Owner"
+
+  - id: d.3
+    title: "Cross-site replication / DR (D.3)"
+    reason: "Deferred by owner decision D3-DEC1: not required for current scope. Future parameters recorded: RPO 1h, RTO 1h, secondary site another hoster data center, per-client buckets/accounts."
     owner: "Backend + Owner"
 
   - id: b.4
