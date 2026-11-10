@@ -13,6 +13,7 @@ dependencies = [
     "psycopg[binary]>=3.2.3",
     "pgvector>=0.3.6",
     "httpx>=0.27.0",
+    "pyjwt>=2.9.0",
 ]
 
 [dependency-groups]
@@ -28,7 +29,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "src/identity/tests", "src/git-orchestrator/tests", "src/retrieval/tests", "src/ingestion/tests"]
+testpaths = ["tests", "src/identity/tests", "src/git-orchestrator/tests", "src/retrieval/tests", "src/ingestion/tests", "src/session/tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 pythonpath = ["src"]
@@ -44,3 +45,5 @@ target-version = "py312"
 "src/retrieval/migrations/env.py" = ["E402"]
 "src/ingestion/tests/conftest.py" = ["E402"]
 "src/ingestion/migrations/env.py" = ["E402"]
+"src/session/tests/conftest.py" = ["E402"]
+"src/session/migrations/env.py" = ["E402"]

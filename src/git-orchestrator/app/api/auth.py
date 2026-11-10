@@ -17,8 +17,7 @@ class AuthenticatedIdentity:
     role: str
 
 
-def get_current_identity(request: Request) -> AuthenticatedIdentity:
-    """Resolve the caller identity from an Open WebUI session token."""
+def _extract_bearer(request: Request) -> str:
     authorization = request.headers.get("Authorization", "")
     if not authorization.startswith("Bearer "):
         raise HTTPException(
@@ -31,16 +30,22 @@ def get_current_identity(request: Request) -> AuthenticatedIdentity:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"code": "AUTH_REQUIRED", "message": "Bearer session token required"},
         )
+    return token
+
+
+def get_current_identity(request: Request) -> AuthenticatedIdentity:
+    """Resolve the caller identity from a Session service access token."""
+    token = _extract_bearer(request)
     try:
         response = httpx.get(
-            settings.IDENTITY_SESSION_URL,
+            f"{settings.SESSION_SERVICE_URL}/api/kb/v1/session/validate",
             headers={"Authorization": f"Bearer {token}"},
             timeout=10,
         )
     except httpx.HTTPError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={"code": "IDENTITY_UNAVAILABLE", "message": "identity service unavailable"},
+            detail={"code": "SESSION_UNAVAILABLE", "message": "session service unavailable"},
         ) from exc
     if response.status_code != 200:
         raise HTTPException(
@@ -48,13 +53,13 @@ def get_current_identity(request: Request) -> AuthenticatedIdentity:
             detail={"code": "INVALID_SESSION", "message": "session token rejected"},
         )
     data = response.json()
-    stable_id = str(data.get("email") or data.get("id") or "").strip()
+    stable_id = str(data.get("stable_id") or "").strip()
     if not stable_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"code": "INVALID_SESSION", "message": "session identity missing"},
         )
-    return AuthenticatedIdentity(stable_id=stable_id, role=str(data.get("role") or "user"))
+    return AuthenticatedIdentity(stable_id=stable_id, role="user")
 
 
 def require_approver(identity: AuthenticatedIdentity) -> None:

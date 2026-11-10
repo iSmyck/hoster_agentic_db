@@ -267,6 +267,7 @@ development_status:
 
   phase-b: in-progress
   b.1-identity-service-live-integration: done
+  b.2-session-service: done
   b.3-retrieval-service-live-integration: done
   b.4-index-management-and-relevance-tuning: backlog
 

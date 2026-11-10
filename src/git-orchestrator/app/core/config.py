@@ -52,6 +52,11 @@ class Settings(BaseSettings):
         default="http://localhost:3100/api/v1/auths/",
         validation_alias=AliasChoices("GO_IDENTITY_SESSION_URL", "IDENTITY_SESSION_URL"),
     )
+    SESSION_SERVICE_URL: str = Field(
+        default="http://localhost:8004",
+        description="Base URL of the Session service.",
+        validation_alias=AliasChoices("GO_SESSION_SERVICE_URL", "SESSION_SERVICE_URL"),
+    )
     KB_ALLOWED_SPACE_IDS: str = Field(
         default="corp-kb/sales",
         validation_alias=AliasChoices("GO_KB_ALLOWED_SPACE_IDS", "KB_ALLOWED_SPACE_IDS"),
