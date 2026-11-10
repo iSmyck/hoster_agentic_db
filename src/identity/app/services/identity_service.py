@@ -203,13 +203,27 @@ def recheck_group_membership(
     now = _now()
 
     # Expire only the subject's previous memberships, not the whole Space.
-    db.query(GroupSnapshot).filter(
-        and_(
-            GroupSnapshot.space_id == space_id,
-            GroupSnapshot.valid_until.is_(None),
-            GroupSnapshot.member_refs.contains([external_ref]),
+    # Filter in Python to avoid SQLAlchemy JSON operator deprecation; spaces
+    # have a bounded number of group snapshots.
+    active_snapshots = (
+        db.query(GroupSnapshot)
+        .filter(
+            and_(
+                GroupSnapshot.space_id == space_id,
+                GroupSnapshot.valid_until.is_(None),
+            )
         )
-    ).update({"valid_until": now}, synchronize_session=False)
+        .all()
+    )
+    snapshot_ids_to_expire = [
+        snap.id
+        for snap in active_snapshots
+        if any(_ref_matches(member, external_ref) for member in (snap.member_refs or []))
+    ]
+    if snapshot_ids_to_expire:
+        db.query(GroupSnapshot).filter(GroupSnapshot.id.in_(snapshot_ids_to_expire)).update(
+            {"valid_until": now}, synchronize_session=False
+        )
 
     rows: list[GroupSnapshot] = []
     for group_name in groups:

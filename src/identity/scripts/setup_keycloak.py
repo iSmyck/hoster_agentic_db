@@ -2,8 +2,8 @@
 
 This script is idempotent: it creates the ``corp-kb`` realm and
 ``identity-service`` client only if they do not already exist, then adds the
-audience mapper required for token introspection to work with direct-access
-grants.
+audience mapper required for token introspection and the groups mapper required
+for group membership claims with direct-access grants.
 
 The script prints the generated client secret so it can be copied into ``.env``.
 It does not write secrets to any file.
@@ -15,6 +15,9 @@ import os
 import sys
 
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
 
 DEFAULT_KEYCLOAK_URL = "http://localhost:8082"
 DEFAULT_REALM = "corp-kb"
@@ -98,6 +101,23 @@ def _create_client(keycloak_url: str, token: str, realm: str, client_id: str) ->
     return _get_client(keycloak_url, token, realm, client_id) or {}
 
 
+def _mapper_exists(
+    keycloak_url: str,
+    token: str,
+    realm: str,
+    client_uuid: str,
+    mapper_name: str,
+) -> bool:
+    mappers_url = f"{keycloak_url}/admin/realms/{realm}/clients/{client_uuid}/protocol-mappers/models"
+    resp = httpx.get(
+        mappers_url,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=30.0,
+    )
+    resp.raise_for_status()
+    return any(m.get("name") == mapper_name for m in resp.json())
+
+
 def _add_audience_mapper(
     keycloak_url: str,
     token: str,
@@ -107,14 +127,7 @@ def _add_audience_mapper(
 ) -> None:
     mapper_name = f"{client_id}-audience"
     mappers_url = f"{keycloak_url}/admin/realms/{realm}/clients/{client_uuid}/protocol-mappers/models"
-    resp = httpx.get(
-        mappers_url,
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=30.0,
-    )
-    resp.raise_for_status()
-    existing = [m for m in resp.json() if m.get("name") == mapper_name]
-    if existing:
+    if _mapper_exists(keycloak_url, token, realm, client_uuid, mapper_name):
         print(f"Audience mapper '{mapper_name}' already exists")
         return
 
@@ -139,13 +152,59 @@ def _add_audience_mapper(
     print(f"Added audience mapper '{mapper_name}'")
 
 
+def _add_groups_mapper(
+    keycloak_url: str,
+    token: str,
+    realm: str,
+    client_uuid: str,
+) -> None:
+    mapper_name = "groups"
+    mappers_url = f"{keycloak_url}/admin/realms/{realm}/clients/{client_uuid}/protocol-mappers/models"
+    if _mapper_exists(keycloak_url, token, realm, client_uuid, mapper_name):
+        print(f"Groups mapper '{mapper_name}' already exists")
+        return
+
+    resp = httpx.post(
+        mappers_url,
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        json={
+            "name": mapper_name,
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-group-membership-mapper",
+            "consentRequired": False,
+            "config": {
+                "claim.name": "groups",
+                "full.path": "false",
+                "id.token.claim": "false",
+                "access.token.claim": "true",
+                "userinfo.token.claim": "true",
+            },
+        },
+        timeout=30.0,
+    )
+    resp.raise_for_status()
+    print(f"Added groups mapper '{mapper_name}'")
+
+
+def _get_user_id(keycloak_url: str, token: str, realm: str, username: str) -> str | None:
+    resp = httpx.get(
+        f"{keycloak_url}/admin/realms/{realm}/users",
+        headers={"Authorization": f"Bearer {token}"},
+        params={"username": username, "exact": "true"},
+        timeout=30.0,
+    )
+    resp.raise_for_status()
+    users = resp.json()
+    return users[0]["id"] if users else None
+
+
 def _create_test_user(
     keycloak_url: str,
     token: str,
     realm: str,
     username: str,
     password: str,
-) -> None:
+) -> str | None:
     users_url = f"{keycloak_url}/admin/realms/{realm}/users"
     resp = httpx.get(
         users_url,
@@ -156,7 +215,7 @@ def _create_test_user(
     resp.raise_for_status()
     if resp.json():
         print(f"Test user '{username}' already exists")
-        return
+        return _get_user_id(keycloak_url, token, realm, username)
 
     resp = httpx.post(
         users_url,
@@ -175,6 +234,80 @@ def _create_test_user(
     )
     resp.raise_for_status()
     print(f"Created test user '{username}'")
+    return _get_user_id(keycloak_url, token, realm, username)
+
+
+def _create_group(
+    keycloak_url: str,
+    token: str,
+    realm: str,
+    group_name: str,
+) -> str | None:
+    groups_url = f"{keycloak_url}/admin/realms/{realm}/groups"
+    resp = httpx.get(
+        groups_url,
+        headers={"Authorization": f"Bearer {token}"},
+        params={"search": group_name, "exact": "true"},
+        timeout=30.0,
+    )
+    resp.raise_for_status()
+    groups = resp.json()
+    if groups:
+        print(f"Group '{group_name}' already exists")
+        return groups[0]["id"]
+
+    resp = httpx.post(
+        groups_url,
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        json={"name": group_name},
+        timeout=30.0,
+    )
+    resp.raise_for_status()
+    print(f"Created group '{group_name}'")
+
+    resp = httpx.get(
+        groups_url,
+        headers={"Authorization": f"Bearer {token}"},
+        params={"search": group_name, "exact": "true"},
+        timeout=30.0,
+    )
+    resp.raise_for_status()
+    groups = resp.json()
+    return groups[0]["id"] if groups else None
+
+
+def _add_user_to_group(
+    keycloak_url: str,
+    token: str,
+    realm: str,
+    user_id: str,
+    group_id: str,
+) -> None:
+    resp = httpx.put(
+        f"{keycloak_url}/admin/realms/{realm}/users/{user_id}/groups/{group_id}",
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=30.0,
+    )
+    if resp.status_code == 204:
+        print("Added test user to 'sales' group")
+    else:
+        resp.raise_for_status()
+
+
+def _get_client_secret(
+    keycloak_url: str,
+    token: str,
+    realm: str,
+    client_uuid: str,
+) -> str | None:
+    resp = httpx.get(
+        f"{keycloak_url}/admin/realms/{realm}/clients/{client_uuid}/client-secret",
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=30.0,
+    )
+    if resp.status_code == 200:
+        return resp.json().get("value")
+    return None
 
 
 def main() -> int:
@@ -208,13 +341,16 @@ def main() -> int:
         return 1
 
     _add_audience_mapper(keycloak_url, token, realm, client_uuid, client_id)
-    _create_test_user(keycloak_url, token, realm, test_username, test_password)
+    _add_groups_mapper(keycloak_url, token, realm, client_uuid)
+    user_id = _create_test_user(keycloak_url, token, realm, test_username, test_password)
+    sales_group_id = _create_group(keycloak_url, token, realm, "sales")
+    if user_id and sales_group_id:
+        _add_user_to_group(keycloak_url, token, realm, user_id, sales_group_id)
 
-    secret = client.get("secret")
+    secret = _get_client_secret(keycloak_url, token, realm, client_uuid)
     if secret:
-        print("\n# Client secret created.")
-        print("# Retrieve it from the Keycloak admin console or read the client")
-        print("# via the admin API; it is not printed here to avoid leaking it.")
+        print("\n# Client secret (copy to .env as KEYCLOAK_CLIENT_SECRET):")
+        print(secret)
     else:
         print("\n# No client secret returned; Keycloak may require re-reading the client.")
 

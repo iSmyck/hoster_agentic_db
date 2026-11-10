@@ -12,6 +12,9 @@ import os
 import sys
 
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
 
 DEFAULT_KEYCLOAK_URL = "http://localhost:8082"
 DEFAULT_REALM = "corp-kb"

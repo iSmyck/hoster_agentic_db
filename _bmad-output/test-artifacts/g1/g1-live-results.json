@@ -1,0 +1,255 @@
+{
+  "checks": [
+    {
+      "actual": "status=200, body={'status': 'ok'}",
+      "details": {},
+      "expected": "GO health endpoint returns 200",
+      "id": "precondition.health",
+      "status": "PASS"
+    },
+    {
+      "actual": "protected=True, merge_only=True",
+      "details": {
+        "merge_only": true,
+        "protected": true,
+        "rules": {
+          "merge_access_levels": [
+            {
+              "access_level": 40,
+              "access_level_description": "Maintainers",
+              "id": 1
+            }
+          ],
+          "merge_only": true,
+          "protected": true,
+          "push_access_levels": [
+            {
+              "access_level": 40,
+              "access_level_description": "Maintainers",
+              "deploy_key_id": null,
+              "id": 1
+            }
+          ]
+        },
+        "space_id": "corp-kb/sales"
+      },
+      "expected": "target branch is protected and merge-only",
+      "id": "precondition.merge_only_rules",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=201, body={'id': '4cb66886-e2db-4ea3-9263-6d5bc850373f', 'space_id': 'corp-kb/sales', 'proposal_sha': 'fbbd3f68c52fdac053e0d31f9d0767adc16143f9', 'base_sha': '76772cc3a475a93f1608dc01012a8b7d9a13f0d4', 'target_sha': None, 'status': 'in_review', 'idempotency_key': 'g1-acceptance-51c73670', 'proposal_data': {'author_stable_id': 'user-sales-editor', 'requester_stable_id': 'user-sales-editor', 'target_branch': 'main', 'mr_iid': 64}, 'created_at': '2026-11-10T10:19:46.575823Z'}",
+      "details": {},
+      "expected": "proposal accepted and MR created",
+      "id": "flow.submit_proposal",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=201, body={'id': 'd93627af-4702-5a7f-939f-9d5616cba658', 'proposal_id': '4cb66886-e2db-4ea3-9263-6d5bc850373f', 'outcome': 'accepted', 'actor_id': 'user-sales-approver', 'idempotency_key': 'g1-decision-a2bbb27b', 'record_sha256': '18e5bf4fd9d6ad0085f6a8d344bc6a66f2c9d5d4000027fcca83c6786a174f88', 'note_id': 139, 'tag_name': 'kb-decisions/d93627af-4702-5a7f-939f-9d5616cba658', 'state': 'recorded', 'supersedes_decision_id': None, 'created_at': '2026-11-10T10:19:49.519250Z'}",
+      "details": {},
+      "expected": "independent human decision recorded with note+tag",
+      "id": "flow.record_decision",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200, body={'proposal_id': '4cb66886-e2db-4ea3-9263-6d5bc850373f', 'status': 'merged', 'merge_sha': '666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22', 'detail': 'merged via GitLab with verified parentage', 'fence_token': 1, 'recovery_required': False}",
+      "details": {},
+      "expected": "GO merge succeeds and returns merge_sha",
+      "id": "flow.execute_merge",
+      "status": "PASS"
+    },
+    {
+      "actual": "parents=['76772cc3a475a93f1608dc01012a8b7d9a13f0d4', 'fbbd3f68c52fdac053e0d31f9d0767adc16143f9']",
+      "details": {
+        "first_parent_matches_base": true,
+        "message": "Merge proposal 4cb66886-e2db-4ea3-9263-6d5bc850373f\n\nDecision-ID: d93627af-4702-5a7f-939f-9d5616cba658\nDecision-Note-ID: 139\nDecision-Hash: 18e5bf4fd9d6ad0085f6a8d344bc6a66f2c9d5d4000027fcca83c6786a174f88\nApproved-by: user-sales-approver",
+        "parents": [
+          "76772cc3a475a93f1608dc01012a8b7d9a13f0d4",
+          "fbbd3f68c52fdac053e0d31f9d0767adc16143f9"
+        ],
+        "second_parent_matches_proposal": true,
+        "trailers": {}
+      },
+      "expected": "merge commit parents equal base_sha and proposal_sha",
+      "id": "flow.merge_parentage",
+      "status": "PASS"
+    },
+    {
+      "actual": "Merge proposal 4cb66886-e2db-4ea3-9263-6d5bc850373f\n\nDecision-ID: d93627af-4702-5a7f-939f-9d5616cba658\nDecision-Note-ID: 139\nDecision-Hash: 18e5bf4fd9d6ad0085f6a8d344bc6a66f2c9d5d4000027fcca83c6786a174f88\nApproved-by: user-sales-approver",
+      "details": {
+        "first_parent_matches_base": true,
+        "message": "Merge proposal 4cb66886-e2db-4ea3-9263-6d5bc850373f\n\nDecision-ID: d93627af-4702-5a7f-939f-9d5616cba658\nDecision-Note-ID: 139\nDecision-Hash: 18e5bf4fd9d6ad0085f6a8d344bc6a66f2c9d5d4000027fcca83c6786a174f88\nApproved-by: user-sales-approver",
+        "parents": [
+          "76772cc3a475a93f1608dc01012a8b7d9a13f0d4",
+          "fbbd3f68c52fdac053e0d31f9d0767adc16143f9"
+        ],
+        "second_parent_matches_proposal": true,
+        "trailers": {}
+      },
+      "expected": "merge commit message contains Decision-ID trailer",
+      "id": "flow.merge_trailers",
+      "status": "PASS"
+    },
+    {
+      "actual": "found=True, target_matches=True, protected=True",
+      "details": {
+        "found": true,
+        "message": "{\"access_policy_revision\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"action\":\"accepted\",\"actor_stable_id\":\"user-sales-approver\",\"approval_policy_revision\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"base_sha\":\"76772cc3a475a93f1608dc01012a8b7d9a13f0d4\",\"decision_id\":\"d93627af-4702-5a7f-939f-9d5616cba658\",\"evidence\":[],\"policy_bundle_id\":\"sales-policy-bundle\",\"proposal_id\":\"4cb66886-e2db-4ea3-9263-6d5bc850373f\",\"proposal_sha\":\"fbbd3f68c52fdac053e0d31f9d0767adc16143f9\",\"record_sha256\":\"18e5bf4fd9d6ad0085f6a8d344bc6a66f2c9d5d4000027fcca83c6786a174f88\",\"timestamp\":\"2026-11-10T10:19:49.538361+00:00\"}",
+        "protected": true,
+        "target": "fbbd3f68c52fdac053e0d31f9d0767adc16143f9",
+        "target_matches_proposal_sha": true
+      },
+      "expected": "protected annotated tag exists on proposal_sha",
+      "id": "flow.decision_tag",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=404",
+      "details": {},
+      "expected": "proposal without source branch is rejected before merge",
+      "id": "negative.source_branch_not_found",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=409, code=INVALID_STATE",
+      "details": {
+        "response": {
+          "detail": {
+            "code": "INVALID_STATE",
+            "message": "no accepted decision for this proposal"
+          }
+        },
+        "status_code": 409
+      },
+      "expected": "merge without decision rejected with INVALID_STATE",
+      "id": "negative.merge_without_decision",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=403, code=ACTOR_MISMATCH",
+      "details": {},
+      "expected": "actor spoofing rejected before DecisionRecord anchors",
+      "id": "negative.actor_spoofing_rejected",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=403, code=SELF_APPROVAL",
+      "details": {},
+      "expected": "self-approval rejected before DecisionRecord anchors",
+      "id": "negative.self_approval_by_author",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200, merge_sha=666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22",
+      "details": {
+        "response": {
+          "detail": "idempotent merge replay",
+          "fence_token": 1,
+          "merge_sha": "666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22",
+          "proposal_id": "4cb66886-e2db-4ea3-9263-6d5bc850373f",
+          "recovery_required": false,
+          "status": "merged"
+        },
+        "status_code": 200
+      },
+      "expected": "merge replay returns existing merge_sha without another external merge",
+      "id": "flow.merge_replay_idempotent",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=201, body={'id': '032063f3-25a3-488b-a184-34f5ba7372b2', 'space_id': 'corp-kb/sales', 'proposal_sha': 'e33305ddaf6927e6590ee01ab87309998742d54d', 'base_sha': '666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22', 'target_sha': None, 'status': 'in_review', 'idempotency_key': 'g1-revert-6db28780', 'proposal_data': {'author_stable_id': 'user-sales-editor', 'requester_stable_id': 'user-sales-editor', 'target_branch': 'main', 'reverts_decision_id': 'd93627af-4702-5a7f-939f-9d5616cba658', 'mr_iid': 67}, 'created_at': '2026-11-10T10:20:15.876074Z'}",
+      "details": {},
+      "expected": "revert proposal accepted and MR created",
+      "id": "flow.revert.submit_proposal",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=201, body={'id': '8a860871-65ac-51fd-9fe7-39f8f3128a00', 'proposal_id': '032063f3-25a3-488b-a184-34f5ba7372b2', 'outcome': 'accepted', 'actor_id': 'user-sales-approver', 'idempotency_key': 'g1-revert-decision-d95590e8', 'record_sha256': 'f56d2c13534b1011b9e7fa0fa7fa750ddb6e2d992180fba05a91180ad61d222c', 'note_id': 141, 'tag_name': 'kb-decisions/8a860871-65ac-51fd-9fe7-39f8f3128a00', 'state': 'recorded', 'supersedes_decision_id': None, 'created_at': '2026-11-10T10:20:16.537720Z'}",
+      "details": {},
+      "expected": "revert decision recorded with note+tag",
+      "id": "flow.revert.record_decision",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200, body={'proposal_id': '032063f3-25a3-488b-a184-34f5ba7372b2', 'status': 'merged', 'merge_sha': 'ed79b829a7063f637c6757afb1a4665ecc052ff8', 'detail': 'merged via GitLab with verified parentage', 'fence_token': 2, 'recovery_required': False}",
+      "details": {},
+      "expected": "revert merge succeeds and returns merge_sha",
+      "id": "flow.revert.execute_merge",
+      "status": "PASS"
+    },
+    {
+      "actual": "parents=['666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22', 'e33305ddaf6927e6590ee01ab87309998742d54d']",
+      "details": {
+        "first_parent_matches_base": true,
+        "message": "Merge proposal 032063f3-25a3-488b-a184-34f5ba7372b2\n\nDecision-ID: 8a860871-65ac-51fd-9fe7-39f8f3128a00\nDecision-Note-ID: 141\nDecision-Hash: f56d2c13534b1011b9e7fa0fa7fa750ddb6e2d992180fba05a91180ad61d222c\nApproved-by: user-sales-approver",
+        "parents": [
+          "666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22",
+          "e33305ddaf6927e6590ee01ab87309998742d54d"
+        ],
+        "second_parent_matches_proposal": true,
+        "trailers": {}
+      },
+      "expected": "revert merge commit parents equal revert base_sha and proposal_sha",
+      "id": "flow.revert.merge_parentage",
+      "status": "PASS"
+    },
+    {
+      "actual": "Merge proposal 032063f3-25a3-488b-a184-34f5ba7372b2\n\nDecision-ID: 8a860871-65ac-51fd-9fe7-39f8f3128a00\nDecision-Note-ID: 141\nDecision-Hash: f56d2c13534b1011b9e7fa0fa7fa750ddb6e2d992180fba05a91180ad61d222c\nApproved-by: user-sales-approver",
+      "details": {
+        "first_parent_matches_base": true,
+        "message": "Merge proposal 032063f3-25a3-488b-a184-34f5ba7372b2\n\nDecision-ID: 8a860871-65ac-51fd-9fe7-39f8f3128a00\nDecision-Note-ID: 141\nDecision-Hash: f56d2c13534b1011b9e7fa0fa7fa750ddb6e2d992180fba05a91180ad61d222c\nApproved-by: user-sales-approver",
+        "parents": [
+          "666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22",
+          "e33305ddaf6927e6590ee01ab87309998742d54d"
+        ],
+        "second_parent_matches_proposal": true,
+        "trailers": {}
+      },
+      "expected": "revert merge commit message contains Decision-ID trailer",
+      "id": "flow.revert.merge_trailers",
+      "status": "PASS"
+    },
+    {
+      "actual": "file_path=docs/g1-proposal-8fe727fde0b4.md, exists=False",
+      "details": {},
+      "expected": "merged file no longer exists after revert merge",
+      "id": "flow.revert.file_restored",
+      "status": "PASS"
+    },
+    {
+      "actual": "found=True, target_matches=True, protected=True",
+      "details": {
+        "found": true,
+        "message": "{\"access_policy_revision\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"action\":\"accepted\",\"actor_stable_id\":\"user-sales-approver\",\"approval_policy_revision\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"base_sha\":\"666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22\",\"decision_id\":\"8a860871-65ac-51fd-9fe7-39f8f3128a00\",\"evidence\":[],\"policy_bundle_id\":\"sales-policy-bundle\",\"proposal_id\":\"032063f3-25a3-488b-a184-34f5ba7372b2\",\"proposal_sha\":\"e33305ddaf6927e6590ee01ab87309998742d54d\",\"record_sha256\":\"f56d2c13534b1011b9e7fa0fa7fa750ddb6e2d992180fba05a91180ad61d222c\",\"timestamp\":\"2026-11-10T10:20:16.547924+00:00\"}",
+        "protected": true,
+        "target": "e33305ddaf6927e6590ee01ab87309998742d54d",
+        "target_matches_proposal_sha": true
+      },
+      "expected": "protected annotated tag exists on revert proposal_sha",
+      "id": "flow.revert.decision_tag",
+      "status": "PASS"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/g1/run_g1_live_acceptance.py",
+  "counts": {
+    "BLOCKED": 0,
+    "FAIL": 0,
+    "PASS": 20,
+    "TOTAL": 20
+  },
+  "environment": {
+    "database": "postgresql+psycopg://localhost:5432/corp_kb",
+    "gitlab_project": "corp-kb/sales",
+    "gitlab_url": "http://localhost:8081",
+    "pinned_toolchain": {
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "live_local_gitlab_ce"
+  },
+  "generated_at": "2026-11-10T10:19:38.830806+00:00",
+  "schema_version": "g1-live-acceptance-v1",
+  "sensitive_data_included": false
+}

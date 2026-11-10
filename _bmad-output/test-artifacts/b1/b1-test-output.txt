@@ -1,0 +1,21 @@
+$ uv run pytest -q src/identity/tests
+44 passed in 3.80s
+
+$ uv run ruff check src/identity
+All checks passed!
+
+$ uv run python src/identity/scripts/smoke_keycloak.py
+Keycloak: http://localhost:8082
+Realm: corp-kb
+Resolved identity:
+  id: <uuid>
+  external_refs: [{
+    'sub': '<uuid>',
+    'name': 'Test User',
+    'email': 'test@example.com',
+    'issuer': 'http://localhost:8082/realms/corp-kb',
+    'given_name': 'Test',
+    'family_name': 'User',
+    'preferred_username': 'testuser'
+  }]
+  created_at: <iso>

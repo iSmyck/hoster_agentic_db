@@ -1,0 +1,159 @@
+{
+  "checks": [
+    {
+      "actual": "status=200",
+      "details": {},
+      "expected": "GO health endpoint returns 200",
+      "id": "precondition.go_health",
+      "status": "PASS"
+    },
+    {
+      "actual": "schema=kb_ops_g1_test",
+      "details": {},
+      "expected": "kb_ops schema reset and migrations applied",
+      "id": "precondition.schema_reset",
+      "status": "PASS"
+    },
+    {
+      "actual": "token present",
+      "details": {},
+      "expected": "admin token available",
+      "id": "openwebui.admin_token",
+      "status": "PASS"
+    },
+    {
+      "actual": "both tokens present",
+      "details": {},
+      "expected": "random per-run author and approver created",
+      "id": "openwebui.create_users",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=401",
+      "details": {},
+      "expected": "prepare-branch rejects unauthenticated writes",
+      "id": "security.prepare_requires_session",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=400",
+      "details": {},
+      "expected": "prepare-branch rejects CI/service paths",
+      "id": "security.prepare_rejects_ci_path",
+      "status": "PASS"
+    },
+    {
+      "actual": "first=200:{\"space_id\":\"corp-kb/sales\",\"proposal_sha\":\"4d3504ce82f06a851ebe707304be2a1ba290d52c\",\"base_sha\":\"ed79b829a7063f637c6757afb1a4665ecc052ff8\",\"proposal_branch\":\"proposal/4d3504ce\",\"file_path\":\"docs/g1-p, second=200:{\"space_id\":\"corp-kb/sales\",\"proposal_sha\":\"4d3504ce82f06a851ebe707304be2a1ba290d52c\",\"base_sha\":\"ed79b829a7063f637c6757afb1a4665ecc052ff8\",\"proposal_branch\":\"proposal/4d3504ce\",\"file_path\":\"docs/g1-p",
+      "details": {},
+      "expected": "prepare retry returns identical proposal/base SHA",
+      "id": "security.prepare_replay_idempotent",
+      "status": "PASS"
+    },
+    {
+      "actual": "http://localhost:5050/kb",
+      "details": {},
+      "expected": "KB editor page loads",
+      "id": "openwebui.kb_page_loads",
+      "status": "PASS"
+    },
+    {
+      "actual": "proposal_id=101532d5-0080-4ecd-b5a6-a17f1d7cad66",
+      "details": {},
+      "expected": "author submits proposal via Open WebUI",
+      "id": "openwebui.author_submit",
+      "status": "PASS"
+    },
+    {
+      "actual": "or, edit content, then submit proposal.\n{\"stable_id\":\"g1-author-aa0a26bc36d3@hoster.test\",\"role\":\"user\"}\nCreating branch and commit in GitLab...\n{\"merge_only\":true,\"protected\":true}\nSubmitting proposal to GO...\n{\"proposal_id\":\"101532d5-0080-4ecd-b5a6-a17f1d7cad66\",\"proposal_sha\":\"1984fe66f399c73fa15c14dda7ea0822f8964c0c\",\"base_sha\":\"ed79b829a7063f637c6757afb1a4665ecc052ff8\"}\nRecording decision...\nERROR: POST /api/kb/v1/decisions -> 403: APPROVER_REQUIRED: independent approver capability required",
+      "details": {},
+      "expected": "author session cannot record an approval",
+      "id": "openwebui.author_cannot_approve",
+      "status": "PASS"
+    },
+    {
+      "actual": "decision_id=cf595329-dd49-58e3-8fed-67cbe5b0e0e5",
+      "details": {},
+      "expected": "approver records decision in independent session",
+      "id": "openwebui.approver_decision",
+      "status": "PASS"
+    },
+    {
+      "actual": "merge_sha=1373dc28929ecc91a36fe130fa87b0e6dbdcc21f",
+      "details": {},
+      "expected": "approver executes merge in independent session",
+      "id": "openwebui.approver_merge",
+      "status": "PASS"
+    },
+    {
+      "actual": "two isolated browser contexts",
+      "details": {},
+      "expected": "author and approver use independent browser sessions",
+      "id": "openwebui.independent_sessions",
+      "status": "PASS"
+    },
+    {
+      "actual": "parents=['ed79b829a7063f637c6757afb1a4665ecc052ff8', '1984fe66f399c73fa15c14dda7ea0822f8964c0c']",
+      "details": {
+        "first_parent_matches_base": true,
+        "message": "Merge proposal 101532d5-0080-4ecd-b5a6-a17f1d7cad66\n\nDecision-ID: cf595329-dd49-58e3-8fed-67cbe5b0e0e5\nDecision-Note-ID: 145\nDecision-Hash: 3058ff2fde3de6d4f256f2316065e39998a0a024aa651825626023c099fa43dc\nApproved-by: g1-approver-aa0a26bc36d3@hoster.test",
+        "parents": [
+          "ed79b829a7063f637c6757afb1a4665ecc052ff8",
+          "1984fe66f399c73fa15c14dda7ea0822f8964c0c"
+        ],
+        "second_parent_matches_proposal": true
+      },
+      "expected": "merge commit parents equal base_sha and proposal_sha",
+      "id": "openwebui.merge_parentage",
+      "status": "PASS"
+    },
+    {
+      "actual": "Merge proposal 101532d5-0080-4ecd-b5a6-a17f1d7cad66\n\nDecision-ID: cf595329-dd49-58e3-8fed-67cbe5b0e0e5\nDecision-Note-ID: 145\nDecision-Hash: 3058ff2fde3de6d4f256f2316065e39998a0a024aa651825626023c099fa43dc\nApproved-by: g1-approver-aa0a26bc36d3@hoster.test",
+      "details": {
+        "first_parent_matches_base": true,
+        "message": "Merge proposal 101532d5-0080-4ecd-b5a6-a17f1d7cad66\n\nDecision-ID: cf595329-dd49-58e3-8fed-67cbe5b0e0e5\nDecision-Note-ID: 145\nDecision-Hash: 3058ff2fde3de6d4f256f2316065e39998a0a024aa651825626023c099fa43dc\nApproved-by: g1-approver-aa0a26bc36d3@hoster.test",
+        "parents": [
+          "ed79b829a7063f637c6757afb1a4665ecc052ff8",
+          "1984fe66f399c73fa15c14dda7ea0822f8964c0c"
+        ],
+        "second_parent_matches_proposal": true
+      },
+      "expected": "merge commit contains Decision-ID trailer",
+      "id": "openwebui.merge_trailers",
+      "status": "PASS"
+    },
+    {
+      "actual": "found=True, target_matches=True, protected=True",
+      "details": {
+        "found": true,
+        "protected": true,
+        "target_matches_proposal_sha": true
+      },
+      "expected": "protected annotated tag exists on proposal_sha",
+      "id": "openwebui.decision_tag",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200, len=61",
+      "details": {},
+      "expected": "merged page is readable on target branch",
+      "id": "openwebui.merged_file_visible",
+      "status": "PASS"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/g1/run_openwebui_acceptance.py",
+  "counts": {
+    "BLOCKED": 0,
+    "FAIL": 0,
+    "PASS": 17,
+    "TOTAL": 17
+  },
+  "environment": {
+    "database": "postgresql+psycopg://localhost:5432/corp_kb",
+    "go_url": "http://localhost:8002",
+    "openwebui_url": "http://localhost:5050",
+    "space_id": "corp-kb/sales"
+  },
+  "generated_at": "2026-11-10T10:20:48.766573+00:00",
+  "schema_version": "g1-openwebui-acceptance-v1",
+  "sensitive_data_included": false
+}

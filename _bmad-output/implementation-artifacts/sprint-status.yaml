@@ -264,6 +264,10 @@ development_status:
   epic-13: done
   13-1-i09-dry-run-importer-and-source-registry: done
   epic-13-retrospective: optional
+
+  phase-b: in-progress
+  b.1-identity-service-live-integration: done
+
 action_items:
   - epic: 1
     action: "G2: execute live acceptance A01–A36 on sandbox GitLab + PostgreSQL +
