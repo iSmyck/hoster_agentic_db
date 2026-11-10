@@ -1,6 +1,6 @@
 # T15 Safe Source Registry, Three-Way Updates and Durable Cursors Evidence Summary
 
-- **Generated:** 2026-11-09T00:01:33.078839+00:00
+- **Generated:** 2026-11-10T11:25:42.071431+00:00
 - **Contracts version:** source-registry-v1
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Spec baseline commit:** d2c0d072a757808ea891fbf6414f00147679f7a7

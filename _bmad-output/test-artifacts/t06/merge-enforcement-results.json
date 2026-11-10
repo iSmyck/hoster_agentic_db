@@ -295,7 +295,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T23:06:43.310082+00:00",
+  "generated_at": "2026-11-10T11:24:19.062105+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t06/run_t06_tests.py",
   "schema_version": "t06-merge-enforcement-results-v1",
   "sensitive_data_included": false,

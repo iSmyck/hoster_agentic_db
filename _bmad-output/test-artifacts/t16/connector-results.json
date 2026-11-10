@@ -181,10 +181,10 @@
       "actual": "capabilities valid",
       "details": {
         "capabilities": [
-          "fetch",
           "list",
           "propose",
-          "changes"
+          "changes",
+          "fetch"
         ],
         "forbidden_present": [],
         "proposal_only_to_go": true
@@ -201,11 +201,11 @@
       "actual": "forbidden capability detected",
       "details": {
         "capabilities": [
+          "fetch",
+          "list",
           "propose",
           "changes",
-          "fetch",
-          "auto_merge",
-          "list"
+          "auto_merge"
         ],
         "expected_negative": true,
         "forbidden_present": [
@@ -225,10 +225,10 @@
       "actual": "forbidden capability detected",
       "details": {
         "capabilities": [
-          "fetch",
-          "index_pointer",
           "list",
-          "propose"
+          "propose",
+          "index_pointer",
+          "fetch"
         ],
         "expected_negative": true,
         "forbidden_present": [
@@ -599,7 +599,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-09T00:01:33.448814+00:00",
+  "generated_at": "2026-11-10T11:25:42.511591+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t16/run_t16_tests.py",
   "schema_version": "t16-connector-results-v1",
   "sensitive_data_included": false,

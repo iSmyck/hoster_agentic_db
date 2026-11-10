@@ -339,7 +339,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T23:06:43.663280+00:00",
+  "generated_at": "2026-11-10T11:25:12.535127+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t07/run_t07_tests.py",
   "schema_version": "t07-review-ui-results-v1",
   "sensitive_data_included": false,

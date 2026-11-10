@@ -1,6 +1,6 @@
 # T06 Merge-Only GO Enforcement, Fencing and Quarantine Evidence Summary
 
-- **Generated:** 2026-11-08T23:06:43.309842+00:00
+- **Generated:** 2026-11-10T11:24:19.061530+00:00
 - **Contracts version:** merge-enforcement-v1
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Spec baseline commit:** d2c0d072a757808ea891fbf6414f00147679f7a7

@@ -80,6 +80,7 @@ class ProposalResponse(BaseModel):
     target_sha: str | None
     status: str
     idempotency_key: str
+    proposal_data: dict[str, Any]
     created_at: datetime
 
 
@@ -129,3 +130,23 @@ class MergeRulesResponse(BaseModel):
     protected: bool
     merge_only: bool
     rules: dict[str, Any]
+
+
+class PrepareBranchRequest(BaseModel):
+    """POST /api/g1-editor/prepare-branch"""
+
+    space_id: str = Field(..., max_length=63)
+    branch: str = Field(..., max_length=255)
+    file_path: str = Field(..., max_length=2048)
+    content: str
+    idempotency_key: str = Field(..., max_length=255)
+
+
+class PrepareBranchResponse(BaseModel):
+    """Branch/commit preparation result for the browser editor."""
+
+    space_id: str
+    proposal_sha: str
+    base_sha: str
+    proposal_branch: str
+    file_path: str

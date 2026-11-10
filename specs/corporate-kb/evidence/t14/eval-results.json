@@ -552,7 +552,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T23:50:40.937735+00:00",
+  "generated_at": "2026-11-10T11:25:41.656188+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t14/run_t14_tests.py",
   "schema_version": "t14-eval-results-v1",
   "sensitive_data_included": false,

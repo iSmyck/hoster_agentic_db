@@ -274,7 +274,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T23:06:44.352726+00:00",
+  "generated_at": "2026-11-10T11:25:12.602171+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t08/run_t08_tests.py",
   "schema_version": "t08-agent-context-results-v1",
   "sensitive_data_included": false,

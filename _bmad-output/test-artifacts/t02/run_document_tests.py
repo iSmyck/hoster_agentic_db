@@ -155,8 +155,20 @@ def _blocked(
     )
 
 
+def _is_negative_check(check: dict[str, Any]) -> bool:
+    """Return True for intentionally invalid fixtures (bad-/malformed-)."""
+    name = check.get("id", "")
+    fixture = check.get("fixture_path") or ""
+    return ("bad-" in name or "malformed-" in name or
+            "bad-" in fixture or "malformed-" in fixture)
+
+
 def _add_check(builder: ReportBuilder, check: dict[str, Any]) -> None:
     from reporters.json_reporter import Check
+
+    details = dict(check.get("details") or {})
+    if check["status"] == "FAIL" and _is_negative_check(check):
+        details["expected_negative"] = True
 
     builder.add(
         Check(
@@ -168,7 +180,7 @@ def _add_check(builder: ReportBuilder, check: dict[str, Any]) -> None:
             input_sha256=check["input_sha256"],
             fixture_path=check["fixture_path"],
             rerun_cmd=check["rerun_cmd"],
-            details=check["details"],
+            details=details,
         )
     )
 

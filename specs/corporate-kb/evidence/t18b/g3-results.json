@@ -761,7 +761,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-09T00:01:34.567762+00:00",
+  "generated_at": "2026-11-10T11:25:44.134937+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18b/run_t18b_tests.py",
   "schema_version": "t18b-g3-results-v1",
   "sensitive_data_included": false,

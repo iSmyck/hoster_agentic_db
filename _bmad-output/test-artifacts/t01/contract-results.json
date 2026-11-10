@@ -637,7 +637,7 @@
       "actual": "found 8 required IDs",
       "cf_id": "CF-09",
       "details": {},
-      "expected": "required invariant IDs present: {'DECISION_KEY_AND_PROPOSAL_EQUALITY', 'PATH_BODY_CORRECTION_TASK_ID', 'PATH_BODY_RUN_ID', 'PATH_BODY_PROPOSAL_ID', 'BODY_HEADER_IDEMPOTENCY', 'PATH_BODY_SPACE_ID', 'PATH_BODY_DOCUMENT_ID', 'PATH_BODY_IMPORT_ID'}",
+      "expected": "required invariant IDs present: {'BODY_HEADER_IDEMPOTENCY', 'DECISION_KEY_AND_PROPOSAL_EQUALITY', 'PATH_BODY_CORRECTION_TASK_ID', 'PATH_BODY_PROPOSAL_ID', 'PATH_BODY_SPACE_ID', 'PATH_BODY_RUN_ID', 'PATH_BODY_DOCUMENT_ID', 'PATH_BODY_IMPORT_ID'}",
       "fixture_path": null,
       "id": "CF-09.required_invariant_ids",
       "input_sha256": null,
@@ -1447,7 +1447,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T16:32:01.453697+00:00",
+  "generated_at": "2026-11-10T11:21:28.129867+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t01/run_contract_tests.py",
   "schema_version": "t01-contract-results-v1",
   "secrets_included": false

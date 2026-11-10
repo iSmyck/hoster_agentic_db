@@ -24,6 +24,7 @@ dev = [
     "jsonschema",
     "referencing",
     "ruff",
+    "playwright>=1.65.0",
 ]
 
 [tool.pytest.ini_options]

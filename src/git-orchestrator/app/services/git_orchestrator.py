@@ -152,11 +152,7 @@ def record_decision(
     request: DecisionRecordRequest,
 ) -> DecisionRecord:
     """Record a human decision for a proposal with canonical note/tag anchors."""
-    existing = (
-        db.query(DecisionRecord)
-        .filter_by(idempotency_key=request.idempotency_key)
-        .first()
-    )
+    existing = db.query(DecisionRecord).filter_by(idempotency_key=request.idempotency_key).first()
     if existing is not None:
         if existing.proposal_id != request.proposal_id or existing.outcome != request.action:
             raise GitOrchestratorError(
@@ -172,6 +168,16 @@ def record_decision(
         raise GitOrchestratorError(
             "INVALID_STATE",
             f"proposal is already {proposal.status}",
+        )
+    principals = {
+        proposal.proposal_data.get("author_stable_id"),
+        proposal.proposal_data.get("requester_stable_id"),
+        proposal.proposal_data.get("version_author_stable_id"),
+    }
+    if request.actor_id in principals:
+        raise GitOrchestratorError(
+            "SELF_APPROVAL",
+            "approver must differ from proposal author/requester/version author",
         )
 
     # Derive a stable decision UUID from the idempotency key so crash+retry
@@ -247,22 +253,53 @@ def execute_merge(
     db: Session,
     adapter: GitLabAdapter,
     proposal_id: uuid.UUID,
+    actor_id: str,
 ) -> dict[str, Any]:
-    """Execute a reviewed, accepted proposal merge with durability barrier."""
+    """Execute or replay a reviewed, accepted proposal merge."""
     proposal = db.get(ProposalRecord, proposal_id)
     if proposal is None:
         raise GitOrchestratorError("NOT_FOUND", "proposal not found")
+
+    decision = (
+        db.query(DecisionRecord).filter_by(proposal_id=proposal.id, outcome="accepted").first()
+    )
+    if decision is not None and decision.actor_id != actor_id:
+        raise GitOrchestratorError(
+            "APPROVER_MISMATCH",
+            "merge caller must match the accepted decision approver",
+        )
+
+    if proposal.status == "merged":
+        merge_sha = proposal.target_sha
+        if decision is None or not merge_sha:
+            raise GitOrchestratorError(
+                "INVALID_STATE", "merged proposal has no verified merge proof"
+            )
+        commit = adapter.get_commit(proposal.space_id, merge_sha)
+        parents = commit.get("parent_ids", [])
+        if (
+            len(parents) < 2
+            or parents[0] != proposal.base_sha
+            or parents[1] != proposal.proposal_sha
+        ):
+            raise GitOrchestratorError(
+                "MERGE_PARENT_MISMATCH",
+                "stored merge proof does not match proposal parentage",
+            )
+        return {
+            "proposal_id": str(proposal.id),
+            "status": proposal.status,
+            "merge_sha": merge_sha,
+            "detail": "idempotent merge replay",
+            "fence_token": proposal.merge_fence_token,
+            "recovery_required": proposal.recovery_required,
+        }
+
     if proposal.status != "in_review":
         raise GitOrchestratorError(
             "INVALID_STATE",
             f"proposal is already {proposal.status}",
         )
-
-    decision = (
-        db.query(DecisionRecord)
-        .filter_by(proposal_id=proposal.id, outcome="accepted")
-        .first()
-    )
     if decision is None:
         raise GitOrchestratorError(
             "INVALID_STATE",
@@ -339,7 +376,11 @@ def execute_merge(
         # Verify the merge commit exists and has correct parentage.
         commit = adapter.get_commit(proposal.space_id, merge_sha)
         parents = commit.get("parent_ids", [])
-        if len(parents) < 2 or parents[0] != proposal.base_sha or parents[1] != proposal.proposal_sha:
+        if (
+            len(parents) < 2
+            or parents[0] != proposal.base_sha
+            or parents[1] != proposal.proposal_sha
+        ):
             raise GitOrchestratorError(
                 "MERGE_PARENT_MISMATCH",
                 f"merge commit parents {parents} do not match base/proposal",
@@ -390,9 +431,7 @@ def reconcile_merge(
         raise GitOrchestratorError("NOT_FOUND", "proposal not found")
 
     decision = (
-        db.query(DecisionRecord)
-        .filter_by(proposal_id=proposal.id, outcome="accepted")
-        .first()
+        db.query(DecisionRecord).filter_by(proposal_id=proposal.id, outcome="accepted").first()
     )
     if decision is None:
         raise GitOrchestratorError("NOT_FOUND", "no accepted decision for this proposal")

@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 from git_orchestrator.app.adapters.gitlab import StubGitLabAdapter
+from git_orchestrator.app.api.auth import AuthenticatedIdentity, get_current_identity
 
 
 @pytest.fixture
@@ -26,7 +27,7 @@ def proposal_base() -> dict[str, Any]:
         "idempotency_key": "proposal-1",
         "proposal_data": {
             "author_stable_id": "author-1",
-            "requester_stable_id": "requester-1",
+            "requester_stable_id": "author-1",
         },
     }
 
@@ -292,7 +293,6 @@ class TestMerge:
             },
         )
         assert decision_resp.status_code == 201
-        decision_id = decision_resp.json()["id"]
 
         # Stub a verified merge commit with correct parentage.
         merge_sha = "m" * 40
@@ -304,7 +304,9 @@ class TestMerge:
         # Make the stub return the verified merge SHA.
         original_merge = stub_adapter.merge_merge_request
 
-        def _verified_merge(space_id: str, mr_iid: int, sha: str, merge_commit_message: str | None = None) -> dict[str, Any]:
+        def _verified_merge(
+            space_id: str, mr_iid: int, sha: str, merge_commit_message: str | None = None
+        ) -> dict[str, Any]:
             mr = original_merge(space_id, mr_iid, sha, merge_commit_message)
             mr["merge_commit_sha"] = merge_sha
             return mr
@@ -318,6 +320,15 @@ class TestMerge:
         assert body["merge_sha"] == merge_sha
         assert body["recovery_required"] is False
         assert body["fence_token"] is not None
+
+        def _unexpected_second_merge(*args: Any, **kwargs: Any) -> dict[str, Any]:
+            raise AssertionError("idempotent replay must not call GitLab merge again")
+
+        stub_adapter.merge_merge_request = _unexpected_second_merge  # type: ignore[assignment]
+        replay = client.post(f"/api/kb/v1/proposals/{proposal_id}/merge")
+        assert replay.status_code == 200, replay.text
+        assert replay.json()["merge_sha"] == merge_sha
+        assert replay.json()["detail"] == "idempotent merge replay"
 
     def test_merge_fails_without_decision(
         self,
@@ -338,40 +349,46 @@ class TestMerge:
     ) -> None:
         proposal_resp = client.post("/api/kb/v1/proposals", json=proposal_base)
         proposal_id = proposal_resp.json()["id"]
+        author_id = proposal_base["proposal_data"]["author_stable_id"]
+        client.app.dependency_overrides[get_current_identity] = lambda: AuthenticatedIdentity(
+            stable_id=author_id, role="admin"
+        )
 
-        client.post(
+        resp = client.post(
             "/api/kb/v1/decisions",
             json={
                 "proposal_id": proposal_id,
                 "action": "accepted",
-                "actor_id": proposal_base["proposal_data"]["author_stable_id"],
+                "actor_id": author_id,
                 "idempotency_key": "decision-self",
             },
         )
-
-        resp = client.post(f"/api/kb/v1/proposals/{proposal_id}/merge")
         assert resp.status_code == 403
         assert resp.json()["detail"]["code"] == "SELF_APPROVAL"
+        stub_adapter: StubGitLabAdapter = client.app.state.gitlab_adapter
+        assert not any(key[0] in {"note", "tag"} for key in stub_adapter.state)
 
-    def test_self_approval_blocked_for_requester(
+    def test_self_approval_blocked_for_version_author(
         self,
         client: TestClient,
         proposal_base: dict[str, Any],
     ) -> None:
+        proposal_base["proposal_data"]["version_author_stable_id"] = "author-1"
         proposal_resp = client.post("/api/kb/v1/proposals", json=proposal_base)
         proposal_id = proposal_resp.json()["id"]
+        client.app.dependency_overrides[get_current_identity] = lambda: AuthenticatedIdentity(
+            stable_id="author-1", role="admin"
+        )
 
-        client.post(
+        resp = client.post(
             "/api/kb/v1/decisions",
             json={
                 "proposal_id": proposal_id,
                 "action": "accepted",
-                "actor_id": proposal_base["proposal_data"]["requester_stable_id"],
-                "idempotency_key": "decision-self-requester",
+                "actor_id": "author-1",
+                "idempotency_key": "decision-self-version-author",
             },
         )
-
-        resp = client.post(f"/api/kb/v1/proposals/{proposal_id}/merge")
         assert resp.status_code == 403
         assert resp.json()["detail"]["code"] == "SELF_APPROVAL"
 
@@ -458,7 +475,7 @@ class TestMerge:
         assert resp2.status_code == 409
         assert resp2.json()["detail"]["code"] == "RECOVERY_REQUIRED"
 
-    def test_remerge_rejected(
+    def test_remerge_returns_existing_result(
         self,
         client: TestClient,
         proposal_base: dict[str, Any],
@@ -484,7 +501,9 @@ class TestMerge:
         }
         original_merge = stub_adapter.merge_merge_request
 
-        def _verified_merge(space_id: str, mr_iid: int, sha: str, merge_commit_message: str | None = None) -> dict[str, Any]:
+        def _verified_merge(
+            space_id: str, mr_iid: int, sha: str, merge_commit_message: str | None = None
+        ) -> dict[str, Any]:
             mr = original_merge(space_id, mr_iid, sha, merge_commit_message)
             mr["merge_commit_sha"] = merge_sha
             return mr
@@ -495,8 +514,9 @@ class TestMerge:
         assert r1.status_code == 200
 
         r2 = client.post(f"/api/kb/v1/proposals/{proposal_id}/merge")
-        assert r2.status_code == 409
-        assert r2.json()["detail"]["code"] == "INVALID_STATE"
+        assert r2.status_code == 200
+        assert r2.json()["merge_sha"] == merge_sha
+        assert r2.json()["detail"] == "idempotent merge replay"
 
 
 class TestMergeRules:
@@ -505,6 +525,25 @@ class TestMergeRules:
         client: TestClient,
         space_id: str,
     ) -> None:
+        resp = client.get(f"/api/kb/v1/spaces/{space_id}/merge-rules")
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["space_id"] == space_id
+        assert body["protected"] is True
+        assert body["merge_only"] is True
+
+    def test_merge_rules_accept_slash_in_space_id(
+        self,
+        client: TestClient,
+    ) -> None:
+        space_id = "corp-kb/sales"
+        stub_adapter: StubGitLabAdapter = client.app.state.gitlab_adapter
+        stub_adapter.state[("rules", space_id)] = {
+            "protected": True,
+            "merge_only": True,
+            "push_access_levels": [],
+        }
+
         resp = client.get(f"/api/kb/v1/spaces/{space_id}/merge-rules")
         assert resp.status_code == 200, resp.text
         body = resp.json()

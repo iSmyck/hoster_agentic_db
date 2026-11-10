@@ -1,6 +1,6 @@
 # T01 Contract Test Evidence Summary
 
-- **Generated:** 2026-11-08T16:32:01.453517+00:00
+- **Generated:** 2026-11-10T11:21:28.129554+00:00
 - **Contracts version:** t01-contract-tests-v1
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Environment:** synthetic_local_no_gitlab

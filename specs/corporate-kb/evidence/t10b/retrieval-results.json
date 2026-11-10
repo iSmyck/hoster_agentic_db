@@ -602,7 +602,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T23:25:35.089491+00:00",
+  "generated_at": "2026-11-10T11:25:13.692032+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10b/run_t10b_tests.py",
   "schema_version": "t10b-retrieval-results-v1",
   "sensitive_data_included": false,

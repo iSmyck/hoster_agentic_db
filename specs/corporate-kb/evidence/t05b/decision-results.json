@@ -358,7 +358,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T23:06:42.962801+00:00",
+  "generated_at": "2026-11-10T11:24:19.077616+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05b/run_t05b_tests.py",
   "schema_version": "t05b-decision-results-v1",
   "sensitive_data_included": false,

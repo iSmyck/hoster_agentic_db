@@ -1,6 +1,6 @@
 # T02 Document Tree and Direct Read Evidence Summary
 
-- **Generated:** 2026-11-08T21:55:51.753670+00:00
+- **Generated:** 2026-11-10T11:30:17.301887+00:00
 - **Contracts version:** document-front-matter-v2
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Spec baseline commit:** 788e299a5316c7d5df685a8f11b043ff36135a10
@@ -10,13 +10,14 @@
 ## Counts
 
 - PASS: 104
-- FAIL: 5
+- FAIL (expected): 5
+- FAIL (unexpected): 0
 - BLOCKED: 4
 - **Total:** 113
 
 ## Top findings
 
-### FAIL
+### FAIL (expected)
 - `front_matter.sales.bad-archived-no-archive.md.schema` (front_matter): 'archive' is a required property at []; fixture `_bmad-output<absolute-path-redacted>`
 - `front_matter.sales.bad-unarchived-with-archive.md.schema` (front_matter): True was expected at ['archived']; fixture `_bmad-output<absolute-path-redacted>`
 - `read.sales.malformed-heading.md.malformed_headings` (read): malformed headings at lines [(14, '####### This heading has too many hashes'), (16, '#This heading lacks a space')]; fixture `None`

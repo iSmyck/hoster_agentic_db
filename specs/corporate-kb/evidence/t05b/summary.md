@@ -1,6 +1,6 @@
 # T05b Canonical DecisionRecord, Exact Merge and Conclusive Recovery Evidence Summary
 
-- **Generated:** 2026-11-08T23:06:42.962801+00:00
+- **Generated:** 2026-11-10T11:24:19.077616+00:00
 - **Contracts version:** decision-record-v1
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Spec baseline commit:** d2c0d072a757808ea891fbf6414f00147679f7a7

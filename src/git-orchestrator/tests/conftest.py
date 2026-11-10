@@ -36,7 +36,10 @@ for _original in list(sys.modules):
         _aliased = _original.replace("git-orchestrator", "git_orchestrator")
         sys.modules[_aliased] = sys.modules[_original]
 
+from fastapi import Request
 from git_orchestrator.app.adapters.gitlab import StubGitLabAdapter
+from git_orchestrator.app.api.auth import AuthenticatedIdentity, get_current_identity
+from git_orchestrator.app.core.config import settings
 from git_orchestrator.app.main import create_app
 from git_orchestrator.app.models.ops import Base
 from git_orchestrator.app.repositories.db import get_db
@@ -80,7 +83,9 @@ def client(
     engine: Any,
     tables: Any,
     stub_adapter: StubGitLabAdapter,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> Generator[TestClient, None, None]:
+    monkeypatch.setattr(settings, "KB_ALLOWED_SPACE_IDS", "corp-kb/sales,demo-space")
     app = create_app(adapter=stub_adapter)
 
     async def _override_get_db() -> AsyncGenerator[Session, None]:
@@ -95,8 +100,16 @@ def client(
         finally:
             session.close()
 
+    def _override_identity(request: Request) -> AuthenticatedIdentity:
+        if request.url.path.endswith("/decisions") or request.url.path.endswith(
+            ("/merge", "/reconcile")
+        ):
+            return AuthenticatedIdentity(stable_id="approver-1", role="admin")
+        return AuthenticatedIdentity(stable_id="author-1", role="user")
+
     app.dependency_overrides.clear()
     app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_current_identity] = _override_identity
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()

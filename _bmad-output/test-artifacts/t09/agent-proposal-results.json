@@ -381,7 +381,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T23:06:44.700876+00:00",
+  "generated_at": "2026-11-10T11:25:12.694801+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t09/run_t09_tests.py",
   "schema_version": "t09-agent-proposal-results-v1",
   "sensitive_data_included": false,

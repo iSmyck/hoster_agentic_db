@@ -11,6 +11,7 @@ from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError
 from referencing import Registry, Resource
 from referencing.exceptions import NoSuchResource
+from referencing.jsonschema import DRAFT202012
 
 
 class SchemaValidator:
@@ -38,7 +39,7 @@ class SchemaValidator:
             self.schemas[key] = schema
             try:
                 resource = Resource.from_contents(
-                    schema, default_specification=self.DRAFT
+                    schema, default_specification=DRAFT202012
                 )
                 self.registry = self.registry.with_resource(
                     schema.get("$id", key), resource

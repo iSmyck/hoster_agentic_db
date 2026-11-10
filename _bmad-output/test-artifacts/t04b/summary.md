@@ -1,6 +1,6 @@
 # T04b Lossless TipTap Adapter and Browser Editor Gate Evidence Summary
 
-- **Generated:** 2026-11-08T22:20:43.525067+00:00
+- **Generated:** 2026-11-10T11:21:28.112861+00:00
 - **Contracts version:** document-front-matter-v2
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Spec baseline commit:** d2c0d072a757808ea891fbf6414f00147679f7a7

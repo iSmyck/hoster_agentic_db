@@ -1,6 +1,6 @@
 # T03a Stable Identity Core and Nested Group Snapshots Evidence Summary
 
-- **Generated:** 2026-11-08T21:55:52.113933+00:00
+- **Generated:** 2026-11-10T11:21:27.636528+00:00
 - **Contracts version:** authz-context-v2
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Spec baseline commit:** 788e299a5316c7d5df685a8f11b043ff36135a10

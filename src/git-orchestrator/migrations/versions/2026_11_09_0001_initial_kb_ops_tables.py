@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import sqlalchemy as sa
 from alembic import op
+from git_orchestrator.app.core.config import settings
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
@@ -18,11 +19,13 @@ down_revision = None
 branch_labels = None
 depends_on = None
 
-SCHEMA = "kb_ops"
+SCHEMA = settings.KB_OPS_SCHEMA
+TABLE_PREFIX = f"{SCHEMA}." if SCHEMA else ""
 
 
 def upgrade() -> None:
-    op.execute(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}")
+    if SCHEMA:
+        op.execute(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}")
 
     op.create_table(
         "proposals",
@@ -72,7 +75,7 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
             nullable=False,
         ),
-        sa.ForeignKeyConstraint(["proposal_id"], [f"{SCHEMA}.proposals.id"]),
+        sa.ForeignKeyConstraint(["proposal_id"], [f"{TABLE_PREFIX}proposals.id"]),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("idempotency_key"),
         schema=SCHEMA,

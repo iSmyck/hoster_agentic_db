@@ -34,7 +34,8 @@
       "actual": "'archive' is a required property at []",
       "details": {
         "document_id": "44444444-4444-4444-8444-444444444445",
-        "error": "'archive' is a required property at []"
+        "error": "'archive' is a required property at []",
+        "expected_negative": true
       },
       "expected": "document front matter is schema valid",
       "fixture_path": "_bmad-output<absolute-path-redacted>",
@@ -48,7 +49,8 @@
       "actual": "True was expected at ['archived']",
       "details": {
         "document_id": "44444444-4444-4444-8444-444444444446",
-        "error": "True was expected at ['archived']"
+        "error": "True was expected at ['archived']",
+        "expected_negative": true
       },
       "expected": "document front matter is schema valid",
       "fixture_path": "_bmad-output<absolute-path-redacted>",
@@ -653,6 +655,7 @@
     {
       "actual": "malformed headings at lines [(14, '####### This heading has too many hashes'), (16, '#This heading lacks a space')]",
       "details": {
+        "expected_negative": true,
         "malformed": [
           [
             14,
@@ -1292,6 +1295,7 @@
       "details": {
         "archived": true,
         "document_id": "44444444-4444-4444-8444-444444444445",
+        "expected_negative": true,
         "has_archive": false,
         "path": "bad-archived-no-archive.md"
       },
@@ -1308,6 +1312,7 @@
       "details": {
         "archived": false,
         "document_id": "44444444-4444-4444-8444-444444444446",
+        "expected_negative": true,
         "has_archive": true,
         "path": "bad-unarchived-with-archive.md"
       },
@@ -1686,6 +1691,8 @@
   "counts": {
     "BLOCKED": 4,
     "FAIL": 5,
+    "FAIL_EXPECTED": 5,
+    "FAIL_UNEXPECTED": 0,
     "PASS": 104
   },
   "environment": {
@@ -1704,7 +1711,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T21:55:51.753670+00:00",
+  "generated_at": "2026-11-10T11:30:17.301887+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t02/run_document_tests.py",
   "schema_version": "t02-document-results-v1",
   "secrets_included": false,

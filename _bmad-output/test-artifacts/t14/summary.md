@@ -1,6 +1,6 @@
 # T14 Reproducible Quality, Safety and Operational Evaluation Evidence Summary
 
-- **Generated:** 2026-11-08T23:50:40.937735+00:00
+- **Generated:** 2026-11-10T11:25:41.656188+00:00
 - **Contracts version:** eval-harness-v1
 - **Baseline commit:** 152b00ff6aaa7b95c7b958d822bf54e8a54d1650
 - **Spec baseline commit:** d2c0d072a757808ea891fbf6414f00147679f7a7

@@ -95,7 +95,19 @@ class ReportBuilder:
         counts = {"PASS": 0, "FAIL": 0, "BLOCKED": 0}
         for c in self.checks:
             counts[c.status] = counts.get(c.status, 0) + 1
-        return counts
+        fail_expected = sum(
+            1
+            for c in self.checks
+            if c.status == "FAIL" and c.details.get("expected_negative") is True
+        )
+        fail_unexpected = counts["FAIL"] - fail_expected
+        return {
+            "PASS": counts["PASS"],
+            "FAIL": counts["FAIL"],
+            "FAIL_EXPECTED": fail_expected,
+            "FAIL_UNEXPECTED": fail_unexpected,
+            "BLOCKED": counts["BLOCKED"],
+        }
 
     def write_json(self, path: Path) -> None:
         report = self.build()

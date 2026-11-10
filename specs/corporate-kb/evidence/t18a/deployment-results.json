@@ -575,7 +575,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-09T00:01:34.191209+00:00",
+  "generated_at": "2026-11-10T11:25:43.727976+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t18a/run_t18a_tests.py",
   "schema_version": "t18a-deployment-results-v1",
   "sensitive_data_included": false,

@@ -370,7 +370,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T23:06:42.602257+00:00",
+  "generated_at": "2026-11-10T11:24:25.050886+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t05a/run_t05a_tests.py",
   "schema_version": "t05a-proposal-results-v1",
   "sensitive_data_included": false,

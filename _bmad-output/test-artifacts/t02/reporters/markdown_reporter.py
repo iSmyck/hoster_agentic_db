@@ -7,7 +7,7 @@ from typing import Any
 
 def render_summary(report: dict[str, Any]) -> str:
     counts = report["counts"]
-    total = sum(counts.values())
+    total = sum(counts.values()) - counts.get("FAIL", 0)
     lines: list[str] = [
         "# T02 Document Tree and Direct Read Evidence Summary",
         "",
@@ -21,7 +21,8 @@ def render_summary(report: dict[str, Any]) -> str:
         "## Counts",
         "",
         f"- PASS: {counts.get('PASS', 0)}",
-        f"- FAIL: {counts.get('FAIL', 0)}",
+        f"- FAIL (expected): {counts.get('FAIL_EXPECTED', 0)}",
+        f"- FAIL (unexpected): {counts.get('FAIL_UNEXPECTED', 0)}",
         f"- BLOCKED: {counts.get('BLOCKED', 0)}",
         f"- **Total:** {total}",
         "",
@@ -30,12 +31,29 @@ def render_summary(report: dict[str, Any]) -> str:
     ]
 
     blocked = [c for c in report["checks"] if c["status"] == "BLOCKED"]
-    failed = [c for c in report["checks"] if c["status"] == "FAIL"]
+    unexpected_fail = [
+        c
+        for c in report["checks"]
+        if c["status"] == "FAIL" and c.get("details", {}).get("expected_negative") is not True
+    ]
+    expected_fail = [
+        c
+        for c in report["checks"]
+        if c["status"] == "FAIL" and c.get("details", {}).get("expected_negative") is True
+    ]
     passed = [c for c in report["checks"] if c["status"] == "PASS"][:10]
 
-    if failed:
-        lines.append("### FAIL")
-        for c in failed:
+    if unexpected_fail:
+        lines.append("### FAIL (unexpected)")
+        for c in unexpected_fail:
+            lines.append(
+                f"- `{c['id']}` ({c['scenario_id']}): {c['actual']}; fixture `{c.get('fixture_path')}`"
+            )
+        lines.append("")
+
+    if expected_fail:
+        lines.append("### FAIL (expected)")
+        for c in expected_fail:
             lines.append(
                 f"- `{c['id']}` ({c['scenario_id']}): {c['actual']}; fixture `{c.get('fixture_path')}`"
             )

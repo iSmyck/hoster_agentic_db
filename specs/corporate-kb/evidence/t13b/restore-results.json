@@ -693,7 +693,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T23:41:40.869325+00:00",
+  "generated_at": "2026-11-10T11:25:41.026122+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t13b/run_t13b_tests.py",
   "schema_version": "t13b-restore-results-v1",
   "sensitive_data_included": false,

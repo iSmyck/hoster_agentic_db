@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from .adapters.gitlab import GitLabAdapter, HttpGitLabAdapter
 from .api.router import router as go_router
@@ -17,6 +18,15 @@ def create_app(adapter: GitLabAdapter | None = None) -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
     )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            origin.strip() for origin in settings.CORS_ALLOW_ORIGINS.split(",") if origin.strip()
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     if adapter is None:
         adapter = HttpGitLabAdapter(
             settings.GITLAB_URL,
@@ -25,6 +35,7 @@ def create_app(adapter: GitLabAdapter | None = None) -> FastAPI:
         )
     app.state.gitlab_adapter = adapter
     app.include_router(go_router)
+
     return app
 
 

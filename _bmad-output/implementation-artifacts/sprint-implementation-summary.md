@@ -1,12 +1,21 @@
 # Implementation Sprint Summary
 
-Date: 2026-11-09
-Scope: Epics 9–13 (real application code)
+Date: 2026-11-10
+Scope: G1 vertical slice — Epics 0–13, T00–T18b, I01–I09
 
 ## Completed
 
 | Epic | Component | Stories | Status |
 |---|---|---|---|
+| Epic 0 | Baseline + G0 approval | T00 | done |
+| Epic 1 | Two-space sandbox | T01 | done |
+| Epic 2 | Document tree + stable identity | T02, T03a, T03b | done |
+| Epic 3 | Editor + review UX | T04a, T04b, tech-debt | done |
+| Epic 4 | Proposal, decision, merge, recovery | T05a–T07b | done |
+| Epic 5 | Retrieval + indexing | T10a, T10b | done |
+| Epic 6 | Import, export, cutover | T12a–T13b | done |
+| Epic 7 | Inference, evaluation, pilot hardening | T11, T14, T18 | done |
+| Epic 8 | Source connectors + deployment | T15–T18b | done |
 | Epic 9 | Identity + AuthZ adapter | I01–I04 | done |
 | Epic 10 | Git Orchestrator | I05–I06 | done |
 | Epic 11 | Open WebUI KB seams | I07 | done |
@@ -15,25 +24,15 @@ Scope: Epics 9–13 (real application code)
 
 ## Verification
 
-- `uv run pytest -q`: **191 passed, 1 skipped** (PostgreSQL migration smoke test skips without PG)
-- `npm run kb:test` in `src/open-webui/`: **30 passed**
+- `uv run pytest -q`: **220 passed**
+- T01–T18b harnesses: all synthetic checks pass; live integration BLOCKED
 - `uv run ruff check src/identity src/git-orchestrator src/retrieval src/ingestion`: clean
-- TypeScript check in `src/open-webui/`: clean
-
-## Commits pushed to main
-
-```
-abd7811 feat(epic-13): ingestion + source connectors implementation
-2a3fd2c feat(epic-12): retrieval + indexing implementation
-2c90fef feat(epic-11): open webui kb seams overlay
-15650d9 feat(epic-10): git orchestrator implementation
-0b24d24 feat(epic-9): identity + authz adapter implementation
-```
+- Code review reports: `_bmad-output/implementation-artifacts/review-*.md`
 
 ## Real implementation now exists
 
 - `src/identity/` — FastAPI + SQLAlchemy + Alembic, kb_authz schema
-- `src/git-orchestrator/` — FastAPI + SQLAlchemy + Alembic, kb_ops schema, GitLab adapter
+- `src/git-orchestrator/` — FastAPI + SQLAlchemy + Alembic, kb_ops schema, GitLab adapter, G1 editor seam
 - `src/retrieval/` — FastAPI + SQLAlchemy + Alembic + pgvector, kb_index schema
 - `src/ingestion/` — FastAPI + SQLAlchemy + Alembic, dry-run importer, source registry
 - `src/open-webui/` — overlay with KB API client and Svelte components
@@ -48,3 +47,4 @@ abd7811 feat(epic-13): ingestion + source connectors implementation
 - Real source connectors (S3, SharePoint, etc.)
 - Full upstream Open WebUI build (G0-D9 debt)
 - T19/T20 deferred epics
+- Production HA, AD/SLO, monitoring, second-client deployment

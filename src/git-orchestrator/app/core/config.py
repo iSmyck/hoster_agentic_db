@@ -48,6 +48,38 @@ class Settings(BaseSettings):
         default="INFO",
         validation_alias=AliasChoices("GO_LOG_LEVEL", "LOG_LEVEL"),
     )
+    IDENTITY_SESSION_URL: str = Field(
+        default="http://localhost:3100/api/v1/auths/",
+        validation_alias=AliasChoices("GO_IDENTITY_SESSION_URL", "IDENTITY_SESSION_URL"),
+    )
+    KB_ALLOWED_SPACE_IDS: str = Field(
+        default="corp-kb/sales",
+        validation_alias=AliasChoices("GO_KB_ALLOWED_SPACE_IDS", "KB_ALLOWED_SPACE_IDS"),
+    )
+    KB_TARGET_BRANCHES: str = Field(
+        default="main",
+        validation_alias=AliasChoices("GO_KB_TARGET_BRANCHES", "KB_TARGET_BRANCHES"),
+    )
+    KB_APPROVER_IDS: str = Field(
+        default="",
+        validation_alias=AliasChoices("GO_KB_APPROVER_IDS", "KB_APPROVER_IDS"),
+    )
+    CORS_ALLOW_ORIGINS: str = Field(
+        default="http://localhost:3100,http://127.0.0.1:3100,http://localhost:5050,http://127.0.0.1:5050",
+        validation_alias=AliasChoices("GO_CORS_ALLOW_ORIGINS", "CORS_ALLOW_ORIGINS"),
+    )
+    POLICY_BUNDLE_ID: str = Field(
+        default="sales-policy-bundle",
+        validation_alias=AliasChoices("GO_POLICY_BUNDLE_ID", "POLICY_BUNDLE_ID"),
+    )
+    ACCESS_POLICY_REVISION: str = Field(
+        default="a" * 40,
+        validation_alias=AliasChoices("GO_ACCESS_POLICY_REVISION", "ACCESS_POLICY_REVISION"),
+    )
+    APPROVAL_POLICY_REVISION: str = Field(
+        default="b" * 40,
+        validation_alias=AliasChoices("GO_APPROVAL_POLICY_REVISION", "APPROVAL_POLICY_REVISION"),
+    )
 
     @field_validator("KB_OPS_SCHEMA", mode="before")
     @classmethod

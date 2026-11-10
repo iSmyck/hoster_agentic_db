@@ -618,7 +618,7 @@
     },
     "sandbox": "synthetic_local_no_gitlab"
   },
-  "generated_at": "2026-11-08T23:25:35.087491+00:00",
+  "generated_at": "2026-11-10T11:25:13.576471+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t10a/run_t10a_tests.py",
   "schema_version": "t10a-index-build-results-v1",
   "sensitive_data_included": false,

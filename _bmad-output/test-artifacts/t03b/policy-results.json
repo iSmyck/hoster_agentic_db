@@ -898,7 +898,7 @@
     },
     "sandbox": "synthetic_local_no_idp"
   },
-  "generated_at": "2026-11-08T21:55:52.433290+00:00",
+  "generated_at": "2026-11-10T11:21:58.419182+00:00",
   "rerun_cmd": "uv run python _bmad-output/test-artifacts/t03b/run_policy_tests.py",
   "schema_version": "t03b-policy-results-v1",
   "sensitive_data_included": false,

@@ -216,8 +216,7 @@ class HttpGitLabAdapter(GitLabAdapter):
         return {
             "protected": True,
             "merge_only": all(
-                level["access_level"] == 40
-                for level in data.get("merge_access_levels", [])
+                level["access_level"] == 40 for level in data.get("merge_access_levels", [])
             ),
             "push_access_levels": data.get("push_access_levels", []),
             "merge_access_levels": data.get("merge_access_levels", []),
@@ -276,7 +275,31 @@ class HttpGitLabAdapter(GitLabAdapter):
             timeout=30,
         )
         response.raise_for_status()
-        return response.json()
+        tag = response.json()
+
+        # Protect the annotated tag so it cannot be moved/deleted by
+        # non-maintainers (G1 requirement: protected kb-decisions/* tags).
+        protected_url = f"{self._project_url(space_id)}/protected_tags"
+        protected_response = httpx.post(
+            protected_url,
+            headers=self._headers(),
+            json={
+                "name": tag_name,
+                "create_access_levels": [{"access_level": 40}],
+            },
+            timeout=30,
+        )
+        protected_response.raise_for_status()
+        verification = httpx.get(
+            f"{protected_url}/{quote(tag_name, safe='')}",
+            headers=self._headers(),
+            timeout=30,
+        )
+        verification.raise_for_status()
+        if verification.json().get("name") not in {tag_name, "kb-decisions/*"}:
+            raise GitLabAdapterError(f"tag protection missing for {tag_name}")
+
+        return tag
 
     def get_commit(self, space_id: str, sha: str) -> dict[str, Any]:
         import httpx
