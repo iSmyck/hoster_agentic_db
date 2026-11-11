@@ -1,11 +1,11 @@
 # G1 Open WebUI acceptance summary
 
-Generated: 2026-11-10T10:20:48.766573+00:00
+Generated: 2026-11-11T21:30:55.291318+00:00
 
-- PASS: 17
-- FAIL: 0
+- PASS: 6
+- FAIL: 3
 - BLOCKED: 0
-- TOTAL: 17
+- TOTAL: 9
 
 ## precondition.go_health — PASS
 
@@ -32,75 +32,24 @@ Generated: 2026-11-10T10:20:48.766573+00:00
 - Expected: prepare-branch rejects unauthenticated writes
 - Actual: status=401
 
-## security.prepare_rejects_ci_path — PASS
+## security.prepare_rejects_ci_path — FAIL
 
 - Expected: prepare-branch rejects CI/service paths
-- Actual: status=400
+- Actual: status=401
 
-## security.prepare_replay_idempotent — PASS
+## security.prepare_replay_idempotent — FAIL
 
 - Expected: prepare retry returns identical proposal/base SHA
-- Actual: first=200:{"space_id":"corp-kb/sales","proposal_sha":"4d3504ce82f06a851ebe707304be2a1ba290d52c","base_sha":"ed79b829a7063f637c6757afb1a4665ecc052ff8","proposal_branch":"proposal/4d3504ce","file_path":"docs/g1-p, second=200:{"space_id":"corp-kb/sales","proposal_sha":"4d3504ce82f06a851ebe707304be2a1ba290d52c","base_sha":"ed79b829a7063f637c6757afb1a4665ecc052ff8","proposal_branch":"proposal/4d3504ce","file_path":"docs/g1-p
+- Actual: first=401:{"detail":{"code":"INVALID_SESSION","message":"session token rejected"}}, second=401:{"detail":{"code":"INVALID_SESSION","message":"session token rejected"}}
 
 ## openwebui.kb_page_loads — PASS
 
 - Expected: KB editor page loads
-- Actual: http://localhost:5050/kb
+- Actual: http://localhost:3100/kb
 
-## openwebui.author_submit — PASS
+## openwebui.author_submit — FAIL
 
 - Expected: author submits proposal via Open WebUI
-- Actual: proposal_id=101532d5-0080-4ecd-b5a6-a17f1d7cad66
-
-## openwebui.author_cannot_approve — PASS
-
-- Expected: author session cannot record an approval
-- Actual: or, edit content, then submit proposal.
-{"stable_id":"g1-author-aa0a26bc36d3@hoster.test","role":"user"}
-Creating branch and commit in GitLab...
-{"merge_only":true,"protected":true}
-Submitting proposal to GO...
-{"proposal_id":"101532d5-0080-4ecd-b5a6-a17f1d7cad66","proposal_sha":"1984fe66f399c73fa15c14dda7ea0822f8964c0c","base_sha":"ed79b829a7063f637c6757afb1a4665ecc052ff8"}
-Recording decision...
-ERROR: POST /api/kb/v1/decisions -> 403: APPROVER_REQUIRED: independent approver capability required
-
-## openwebui.approver_decision — PASS
-
-- Expected: approver records decision in independent session
-- Actual: decision_id=cf595329-dd49-58e3-8fed-67cbe5b0e0e5
-
-## openwebui.approver_merge — PASS
-
-- Expected: approver executes merge in independent session
-- Actual: merge_sha=1373dc28929ecc91a36fe130fa87b0e6dbdcc21f
-
-## openwebui.independent_sessions — PASS
-
-- Expected: author and approver use independent browser sessions
-- Actual: two isolated browser contexts
-
-## openwebui.merge_parentage — PASS
-
-- Expected: merge commit parents equal base_sha and proposal_sha
-- Actual: parents=['ed79b829a7063f637c6757afb1a4665ecc052ff8', '1984fe66f399c73fa15c14dda7ea0822f8964c0c']
-
-## openwebui.merge_trailers — PASS
-
-- Expected: merge commit contains Decision-ID trailer
-- Actual: Merge proposal 101532d5-0080-4ecd-b5a6-a17f1d7cad66
-
-Decision-ID: cf595329-dd49-58e3-8fed-67cbe5b0e0e5
-Decision-Note-ID: 145
-Decision-Hash: 3058ff2fde3de6d4f256f2316065e39998a0a024aa651825626023c099fa43dc
-Approved-by: g1-approver-aa0a26bc36d3@hoster.test
-
-## openwebui.decision_tag — PASS
-
-- Expected: protected annotated tag exists on proposal_sha
-- Actual: found=True, target_matches=True, protected=True
-
-## openwebui.merged_file_visible — PASS
-
-- Expected: merged page is readable on target branch
-- Actual: status=200, len=61
+- Actual: Submit proposal button is disabled; status=Ready. Select actor, edit content, then submit proposal.
+WARN: initialization failed: GET /api/kb/v1/identity/me -> 401: INVALID_SESSION: session token rejected
 

@@ -1,10 +1,10 @@
 # Local stack smoke test
 
-Generated: 2026-11-11T20:04:22.930710+00:00
+Generated: 2026-11-11T21:11:44.296499+00:00
 
-- PASS: 12
+- PASS: 13
 - FAIL: 0
-- BLOCKED: 1
+- BLOCKED: 0
 - TOTAL: 13
 
 ## health.identity — PASS
@@ -37,10 +37,10 @@ Generated: 2026-11-11T20:04:22.930710+00:00
 - Expected: openwebui health endpoint returns 200
 - Actual: status=200
 
-## health.gitlab — BLOCKED
+## health.gitlab — PASS
 
-- Expected: GitLab API is reachable (requires token)
-- Actual: status=401, no GITLAB_TOKEN configured
+- Expected: GitLab API is reachable
+- Actual: status=200
 
 ## session.create_author — PASS
 
@@ -50,7 +50,7 @@ Generated: 2026-11-11T20:04:22.930710+00:00
 ## session.validate_author — PASS
 
 - Expected: session token validates and returns author-1 stable_id
-- Actual: status=200, body={"session_id":"e0ea0ee1-5b26-470e-abf7-ff2e0d98167b","stable_id":"author-1","access_policy_revision":"0000000000000000000000000000000000000000","approval_policy_revision":"0000000000000000000000000000
+- Actual: status=200, body={"session_id":"eb4d56a5-11f2-451d-9832-86464aeb20f8","stable_id":"author-1","access_policy_revision":"0000000000000000000000000000000000000000","approval_policy_revision":"0000000000000000000000000000
 
 ## go.draft_save — PASS
 

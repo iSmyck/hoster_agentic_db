@@ -15,7 +15,7 @@
 #   - blocked: cannot proceed without owner/external input
 
 generated: "2026-11-11 01:05"
-last_updated: "2026-11-11 23:08"
+last_updated: "2026-11-12 00:36"
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -98,8 +98,8 @@ development_status:
         status: done
       - id: t04a
         title: "T04a durable drafts, guarded navigation, cursor-based Git history"
-        status: verified
-        note: "Synthetic API checks 9/9 PASS. UI tabs, dirty-state guard, history panel implemented. Live browser acceptance pending."
+        status: blocked
+        note: "Local stack auth fixed (public.user detection, WEBUI_SECRET_KEY, signup enabled). Honest live browser evidence captured: 6 PASS / 3 FAIL / 0 BLOCKED. openwebui.author_submit FAIL because the Submit proposal button is disabled: /api/kb/v1/identity/me returns 401 INVALID_SESSION (Open WebUI token is rejected by the GO/session service). Owner decision still required on native editor scope/identity token seam before T04a can pass."
       - id: t04b
         title: "T04b lossless TipTap adapter and browser editor gate"
         status: verified
@@ -126,11 +126,11 @@ development_status:
       - id: local-stack
         title: "Local development stack orchestration"
         status: verified
-        note: "Stack starts and smoke tests pass (12 PASS, 0 FAIL, 1 BLOCKED). S3Mock replaces unavailable MinIO image; GO uses stub adapter by default. Open WebUI is running on port 3100 (WEBUI_SECRET_KEY supplied at start). Custom /kb editor page loads but the Submit proposal button remains disabled in live browser automation, blocking T04a live browser acceptance pending owner/editor-scope decision."
+        note: "Stack starts and smoke tests pass (13 PASS, 0 FAIL, 0 BLOCKED). S3Mock replaces unavailable MinIO image; GO uses stub adapter by default. Open WebUI v0.13.0 runs on port 3100 with auth enabled, signup enabled and WEBUI_SECRET_KEY set. Custom /kb editor page loads; Submit proposal button is disabled in live browser automation because the Open WebUI token is rejected by GO/session identity/me, blocking T04a live browser acceptance."
 
   phase-b:
     status: backlog
-    note: "Identity/Retrieval services live integration"
+    note: "Identity/Retrieval services live integration. Cannot start live integration until owner provides Keycloak/OpenLDAP sandbox details (realm, client credentials, test users/groups, revocation scenarios) and retrieval benchmark inputs (Russian corpus, ACL matrix, pgvector config, golden-set thresholds)."
     items:
       - id: b.1
         title: "B.1 Identity service live integration"
@@ -224,7 +224,7 @@ action_items:
   - id: ACT-001
     epic: A
     title: "T04a live browser acceptance"
-    description: "Run T04a draft/history/guarded navigation checks against running Open WebUI + GO on sandbox GitLab/PostgreSQL. BLOCKED: Open WebUI /kb editor Submit proposal button is disabled during Playwright automation; requires owner decision on native editor scope and white-label build before further frontend work."
+    description: "Run T04a draft/history/guarded navigation checks against running Open WebUI + GO on sandbox GitLab/PostgreSQL. STATUS: BLOCKED. Local stack auth is fixed and the harness completes (6 PASS / 3 FAIL / 0 BLOCKED). Root cause: the /kb editor uses the Open WebUI token for GO /api/kb/v1/identity/me, which the GO/session service rejects with INVALID_SESSION, leaving actor unset and the Submit proposal button disabled. Requires owner decision on the Open WebUI → session-service identity token seam and native editor scope before further frontend work. Evidence: specs/corporate-kb/evidence/g1/g1-openwebui-results.json."
     owner: "Frontend + Dev"
     status: blocked
 
@@ -252,14 +252,14 @@ action_items:
   - id: ACT-005
     epic: B
     title: "Identity service Keycloak/OpenLDAP live integration"
-    description: "Connect Identity service to sandbox Keycloak; verify stable IDs, nested groups, revocation."
+    description: "Connect Identity service to sandbox Keycloak; verify stable IDs, nested groups, revocation. Missing owner/sandbox inputs: (1) confirmed Keycloak realm and client credentials for the identity service (current .env values are local-dev placeholders), (2) OpenLDAP schema/group hierarchy or Keycloak group mappings to test nested groups and revocation, (3) test user set with known stable IDs and expected group membership, (4) decision on whether production AD is truly deferred or a read-only AD mirror is required for Phase B."
     owner: "Backend + Security"
     status: open
 
   - id: ACT-006
     epic: B
     title: "Retrieval service live pgvector benchmark"
-    description: "Run ACL-aware Russian corpus benchmark and agree golden-set thresholds."
+    description: "Run ACL-aware Russian corpus benchmark and agree golden-set thresholds. Missing owner/sandbox inputs: (1) Russian-language knowledge-base corpus or representative sample documents and expected queries, (2) pgvector index configuration (chunk size, overlap, embedding model baseline) and target recall@k / MRR thresholds, (3) ACL matrix defining which users/groups may retrieve which documents, (4) SLO targets (p95 latency, relevance floor) and hardware baseline for the benchmark."
     owner: "Backend + QA"
     status: open
 

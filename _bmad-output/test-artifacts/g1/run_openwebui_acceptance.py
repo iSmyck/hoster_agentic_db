@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import os
 import secrets
+import sys
 import time
 import uuid
 from datetime import UTC, datetime
@@ -255,7 +256,28 @@ def _run_author_flow(
     content = f"# G1 Open WebUI proposal {RUN_ID}\n\nNative editor change.\n"
     page.locator("#kb-path").fill(file_path)
     page.locator("#kb-content").fill(content)
-    page.locator("button:has-text('1. Submit proposal')").click()
+
+    submit_btn = page.locator("button:has-text('1. Submit proposal')")
+    try:
+        if submit_btn.count() == 0:
+            raise RuntimeError("Submit proposal button not found")
+        if submit_btn.is_disabled():
+            raise RuntimeError("Submit proposal button is disabled")
+        submit_btn.click()
+    except Exception as exc:  # noqa: BLE001
+        try:
+            status_text = page.locator("#kb-status").text_content() or ""
+        except Exception:  # noqa: BLE001
+            status_text = ""
+        _check(
+            checks,
+            "openwebui.author_submit",
+            "FAIL",
+            "author submits proposal via Open WebUI",
+            f"{exc}; status={status_text[:500]}",
+        )
+        context.close()
+        return None
     _wait_for_status(page, "proposal_id")
     status_text = page.locator("#kb-status").text_content() or ""
     proposal_id = _extract_json_value(status_text, "proposal_id")
@@ -434,9 +456,59 @@ def _security_api_checks(author_token: str, checks: list[dict[str, Any]]) -> Non
     )
 
 
+def _write_report(checks: list[dict[str, Any]], generated_at: str, db_url: str) -> int:
+    pass_count = sum(1 for c in checks if c["status"] == "PASS")
+    fail_count = sum(1 for c in checks if c["status"] == "FAIL")
+    blocked_count = sum(1 for c in checks if c["status"] == "BLOCKED")
+
+    report = {
+        "schema_version": "g1-openwebui-acceptance-v1",
+        "generated_at": generated_at,
+        "environment": {
+            "openwebui_url": OPENWEBUI_URL,
+            "go_url": GO_URL,
+            "space_id": SPACE_ID,
+            "database": _safe_dsn(db_url) if db_url else "unknown",
+        },
+        "sensitive_data_included": False,
+        "command": "uv run python _bmad-output/test-artifacts/g1/run_openwebui_acceptance.py",
+        "counts": {
+            "PASS": pass_count,
+            "FAIL": fail_count,
+            "BLOCKED": blocked_count,
+            "TOTAL": len(checks),
+        },
+        "checks": checks,
+    }
+
+    try:
+        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
+        REPORT_JSON.write_text(
+            json.dumps(report, indent=2, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        EVIDENCE_JSON.write_text(
+            json.dumps(report, indent=2, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"
+        )
+
+        summary = f"# G1 Open WebUI acceptance summary\n\nGenerated: {generated_at}\n\n"
+        summary += f"- PASS: {pass_count}\n- FAIL: {fail_count}\n- BLOCKED: {blocked_count}\n- TOTAL: {len(checks)}\n\n"
+        for c in checks:
+            summary += f"## {c['id']} — {c['status']}\n\n- Expected: {c['expected']}\n- Actual: {c['actual']}\n\n"
+        SUMMARY_MD.write_text(summary, encoding="utf-8")
+        EVIDENCE_MD.write_text(summary, encoding="utf-8")
+    except OSError as exc:
+        print(f"Failed to write acceptance report: {exc}", file=sys.stderr)
+        return 1
+
+    print(f"Counts: {report['counts']}")
+    return 0 if fail_count == 0 else 1
+
+
 def main() -> int:
     checks: list[dict[str, Any]] = []
     generated_at = datetime.now(UTC).isoformat()
+    db_url = os.environ.get("GO_DATABASE_URL") or os.environ.get("DATABASE_URL") or ""
 
     print("Checking GO health...", flush=True)
     # Check GO health.
@@ -451,7 +523,7 @@ def main() -> int:
         )
     except Exception as exc:  # noqa: BLE001
         _check(checks, "precondition.go_health", "FAIL", "GO health endpoint returns 200", str(exc))
-        return 1
+        return _write_report(checks, generated_at, db_url)
 
     # Reset kb_ops schema and run migrations for a clean state.
     try:
@@ -459,7 +531,6 @@ def main() -> int:
         from alembic.config import Config
         from sqlalchemy import create_engine, text
 
-        db_url = os.environ.get("GO_DATABASE_URL") or os.environ.get("DATABASE_URL")
         if not db_url:
             raise RuntimeError("set GO_DATABASE_URL or DATABASE_URL for the G1 harness")
         schema = os.environ.get("GO_KB_OPS_SCHEMA", "kb_ops_g1_test")
@@ -495,7 +566,7 @@ def main() -> int:
             "kb_ops schema reset and migrations applied",
             f"{type(exc).__name__}: {exc}",
         )
-        return 1
+        return _write_report(checks, generated_at, db_url)
 
     print("Starting Playwright...", flush=True)
 
@@ -513,7 +584,7 @@ def main() -> int:
                 "set OPENWEBUI_ADMIN_TOKEN or admin credentials",
             )
             browser.close()
-            return 1
+            return _write_report(checks, generated_at, db_url)
         _check(checks, "openwebui.admin_token", "PASS", "admin token available", "token present")
 
         author_token = _create_user_via_api(
@@ -535,7 +606,7 @@ def main() -> int:
                 f"author={bool(author_token)}, approver={bool(approver_token)}",
             )
             browser.close()
-            return 1
+            return _write_report(checks, generated_at, db_url)
         _check(
             checks,
             "openwebui.create_users",
@@ -550,11 +621,11 @@ def main() -> int:
         print(f"Author flow: {bool(flow)}", flush=True)
         if flow is None:
             browser.close()
-            return 1
+            return _write_report(checks, generated_at, db_url)
         flow = _run_approver_flow(browser, approver_token, flow, checks)
         if flow is None:
             browser.close()
-            return 1
+            return _write_report(checks, generated_at, db_url)
         _check(
             checks,
             "openwebui.independent_sessions",
@@ -612,48 +683,7 @@ def main() -> int:
 
         browser.close()
 
-    pass_count = sum(1 for c in checks if c["status"] == "PASS")
-    fail_count = sum(1 for c in checks if c["status"] == "FAIL")
-    blocked_count = sum(1 for c in checks if c["status"] == "BLOCKED")
-
-    report = {
-        "schema_version": "g1-openwebui-acceptance-v1",
-        "generated_at": generated_at,
-        "environment": {
-            "openwebui_url": OPENWEBUI_URL,
-            "go_url": GO_URL,
-            "space_id": SPACE_ID,
-            "database": _safe_dsn(db_url),
-        },
-        "sensitive_data_included": False,
-        "command": "uv run python _bmad-output/test-artifacts/g1/run_openwebui_acceptance.py",
-        "counts": {
-            "PASS": pass_count,
-            "FAIL": fail_count,
-            "BLOCKED": blocked_count,
-            "TOTAL": len(checks),
-        },
-        "checks": checks,
-    }
-
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
-    REPORT_JSON.write_text(
-        json.dumps(report, indent=2, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"
-    )
-    EVIDENCE_JSON.write_text(
-        json.dumps(report, indent=2, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"
-    )
-
-    summary = f"# G1 Open WebUI acceptance summary\n\nGenerated: {generated_at}\n\n"
-    summary += f"- PASS: {pass_count}\n- FAIL: {fail_count}\n- BLOCKED: {blocked_count}\n- TOTAL: {len(checks)}\n\n"
-    for c in checks:
-        summary += f"## {c['id']} — {c['status']}\n\n- Expected: {c['expected']}\n- Actual: {c['actual']}\n\n"
-    SUMMARY_MD.write_text(summary, encoding="utf-8")
-    EVIDENCE_MD.write_text(summary, encoding="utf-8")
-
-    print(f"Counts: {report['counts']}")
-    return 0 if fail_count == 0 else 1
+    return _write_report(checks, generated_at, db_url)
 
 
 if __name__ == "__main__":

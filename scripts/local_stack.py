@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import secrets
 import signal
 import subprocess
 import sys
@@ -30,8 +31,10 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(REPO_ROOT / ".env", override=False)
 INFRA_COMMAND = ["docker", "compose", "up", "-d"]
 INFRA_STOP_COMMAND = ["docker", "compose", "down"]
 
@@ -177,30 +180,48 @@ def _start_services() -> list[subprocess.Popen[Any]]:
     return processes
 
 
-def _ensure_openwebui_schema() -> bool:
-    """Create the openwebui schema if missing and report whether users exist."""
+def _openwebui_has_users() -> bool:
+    """Check whether Open WebUI's v0.13.0 public.user table already has users."""
     import sqlalchemy
 
     dsn = os.environ.get("DATABASE_URL", "postgresql+psycopg://corp_kb:corp_kb_dev@localhost:5432/corp_kb")
     engine = sqlalchemy.create_engine(dsn)
     try:
         with engine.connect() as conn:
-            conn.execute(sqlalchemy.text("CREATE SCHEMA IF NOT EXISTS openwebui"))
-            conn.commit()
             result = conn.execute(
                 sqlalchemy.text(
                     "SELECT EXISTS (SELECT 1 FROM information_schema.tables "
-                    "WHERE table_schema = 'openwebui' AND table_name = 'user')"
+                    "WHERE table_schema = 'public' AND table_name = 'user')"
                 )
             )
             has_table = result.scalar()
             if not has_table:
                 return False
-            result = conn.execute(sqlalchemy.text("SELECT COUNT(*) FROM openwebui.user"))
+            result = conn.execute(sqlalchemy.text("SELECT COUNT(*) FROM public.user"))
             return (result.scalar() or 0) > 0
     except Exception as exc:  # noqa: BLE001
-        print(f"Warning: could not ensure Open WebUI schema: {exc}")
+        print(f"Warning: could not check Open WebUI user table: {exc}")
         return False
+
+
+def _reset_openwebui_users() -> None:
+    """Truncate Open WebUI user tables for a clean G1 test run.
+
+    Guarded by G1_ALLOW_DESTRUCTIVE_RESET so a normal ``local_stack.py`` run
+    does not wipe manually-created accounts.
+    """
+    if os.environ.get("G1_ALLOW_DESTRUCTIVE_RESET", "").lower() not in {"1", "true", "yes"}:
+        return
+    import sqlalchemy
+
+    dsn = os.environ.get("DATABASE_URL", "postgresql+psycopg://corp_kb:corp_kb_dev@localhost:5432/corp_kb")
+    engine = sqlalchemy.create_engine(dsn)
+    try:
+        with engine.begin() as conn:
+            conn.execute(sqlalchemy.text('TRUNCATE TABLE public."user", public.auth CASCADE'))
+        print("Truncated Open WebUI public.user and public.auth tables.")
+    except Exception as exc:  # noqa: BLE001
+        print(f"Warning: could not truncate Open WebUI user tables: {exc}")
 
 
 def _load_openwebui_api_env(env: dict[str, str]) -> None:
@@ -247,12 +268,21 @@ def _start_openwebui() -> subprocess.Popen[Any] | None:
     # The pinned frontend build is produced by `npm run build` in the upstream checkout root.
     env["FRONTEND_BUILD_DIR"] = str(OPENWEBUI_DIR / "build")
     _load_openwebui_api_env(env)
-    if _ensure_openwebui_schema():
-        print("Open WebUI has existing users; keeping authentication enabled.")
+
+    # Open WebUI v0.13.0 stores users in public.user (not openwebui.user). Always
+    # enable auth + signup for G1 local runs and supply the mandatory secret key.
+    # RESET_CONFIG_ON_START re-seeds ui.enable_signup from ENABLE_SIGNUP so the
+    # first-run signup path is available even when a stale config row exists.
+    env["WEBUI_AUTH"] = "true"
+    env["ENABLE_SIGNUP"] = "true"
+    env["RESET_CONFIG_ON_START"] = "true"
+    if not env.get("WEBUI_SECRET_KEY"):
+        env["WEBUI_SECRET_KEY"] = secrets.token_urlsafe(32)
+
+    if _openwebui_has_users():
+        print("Open WebUI has existing users; authentication remains enabled.")
     else:
-        print("Open WebUI has no users; disabling authentication for local dev.")
-        env["WEBUI_AUTH"] = "false"
-        env["ENABLE_SIGNUP"] = "true"
+        print("Open WebUI has no users; first signup will create the admin account.")
     cmd = [
         str(venv_python),
         "-m",
@@ -307,6 +337,7 @@ def start_stack(openwebui: bool = True) -> list[subprocess.Popen[Any]]:
     processes = _start_services()
     _wait_for_services()
     if openwebui:
+        _reset_openwebui_users()
         owui = _start_openwebui()
         if owui is not None:
             processes.append(owui)

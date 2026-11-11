@@ -53,7 +53,7 @@
     {
       "actual": "status=200",
       "details": {
-        "body": "{\"status\":true,\"name\":\"hoster.by Knowledge Base (Open WebUI)\",\"version\":\"0.13.0\",\"default_locale\":\"\",\"i18n\":{},\"oauth\":{\"providers\":{},\"auto_redirect\":false},\"features\":{\"slim\":false,\"auth\":true,\"auth",
+        "body": "{\"onboarding\":true,\"status\":true,\"name\":\"hoster.by Knowledge Base (Open WebUI)\",\"version\":\"0.13.0\",\"default_locale\":\"\",\"i18n\":{},\"oauth\":{\"providers\":{},\"auto_redirect\":false},\"features\":{\"slim\":false",
         "url": "http://127.0.0.1:3100/api/config"
       },
       "expected": "openwebui health endpoint returns 200",
@@ -61,13 +61,14 @@
       "status": "PASS"
     },
     {
-      "actual": "status=401, no GITLAB_TOKEN configured",
+      "actual": "status=200",
       "details": {
+        "body": "{\"version\":\"19.5.3\",\"revision\":\"0d4c9a9a2fa\",\"kas\":{\"enabled\":true,\"externalUrl\":\"ws://localhost:8081/-/kubernetes-agent/\",\"externalK8sProxyUrl\":\"http://localhost:8081/-/kubernetes-agent/k8s-proxy/\",\"",
         "url": "http://localhost:8081/api/v4/version"
       },
-      "expected": "GitLab API is reachable (requires token)",
+      "expected": "GitLab API is reachable",
       "id": "health.gitlab",
-      "status": "BLOCKED"
+      "status": "PASS"
     },
     {
       "actual": "token issued",
@@ -77,7 +78,7 @@
       "status": "PASS"
     },
     {
-      "actual": "status=200, body={\"session_id\":\"e0ea0ee1-5b26-470e-abf7-ff2e0d98167b\",\"stable_id\":\"author-1\",\"access_policy_revision\":\"0000000000000000000000000000000000000000\",\"approval_policy_revision\":\"0000000000000000000000000000",
+      "actual": "status=200, body={\"session_id\":\"eb4d56a5-11f2-451d-9832-86464aeb20f8\",\"stable_id\":\"author-1\",\"access_policy_revision\":\"0000000000000000000000000000000000000000\",\"approval_policy_revision\":\"0000000000000000000000000000",
       "details": {},
       "expected": "session token validates and returns author-1 stable_id",
       "id": "session.validate_author",
@@ -114,9 +115,9 @@
   ],
   "command": "uv run python scripts/smoke_local_stack.py",
   "counts": {
-    "BLOCKED": 1,
+    "BLOCKED": 0,
     "FAIL": 0,
-    "PASS": 12,
+    "PASS": 13,
     "TOTAL": 13
   },
   "environment": {
@@ -130,6 +131,6 @@
       "session": "http://127.0.0.1:8004/health"
     }
   },
-  "generated_at": "2026-11-11T20:04:22.930710+00:00",
+  "generated_at": "2026-11-11T21:11:44.296499+00:00",
   "schema_version": "local-stack-smoke-v1"
 }

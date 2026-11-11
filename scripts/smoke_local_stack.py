@@ -23,8 +23,10 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(REPO_ROOT / ".env", override=False)
 RESULTS_DIR = REPO_ROOT / "_bmad-output" / "test-artifacts" / "local-stack"
 EVIDENCE_DIR = REPO_ROOT / "specs" / "corporate-kb" / "evidence" / "local-stack"
 
