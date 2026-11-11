@@ -85,6 +85,21 @@ class GitLabAdapter(ABC):
     def get_branch(self, space_id: str, branch: str) -> dict[str, Any]:
         """Return branch metadata including HEAD commit SHA."""
 
+    @abstractmethod
+    def get_history(
+        self,
+        space_id: str,
+        path: str,
+        branch: str,
+        cursor: str | None = None,
+        limit: int = 20,
+    ) -> dict[str, Any]:
+        """Return paginated commit history for ``path`` on ``branch``.
+
+        The result must contain ``commits`` (list) and optionally
+        ``next_cursor`` (str).  ``cursor`` is opaque to the caller.
+        """
+
 
 class HttpGitLabAdapter(GitLabAdapter):
     """Production adapter using the GitLab REST API via httpx.
@@ -317,6 +332,29 @@ class HttpGitLabAdapter(GitLabAdapter):
         response.raise_for_status()
         return response.json()
 
+    def get_history(
+        self,
+        space_id: str,
+        path: str,
+        branch: str,
+        cursor: str | None = None,
+        limit: int = 20,
+    ) -> dict[str, Any]:
+        import httpx
+
+        url = f"{self._project_url(space_id)}/repository/commits"
+        params: dict[str, Any] = {"path": path, "ref_name": branch, "per_page": limit}
+        if cursor:
+            params["since"] = cursor
+        response = httpx.get(url, headers=self._headers(), params=params, timeout=30)
+        response.raise_for_status()
+        commits = response.json()
+        next_cursor = None
+        if len(commits) == limit and commits:
+            # Use the oldest commit timestamp as the next cursor.
+            next_cursor = commits[-1].get("committed_date")
+        return {"commits": commits, "next_cursor": next_cursor}
+
 
 class StubGitLabAdapter(GitLabAdapter):
     """In-memory stub for unit tests. No external calls."""
@@ -423,3 +461,21 @@ class StubGitLabAdapter(GitLabAdapter):
             {"name": branch, "commit": {"id": ""}},
         )
         return dict(branch_data)
+
+    def get_history(
+        self,
+        space_id: str,
+        path: str,
+        branch: str,
+        cursor: str | None = None,
+        limit: int = 20,
+    ) -> dict[str, Any]:
+        history = self._get(("history", space_id, path, branch), [])
+        commits = list(history)
+        if cursor:
+            commits = [c for c in commits if c.get("committed_date", "") < cursor]
+        page = commits[:limit]
+        next_cursor = None
+        if len(commits) > limit and page:
+            next_cursor = page[-1].get("committed_date")
+        return {"commits": page, "next_cursor": next_cursor}

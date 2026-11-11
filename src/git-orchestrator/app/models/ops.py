@@ -183,3 +183,33 @@ class CutoverRecord(Base):
         default="freeze_pending",
         comment="freeze_pending | frozen | protected | preflight | activating | activated | failed",
     )
+
+
+class DraftRecord(Base):
+    """Durable browser editor draft bound to (Space, path, author)."""
+
+    __tablename__ = "drafts"
+    __table_args__ = (
+        Index("ix_drafts_space_path_author", "space_id", "path", "author_stable_id"),
+        _schema_args(),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    space_id: Mapped[str] = mapped_column(String(63), nullable=False)
+    path: Mapped[str] = mapped_column(String(2048), nullable=False)
+    author_stable_id: Mapped[str] = mapped_column(String(512), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    base_sha: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    target_branch: Mapped[str] = mapped_column(String(255), nullable=False, default="main")
+    idempotency_key: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )

@@ -150,3 +150,90 @@ class PrepareBranchResponse(BaseModel):
     base_sha: str
     proposal_branch: str
     file_path: str
+
+
+class DraftSaveRequest(BaseModel):
+    """POST /api/kb/v1/drafts/save"""
+
+    space_id: str = Field(..., max_length=63)
+    path: str = Field(..., max_length=2048)
+    content: str
+    target_branch: str = Field(default="main", max_length=255)
+    base_sha: str | None = Field(default=None, pattern=r"^[0-9a-f]{40}$")
+
+
+class DraftResponse(BaseModel):
+    """Stored durable draft."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    space_id: str
+    path: str
+    author_stable_id: str
+    content: str
+    base_sha: str | None
+    target_branch: str
+    idempotency_key: str
+    created_at: str
+    updated_at: str
+
+
+class DraftListRequest(BaseModel):
+    """POST /api/kb/v1/drafts/list"""
+
+    space_id: str = Field(..., max_length=63)
+    cursor: str | None = Field(default=None, max_length=64)
+    limit: int = Field(default=20, ge=1, le=100)
+
+
+class DraftListResponse(BaseModel):
+    """Paginated list of drafts."""
+
+    space_id: str
+    drafts: list[DraftResponse]
+    next_cursor: str | None
+
+
+class DraftGetRequest(BaseModel):
+    """POST /api/kb/v1/drafts/get"""
+
+    space_id: str = Field(..., max_length=63)
+    path: str = Field(..., max_length=2048)
+
+
+class DraftDiscardRequest(BaseModel):
+    """POST /api/kb/v1/drafts/discard"""
+
+    space_id: str = Field(..., max_length=63)
+    path: str = Field(..., max_length=2048)
+
+
+class HistoryRequest(BaseModel):
+    """POST /api/kb/v1/documents/history"""
+
+    space_id: str = Field(..., max_length=63)
+    path: str = Field(..., max_length=2048)
+    branch: str = Field(default="main", max_length=255)
+    cursor: str | None = Field(default=None, max_length=64)
+    limit: int = Field(default=20, ge=1, le=100)
+
+
+class HistoryCommit(BaseModel):
+    """Single commit in a document history page."""
+
+    sha: str
+    message: str
+    author_name: str
+    author_email: str
+    committed_date: str
+
+
+class HistoryResponse(BaseModel):
+    """Paginated document history."""
+
+    space_id: str
+    path: str
+    branch: str
+    commits: list[HistoryCommit]
+    next_cursor: str | None

@@ -1,0 +1,96 @@
+{
+  "baseline_commit": "152b00ff6aaa7b95c7b958d822bf54e8a54d1650",
+  "checks": [
+    {
+      "actual": "passed",
+      "details": {
+        "duration": 0.029557000030763447
+      },
+      "expected": "test passes",
+      "id": "src/git-orchestrator/tests/test_t04a_drafts.py::test_save_draft_creates_or_updates",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "duration": 0.006930249975994229
+      },
+      "expected": "test passes",
+      "id": "src/git-orchestrator/tests/test_t04a_drafts.py::test_get_draft_returns_saved",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "duration": 0.006626166985370219
+      },
+      "expected": "test passes",
+      "id": "src/git-orchestrator/tests/test_t04a_drafts.py::test_get_missing_draft_404",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "duration": 0.0083768330514431
+      },
+      "expected": "test passes",
+      "id": "src/git-orchestrator/tests/test_t04a_drafts.py::test_list_drafts_paginated",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "duration": 0.010373333003371954
+      },
+      "expected": "test passes",
+      "id": "src/git-orchestrator/tests/test_t04a_drafts.py::test_discard_draft",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "duration": 0.0064787500305101275
+      },
+      "expected": "test passes",
+      "id": "src/git-orchestrator/tests/test_t04a_drafts.py::test_history_returns_commits",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "duration": 0.009172791033051908
+      },
+      "expected": "test passes",
+      "id": "src/git-orchestrator/tests/test_t04a_drafts.py::test_history_pagination_cursor",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "duration": 0.007238332997076213
+      },
+      "expected": "test passes",
+      "id": "src/git-orchestrator/tests/test_t04a_drafts.py::test_draft_security_space_isolation",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "duration": 0.0074350410141050816
+      },
+      "expected": "test passes",
+      "id": "src/git-orchestrator/tests/test_t04a_drafts.py::test_draft_security_path_validation",
+      "status": "PASS"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/t04a/run_draft_api_tests.py",
+  "counts": {
+    "BLOCKED": 0,
+    "FAIL": 0,
+    "PASS": 9,
+    "TOTAL": 9
+  },
+  "generated_at": "2026-11-10T19:23:29.879041+00:00",
+  "schema_version": "t04a-api-results-v1",
+  "spec_baseline_commit": "d2c0d072a757808ea891fbf6414f00147679f7a7"
+}

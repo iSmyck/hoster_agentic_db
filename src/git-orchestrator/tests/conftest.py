@@ -43,6 +43,7 @@ from git_orchestrator.app.core.config import settings
 from git_orchestrator.app.main import create_app
 from git_orchestrator.app.models.ops import Base
 from git_orchestrator.app.repositories.db import get_db
+from git_orchestrator.app.services.seed import seed_sample_drafts
 
 
 @pytest.fixture
@@ -87,6 +88,56 @@ def client(
 ) -> Generator[TestClient, None, None]:
     monkeypatch.setattr(settings, "KB_ALLOWED_SPACE_IDS", "corp-kb/sales,demo-space")
     app = create_app(adapter=stub_adapter)
+
+    async def _override_get_db() -> AsyncGenerator[Session, None]:
+        session_factory = sessionmaker(bind=engine)
+        session = session_factory()
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    def _override_identity(request: Request) -> AuthenticatedIdentity:
+        if request.url.path.endswith("/decisions") or request.url.path.endswith(
+            ("/merge", "/reconcile")
+        ):
+            return AuthenticatedIdentity(stable_id="approver-1", role="admin")
+        return AuthenticatedIdentity(stable_id="author-1", role="user")
+
+    app.dependency_overrides.clear()
+    app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_current_identity] = _override_identity
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def seeded_client(
+    engine: Any,
+    tables: Any,
+    stub_adapter: StubGitLabAdapter,
+    monkeypatch: pytest.MonkeyPatch,
+) -> Generator[TestClient, None, None]:
+    """Test client with default synthetic drafts and stub history seeded."""
+    monkeypatch.setattr(settings, "KB_ALLOWED_SPACE_IDS", "corp-kb/sales,demo-space")
+    app = create_app(adapter=stub_adapter)
+
+    # Seed the DB and stub adapter state once before any request is made.
+    SessionLocal = sessionmaker(bind=engine)
+    seed_session = SessionLocal()
+    try:
+        seed_sample_drafts(seed_session, stub_adapter, space_id="corp-kb/sales")
+        seed_session.commit()
+    except Exception:
+        seed_session.rollback()
+        raise
+    finally:
+        seed_session.close()
 
     async def _override_get_db() -> AsyncGenerator[Session, None]:
         session_factory = sessionmaker(bind=engine)

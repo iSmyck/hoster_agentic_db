@@ -18,7 +18,15 @@ from ..schemas.ops import (
     DecisionResponse,
     DocumentReadRequest,
     DocumentReadResponse,
+    DraftDiscardRequest,
+    DraftGetRequest,
+    DraftListRequest,
+    DraftListResponse,
+    DraftResponse,
+    DraftSaveRequest,
     HealthResponse,
+    HistoryRequest,
+    HistoryResponse,
     MergeResponse,
     MergeRulesResponse,
     PrepareBranchRequest,
@@ -28,7 +36,9 @@ from ..schemas.ops import (
     TreeRequest,
     TreeResponse,
 )
+from ..services import drafts as draft_service
 from ..services import git_orchestrator
+from ..services.drafts import DraftServiceError
 from ..services.git_orchestrator import GitOrchestratorError
 from .auth import (
     AuthenticatedIdentity,
@@ -204,6 +214,134 @@ def get_tree(
         "sha": request.sha,
         "entries": normalized,
     }
+
+
+@router.post("/api/kb/v1/documents/history", response_model=HistoryResponse)
+def get_document_history(
+    request: HistoryRequest,
+    adapter: Annotated[GitLabAdapter, Depends(get_gitlab_adapter)],
+    identity: Annotated[AuthenticatedIdentity, Depends(get_current_identity)],
+) -> dict[str, Any]:
+    require_space_access(identity, request.space_id)
+    validate_target_branch(request.branch)
+    validate_markdown_path(request.path)
+    try:
+        page = adapter.get_history(
+            request.space_id,
+            request.path,
+            request.branch,
+            cursor=request.cursor,
+            limit=request.limit,
+        )
+    except (GitLabAdapterError, httpx.HTTPError) as exc:
+        raise _handle_adapter_error(exc) from exc
+    commits = [
+        {
+            "sha": c.get("id", c.get("sha", "")),
+            "message": c.get("message", ""),
+            "author_name": c.get("author_name", ""),
+            "author_email": c.get("author_email", ""),
+            "committed_date": c.get("committed_date", ""),
+        }
+        for c in page.get("commits", [])
+    ]
+    return {
+        "space_id": request.space_id,
+        "path": request.path,
+        "branch": request.branch,
+        "commits": commits,
+        "next_cursor": page.get("next_cursor"),
+    }
+
+
+@router.post("/api/kb/v1/drafts/save", response_model=DraftResponse)
+def save_draft(
+    request: DraftSaveRequest,
+    db: Annotated[Session, Depends(get_db)],
+    identity: Annotated[AuthenticatedIdentity, Depends(get_current_identity)],
+) -> dict[str, Any]:
+    require_space_access(identity, request.space_id)
+    validate_target_branch(request.target_branch)
+    validate_markdown_path(request.path)
+    try:
+        record = draft_service.save_draft(
+            db,
+            request.space_id,
+            request.path,
+            identity.stable_id,
+            request.content,
+            target_branch=request.target_branch,
+            base_sha=request.base_sha,
+        )
+    except DraftServiceError as exc:
+        raise _handle_domain_error(
+            GitOrchestratorError(exc.code, exc.message)
+        ) from exc
+    return draft_service.draft_to_dict(record)
+
+
+@router.post("/api/kb/v1/drafts/get", response_model=DraftResponse)
+def get_draft(
+    request: DraftGetRequest,
+    db: Annotated[Session, Depends(get_db)],
+    identity: Annotated[AuthenticatedIdentity, Depends(get_current_identity)],
+) -> dict[str, Any]:
+    require_space_access(identity, request.space_id)
+    validate_markdown_path(request.path)
+    record = draft_service.get_draft(
+        db, request.space_id, request.path, identity.stable_id
+    )
+    if record is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "NOT_FOUND", "message": "draft not found"},
+        )
+    return draft_service.draft_to_dict(record)
+
+
+@router.post("/api/kb/v1/drafts/list", response_model=DraftListResponse)
+def list_drafts(
+    request: DraftListRequest,
+    db: Annotated[Session, Depends(get_db)],
+    identity: Annotated[AuthenticatedIdentity, Depends(get_current_identity)],
+) -> dict[str, Any]:
+    require_space_access(identity, request.space_id)
+    try:
+        records, next_cursor = draft_service.list_drafts(
+            db,
+            request.space_id,
+            identity.stable_id,
+            cursor=request.cursor,
+            limit=request.limit,
+        )
+    except DraftServiceError as exc:
+        raise _handle_domain_error(
+            GitOrchestratorError(exc.code, exc.message)
+        ) from exc
+    return {
+        "space_id": request.space_id,
+        "drafts": [draft_service.draft_to_dict(r) for r in records],
+        "next_cursor": next_cursor,
+    }
+
+
+@router.post("/api/kb/v1/drafts/discard")
+def discard_draft(
+    request: DraftDiscardRequest,
+    db: Annotated[Session, Depends(get_db)],
+    identity: Annotated[AuthenticatedIdentity, Depends(get_current_identity)],
+) -> dict[str, Any]:
+    require_space_access(identity, request.space_id)
+    validate_markdown_path(request.path)
+    deleted = draft_service.discard_draft(
+        db, request.space_id, request.path, identity.stable_id
+    )
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "NOT_FOUND", "message": "draft not found"},
+        )
+    return {"space_id": request.space_id, "path": request.path, "discarded": True}
 
 
 @router.post(

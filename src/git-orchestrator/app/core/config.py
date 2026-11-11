@@ -44,6 +44,11 @@ class Settings(BaseSettings):
         default="",
         description="Optional prefix when mapping space_id to a GitLab project path.",
     )
+    GITLAB_ADAPTER: str = Field(
+        default="http",
+        description="GitLab adapter to use: 'http' for REST API or 'stub' for in-memory synthetic data.",
+        validation_alias=AliasChoices("GO_GITLAB_ADAPTER", "GITLAB_ADAPTER"),
+    )
     LOG_LEVEL: str = Field(
         default="INFO",
         validation_alias=AliasChoices("GO_LOG_LEVEL", "LOG_LEVEL"),
@@ -94,6 +99,15 @@ class Settings(BaseSettings):
         if not isinstance(value, str):
             return str(value)
         return value
+
+    @field_validator("GITLAB_ADAPTER")
+    @classmethod
+    def _valid_gitlab_adapter(cls, value: str) -> str:
+        allowed = {"http", "stub"}
+        normalized = value.lower()
+        if normalized not in allowed:
+            raise ValueError(f"GITLAB_ADAPTER must be one of {allowed!r}")
+        return normalized
 
 
 settings = Settings()
