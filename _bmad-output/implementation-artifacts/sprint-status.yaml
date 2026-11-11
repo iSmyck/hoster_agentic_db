@@ -1,425 +1,374 @@
-# STATUS DEFINITIONS:
+# STATUS DEFINITIONS
 # ==================
-# Epic Status:
-#   - backlog: Epic not yet started
-#   - in-progress: Epic actively being worked on
-#   - done: All stories in epic completed
+# Epic / Phase status:
+#   - backlog: not started
+#   - todo: ready to start
+#   - in-progress: actively being worked on
+#   - done: all required stories completed and accepted
+#   - verified: synthetic harnesses pass, live acceptance pending
+#   - blocked: cannot proceed without owner/external input
+#
+# Action item status:
+#   - open: committed, not started
+#   - in-progress: actively being worked on
+#   - done: completed
+#   - blocked: cannot proceed without owner/external input
 
-# Story Status:
-#   - backlog: Story only exists in epic file
-#   - ready-for-dev: Story file created, ready for development
-#   - in-progress: Developer actively working on implementation
-#   - review: Implementation complete, ready for review
-#   - done: Story completed
-
-# Retrospective Status:
-#   - optional: Can be completed but not required
-#   - done: Retrospective has been completed
-
-# Action Item Status:
-#   - open: Committed during a retrospective, not yet addressed
-#   - in-progress: Actively being worked on
-#   - done: Completed
-
-# WORKFLOW NOTES:
-# ===============
-# - Epic transitions to 'in-progress' automatically when its first story starts (via build's sprint sync)
-# - Stories can be worked in parallel if team capacity allows
-# - Developer typically creates the next story after the previous one is 'done' to incorporate learnings
-# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
-# - Retrospective appends its action items to action_items; the status view surfaces open ones
-generated: 11-08-2026 18:17
-last_updated: 11-10-2026 14:56
+generated: "2026-11-11 01:05"
+last_updated: "2026-11-11 01:05"
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
-story_location: 
-  /Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/implementation-artifacts
+story_location: /Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/implementation-artifacts
 
-current_phase: "Phase D — Backup/restore and disaster recovery"
+current_phase: "G1 vertical slice — editor hardening and local stack"
+
+# -----------------------------------------------------------------------------
+# Roadmap
+# -----------------------------------------------------------------------------
 roadmap:
   - id: A
     name: "G1 vertical slice implementation"
-    status: DONE
-    target_milestone: "2026-11-10"
+    status: in-progress
+    target_milestone: "2026-11"
+    note: "Core edit/MR/decision/merge flow live-verified. T04a durable drafts/history/guarded navigation synthetically PASS. T04b lossless TipTap adapter and full browser acceptance remain open."
+
   - id: B
     name: "Identity/Retrieval services live integration"
-    status: TODO
-    target_milestone: "Estimate TBC — 2026-12 (pending T04/T05 live closure)"
+    status: backlog
+    target_milestone: "TBC — pending G1 closure and sandbox"
+    note: "Services exist and pass synthetic tests. Live Keycloak/OpenLDAP integration and pgvector production benchmarks are future work."
+
   - id: C
     name: "Ingestion/source connectors"
     status: backlog
-    target_milestone: "Estimate TBC — 2026-12/2027-01 (pending owner source selection)"
+    target_milestone: "TBC — pending owner source selection"
+    note: "Only MinIO/object-store staging (C.1.1) implemented to unblock D.1.2."
+
   - id: D
     name: "Backup/restore and disaster recovery"
-    status: in-progress
-    target_milestone: "Estimate TBC — 2027-01 (pending RPO/RTO owner decision)"
+    status: verified
+    target_milestone: "2026-11"
+    note: "D.1.1, D.1.2, D.2, D.4.1 implemented and reviewed. D.3, D.4.2–D.4.4 deferred to backlog pending owner decisions."
+
   - id: E
     name: "Production hardening, Hoster evaluation, second-client deployment"
-    status: TODO
-    target_milestone: "Estimate TBC — 2027-01/02 (pending hoster inputs and second-client resources)"
+    status: backlog
+    target_milestone: "TBC — pending hoster inputs and second-client resources"
+    note: "Deferred per owner decisions G1-D3, G1-D6, G1-D7."
 
-next_sprint_ready:
-  phase: B
-  ready: true
-  reason: "Phase B has sufficient design detail (ADR-10, ADR-03, ADR-05, architecture.md), task decomposition (28 tasks) and dependency mapping to start implementation once the T04/T05 live G1 subset is closed and the identity/retrieval sandbox is provisioned. Owner inputs are still required for production IdP profile and embedding model selection before final Phase B/Phase E acceptance."
-
-
+# -----------------------------------------------------------------------------
+# Readiness
+# -----------------------------------------------------------------------------
 readiness:
-  g1_slice_percent: 100
-  overall_percent: 25
-  g1_status: "DONE"
+  g1_slice_percent: 80
+  overall_percent: 35
+  g1_status: "IN_PROGRESS"
   blocked_gates:
-    - T04 browser editor (durable drafts/history, lossless TipTap adapter)
+    - T04b lossless TipTap adapter and browser editor gate
+    - Full A01–A36 live acceptance on sandbox GitLab + PostgreSQL + IdP
     - T13/T16 object-store ACL production engine recheck
     - T11 hoster.ai endpoint/model IDs/credentials/egress
     - Production AD/live-SLO and production IdP integration
     - Full product migrations/HA and cross-client deployment
 
-remaining_phases:
-  - id: A
-    name: "G1 vertical slice implementation"
-    status: DONE
-    epics:
-      - "E00 T00 baseline and G0 approval"
-      - "E01 contracts and projection mappings"
-      - "E02 document tree and stable identity"
-      - "E03 editor and review UX"
-      - "E04 proposal, decision, merge and recovery"
-      - "E05 retrieval and indexing"
-      - "E06 import, export and cutover"
-      - "E07 inference, evaluation and pilot hardening"
-      - "E08 source connectors and deployment"
-      - "E09-E13 implementation epics"
-    story_count: "derived from T00-T18b tracker"
-    task_count: "derived from T00-T18b tracker"
-    dependencies:
-      - "G0 approval"
-      - "T00 baseline"
-    top_risks:
-      - "T04/T05 live acceptance not closed"
-      - "TipTap adapter browser checks BLOCKED"
-      - "Object-store ACL production recheck BLOCKED"
-  - id: B
-    name: "Identity/Retrieval services live integration"
-    status: TODO
-    epics:
-      - "B.1 Identity service live integration"
-      - "B.2 Session service"
-      - "B.3 Retrieval API and search/ranking"
-      - "B.4 Index management and relevance tuning"
-    story_count: 12
-    task_count: 28
-    dependencies:
-      - "Phase A G1 subset closed (T04/T05 live)"
-      - "ADR-10 identity"
-      - "ADR-03 retrieval adapter"
-      - "ADR-05 index delivery"
-      - "ADR-15 schema ownership"
-      - "Keycloak/OpenLDAP sandbox"
-      - "hoster embedding model selection (for B.4)"
-    top_risks:
-      - "Production IdP profile not yet selected"
-      - "Embedding model/thresholds owner TBD"
-      - "Stock Open WebUI auth gaps require adapter work"
-  - id: C
-    name: "Ingestion/source connectors"
-    status: TODO
-    epics:
-      - "C.1 File upload and media handling"
-      - "C.2 Connector framework"
-      - "C.3 Parsing pipeline"
-      - "C.4 Content-standard enforcement and ingestion job queue"
-    story_count: 10
-    task_count: 18
-    dependencies:
-      - "Phase B identity/retrieval services live"
-      - "Phase A T12/T15/T16 design"
-      - "Owner source selection"
-      - "MinIO/object-store ACL resolved"
-      - "content-standard.md 2.3"
-    top_risks:
-      - "Owner source/connector not selected"
-      - "Object-store ACL production recheck still open"
-      - "Docling/extraction model licenses and egress"
-  - id: D
-    name: "Backup/restore and disaster recovery"
-    status: TODO
-    epics:
-      - "D.1 Scheduled backups"
-      - "D.2 Point-in-time restore"
-      - "D.3 Cross-site replication / DR"
-      - "D.4 Backup integrity and encryption/retention"
-    story_count: 8
-    task_count: 15
-    dependencies:
-      - "Phase A T13a/T13b design"
-      - "Phase C object-store implementation"
-      - "Owner RPO/RTO/retention decisions"
-      - "Backup storage target selection"
-    top_risks:
-      - "RPO/RTO/retention owner TBD"
-      - "Cross-site replication may be out of scope unless required"
-      - "Correction-task backup reconciliation complexity"
-  - id: E
-    name: "Production hardening, Hoster evaluation, second-client deployment"
-    status: TODO
-    epics:
-      - "E.1 Production identity and SLO"
-      - "E.2 Object-store ACL and production storage"
-      - "E.3 Migrations and HA"
-      - "E.4 Hoster white-label and second-client deployment"
-      - "E.5 Security audit and egress/ingress policy"
-    story_count: 11
-    task_count: 17
-    dependencies:
-      - "Phases B-D completed or stable"
-      - "Production AD/LDAP access"
-      - "hoster.ai endpoint/model IDs/credentials"
-      - "Second-client resources"
-      - "Owner SLO/budget/HA decisions"
-    top_risks:
-      - "hoster.ai inputs deferred (T11 BLOCKED)"
-      - "Production AD/SLO not yet available"
-      - "Second-client environment/resources not provisioned"
-      - "Security/pen-test findings may force scope changes"
-
+# -----------------------------------------------------------------------------
+# Development status
+# -----------------------------------------------------------------------------
 development_status:
-  epic-0: done
-  0-1-t00-baseline-audit-and-owner-g0-approval: done
-  epic-0-retrospective: optional
+  phase-a:
+    status: in-progress
+    note: "G1 vertical slice"
+    items:
+      - id: t00
+        title: "T00 baseline and G0 approval"
+        status: done
+      - id: t01
+        title: "T01 contracts and projection mappings"
+        status: done
+      - id: t02
+        title: "T02 document tree and canonical direct read"
+        status: done
+      - id: t03a
+        title: "T03a stable identity core and nested group snapshots"
+        status: done
+      - id: t03b
+        title: "T03b per-Space policy enforcement and revocation"
+        status: done
+      - id: t04a
+        title: "T04a durable drafts, guarded navigation, cursor-based Git history"
+        status: verified
+        note: "Synthetic API checks 9/9 PASS. UI tabs, dirty-state guard, history panel implemented. Live browser acceptance pending."
+      - id: t04b
+        title: "T04b lossless TipTap adapter and browser editor gate"
+        status: in-progress
+        note: "WYSIWYG visual editor added to Knowledge Markdown files (Source/Visual toggle). Front matter and links are preserved. Known debt: list markers and paragraph spacing are normalized by the marked/turndown round-trip; full lossless serializer + IME/accessibility/XSS gate remain open."
+      - id: t05
+        title: "T05 proposal/decision/merge lifecycle and recovery"
+        status: verified
+        note: "Live API subset 20/20 PASS; Open WebUI subset 17/17 PASS. Full A05–A10/A27–A30 and fault matrix pending."
+      - id: t06
+        title: "T06 merge-only GO enforcement, fencing and quarantine"
+        status: verified
+      - id: t07
+        title: "T07 business review and independent decisions"
+        status: verified
+      - id: t07b
+        title: "T07b DocOps review projections and correction tasks"
+        status: verified
+      - id: t08
+        title: "T08 scoped working context and canonical direct read"
+        status: done
+      - id: t09
+        title: "T09 restricted single-page agent proposal tools"
+        status: done
+      - id: local-stack
+        title: "Local development stack orchestration"
+        status: verified
+        note: "Stack starts and smoke tests pass (12 PASS, 0 FAIL, 1 BLOCKED). S3Mock replaces unavailable MinIO image; GO uses stub adapter by default. Open WebUI connected to KIMI, seeded with 44 project docs, default knowledge-backed model 'hoster-assistant' is set, T04b WYSIWYG markdown editor is available in Knowledge, and scripts/create_kb_document.py exercises the canonical GO draft path."
 
-  epic-1: done
-  1-1-t01-reproducible-two-space-sandbox-and-executable-defect-evi: done
-  epic-1-retrospective: optional
+  phase-b:
+    status: backlog
+    note: "Identity/Retrieval services live integration"
+    items:
+      - id: b.1
+        title: "B.1 Identity service live integration"
+        status: backlog
+      - id: b.2
+        title: "B.2 Session service"
+        status: verified
+        note: "Service implemented and synthetically tested. Live integration pending."
+      - id: b.3
+        title: "B.3 Retrieval API and search/ranking"
+        status: backlog
+      - id: b.4
+        title: "B.4 Index management and relevance tuning"
+        status: backlog
 
-  epic-2: done
-  2-1-t02-git-backed-document-tree-and-canonical-direct-read: done
-  2-2-t03a-stable-identity-core-and-nested-group-snapshots: done
-  2-3-t03b-per-space-policy-enforcement-and-revocation: done
-  epic-2-retrospective: optional
+  phase-c:
+    status: backlog
+    note: "Ingestion/source connectors"
+    items:
+      - id: c.1.1
+        title: "C.1.1 MinIO object-store staging"
+        status: done
+        note: "Pulled from backlog to unblock D.1.2."
+      - id: c.1.2
+        title: "C.1.2 Media classification and critical-media gating"
+        status: backlog
+      - id: c.2
+        title: "C.2 Connector framework"
+        status: backlog
+      - id: c.3
+        title: "C.3 Parsing pipeline"
+        status: backlog
+      - id: c.4
+        title: "C.4 Content-standard enforcement and ingestion job queue"
+        status: backlog
 
-  epic-3: done
-  3-1-t04a-durable-drafts-guarded-navigation-and-cursor-based-git: done
-  3-2-t04b-lossless-tiptap-adapter-and-browser-editor-gate: done
-  3-3-tech-debt-pytest-baseline-and-harness-unit-tests: done
-  epic-3-retrospective: optional
+  phase-d:
+    status: verified
+    note: "Backup/restore and disaster recovery"
+    items:
+      - id: d.1.1
+        title: "D.1.1 Git mirror and metadata backup"
+        status: done
+      - id: d.1.2
+        title: "D.1.2 PostgreSQL and object-store backup"
+        status: done
+      - id: d.2
+        title: "D.2 Point-in-time restore"
+        status: done
+      - id: d.3
+        title: "D.3 Cross-site replication / DR"
+        status: backlog
+        note: "Deferred by D3-DEC1. Future RPO 1h, RTO 1h, secondary site another hoster DC, per-client buckets/accounts."
+      - id: d.4.1
+        title: "D.4.1 Integrity verification"
+        status: done
+      - id: d.4.2
+        title: "D.4.2 Encryption at rest"
+        status: backlog
+      - id: d.4.3
+        title: "D.4.3 Retention policy"
+        status: backlog
+      - id: d.4.4
+        title: "D.4.4 DR runbook"
+        status: backlog
 
-  epic-4: done
-  4-1-t05a-exact-proposalrecord-and-proposalversion-lifecycle: done
-  4-2-t05b-canonical-decisionrecord-exact-merge-and-conclusive-rec: done
-  4-3-t06-merge-only-go-enforcement-fencing-and-quarantine: done
-  4-4-t07-exact-business-review-and-independent-decisions: done
-  4-5-t08-scoped-working-context-and-canonical-direct-read-agent-t: done
-  4-6-t09-restricted-single-page-agent-proposal-tools: done
-  4-7-t07b-docops-review-projections-correction-tasks-and-ux-telem: done
-  epic-4-retrospective: optional
+  phase-e:
+    status: backlog
+    note: "Production hardening"
+    items:
+      - id: e.1
+        title: "E.1 Production identity and SLO"
+        status: backlog
+      - id: e.2
+        title: "E.2 Object-store ACL and production storage"
+        status: backlog
+      - id: e.3
+        title: "E.3 Migrations and HA"
+        status: backlog
+      - id: e.4
+        title: "E.4 Hoster white-label and second-client deployment"
+        status: backlog
+      - id: e.5
+        title: "E.5 Security audit and egress/ingress policy"
+        status: backlog
 
-  epic-5: done
-  5-1-t10a-exact-sha-ci-index-build-and-validated-preflight-artifa: done
-  5-2-t10b-published-retrieval-search-cursors-and-monotonic-public: done
-  epic-5-retrospective: optional
-
-  epic-6: done
-  6-1-t12a-deterministic-dry-run-import-and-admission-gates: done
-  6-2-t12b-controlled-cutover-and-activation-using-the-e05-preflig: done
-  6-3-t13a-complete-portable-export-with-exact-refs-and-closure: done
-  6-4-t13b-mirror-metadata-backup-rebuild-and-conservative-clean-r: done
-  epic-6-retrospective: optional
-
-  epic-7: done
-  7-1-t11-approved-hoster-ai-studio-inference-lifecycle: done
-  7-2-t14-reproducible-quality-safety-and-operational-evaluation: done
-  7-3-t18-necessary-pilot-part-pilot-hardening-protected-deploymen: done
-  epic-7-retrospective: optional
-
-  epic-8: done
-  8-1-t15-safe-source-registry-three-way-updates-and-durable-curso: done
-  8-2-t16-one-owner-selected-real-source-connector: done
-  8-3-t17-conditional-evidence-gated-extraction-media-and-ocr-qual: done
-  8-4-t18a-repeatable-config-only-dedicated-deployment: done
-  8-5-t18b-full-g3-backup-restore-upgrade-and-full-operational-acceptance: done
-  epic-8-retrospective: optional
-
-  epic-9: done
-  9-1-i01-project-bootstrap-and-local-infrastructure: done
-  9-2-i02-identity-domain-models-and-kb_authz-migrations: done
-  9-3-i03-identity-resolution-and-group-snapshot-ingestion: done
-  9-4-i04-policy-activation-authzcontext-and-path-approval: done
-  epic-9-retrospective: optional
-
-  epic-10: done
-  10-1-i05-git-orchestrator-bootstrap-and-gitlab-client: done
-  10-2-i06-proposalrecord-and-decisionrecord-lifecycle: done
-  epic-10-retrospective: optional
-
-  epic-11: done
-  11-1-i07-open-webui-fork-setup-and-kb-api-client: done
-  epic-11-retrospective: optional
-
-  epic-12: done
-  12-1-i08-index-worker-and-pgvector-search: done
-  epic-12-retrospective: optional
-
-  epic-13: done
-  13-1-i09-dry-run-importer-and-source-registry: done
-  epic-13-retrospective: optional
-
-  phase-b: done
-  b.1-identity-service-live-integration: done
-  b.2-session-service: done
-  b.3-retrieval-service-live-integration: done
-  b.4-index-management-and-relevance-tuning: backlog
-
-  phase-c: in-progress
-  c.1-file-upload-and-media-handling: in-progress
-  c.1.1-minio-object-store-staging: done
-  c.1.2-media-classification-and-critical-media-gating: backlog
-  c.2-connector-framework: backlog
-  c.3-parsing-pipeline: backlog
-  c.4-content-standard-enforcement-and-ingestion-job-queue: backlog
-
-  phase-d: done
-  d.1-scheduled-backups: in-progress
-  d.1.1-git-mirror-and-metadata-backup: done
-  d.1.2-postgresql-and-object-store-backup: done
-  d.2-point-in-time-restore: done
-  d.3-cross-site-replication-dr: backlog
-  d.4-backup-integrity-encryption-and-retention: done
-  d.4.1-integrity-verification: done
-  d.4.2-encryption-at-rest: backlog
-  d.4.3-retention-policy: backlog
-  d.4.4-dr-runbook: backlog
-  d.4.1-backup-integrity-checks: done
-  d.4.2-encryption-at-rest: backlog
-  d.4.3-retention: backlog
-  d.4.4-runbook: backlog
-
-  # D.3 owner decisions recorded 2026-11-10:
-  # - Cross-site DR not required now; moved to backlog.
-  # - Future RPO: 1 hour, RTO: 1 hour.
-  # - Secondary site: another hoster data center.
-  # - Tenant isolation: separate buckets/accounts per client.
-
+# -----------------------------------------------------------------------------
+# Action items
+# -----------------------------------------------------------------------------
 action_items:
-  - epic: 1
-    action: "G2: execute live acceptance A01–A36 on sandbox GitLab + PostgreSQL +
-      IdP; currently only G1 subset done"
-    owner: "QA + Dev"
-    status: open
-  - epic: 3
-    action: "T04a/T04b live: integrate Open WebUI native editor with GO API (proposal/decision/merge
-      UI) and automate browser checks"
+  - id: ACT-001
+    epic: A
+    title: "T04a live browser acceptance"
+    description: "Run T04a draft/history/guarded navigation checks against running Open WebUI + GO on sandbox GitLab/PostgreSQL."
     owner: "Frontend + Dev"
     status: open
-  - epic: 9
-    action: "T03a/T03b live: implement Identity service FastAPI, connect Keycloak/OpenLDAP,
-      verify stable IDs, nested groups, revocation"
-    owner: "Backend + Security"
-    status: open
-  - epic: 12
-    action: "T10a/T10b live: implement Retrieval service, pgvector index builds, exact-SHA
-      CI, published retrieval with cursors"
-    owner: "Backend + QA"
-    status: open
-  - epic: 13
-    action: "T12/T15/T16 live: implement Ingestion service, source registry with durable
-      cursors, one owner-selected real source connector"
-    owner: "Backend + Owner (source selection)"
-    status: open
-  - epic: 13
-    action: "T17 live: evidence-gated extraction/media/OCR for non-Markdown sources
-      with synthetic/sanitized fixtures"
-    owner: "Backend + Owner (sample formats)"
-    status: open
-  - epic: 6
-    action: "T13a/T13b live: full export/backup/restore/rebuild drill on GitLab/PostgreSQL/object-store"
-    owner: "DevOps + Backend"
-    status: open
-  - epic: 7
-    action: "T14 live: real hoster.ai inference endpoint, model IDs, egress config;
-      golden-set evaluation with human review"
-    owner: "ML + Owner (hoster inputs)"
-    status: open
-  - epic: 8
-    action: "T18a/T18b live: config-only second-client deployment, full G3 backup/restore/upgrade
-      and operational acceptance"
-    owner: "DevOps + QA + Owner (second-client resources)"
-    status: open
-  - epic: 0
-    action: "Production readiness: HA PostgreSQL, monitoring/alerting, runbooks, security
-      review, privileged bypass governance"
-    owner: "DevOps + Security + Owner"
-    status: open
-  - epic: 0
-    action: "Owner decisions: business groups/path scopes, hoster inventory, corpus/concurrency/latency/quality/budgets,
-      RPO/RTO/retention, object-store, branding/legal"
-    owner: "Owner"
-    status: open
-  - epic: 0
-    action: "T19/T20 deferred: measured benchmark and business gate before engine
-      evolution / fast-trust-scale policies"
-    owner: "Owner + Architect"
+
+  - id: ACT-002
+    epic: A
+    title: "T04b lossless TipTap adapter refinement"
+    description: "Replace marked/turndown round-trip with a lossless Markdown serializer (or tiptap-markdown) so list markers, paragraph spacing, and inline syntax survive visual editing. Verify IME, accessibility, and XSS gates."
+    owner: "Frontend + Dev"
     status: open
 
-# Owner decisions recorded 2026-11-10:
-# - Priority: T04a/T04b Open WebUI native editor first, then B–E.
-# - Identity: Keycloak/OpenLDAP from docker-compose.
-# - Inference: KIMI for now; hoster.ai switch later by owner.
-# - Corpus/connector: not needed now, no data migration.
-# - Object store: MinIO sufficient.
-# - Production constraints: deferred, not critical for launch.
-# - Legal/branding: white-label allowed under https://hoster.by/, rebrandable per client, commercial distribution planned.
+  - id: ACT-003
+    epic: A
+    title: "Local stack smoke execution"
+    description: "Start scripts/local_stack.py and confirm scripts/smoke_local_stack.py passes."
+    owner: "DevOps + Dev"
+    status: done
+
+  - id: ACT-004
+    epic: A
+    title: "Full G1 live acceptance A01–A36 subset"
+    description: "Execute remaining A05–A10/A27–A30 and concurrency/fault matrix on sandbox."
+    owner: "QA + Dev"
+    status: open
+
+  - id: ACT-005
+    epic: B
+    title: "Identity service Keycloak/OpenLDAP live integration"
+    description: "Connect Identity service to sandbox Keycloak; verify stable IDs, nested groups, revocation."
+    owner: "Backend + Security"
+    status: open
+
+  - id: ACT-006
+    epic: B
+    title: "Retrieval service live pgvector benchmark"
+    description: "Run ACL-aware Russian corpus benchmark and agree golden-set thresholds."
+    owner: "Backend + QA"
+    status: open
+
+  - id: ACT-007
+    epic: C
+    title: "Owner source/connector selection"
+    description: "Select first real source connector scope and sample formats."
+    owner: "Owner"
+    status: open
+
+  - id: ACT-008
+    epic: D
+    title: "Backup encryption, retention and runbook decisions"
+    description: "Owner decisions on key management, retention policy, runbook format."
+    owner: "Backend + Owner"
+    status: open
+
+  - id: ACT-009
+    epic: E
+    title: "hoster.ai endpoint and model inputs"
+    description: "Provide endpoint, model IDs, credentials, egress config for T14."
+    owner: "ML + Owner"
+    status: open
+
+  - id: ACT-010
+    epic: E
+    title: "Second-client deployment resources"
+    description: "Agree second-client scope and provision resources for T18a/T18b."
+    owner: "DevOps + QA + Owner"
+    status: open
+
+  - id: ACT-011
+    epic: E
+    title: "Production readiness decisions"
+    description: "HA PostgreSQL, monitoring/alerting, runbooks, security review, privileged bypass governance."
+    owner: "DevOps + Security + Owner"
+    status: open
+
+  - id: ACT-012
+    epic: A
+    title: "Open WebUI white-label logo/favicon decision"
+    description: "Upstream Open WebUI LICENSE restricts logo/favicon replacement. Decide whether to keep default branding or pursue a license-compliant white-label build."
+    owner: "Frontend + Owner"
+    status: open
+
+# -----------------------------------------------------------------------------
+# Owner decisions
+# -----------------------------------------------------------------------------
 decisions:
   - id: "G1-D1"
-    decision: "Implement Open WebUI native editor integration with GO API (T04a/T04b
-      live) as the next work package"
+    decision: "Implement Open WebUI native editor integration with GO API (T04a/T04b live) as the next work package"
     status: accepted
+
   - id: "G1-D2"
-    decision: "Use Keycloak/OpenLDAP from docker-compose for identity; production
-      AD deferred"
+    decision: "Use Keycloak/OpenLDAP from docker-compose for identity; production AD deferred"
     status: accepted
+
   - id: "G1-D3"
     decision: "Use KIMI for inference; hoster.ai integration deferred to owner"
     status: accepted
+
   - id: "G1-D4"
     decision: "No corpus/connector work now; no data migration"
     status: superseded
+
   - id: "G1-D4-rev1"
     decision: "Move Phase C (ingestion/source connectors) to backlog; proceed with Phase D backup/restore and disaster recovery instead"
     status: superseded
     supersedes: "G1-D4"
+
   - id: "G1-D4-rev2"
     decision: "Pull the MinIO/object-store staging slice (C.1.1) out of backlog in order to implement D.1.2 PostgreSQL and object-store backup fully"
     status: accepted
     supersedes: "G1-D4-rev1"
+
   - id: "G1-D5"
     decision: "MinIO is sufficient for object storage"
     status: accepted
+
   - id: "G1-D6"
     decision: "Production HA/SLO/monitoring deferred"
     status: accepted
+
   - id: "G1-D7"
-    decision: "White-label branding under hoster.by is allowed; per-client rebranding
-      required; commercial distribution planned"
+    decision: "White-label branding under hoster.by is allowed; per-client rebranding required; commercial distribution planned"
     status: accepted
+
   - id: "D3-DEC1"
     decision: "Cross-site DR / replication is not required for the current scope; moved to backlog as future improvement"
     status: accepted
+
   - id: "D3-DEC2"
     decision: "Target RPO: 1 hour; target RTO: 1 hour (for future DR implementation)"
     status: accepted
+
   - id: "D3-DEC3"
     decision: "Secondary site for future DR: another hoster data center"
     status: accepted
+
   - id: "D3-DEC4"
     decision: "Tenant isolation for future DR: separate buckets/accounts per client"
     status: accepted
 
+# -----------------------------------------------------------------------------
+# Backlog
+# -----------------------------------------------------------------------------
 backlog:
   - id: c.1.2
     title: "Media classification and critical-media gating (C.1.2)"
-    reason: "Remaining part of C.1; object-store staging is now in progress for D.1.2 dependency."
+    reason: "Remaining part of C.1; object-store staging is now done for D.1.2 dependency."
     owner: "Backend + Owner"
 
   - id: c.2-c.4
@@ -438,6 +387,6 @@ backlog:
     owner: "Backend + Owner"
 
   - id: b.4
-    title: "Index management and relevance tuning"
+    title: "Index management and relevance tuning (B.4)"
     reason: "Deferred by owner decision: current Markdown-based knowledge base is sufficient for launch; full index worker, CI builds, incremental/full equivalence, profile shadow builds and Russian-aware chunking/embedding tuning are not required now."
     owner: "Backend + Owner"
