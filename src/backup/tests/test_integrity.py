@@ -51,7 +51,7 @@ def test_valid_package_passes(valid_package: Path) -> None:
     assert report.missing_files == []
     assert report.space_id == "demo-space"
     assert report.backup_id == "b1"
-    assert (valid_package / "integrity_report.json").exists()
+    assert valid_package.with_suffix(".integrity_report.json").exists()
 
 
 def test_corrupt_file_fails(valid_package: Path) -> None:

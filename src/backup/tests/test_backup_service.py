@@ -12,9 +12,10 @@ from sqlalchemy.orm import Session
 
 from backup.app.adapters.gitlab import BackupGitLabAdapterError, StubBackupGitLabAdapter
 from backup.app.core.config import settings
-from backup.app.models.backup import BackupStatus
-from backup.app.services.backup import BackupService, BackupServiceError
+from backup.app.models.backup import AssetsManifest, BackupStatus
+from backup.app.services.backup import BackupService, BackupServiceError, _sanitize_space_id
 from backup.app.services.object_store import ObjectStoreService
+from backup.app.services.postgres_backup import PostgresBackupService
 
 
 def _insert_proposal(session: Session, space_id: str, proposal_sha: str) -> Any:
@@ -97,6 +98,7 @@ def test_metadata_export_contains_mrs_notes_tags(
     assert "1" in metadata.notes
     assert metadata.notes["1"][0].body == "DecisionRecord accepted"
     assert metadata.tags[0]["name"] == "kb-decisions/d-1"
+    assert metadata.tags[0]["target"] == "c" * 40
 
 
 def test_kb_ops_export_contains_records(
@@ -206,8 +208,8 @@ def test_failure_leaves_failed_status(
 
     space_dir = Path(service.storage_path) / "demo-space"
     assert space_dir.exists()
-    status_files = list(space_dir.rglob("status.json"))
-    assert status_files, "expected a status.json under the backup package"
+    status_files = list(space_dir.glob("*.status.json"))
+    assert status_files, "expected a .status.json sidecar under the space directory"
     status = json.loads(status_files[0].read_text(encoding="utf-8"))
     assert status["status"] == BackupStatus.FAILED.value
     assert "error" in status
@@ -274,7 +276,10 @@ def test_resolve_head_from_branch(
     tmp_storage_path: Path,
 ) -> None:
     adapter = StubBackupGitLabAdapter(
-        state={("branch", "demo-space", "main"): {"name": "main", "commit": {"id": "abc123"}}}
+        state={
+            ("default_branch", "demo-space"): "main",
+            ("branch", "demo-space", "main"): {"name": "main", "commit": {"id": "abc123"}},
+        }
     )
     service = BackupService(
         adapter=adapter,
@@ -288,6 +293,62 @@ def test_resolve_head_from_branch(
 
     head = service._resolve_head("demo-space")
     assert head == "abc123"
+
+
+def test_resolve_head_uses_default_branch(
+    engine: Any,
+    tmp_storage_path: Path,
+) -> None:
+    adapter = StubBackupGitLabAdapter(
+        state={
+            ("default_branch", "demo-space"): "trunk",
+            ("branch", "demo-space", "trunk"): {"name": "trunk", "commit": {"id": "def456"}},
+        }
+    )
+    service = BackupService(
+        adapter=adapter,
+        engine=engine,
+        storage_path=str(tmp_storage_path / "backups"),
+        gitlab_url="http://localhost:8081",
+        gitlab_token="",
+        project_path_prefix="",
+        kb_ops_schema=None,
+    )
+
+    head = service._resolve_head("demo-space")
+    assert head == "def456"
+
+
+def test_different_head_creates_new_backup(
+    engine: Any,
+    ops_tables: Any,
+    synthetic_git_repo: Path,
+    tmp_storage_path: Path,
+) -> None:
+    adapter = StubBackupGitLabAdapter(
+        state={
+            ("default_branch", "demo-space"): "main",
+            ("branch", "demo-space", "main"): {"name": "main", "commit": {"id": "a" * 40}},
+        }
+    )
+    service = BackupService(
+        adapter=adapter,
+        engine=engine,
+        storage_path=str(tmp_storage_path / "backups"),
+        gitlab_url=str(synthetic_git_repo.parent),
+        gitlab_token="",
+        project_path_prefix="",
+        kb_ops_schema=None,
+    )
+
+    first = service.create_mirror_backup("demo-space")
+    adapter.state[("branch", "demo-space", "main")] = {
+        "name": "main",
+        "commit": {"id": "b" * 40},
+    }
+    second = service.create_mirror_backup("demo-space")
+
+    assert first.backup_id != second.backup_id
 
 
 def test_kb_ops_error_preserved(
@@ -331,10 +392,14 @@ def test_invalid_space_id_rejected(
         kb_ops_schema=None,
     )
 
-    for bad in ["../etc", "demo/space", "demo space", "", "demo.space"]:
+    for bad in ["../etc", "corp-kb/../etc", "demo space", "", "demo.space", "/demo", "demo/"]:
         with pytest.raises(BackupServiceError) as exc_info:
             service.create_mirror_backup(bad)
         assert exc_info.value.code == "INVALID_SPACE_ID"
+
+    # Nested GitLab paths are allowed.
+    valid_nested = _sanitize_space_id("corp-kb/sales")
+    assert valid_nested == "corp-kb/sales"
 
 
 def test_metadata_export_failure_raises(
@@ -609,6 +674,250 @@ def test_full_backup_postgres_error_returns_502(client: Any) -> None:
     )
     response = client.post("/api/kb/v1/backups/demo-space/full")
     assert response.status_code == 502
+
+
+def test_full_backup_manifest_hashes_match(
+    engine: Any,
+    ops_tables: Any,
+    synthetic_git_repo: Path,
+    tmp_storage_path: Path,
+) -> None:
+    from backup.app.adapters.object_store import StubObjectStoreAdapter
+
+    object_store_adapter = StubObjectStoreAdapter()
+    object_store_service = ObjectStoreService(object_store_adapter)
+    object_store_service.stage_file("demo-space", "asset.txt", b"asset content", media_type="text/plain")
+
+    def fake_run(*args: Any, **kwargs: Any) -> Any:
+        class Result:
+            returncode = 0
+            stderr = b""
+
+        stdout = kwargs.get("stdout")
+        if stdout is not None and hasattr(stdout, "write"):
+            stdout.write(b"-- synthetic pg_dump\n")
+        return Result()
+
+    postgres_service = PostgresBackupService(
+        host="localhost",
+        port=5432,
+        user="u",
+        password="p",
+        db="db",
+        schemas=["kb_authz", "kb_ops", "kb_index"],
+        run_command=fake_run,
+    )
+
+    adapter = StubBackupGitLabAdapter(
+        state={("branch", "demo-space", "main"): {"name": "main", "commit": {"id": "a" * 40}}}
+    )
+    service = BackupService(
+        adapter=adapter,
+        engine=engine,
+        storage_path=str(tmp_storage_path / "backups"),
+        gitlab_url=str(synthetic_git_repo.parent),
+        gitlab_token="",
+        project_path_prefix="",
+        kb_ops_schema=None,
+        object_store_adapter=object_store_adapter,
+        postgres_backup_service=postgres_service,
+    )
+
+    package = service.create_full_backup("demo-space")
+    manifest = package.manifest
+    assert manifest is not None
+
+    package_path = Path(package.package_path)
+    for file_hash in manifest.files:
+        actual = _sha256_file(package_path / file_hash.path)
+        assert actual == file_hash.sha256, file_hash.path
+
+
+def test_full_backup_copies_multiple_object_versions(
+    engine: Any,
+    ops_tables: Any,
+    synthetic_git_repo: Path,
+    tmp_storage_path: Path,
+) -> None:
+    from backup.app.adapters.object_store import StubObjectStoreAdapter
+
+    object_store_adapter = StubObjectStoreAdapter()
+    object_store_service = ObjectStoreService(object_store_adapter)
+    object_store_service.stage_file("demo-space", "asset.txt", b"version 1", media_type="text/plain")
+    object_store_service.stage_file("demo-space", "asset.txt", b"version 2", media_type="text/plain")
+
+    def fake_run(*args: Any, **kwargs: Any) -> Any:
+        class Result:
+            returncode = 0
+            stderr = b""
+
+        stdout = kwargs.get("stdout")
+        if stdout is not None and hasattr(stdout, "write"):
+            stdout.write(b"-- synthetic pg_dump\n")
+        return Result()
+
+    postgres_service = PostgresBackupService(
+        host="localhost",
+        port=5432,
+        user="u",
+        password="p",
+        db="db",
+        schemas=["kb_ops"],
+        run_command=fake_run,
+    )
+
+    adapter = StubBackupGitLabAdapter(
+        state={("branch", "demo-space", "main"): {"name": "main", "commit": {"id": "a" * 40}}}
+    )
+    service = BackupService(
+        adapter=adapter,
+        engine=engine,
+        storage_path=str(tmp_storage_path / "backups"),
+        gitlab_url=str(synthetic_git_repo.parent),
+        gitlab_token="",
+        project_path_prefix="",
+        kb_ops_schema=None,
+        object_store_adapter=object_store_adapter,
+        postgres_backup_service=postgres_service,
+    )
+
+    package = service.create_full_backup("demo-space")
+    package_path = Path(package.package_path)
+    export_dir = package_path / "object_store_export"
+    exported_files = list(export_dir.iterdir())
+    assert len(exported_files) == 2
+
+    assets_manifest = AssetsManifest.model_validate(
+        json.loads((package_path / "assets_manifest.json").read_text(encoding="utf-8"))
+    )
+    assert len(assets_manifest.objects) == 2
+
+
+def test_full_backup_empty_object_store(
+    engine: Any,
+    ops_tables: Any,
+    synthetic_git_repo: Path,
+    tmp_storage_path: Path,
+) -> None:
+    from backup.app.adapters.object_store import StubObjectStoreAdapter
+
+    object_store_adapter = StubObjectStoreAdapter()
+
+    def fake_run(*args: Any, **kwargs: Any) -> Any:
+        class Result:
+            returncode = 0
+            stderr = b""
+
+        stdout = kwargs.get("stdout")
+        if stdout is not None and hasattr(stdout, "write"):
+            stdout.write(b"-- synthetic pg_dump\n")
+        return Result()
+
+    postgres_service = PostgresBackupService(
+        host="localhost",
+        port=5432,
+        user="u",
+        password="p",
+        db="db",
+        schemas=["kb_ops"],
+        run_command=fake_run,
+    )
+
+    adapter = StubBackupGitLabAdapter(
+        state={("branch", "demo-space", "main"): {"name": "main", "commit": {"id": "a" * 40}}}
+    )
+    service = BackupService(
+        adapter=adapter,
+        engine=engine,
+        storage_path=str(tmp_storage_path / "backups"),
+        gitlab_url=str(synthetic_git_repo.parent),
+        gitlab_token="",
+        project_path_prefix="",
+        kb_ops_schema=None,
+        object_store_adapter=object_store_adapter,
+        postgres_backup_service=postgres_service,
+    )
+
+    package = service.create_full_backup("demo-space")
+    package_path = Path(package.package_path)
+    assert (package_path / "object_store_export").is_dir()
+    assert not any((package_path / "object_store_export").iterdir())
+
+    assets_manifest = AssetsManifest.model_validate(
+        json.loads((package_path / "assets_manifest.json").read_text(encoding="utf-8"))
+    )
+    assert assets_manifest.objects == []
+
+
+def test_object_store_not_configured(
+    engine: Any,
+    ops_tables: Any,
+    synthetic_git_repo: Path,
+    tmp_storage_path: Path,
+) -> None:
+    def fake_run(*args: Any, **kwargs: Any) -> Any:
+        class Result:
+            returncode = 0
+            stderr = b""
+
+        stdout = kwargs.get("stdout")
+        if stdout is not None and hasattr(stdout, "write"):
+            stdout.write(b"-- synthetic pg_dump\n")
+        return Result()
+
+    adapter = StubBackupGitLabAdapter(
+        state={("branch", "demo-space", "main"): {"name": "main", "commit": {"id": "a" * 40}}}
+    )
+    service = BackupService(
+        adapter=adapter,
+        engine=engine,
+        storage_path=str(tmp_storage_path / "backups"),
+        gitlab_url=str(synthetic_git_repo.parent),
+        gitlab_token="",
+        project_path_prefix="",
+        kb_ops_schema=None,
+        postgres_backup_service=PostgresBackupService(
+            host="h",
+            port=5432,
+            user="u",
+            password="p",
+            db="db",
+            schemas=["kb_ops"],
+            run_command=fake_run,
+        ),
+    )
+
+    with pytest.raises(BackupServiceError) as exc_info:
+        service.create_full_backup("demo-space")
+    assert exc_info.value.code == "OBJECT_STORE_NOT_CONFIGURED"
+
+
+def test_postgres_not_configured(
+    engine: Any,
+    ops_tables: Any,
+    synthetic_git_repo: Path,
+    tmp_storage_path: Path,
+) -> None:
+    from backup.app.adapters.object_store import StubObjectStoreAdapter
+
+    object_store_adapter = StubObjectStoreAdapter()
+    adapter = StubBackupGitLabAdapter(
+        state={("branch", "demo-space", "main"): {"name": "main", "commit": {"id": "a" * 40}}}
+    )
+    service = BackupService(
+        adapter=adapter,
+        engine=engine,
+        storage_path=str(tmp_storage_path / "backups"),
+        gitlab_url=str(synthetic_git_repo.parent),
+        gitlab_token="",
+        project_path_prefix="",
+        kb_ops_schema=None,
+        object_store_adapter=object_store_adapter,
+    )
+
+    with pytest.raises(BackupServiceError) as exc_info:
+        service.create_full_backup("demo-space")
+    assert exc_info.value.code == "POSTGRES_NOT_CONFIGURED"
 
 
 def _sha256_file(path: Path) -> str:

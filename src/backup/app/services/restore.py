@@ -18,6 +18,7 @@ from backup.app.models.restore import (
     RestoreStatus,
     RestoreStep,
 )
+from backup.app.services.backup import _safe_object_filename
 from backup.app.services.closure import ClosureVerifier
 from backup.app.services.integrity import IntegrityChecker, IntegrityCheckerError
 from backup.app.services.object_store import ObjectStoreService
@@ -35,16 +36,46 @@ class RestoreServiceError(Exception):
         super().__init__(f"{code}: {message}")
 
 
-_SPACE_ID_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
+_SPACE_ID_RE = re.compile(r"^[a-zA-Z0-9_/-]+$")
+_BACKUP_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{1,128}$")
+
+
+def _sanitize_backup_id(backup_id: str) -> str:
+    """Return a filesystem-safe backup_id or raise RestoreServiceError.
+
+    Backup IDs produced by BackupService are 64-character SHA-256 hex strings;
+    the sanitizer accepts any short filesystem-safe identifier for tests.
+    """
+    if not backup_id or not _BACKUP_ID_RE.fullmatch(backup_id):
+        raise RestoreServiceError(
+            "INVALID_BACKUP_ID",
+            "backup_id must be a filesystem-safe identifier",
+        )
+    return backup_id
 
 
 def _sanitize_space_id(space_id: str) -> str:
-    """Return a filesystem-safe space_id or raise RestoreServiceError."""
+    """Return a filesystem-safe space_id or raise RestoreServiceError.
+
+    Allows GitLab-style nested paths (``corp-kb/sales``) while rejecting
+    path-traversal sequences and ambiguous forms.
+    """
     if not space_id or not _SPACE_ID_RE.fullmatch(space_id):
         raise RestoreServiceError(
             "INVALID_SPACE_ID",
-            "space_id must contain only alphanumeric, hyphen, or underscore characters",
+            "space_id must contain only alphanumeric, hyphen, underscore, or slash characters",
         )
+    if space_id.startswith("/") or space_id.endswith("/") or "//" in space_id:
+        raise RestoreServiceError(
+            "INVALID_SPACE_ID",
+            "space_id must not start/end with slash or contain empty segments",
+        )
+    for segment in space_id.split("/"):
+        if segment in {".", ".."}:
+            raise RestoreServiceError(
+                "INVALID_SPACE_ID",
+                "space_id must not contain '.' or '..' segments",
+            )
     return space_id
 
 
@@ -112,6 +143,7 @@ class RestoreService:
                     "PACKAGE_NOT_FOUND",
                     f"no backup package found for space: {space_id}",
                 )
+        resolved_backup_id = _sanitize_backup_id(resolved_backup_id)
 
         package_path = self._package_path(space_id, resolved_backup_id)
         if not package_path.is_dir() or not (package_path / "manifest.json").exists():
@@ -123,15 +155,9 @@ class RestoreService:
         self._load_manifest(package_path)
         integrity_report = self._run_integrity_check(package_path)
         if not integrity_report.verified:
-            return RestoreResult(
-                space_id=space_id,
-                target_space_id=target_space_id,
-                backup_id=resolved_backup_id,
-                status=RestoreStatus.FAILED,
-                package_path=str(package_path),
-                restored_steps=[RestoreStep.INTEGRITY_CHECK],
-                integrity_report=integrity_report,
-                error="integrity check failed; restore aborted",
+            raise RestoreServiceError(
+                "INTEGRITY_MISMATCH",
+                "integrity check failed; restore aborted",
             )
 
         # Refuse to overwrite an existing target unless forced.
@@ -190,6 +216,7 @@ class RestoreService:
     ) -> IntegrityReport:
         """Run a read-only integrity check on a backup package."""
         space_id = _sanitize_space_id(space_id)
+        backup_id = _sanitize_backup_id(backup_id)
         package_path = self._package_path(space_id, backup_id)
         return self._run_integrity_check(package_path)
 
@@ -220,16 +247,35 @@ class RestoreService:
             raise RestoreServiceError(exc.code, exc.message) from exc
 
     def _target_exists(self, target_space_id: str) -> bool:
-        """Return True if the target Space already exists in GitLab."""
+        """Return True if any part of the target Space already exists."""
+        # GitLab repository check (use default branch, not hard-coded main).
         try:
-            branch = self.adapter.get_branch(target_space_id, "main")
+            default_branch = self.adapter.get_default_branch(target_space_id)
+            branch = self.adapter.get_branch(target_space_id, default_branch)
             head = str(branch.get("commit", {}).get("id", ""))
-            return bool(head and head != "0" * 40)
+            if head and head != "0" * 40:
+                return True
         except BackupGitLabAdapterError as exc:
-            if exc.status_code == 404:
-                return False
-            logger.warning("target existence check failed for %s: %s", target_space_id, exc)
-            return False
+            if exc.status_code != 404:
+                logger.warning("target existence check failed for %s: %s", target_space_id, exc)
+                raise RestoreServiceError(
+                    "TARGET_CHECK_FAILED",
+                    f"could not verify target existence for {target_space_id}",
+                ) from exc
+
+        # PostgreSQL schema check.
+        if self.postgres_backup_service is not None:
+            try:
+                if self.postgres_backup_service.schemas_exist():
+                    return True
+            except PostgresBackupServiceError as exc:
+                logger.warning("postgres target existence check failed: %s", exc)
+                raise RestoreServiceError(
+                    "TARGET_CHECK_FAILED",
+                    f"could not verify target postgres state for {target_space_id}",
+                ) from exc
+
+        return False
 
     def _restore_git_mirror(self, package_path: Path, target_space_id: str) -> None:
         mirror_dir = package_path / "mirror.git"
@@ -276,10 +322,15 @@ class RestoreService:
             json.loads(assets_path.read_text(encoding="utf-8"))
         )
 
+        try:
+            self.object_store_service.adapter.create_bucket(
+                settings.BACKUP_RESTORE_MINIO_BUCKET
+            )
+        except ObjectStoreAdapterError as exc:
+            logger.warning("failed to ensure restore bucket: %s", exc)
+
         for entry in assets.objects:
-            safe_object_id = re.sub(r"[^a-zA-Z0-9_.-]", "_", entry.object_id)
-            safe_version = re.sub(r"[^a-zA-Z0-9_.-]", "_", entry.version)
-            source = export_dir / f"{safe_object_id}_{safe_version}.bin"
+            source = export_dir / _safe_object_filename(entry.object_id, entry.version)
             if not source.exists():
                 raise RestoreServiceError(
                     "OBJECT_FILE_MISSING",
@@ -312,7 +363,7 @@ class RestoreService:
         progress, without implementing a full distributed barrier.
         """
         try:
-            sidecar_path = package_path / "restore_status.json"
+            sidecar_path = package_path.with_suffix(".restore_status.json")
             sidecar_path.write_text(
                 json.dumps(
                     {

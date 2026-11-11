@@ -93,6 +93,7 @@ def tmp_storage_path() -> Generator[Path, None, None]:
 def stub_adapter() -> StubBackupGitLabAdapter:
     return StubBackupGitLabAdapter(
         state={
+            ("default_branch", "demo-space"): "main",
             ("branch", "demo-space", "main"): {"name": "main", "commit": {"id": "a" * 40}},
             ("mrs", "demo-space"): [
                 {

@@ -12,7 +12,7 @@ import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, quote_plus
 
 from sqlalchemy import Engine, create_engine, text
 
@@ -47,16 +47,31 @@ class BackupServiceError(Exception):
         super().__init__(f"{code}: {message}")
 
 
-_SPACE_ID_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
+_SPACE_ID_RE = re.compile(r"^[a-zA-Z0-9_/-]+$")
 
 
 def _sanitize_space_id(space_id: str) -> str:
-    """Return a filesystem-safe space_id or raise BackupServiceError."""
+    """Return a filesystem-safe space_id or raise BackupServiceError.
+
+    Allows GitLab-style nested paths (``corp-kb/sales``) while rejecting
+    path-traversal sequences and ambiguous forms.
+    """
     if not space_id or not _SPACE_ID_RE.fullmatch(space_id):
         raise BackupServiceError(
             "INVALID_SPACE_ID",
-            "space_id must contain only alphanumeric, hyphen, or underscore characters",
+            "space_id must contain only alphanumeric, hyphen, underscore, or slash characters",
         )
+    if space_id.startswith("/") or space_id.endswith("/") or "//" in space_id:
+        raise BackupServiceError(
+            "INVALID_SPACE_ID",
+            "space_id must not start/end with slash or contain empty segments",
+        )
+    for segment in space_id.split("/"):
+        if segment in {".", ".."}:
+            raise BackupServiceError(
+                "INVALID_SPACE_ID",
+                "space_id must not contain '.' or '..' segments",
+            )
     return space_id
 
 
@@ -98,11 +113,13 @@ class BackupService:
             return f"{self.kb_ops_schema}.{name}"
         return name
 
-    def _hour_bucket(self) -> str:
-        return datetime.now(UTC).strftime("%Y%m%d%H")
+    def _backup_id(self, space_id: str, head_sha: str) -> str:
+        """Idempotency key: deterministic per space_id + HEAD SHA.
 
-    def _backup_id(self, space_id: str, head_sha: str, hour_bucket: str) -> str:
-        payload = f"{space_id}:{head_sha}:{hour_bucket}".encode()
+        Spec acceptance criterion: repeated request for the same space_id and
+        HEAD returns the existing package_id.
+        """
+        payload = (space_id + head_sha).encode()
         return hashlib.sha256(payload).hexdigest()
 
     def _package_path(self, space_id: str, backup_id: str) -> Path:
@@ -139,15 +156,24 @@ class BackupService:
         try:
             # Resolve current HEAD via the adapter (or a synthetic value for stubs).
             head_sha = self._resolve_head(space_id)
-            hour_bucket = self._hour_bucket()
-            backup_id = self._backup_id(space_id, head_sha, hour_bucket)
+            backup_id = self._backup_id(space_id, head_sha)
+            hour_bucket = datetime.now(UTC).strftime("%Y%m%d%H")
             package_path = self._package_path(space_id, backup_id)
 
             if package_path.exists() and (package_path / "manifest.json").exists():
                 return self._load_existing_package(space_id, backup_id, package_path)
 
-            package_path.mkdir(parents=True, exist_ok=True)
-            status_path = package_path / "status.json"
+            try:
+                package_path.mkdir(parents=True, exist_ok=False)
+            except FileExistsError:
+                if (package_path / "manifest.json").exists():
+                    return self._load_existing_package(space_id, backup_id, package_path)
+                raise BackupServiceError(
+                    "BACKUP_IN_PROGRESS",
+                    f"backup {backup_id} for {space_id} is already in progress",
+                )
+
+            status_path = package_path.with_suffix(".status.json")
             self._write_status(status_path, status_marker, backup_id, space_id)
 
             mirror_dir = package_path / "mirror.git"
@@ -190,7 +216,7 @@ class BackupService:
             if package_path is not None:
                 try:
                     self._write_status(
-                        package_path / "status.json",
+                        package_path.with_suffix(".status.json"),
                         BackupStatus.FAILED,
                         backup_id or "unknown",
                         space_id,
@@ -211,11 +237,12 @@ class BackupService:
     def _resolve_head(self, space_id: str) -> str:
         """Resolve HEAD SHA for the Space repository.
 
-        Uses the adapter's branch endpoint first, then falls back to an
+        Uses the adapter's default branch endpoint first, then falls back to an
         existing local mirror (idempotency path).
         """
         try:
-            branch = self.adapter.get_branch(space_id, "main")
+            default_branch = self.adapter.get_default_branch(space_id)
+            branch = self.adapter.get_branch(space_id, default_branch)
             head = str(branch.get("commit", {}).get("id", ""))
             if head and head != "0" * 40:
                 return head
@@ -225,7 +252,15 @@ class BackupService:
         # Fallback: derive from an existing mirror in the latest backup package.
         space_dir = self.storage_path / space_id
         if space_dir.exists():
-            for backup_dir in sorted(space_dir.iterdir(), reverse=True):
+            candidates = [
+                d for d in space_dir.iterdir()
+                if d.is_dir() and (d / "manifest.json").exists()
+            ]
+            for backup_dir in sorted(
+                candidates,
+                key=lambda p: _read_manifest_created_at(p),
+                reverse=True,
+            ):
                 mirror_dir = backup_dir / "mirror.git"
                 if mirror_dir.is_dir():
                     try:
@@ -268,13 +303,18 @@ class BackupService:
         if mirror_dir.exists():
             shutil.rmtree(mirror_dir)
         url = self._mirror_url(space_id)
-        result = subprocess.run(
-            ["git", "clone", "--mirror", url, str(mirror_dir)],
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=300,
-        )
+        try:
+            result = subprocess.run(
+                ["git", "clone", "--mirror", url, str(mirror_dir)],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=300,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise BackupGitLabAdapterError(
+                f"git clone --mirror timed out for {space_id}"
+            ) from exc
         if result.returncode != 0:
             logger.error("git clone --mirror failed for %s", space_id)
             raise BackupGitLabAdapterError("git clone --mirror failed")
@@ -315,6 +355,8 @@ class BackupService:
     def _export_kb_ops(self, space_id: str) -> KbOpsExport:
         proposals: list[dict[str, Any]] = []
         decisions: list[dict[str, Any]] = []
+        source_sync_cursors: list[dict[str, Any]] = []
+        cutovers: list[dict[str, Any]] = []
         try:
             with self.engine.connect() as conn:
                 result = conn.execute(
@@ -333,6 +375,22 @@ class BackupService:
                 )
                 for row in result.mappings():
                     decisions.append(_serialize_row(row))
+
+                result = conn.execute(
+                    text(
+                        f"SELECT * FROM {self._table('source_sync_cursors')} WHERE space_id = :space_id"
+                    ),
+                    {"space_id": space_id},
+                )
+                for row in result.mappings():
+                    source_sync_cursors.append(_serialize_row(row))
+
+                result = conn.execute(
+                    text(f"SELECT * FROM {self._table('cutovers')} WHERE space_id = :space_id"),
+                    {"space_id": space_id},
+                )
+                for row in result.mappings():
+                    cutovers.append(_serialize_row(row))
         except Exception as exc:
             raise BackupServiceError("KB_OPS_ERROR", f"kb_ops export failed: {exc}") from exc
 
@@ -340,6 +398,8 @@ class BackupService:
             space_id=space_id,
             proposals=proposals,
             decisions=decisions,
+            source_sync_cursors=source_sync_cursors,
+            cutovers=cutovers,
         )
 
     def _backup_postgres(self, space_id: str, package_path: Path) -> PostgresExport:
@@ -372,19 +432,19 @@ class BackupService:
         all_versions: list[ObjectStoreEntry] = []
         for current in current_objects.objects:
             try:
-                versions = self.object_store_service.adapter.list_object_versions(
+                versions = self.object_store_service.list_object_versions(
                     space_id, current.object_id
                 )
-            except (ObjectStoreServiceError, ObjectStoreAdapterError) as exc:
+            except ObjectStoreServiceError as exc:
                 raise BackupServiceError("OBJECT_STORE_ERROR", str(exc)) from exc
             if not versions:
                 versions = [current]
             for entry in versions:
                 try:
-                    content = self.object_store_service.adapter.get_object(
+                    content = self.object_store_service.get_object_content(
                         space_id, entry.object_id, entry.version
                     )
-                except (ObjectStoreServiceError, ObjectStoreAdapterError) as exc:
+                except ObjectStoreServiceError as exc:
                     raise BackupServiceError("OBJECT_STORE_ERROR", str(exc)) from exc
                 actual_sha = hashlib.sha256(content).hexdigest()
                 if actual_sha != entry.sha256:
@@ -392,9 +452,8 @@ class BackupService:
                         "HASH_MISMATCH",
                         f"object store hash mismatch for {entry.object_id}@{entry.version}",
                     )
-                safe_object_id = re.sub(r"[^a-zA-Z0-9_.-]", "_", entry.object_id)
-                safe_version = re.sub(r"[^a-zA-Z0-9_.-]", "_", entry.version)
-                dest = export_dir / f"{safe_object_id}_{safe_version}.bin"
+                safe_name = _safe_object_filename(entry.object_id, entry.version)
+                dest = export_dir / safe_name
                 if dest.exists():
                     raise BackupServiceError(
                         "DUPLICATE_OBJECT_VERSION",
@@ -454,7 +513,7 @@ class BackupService:
         for path in sorted(
             [p.relative_to(package_path) for p in package_path.rglob("*") if p.is_file()]
         ):
-            if path.name in ("manifest.json", "status.json"):
+            if path.name == "manifest.json" or path.name.startswith("."):
                 continue
             files.append(FileHash(path=str(path), sha256=_sha256_file(package_path / path)))
         return BackupManifest(
@@ -500,7 +559,7 @@ class BackupService:
             return None
         latest = max(
             candidates,
-            key=lambda p: (p / "manifest.json").stat().st_mtime,
+            key=_read_manifest_created_at,
         )
         manifest = BackupManifest.model_validate(
             json.loads((latest / "manifest.json").read_text(encoding="utf-8"))
@@ -522,6 +581,29 @@ def _sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def _safe_object_filename(object_id: str, version: str) -> str:
+    """Return a unique, filesystem-safe filename for an object version.
+
+    Uses percent-encoding so distinct object/version strings cannot collide.
+    """
+    encoded_object_id = quote_plus(object_id, safe="")
+    encoded_version = quote_plus(version, safe="")
+    return f"{encoded_object_id}_{encoded_version}.bin"
+
+
+def _read_manifest_created_at(package_path: Path) -> datetime:
+    """Return manifest.created_at for a package directory, or epoch if unreadable."""
+    manifest_path = package_path / "manifest.json"
+    try:
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+        created_at = data.get("created_at")
+        if created_at:
+            return datetime.fromisoformat(created_at)
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("unable to read manifest created_at for %s: %s", package_path, exc)
+    return datetime.fromtimestamp(0, tz=UTC)
+
+
 def _serialize_row(row: Any) -> dict[str, Any]:
     """Convert a SQLAlchemy row mapping into JSON-serializable dict."""
     result: dict[str, Any] = {}
@@ -531,5 +613,10 @@ def _serialize_row(row: Any) -> dict[str, Any]:
             value = str(value)
         elif isinstance(value, datetime):
             value = value.isoformat()
+        else:
+            try:
+                json.dumps(value)
+            except TypeError:
+                value = str(value)
         result[key] = value
     return result

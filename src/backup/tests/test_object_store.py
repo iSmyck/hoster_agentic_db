@@ -74,7 +74,7 @@ def test_adapter_list_versions(adapter: StubObjectStoreAdapter) -> None:
 
 def test_service_error_wrapped(adapter: StubObjectStoreAdapter) -> None:
     def failing_upload(*args: object, **kwargs: object) -> None:
-        raise ObjectStoreAdapterError("bucket missing", status_code="NoSuchBucket")
+        raise ObjectStoreAdapterError("bucket missing", s3_code="NoSuchBucket")
 
     adapter.upload = failing_upload  # type: ignore[method-assign]
     service = ObjectStoreService(adapter)
@@ -82,3 +82,25 @@ def test_service_error_wrapped(adapter: StubObjectStoreAdapter) -> None:
     with pytest.raises(ObjectStoreServiceError) as exc_info:
         service.stage_file("demo-space", "file.txt", b"data")
     assert exc_info.value.code == "OBJECT_STORE_ERROR"
+
+
+def test_source_ref_roundtrip(service: ObjectStoreService) -> None:
+    entry = service.stage_file(
+        "demo-space",
+        "file.txt",
+        b"content",
+        media_type="text/plain",
+        source_ref="https://example.com/file.txt",
+    )
+
+    versions = service.list_object_versions("demo-space", entry.object_id)
+    assert len(versions) == 1
+    assert versions[0].source_ref == "https://example.com/file.txt"
+
+
+def test_service_get_object_content(service: ObjectStoreService) -> None:
+    entry = service.stage_file("demo-space", "file.txt", b"service content")
+
+    content = service.get_object_content("demo-space", entry.object_id, entry.version)
+
+    assert content == b"service content"

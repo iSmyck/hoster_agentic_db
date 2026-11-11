@@ -30,16 +30,7 @@ def create_app(
 
     if service is not None:
         app.state.backup_service = service
-        app.state.object_store_service = (
-            service.object_store_service
-            if getattr(service, "object_store_service", None) is not None
-            else None
-        )
-        if app.state.object_store_service is None:
-            default_adapter = _default_object_store_adapter()
-            app.state.object_store_service = (
-                ObjectStoreService(default_adapter) if default_adapter else None
-            )
+        app.state.object_store_service = getattr(service, "object_store_service", None)
         app.state.restore_service = restore_service or _default_restore_service(
             app.state.backup_service
         )
@@ -70,7 +61,7 @@ def _default_restore_service(backup_service: BackupService) -> RestoreService:
         gitlab_token=settings.BACKUP_RESTORE_GITLAB_TOKEN,
         project_path_prefix=settings.BACKUP_RESTORE_GITLAB_PROJECT_PATH_PREFIX,
         object_store_adapter=_default_restore_object_store_adapter(),
-        postgres_backup_service=backup_service.postgres_backup_service,
+        postgres_backup_service=_default_restore_postgres_backup_service(),
     )
 
 
@@ -123,6 +114,20 @@ def _default_postgres_backup_service() -> PostgresBackupService:
         password=settings.BACKUP_POSTGRES_PASSWORD,
         db=settings.BACKUP_POSTGRES_DB,
         schemas=schemas,
+        timeout_seconds=settings.BACKUP_PG_DUMP_TIMEOUT_SECONDS,
+    )
+
+
+def _default_restore_postgres_backup_service() -> PostgresBackupService:
+    schemas = [s.strip() for s in settings.BACKUP_POSTGRES_SCHEMAS.split(",") if s.strip()]
+    return PostgresBackupService(
+        host=settings.BACKUP_RESTORE_POSTGRES_HOST,
+        port=settings.BACKUP_RESTORE_POSTGRES_PORT,
+        user=settings.BACKUP_RESTORE_POSTGRES_USER,
+        password=settings.BACKUP_RESTORE_POSTGRES_PASSWORD,
+        db=settings.BACKUP_RESTORE_POSTGRES_DB,
+        schemas=schemas,
+        timeout_seconds=settings.BACKUP_PG_DUMP_TIMEOUT_SECONDS,
     )
 
 

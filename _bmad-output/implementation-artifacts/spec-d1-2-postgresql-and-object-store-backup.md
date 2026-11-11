@@ -124,6 +124,22 @@ warnings:
 - `models/backup.py`: renamed `version_id` → `version` in `ObjectStoreEntry` to match content-standard.md.
 - Added endpoint failure-path tests for object-store/Postgres 502 responses and upload missing-bucket 502.
 
+### 2026-11-10 — Phase D adversarial review (Chunk 2)
+- `[high]` `[patch]` `MinioObjectStoreAdapter` auto-created bucket on init, hiding the "bucket missing → 502" contract; removed auto-creation.
+- `[high]` `[patch]` ETag was used as a fallback `version_id` and then passed to `get_object(version_id=etag)`, breaking non-versioned buckets; removed ETag fallback.
+- `[high]` `[patch]` `list_object_versions` did not filter S3 delete markers; filtered them out.
+- `[medium]` `[patch]` `BackupService._backup_object_store` reached through `ObjectStoreService` to the adapter; added service methods `get_object_content`/`list_object_versions`.
+- `[medium]` `[patch]` Object export filenames used lossy `_` substitution causing collisions; switched to percent-encoding.
+- `[medium]` `[patch]` `StubObjectStoreAdapter` sorted versions lexicographically (`v9` > `v10`); fixed numeric sorting.
+- `[medium]` `[patch]` `MinioObjectStoreAdapter.get_object` leaked connections on read failure; added `try/finally`.
+- `[medium]` `[patch]` Unclassified `ObjectStoreServiceError` defaulted to HTTP 500; changed default to 502.
+- `[medium]` `[patch]` `create_app` auto-wired a default MinIO adapter even when an injected `BackupService` had none; now respects the injected service.
+- `[medium]` `[patch]` `pg_dump` timeout was hard-coded 300s; added `BACKUP_PG_DUMP_TIMEOUT_SECONDS`.
+- `[medium]` `[patch]` `pg_dump` wrote directly to final file; switched to atomic `.sql.tmp` + rename.
+- `[low]` `[patch]` Upload response omitted `version_id`; added it alongside `version`.
+- `[low]` `[patch]` Upload endpoint did not declare HTTP 413 response; added it.
+- `[low]` `[patch]` `docker-compose.yml` MinIO healthcheck used `curl` (not in image); replaced with `mc ready local`.
+
 ## Auto Run Result
 
 - 2026-11-10: `uv run pytest -q` → 291 passed, 5 skipped, 1 warning; `uv run ruff check src/backup` → clean. Live MinIO/PostgreSQL sandbox verification BLOCKED (no running sandbox in this environment).

@@ -269,11 +269,9 @@ def test_restore_corrupt_package_aborts(tmp_path: Path) -> None:
         postgres_backup_service=_postgres_service(),
     )
 
-    result = service.restore("src-space", "b1")
-
-    assert result.status == RestoreStatus.FAILED
-    assert result.integrity_report is not None
-    assert result.integrity_report.verified is False
+    with pytest.raises(RestoreServiceError) as exc_info:
+        service.restore("src-space", "b1")
+    assert exc_info.value.code == "INTEGRITY_MISMATCH"
     assert len(spy.objects) == 0
 
 
@@ -388,7 +386,7 @@ def test_restore_endpoint_target_exists_returns_409(client: Any, tmp_path: Path)
     assert response.status_code == 409
 
 
-def test_restore_endpoint_corrupt_package_returns_failed_status(client: Any, tmp_path: Path) -> None:
+def test_restore_endpoint_corrupt_package_returns_409(client: Any, tmp_path: Path) -> None:
     package = _create_package(tmp_path, "demo-space", "b1")
     (package / "object_store_export" / "asset.txt_v1.bin").write_bytes(b"tampered")
     client.app.state.restore_service.storage_path = tmp_path
@@ -397,7 +395,6 @@ def test_restore_endpoint_corrupt_package_returns_failed_status(client: Any, tmp
         "/api/kb/v1/backups/demo-space/restore",
         json={"backup_id": "b1"},
     )
-    assert response.status_code == 200
+    assert response.status_code == 409
     data = response.json()
-    assert data["status"] == "failed"
-    assert data["integrity_report"]["verified"] is False
+    assert data["detail"]["code"] == "INTEGRITY_MISMATCH"

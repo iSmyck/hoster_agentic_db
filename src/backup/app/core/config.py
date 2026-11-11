@@ -112,6 +112,11 @@ class Settings(BaseSettings):
         description="Comma-separated operational schemas to back up.",
         validation_alias=AliasChoices("BACKUP_POSTGRES_SCHEMAS", "BACKUP_SCHEMAS"),
     )
+    BACKUP_PG_DUMP_TIMEOUT_SECONDS: int = Field(
+        default=300,
+        description="Timeout for pg_dump/psql subprocess commands.",
+        validation_alias=AliasChoices("BACKUP_PG_DUMP_TIMEOUT_SECONDS", "PG_DUMP_TIMEOUT_SECONDS"),
+    )
 
     # Restore target environment credentials (separate from source backup settings).
     BACKUP_RESTORE_GITLAB_URL: str = Field(

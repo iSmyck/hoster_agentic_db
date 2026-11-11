@@ -84,9 +84,39 @@ class ObjectStoreService:
             ],
         )
 
+    def get_object_content(
+        self, space_id: str, object_id: str, version: str | None = None
+    ) -> bytes:
+        """Return the content of an object version."""
+        try:
+            return self.adapter.get_object(space_id, object_id, version)
+        except ObjectStoreAdapterError as exc:
+            logger.exception("object store get failed for %s@%s", object_id, version)
+            raise ObjectStoreServiceError("OBJECT_STORE_ERROR", str(exc)) from exc
+
+    def list_object_versions(self, space_id: str, object_id: str) -> list[ObjectStoreEntry]:
+        """List all versions of a staged object."""
+        try:
+            entries = self.adapter.list_object_versions(space_id, object_id)
+        except ObjectStoreAdapterError as exc:
+            logger.exception("object store list versions failed for %s", object_id)
+            raise ObjectStoreServiceError("OBJECT_STORE_ERROR", str(exc)) from exc
+
+        return [
+            ObjectStoreEntry(
+                object_id=e.object_id,
+                version=e.version,
+                sha256=e.sha256,
+                size=e.size,
+                media_type=e.media_type,
+                source_ref=e.source_ref,
+            )
+            for e in entries
+        ]
+
     @staticmethod
     def _derive_object_id(filename: str) -> str:
         """Generate an opaque object id from a filename."""
-        base = Path(filename).name
+        base = Path(filename).name or "unnamed"
         suffix = uuid.uuid4().hex[:12]
         return f"{suffix}-{base}"

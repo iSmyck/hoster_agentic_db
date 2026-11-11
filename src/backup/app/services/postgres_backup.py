@@ -40,6 +40,7 @@ class PostgresBackupService:
         schemas: list[str] | None = None,
         pg_dump_command: list[str] | None = None,
         run_command: Any | None = None,
+        timeout_seconds: int = 300,
     ) -> None:
         self.host = host
         self.port = port
@@ -49,6 +50,7 @@ class PostgresBackupService:
         self.schemas = list(schemas) if schemas else ["kb_authz", "kb_ops", "kb_index"]
         self.pg_dump_command = pg_dump_command or ["pg_dump"]
         self._run_command = run_command if run_command is not None else subprocess.run
+        self.timeout_seconds = timeout_seconds
 
     def restore_schemas(
         self,
@@ -89,10 +91,10 @@ class PostgresBackupService:
                         command,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
-                        env=env,
-                        check=False,
-                        timeout=300,
-                    )
+                env=env,
+                check=False,
+                timeout=self.timeout_seconds,
+            )
                     if result.returncode != 0:
                         stderr = (
                             result.stderr.decode("utf-8", errors="replace")
@@ -116,6 +118,45 @@ class PostgresBackupService:
                         "POSTGRES_RESTORE_ERROR",
                         f"unexpected error restoring {sql_file}: {exc}",
                     ) from exc
+
+    def schemas_exist(self) -> bool:
+        """Return True if any configured operational schema exists in the target DB."""
+        env = {**os.environ, "PGPASSWORD": self.password}
+        schema_list = ", ".join(f"'{s.replace('"', '""')}'" for s in self.schemas)
+        command = [
+            "psql",
+            "--host", self.host,
+            "--port", str(self.port),
+            "--username", self.user,
+            "--dbname", self.db,
+            "--no-password",
+            "--quiet",
+            "--tuples-only",
+            "--command",
+            f"SELECT 1 FROM information_schema.schemata WHERE schema_name IN ({schema_list}) LIMIT 1",
+        ]
+        try:
+            result = self._run_command(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=env,
+                check=False,
+                timeout=self.timeout_seconds,
+            )
+            return result.returncode == 0 and result.stdout and result.stdout.strip() == b"1"
+        except FileNotFoundError as exc:
+            raise PostgresBackupServiceError(
+                "PSQL_NOT_FOUND",
+                f"psql not found: {exc}",
+            ) from exc
+        except PostgresBackupServiceError:
+            raise
+        except Exception as exc:
+            raise PostgresBackupServiceError(
+                "POSTGRES_RESTORE_ERROR",
+                "unexpected error checking schema existence",
+            ) from exc
 
     def count_decisions(self, space_id: str) -> int:
         """Count decisions for a Space in the restored kb_ops schema.
@@ -141,7 +182,9 @@ class PostgresBackupService:
             "--quiet",
             "--tuples-only",
             "--command",
-            f"SELECT COUNT(*) FROM {schema}.decisions WHERE space_id = '{space_id}'",
+            "SELECT COUNT(*) FROM \"" + schema.replace('"', '""') + "\".decisions WHERE space_id = :'space_id'",
+            "--set",
+            f"space_id={space_id}",
         ]
         try:
             result = self._run_command(
@@ -150,7 +193,7 @@ class PostgresBackupService:
                 stderr=subprocess.PIPE,
                 env=env,
                 check=False,
-                timeout=60,
+                timeout=self.timeout_seconds,
             )
             if result.returncode != 0:
                 stderr = (
@@ -159,7 +202,7 @@ class PostgresBackupService:
                 logger.error("psql count_decisions failed for %s: %s", space_id, stderr)
                 raise PostgresBackupServiceError(
                     "PSQL_FAILED",
-                    f"psql count_decisions failed for {space_id}: {stderr}",
+                    "psql count_decisions failed",
                 )
             stdout = result.stdout.decode("utf-8", errors="replace").strip() if result.stdout else "0"
             return int(stdout)
@@ -173,7 +216,7 @@ class PostgresBackupService:
         except Exception as exc:
             raise PostgresBackupServiceError(
                 "POSTGRES_RESTORE_ERROR",
-                f"unexpected error counting decisions for {space_id}: {exc}",
+                "unexpected error counting decisions",
             ) from exc
 
     def dump_schemas(
@@ -207,25 +250,23 @@ class PostgresBackupService:
         for schema in self.schemas:
             for kind, extra_args in [("schema", ["--schema-only"]), ("data", ["--data-only"])]:
                 file_path = output_dir / f"{schema}_{kind}.sql"
+                temp_path = file_path.with_suffix(".sql.tmp")
                 command = [*base_command, *extra_args, "--schema", schema]
                 try:
-                    with file_path.open("wb") as f:
+                    with temp_path.open("wb") as f:
                         result = self._run_command(
                             command,
                             stdout=f,
                             stderr=subprocess.PIPE,
                             env=env,
                             check=False,
-                            timeout=300,
+                            timeout=self.timeout_seconds,
                         )
                     if result.returncode != 0:
-                        stderr = (
-                            result.stderr.decode("utf-8", errors="replace") if result.stderr else ""
-                        )
-                        logger.error("pg_dump failed for %s %s: %s", schema, kind, stderr)
+                        logger.error("pg_dump failed for %s %s", schema, kind)
                         raise PostgresBackupServiceError(
                             "PG_DUMP_FAILED",
-                            f"pg_dump failed for {schema} ({kind}): {stderr}",
+                            f"pg_dump failed for {schema} ({kind})",
                         )
                 except FileNotFoundError as exc:
                     raise PostgresBackupServiceError(
@@ -237,9 +278,10 @@ class PostgresBackupService:
                 except Exception as exc:
                     raise PostgresBackupServiceError(
                         "POSTGRES_BACKUP_ERROR",
-                        f"unexpected error dumping {schema} ({kind}): {exc}",
+                        f"unexpected error dumping {schema} ({kind})",
                     ) from exc
 
+                temp_path.replace(file_path)
                 sha256 = _sha256_file(file_path)
                 files.append(
                     PostgresExportFile(

@@ -39,6 +39,10 @@ class BackupGitLabAdapter(ABC):
         """Return branch metadata including HEAD commit SHA."""
 
     @abstractmethod
+    def get_default_branch(self, space_id: str) -> str:
+        """Return the default branch name for the Space repository."""
+
+    @abstractmethod
     def push_mirror(self, space_id: str, mirror_dir: str) -> dict[str, Any]:
         """Push a local bare mirror to the target Space repository.
 
@@ -97,13 +101,18 @@ class HttpBackupGitLabAdapter(BackupGitLabAdapter):
                     f"GitLab request failed: {exc}",
                     status_code=exc.response.status_code,
                 ) from exc
+            except httpx.RequestError as exc:
+                raise BackupGitLabAdapterError(
+                    f"GitLab unreachable: {exc}",
+                    status_code=502,
+                ) from exc
             page_data = response.json()
             if not isinstance(page_data, list):
                 raise BackupGitLabAdapterError(
                     f"unexpected response shape from {url}: not a list"
                 )
             results.extend(page_data)
-            if len(page_data) < per_page:
+            if not page_data or not response.headers.get("x-next-page"):
                 break
             page += 1
         return results
@@ -132,20 +141,61 @@ class HttpBackupGitLabAdapter(BackupGitLabAdapter):
                 f"GitLab request failed: {exc}",
                 status_code=exc.response.status_code,
             ) from exc
+        except httpx.RequestError as exc:
+            raise BackupGitLabAdapterError(
+                f"GitLab unreachable: {exc}",
+                status_code=502,
+            ) from exc
         return response.json()
 
     def get_project_url(self, space_id: str) -> str:
         return f"{self.base_url}/{self._project_path(space_id)}"
 
+    def get_default_branch(self, space_id: str) -> str:
+        import httpx
+
+        try:
+            response = httpx.get(
+                f"{self.base_url}/api/v4/projects/{quote(self._project_path(space_id), safe='')}",
+                headers=self._headers(),
+                timeout=30,
+            )
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise BackupGitLabAdapterError(
+                f"GitLab request failed: {exc}",
+                status_code=exc.response.status_code,
+            ) from exc
+        except httpx.RequestError as exc:
+            raise BackupGitLabAdapterError(
+                f"GitLab unreachable: {exc}",
+                status_code=502,
+            ) from exc
+        data = response.json()
+        default_branch = data.get("default_branch")
+        if not default_branch:
+            raise BackupGitLabAdapterError(
+                f"default_branch missing for project {space_id}",
+                status_code=500,
+            )
+        return default_branch
+
     def push_mirror(self, space_id: str, mirror_dir: str) -> dict[str, Any]:
         import subprocess
-        from urllib.parse import quote
+        from urllib.parse import quote, urlparse, urlunparse
 
         project_path = self._project_path(space_id)
         base = self.base_url.rstrip("/")
+        parsed = urlparse(base)
+        if not parsed.scheme or not parsed.netloc:
+            raise BackupGitLabAdapterError(
+                f"invalid GitLab base URL: {self.base_url}",
+                status_code=500,
+            )
         if self.token:
             quoted_token = quote(self.token, safe="")
-            url = f"{base.replace('://', f'://oauth2:{quoted_token}@', 1)}/{project_path}.git"
+            netloc = f"oauth2:{quoted_token}@{parsed.netloc}"
+            url = urlunparse((parsed.scheme, netloc, f"/{project_path}.git", "", "", ""))
         else:
             url = f"{base}/{project_path}.git"
         result = subprocess.run(
@@ -161,7 +211,7 @@ class HttpBackupGitLabAdapter(BackupGitLabAdapter):
                 f"git push --mirror failed for {space_id}: {result.stderr}",
                 status_code=500,
             )
-        return {"status": "ok", "output": result.stdout, "target_url": url}
+        return {"status": "ok", "output": result.stdout}
 
 
 class StubBackupGitLabAdapter(BackupGitLabAdapter):
@@ -192,8 +242,11 @@ class StubBackupGitLabAdapter(BackupGitLabAdapter):
     def get_project_url(self, space_id: str) -> str:
         return f"http://stub.example.com/{space_id}"
 
+    def get_default_branch(self, space_id: str) -> str:
+        return self._get(("default_branch", space_id), "main")
+
     def push_mirror(self, space_id: str, mirror_dir: str) -> dict[str, Any]:
         pushed = self.state.get(("push_mirror", space_id), True)
         if pushed is True:
-            return {"status": "ok", "output": "stub push mirror", "target_url": self.get_project_url(space_id)}
+            return {"status": "ok", "output": "stub push mirror"}
         raise BackupGitLabAdapterError(f"push mirror rejected for {space_id}", status_code=409)

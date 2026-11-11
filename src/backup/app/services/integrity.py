@@ -85,13 +85,13 @@ class IntegrityChecker:
         )
 
         try:
-            sidecar_path = package_path / "integrity_report.json"
+            sidecar_path = package_path.with_suffix(".integrity_report.json")
             sidecar_path.write_text(
                 json.dumps(report.model_dump(mode="json"), indent=2, ensure_ascii=False),
                 encoding="utf-8",
             )
         except Exception as exc:  # noqa: BLE001
-            logger.warning("failed to write integrity_report.json for %s: %s", package_path, exc)
+            logger.warning("failed to write integrity report sidecar for %s: %s", package_path, exc)
 
         return report
 

@@ -71,6 +71,8 @@ class KbOpsExport(BaseModel):
     space_id: str
     proposals: list[dict[str, Any]] = Field(default_factory=list)
     decisions: list[dict[str, Any]] = Field(default_factory=list)
+    source_sync_cursors: list[dict[str, Any]] = Field(default_factory=list)
+    cutovers: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ObjectStoreEntry(BaseModel):

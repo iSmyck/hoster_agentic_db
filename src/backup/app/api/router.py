@@ -24,7 +24,7 @@ from backup.app.services.object_store import ObjectStoreService, ObjectStoreServ
 from backup.app.services.restore import RestoreService, RestoreServiceError
 
 router = APIRouter()
-_SPACE_ID_RE = __import__("re").compile(r"^[a-zA-Z0-9_-]+$")
+_SPACE_ID_RE = __import__("re").compile(r"^[a-zA-Z0-9_/-]+$")
 
 
 def get_backup_service(request: Request) -> BackupService:
@@ -67,17 +67,20 @@ def _handle_backup_error(exc: BackupServiceError) -> HTTPException:
                 status_code = status.HTTP_404_NOT_FOUND
     return HTTPException(
         status_code=status_code,
-        detail={"code": exc.code, "message": exc.message},
+        detail={"code": exc.code, "detail": exc.message},
     )
 
 
 def _handle_restore_error(exc: RestoreServiceError) -> HTTPException:
     code_map = {
         "INVALID_SPACE_ID": status.HTTP_400_BAD_REQUEST,
+        "INVALID_BACKUP_ID": status.HTTP_400_BAD_REQUEST,
         "PACKAGE_NOT_FOUND": status.HTTP_404_NOT_FOUND,
         "MANIFEST_MISSING": status.HTTP_404_NOT_FOUND,
         "MANIFEST_INVALID": status.HTTP_400_BAD_REQUEST,
         "TARGET_EXISTS": status.HTTP_409_CONFLICT,
+        "TARGET_CHECK_FAILED": status.HTTP_502_BAD_GATEWAY,
+        "INTEGRITY_MISMATCH": status.HTTP_409_CONFLICT,
         "MIRROR_MISSING": status.HTTP_500_INTERNAL_SERVER_ERROR,
         "GIT_RESTORE_ERROR": status.HTTP_502_BAD_GATEWAY,
         "POSTGRES_NOT_CONFIGURED": status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -100,7 +103,7 @@ def _handle_restore_error(exc: RestoreServiceError) -> HTTPException:
                 status_code = status.HTTP_409_CONFLICT
     return HTTPException(
         status_code=status_code,
-        detail={"code": exc.code, "message": exc.message},
+        detail={"code": exc.code, "detail": exc.message},
     )
 
 
@@ -108,7 +111,7 @@ def _handle_object_store_error(exc: ObjectStoreServiceError) -> HTTPException:
     code_map = {
         "OBJECT_STORE_ERROR": status.HTTP_502_BAD_GATEWAY,
     }
-    status_code = code_map.get(exc.code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+    status_code = code_map.get(exc.code, status.HTTP_502_BAD_GATEWAY)
     cause = exc.__cause__
     if (
         isinstance(cause, ObjectStoreAdapterError)
@@ -118,7 +121,7 @@ def _handle_object_store_error(exc: ObjectStoreServiceError) -> HTTPException:
         status_code = status.HTTP_502_BAD_GATEWAY
     return HTTPException(
         status_code=status_code,
-        detail={"code": exc.code, "message": exc.message},
+        detail={"code": exc.code, "detail": exc.message},
     )
 
 
@@ -128,10 +131,11 @@ def health() -> dict[str, str]:
 
 
 @router.post(
-    "/api/kb/v1/backups/{space_id}/mirror",
+    "/api/kb/v1/backups/{space_id:path}/mirror",
     status_code=status.HTTP_201_CREATED,
     response_model=BackupCreateResponse,
     responses={
+        400: {"model": ErrorResponse},
         403: {"model": ErrorResponse},
         404: {"model": ErrorResponse},
         502: {"model": ErrorResponse},
@@ -155,7 +159,7 @@ def create_mirror_backup(
 
 
 @router.get(
-    "/api/kb/v1/backups/{space_id}/latest",
+    "/api/kb/v1/backups/{space_id:path}/latest",
     response_model=BackupLatestResponse,
     responses={404: {"model": ErrorResponse}},
 )
@@ -167,7 +171,7 @@ def get_latest_backup(
     if package is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={"code": "NOT_FOUND", "message": "no backup found for space"},
+            detail={"code": "NOT_FOUND", "detail": "no backup found for space"},
         )
     return {
         "space_id": package.space_id,
@@ -184,6 +188,7 @@ def get_latest_backup(
     response_model=ObjectUploadResponse,
     responses={
         400: {"model": ErrorResponse},
+        413: {"model": ErrorResponse},
         502: {"model": ErrorResponse},
         500: {"model": ErrorResponse},
     },
@@ -196,7 +201,7 @@ def upload_object(
     if not space_id or not _SPACE_ID_RE.fullmatch(space_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"code": "INVALID_SPACE_ID", "message": "invalid space_id"},
+            detail={"code": "INVALID_SPACE_ID", "detail": "invalid space_id"},
         )
     max_size = settings.BACKUP_MAX_UPLOAD_SIZE_BYTES
     try:
@@ -204,7 +209,7 @@ def upload_object(
         if len(content) > max_size:
             raise HTTPException(
                 status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-                detail={"code": "UPLOAD_TOO_LARGE", "message": f"upload exceeds {max_size} bytes"},
+                detail={"code": "UPLOAD_TOO_LARGE", "detail": f"upload exceeds {max_size} bytes"},
             )
         entry = service.stage_file(
             space_id=space_id,
@@ -220,16 +225,18 @@ def upload_object(
     return {
         "object_id": entry.object_id,
         "version": entry.version,
+        "version_id": entry.version,
         "sha256": entry.sha256,
         "size": entry.size,
     }
 
 
 @router.post(
-    "/api/kb/v1/backups/{space_id}/full",
+    "/api/kb/v1/backups/{space_id:path}/full",
     status_code=status.HTTP_201_CREATED,
     response_model=BackupCreateResponse,
     responses={
+        400: {"model": ErrorResponse},
         403: {"model": ErrorResponse},
         404: {"model": ErrorResponse},
         502: {"model": ErrorResponse},
@@ -240,11 +247,6 @@ def create_full_backup(
     space_id: str,
     service: Annotated[BackupService, Depends(get_backup_service)],
 ) -> dict[str, Any]:
-    if not space_id or not _SPACE_ID_RE.fullmatch(space_id):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"code": "INVALID_SPACE_ID", "message": "invalid space_id"},
-        )
     try:
         package = service.create_full_backup(space_id)
     except BackupServiceError as exc:
@@ -258,7 +260,7 @@ def create_full_backup(
 
 
 @router.post(
-    "/api/kb/v1/backups/{space_id}/restore",
+    "/api/kb/v1/backups/{space_id:path}/restore",
     status_code=status.HTTP_200_OK,
     response_model=RestoreResponse,
     responses={
@@ -275,11 +277,6 @@ def restore_backup(
     request: RestoreRequest,
     service: Annotated[RestoreService, Depends(get_restore_service)],
 ) -> dict[str, Any]:
-    if not space_id or not _SPACE_ID_RE.fullmatch(space_id):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"code": "INVALID_SPACE_ID", "message": "invalid space_id"},
-        )
     try:
         result = service.restore(space_id, request.backup_id or "", request)
     except RestoreServiceError as exc:
@@ -288,11 +285,12 @@ def restore_backup(
 
 
 @router.post(
-    "/api/kb/v1/backups/{space_id}/verify-integrity",
+    "/api/kb/v1/backups/{space_id:path}/verify-integrity",
     status_code=status.HTTP_200_OK,
     response_model=IntegrityResponse,
     responses={
         400: {"model": ErrorResponse},
+        409: {"model": IntegrityResponse},
         404: {"model": ErrorResponse},
         500: {"model": ErrorResponse},
     },
@@ -302,18 +300,19 @@ def verify_backup_integrity(
     backup_id: Annotated[str, Form()],
     service: Annotated[RestoreService, Depends(get_restore_service)],
 ) -> dict[str, Any]:
-    if not space_id or not _SPACE_ID_RE.fullmatch(space_id):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"code": "INVALID_SPACE_ID", "message": "invalid space_id"},
-        )
     if not backup_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"code": "INVALID_BACKUP_ID", "message": "backup_id is required"},
+            detail={"code": "INVALID_BACKUP_ID", "detail": "backup_id is required"},
         )
     try:
         report = service.verify_integrity(space_id, backup_id)
     except RestoreServiceError as exc:
         raise _handle_restore_error(exc) from exc
-    return report.model_dump(mode="json")
+    data = report.model_dump(mode="json")
+    if not report.verified:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=data,
+        )
+    return data

@@ -123,13 +123,26 @@ class MinioObjectStoreAdapter(ObjectStoreAdapter):
             secret_key=secret_key,
             secure=use_ssl,
         )
-        self._ensure_bucket()
 
     def _object_key(self, space_id: str, object_id: str) -> str:
         return f"{space_id}/{object_id}"
 
-    def _ensure_bucket(self) -> None:
-        self.create_bucket(self.bucket)
+    def _ensure_bucket_exists(self) -> None:
+        from minio.error import S3Error
+
+        try:
+            if not self.client.bucket_exists(self.bucket):
+                raise ObjectStoreAdapterError(
+                    f"bucket does not exist: {self.bucket}",
+                    status_code=502,
+                    s3_code="NoSuchBucket",
+                )
+        except S3Error as exc:
+            raise ObjectStoreAdapterError(
+                str(exc),
+                status_code=getattr(exc, "http_status", None),
+                s3_code=exc.code,
+            ) from exc
 
     def create_bucket(self, bucket: str) -> None:
         if not self.client.bucket_exists(bucket):
@@ -162,10 +175,9 @@ class MinioObjectStoreAdapter(ObjectStoreAdapter):
                 metadata=metadata,
             )
             stat = self.client.stat_object(self.bucket, key)
-            version = stat.version_id or stat.etag or "null"
             return ObjectStoreEntry(
                 object_id=object_id,
-                version=version,
+                version=stat.version_id or "null",
                 sha256=sha256,
                 size=len(data),
                 media_type=media_type,
@@ -225,7 +237,7 @@ class MinioObjectStoreAdapter(ObjectStoreAdapter):
             stat = self.client.stat_object(self.bucket, key)
             return ObjectStoreEntry(
                 object_id=object_id,
-                version=stat.version_id or stat.etag or "null",
+                version=stat.version_id or "null",
                 sha256=sha256,
                 size=len(data),
                 media_type=media_type,
@@ -248,16 +260,18 @@ class MinioObjectStoreAdapter(ObjectStoreAdapter):
                 key,
                 version_id=version if version and version != "null" else None,
             )
-            data = response.read()
-            response.close()
-            response.release_conn()
-            return data
         except S3Error as exc:
             raise ObjectStoreAdapterError(
                 str(exc), status_code=getattr(exc, "http_status", None), s3_code=exc.code
             ) from exc
         except Exception as exc:
             raise ObjectStoreAdapterError(str(exc)) from exc
+        try:
+            data = response.read()
+            return data
+        finally:
+            response.close()
+            response.release_conn()
 
     def list_object_versions(self, space_id: str, object_id: str) -> list[ObjectStoreEntry]:
         from minio.error import S3Error
@@ -267,7 +281,12 @@ class MinioObjectStoreAdapter(ObjectStoreAdapter):
             versions = self.client.list_objects(
                 self.bucket, prefix=key, recursive=False, include_version=True
             )
-            return [self._entry_from_object(v) for v in versions if v.object_name == key]
+            entries: list[ObjectStoreEntry] = []
+            for v in versions:
+                if v.object_name != key or getattr(v, "is_delete_marker", False):
+                    continue
+                entries.append(self._entry_from_object(v))
+            return entries
         except S3Error as exc:
             raise ObjectStoreAdapterError(
                 str(exc), status_code=getattr(exc, "http_status", None), s3_code=exc.code
@@ -299,7 +318,7 @@ class MinioObjectStoreAdapter(ObjectStoreAdapter):
         )
         return ObjectStoreEntry(
             object_id=object_id,
-            version=obj.version_id or obj.etag or "null",
+            version=obj.version_id or "null",
             sha256=sha256,
             size=obj.size,
             media_type=obj.content_type,
@@ -374,10 +393,15 @@ class StubObjectStoreAdapter(ObjectStoreAdapter):
         if not candidates:
             raise ObjectStoreAdapterError(f"object not found: {space_id}/{object_id}@{version}")
         if version is None:
-            return max(candidates, key=lambda item: item[0])[1]
+            # Versions are "v{N}"; sort by the integer suffix so v10 > v9.
+            return max(
+                candidates,
+                key=lambda item: int(item[0][1:]) if item[0].startswith("v") else 0,
+            )[1]
         return candidates[0][1]
 
     def list_object_versions(self, space_id: str, object_id: str) -> list[ObjectStoreEntry]:
+        current = self._store.get(space_id, {}).get(object_id)
         entries: list[ObjectStoreEntry] = []
         for (s, o, v), data in self._content.items():
             if s == space_id and o == object_id:
@@ -387,6 +411,11 @@ class StubObjectStoreAdapter(ObjectStoreAdapter):
                         version=v,
                         sha256=hashlib.sha256(data).hexdigest(),
                         size=len(data),
+                        media_type=current.media_type if current else None,
+                        source_ref=current.source_ref if current else None,
                     )
                 )
-        return entries
+        return sorted(
+            entries,
+            key=lambda e: int(e.version[1:]) if e.version.startswith("v") else 0,
+        )

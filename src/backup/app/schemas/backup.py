@@ -13,7 +13,7 @@ class HealthResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     code: str
-    message: str
+    detail: str
 
 
 class BackupCreateResponse(BaseModel):
@@ -34,6 +34,7 @@ class BackupLatestResponse(BaseModel):
 class ObjectUploadResponse(BaseModel):
     object_id: str
     version: str
+    version_id: str | None = None
     sha256: str
     size: int
 
@@ -45,6 +46,7 @@ class RestoreResponse(BaseModel):
     status: str
     package_path: str
     restored_steps: list[str]
+    restored_at: str | None = None
     integrity_report: dict[str, Any] | None = None
     closure_report: dict[str, Any] | None = None
     error: str | None = None
@@ -56,5 +58,6 @@ class IntegrityResponse(BaseModel):
     package_path: str
     verified: bool
     checked_files: int
+    checked_at: str | None = None
     mismatches: list[dict[str, Any]]
     missing_files: list[str]

@@ -132,6 +132,19 @@ warnings:
   - `[low]` `[patch]` `create_mirror_backup` endpoint declared only 502/500 responses, but `_handle_backup_error` can return 403/404. Added 403/404 to the endpoint responses dict.
   - `[low]` `[patch]` `MergeRequestSummary`/`TagSummary` were unused dead models; `_override_get_db` in conftest was dead code. Removed the dead models/code and added tests for branch HEAD resolution, KB_OPS_ERROR preservation, invalid `space_id`, and metadata-export failure.
 
+### 2026-11-10 — Phase D adversarial review (Chunk 1)
+- `[high]` `[patch]` `space_id` sanitizer rejected nested GitLab paths such as `corp-kb/sales`; updated regex and API routes to accept `{space_id:path}` while still blocking traversal.
+- `[high]` `[patch]` Idempotency key included an hour bucket, contradicting the acceptance criterion "same space_id + HEAD". Removed hour bucket from idempotency key.
+- `[high]` `[patch]` `_resolve_head` hard-coded `main`; added `BackupGitLabAdapter.get_default_branch()` and used it.
+- `[high]` `[patch]` Backup creation had a read-then-act race; closed with `package_path.mkdir(parents=True, exist_ok=False)`.
+- `[medium]` `[patch]` GitLab pagination used `len(page_data) < per_page` which can truncate exact-page results; switched to `x-next-page` header.
+- `[medium]` `[patch]` API error schema used `message` instead of spec-required `detail`; aligned all error responses to `{code, detail}`.
+- `[medium]` `[patch]` `kb_ops` export only covered `proposals`/`decisions`; added `source_sync_cursors` and `cutovers`.
+- `[medium]` `[patch]` `get_latest` sorted by filesystem mtime; now sorts by `manifest.created_at`.
+- `[medium]` `[patch]` `_serialize_row` only handled UUID/datetime; added fallback for any non-JSON value.
+- `[medium]` `[patch]` Manifest hashing included hidden files and excluded `status.json`; now excludes dotfiles and moved `status.json` to a package sidecar.
+- `[medium]` `[patch]` Network/timeout failures during Git operations mapped to HTTP 500; now mapped to 502 via `BackupGitLabAdapterError`.
+
 ## Auto Run Result
 
 - Summary: Implemented a new `src/backup/` FastAPI service that creates per-Space immutable backup packages. Each package contains a `git clone --mirror` of the Space repository, exported GitLab MR/notes/tags metadata, read-only `kb_ops.proposals`/`decisions` export, and a SHA-256 manifest. Added REST endpoints, stub/HTTP GitLab adapters, unit tests with synthetic git repos, a live smoke script, and evidence artifacts.

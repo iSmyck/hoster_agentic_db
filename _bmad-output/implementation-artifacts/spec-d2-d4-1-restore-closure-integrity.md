@@ -115,6 +115,18 @@ warnings:
 ### 2026-11-10 — Initial draft
 - (none)
 
+### 2026-11-10 — Post-implementation review fixes
+- `[high] [patch]` Restore now uses separate `BACKUP_RESTORE_POSTGRES_*` credentials instead of reusing the source backup PostgreSQL service.
+- `[high] [patch]` `_target_exists` checks the GitLab default branch and PostgreSQL schemas; non-404 errors are no longer swallowed.
+- `[high] [patch]` `BackupGitLabAdapter.push_mirror` no longer returns the token-embedded URL in its result dict.
+- `[high] [patch]` `PostgresBackupService.count_decisions` parameterized `space_id` via psql variables and added `schemas_exist()`.
+- `[high] [patch]` `verify-integrity` endpoint returns HTTP 409 on mismatch; restore aborts with HTTP 409 on integrity failure.
+- `[medium] [patch]` `backup_id` sanitized to prevent filesystem traversal.
+- `[medium] [patch]` Integrity/restore status sidecars moved outside the package directory.
+- `[medium] [patch]` Object-store restore creates the target bucket and uses percent-encoded filenames.
+- `[low] [patch]` `RestoreResponse`/`IntegrityResponse` schemas include `restored_at`/`checked_at`.
+- `[low] [patch]` Sprint status corrected: D.4 is `in-progress`, duplicate D.4.x keys removed.
+
 ## Auto Run Result
 
 - `uv run pytest -q src/backup/tests` — 51 passed, 1 skipped, 1 warning (Starlette deprecation).
