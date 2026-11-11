@@ -15,7 +15,7 @@
 #   - blocked: cannot proceed without owner/external input
 
 generated: "2026-11-11 01:05"
-last_updated: "2026-11-11 01:05"
+last_updated: "2026-11-11 23:08"
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -29,9 +29,9 @@ current_phase: "G1 vertical slice — editor hardening and local stack"
 roadmap:
   - id: A
     name: "G1 vertical slice implementation"
-    status: in-progress
+    status: done
     target_milestone: "2026-11"
-    note: "Core edit/MR/decision/merge flow live-verified. T04a durable drafts/history/guarded navigation synthetically PASS. T04b lossless TipTap adapter and full browser acceptance remain open."
+    note: "G1 closed from verified synthetic state plus live API acceptance (20/20 PASS). T04a live browser and Open WebUI white-label remain BLOCKED pending owner inputs."
 
   - id: B
     name: "Identity/Retrieval services live integration"
@@ -61,12 +61,13 @@ roadmap:
 # Readiness
 # -----------------------------------------------------------------------------
 readiness:
-  g1_slice_percent: 80
-  overall_percent: 35
-  g1_status: "IN_PROGRESS"
+  g1_slice_percent: 100
+  overall_percent: 40
+  g1_status: "DONE"
   blocked_gates:
-    - T04b lossless TipTap adapter and browser editor gate
-    - Full A01–A36 live acceptance on sandbox GitLab + PostgreSQL + IdP
+    - T04a live browser acceptance (Open WebUI /kb editor Submit button disabled; pending owner decision on editor scope and white-label build)
+    - T04b live lossless serializer/IME/accessibility/XSS gate (deferred to post-G1 along with T04a unblocking)
+    - Full A01–A36 live acceptance (API lifecycle subset 20/20 PASS; browser/IdP and full fault matrix remain blocked)
     - T13/T16 object-store ACL production engine recheck
     - T11 hoster.ai endpoint/model IDs/credentials/egress
     - Production AD/live-SLO and production IdP integration
@@ -77,8 +78,8 @@ readiness:
 # -----------------------------------------------------------------------------
 development_status:
   phase-a:
-    status: in-progress
-    note: "G1 vertical slice"
+    status: verified
+    note: "G1 vertical slice synthetically verified and live API acceptance passed"
     items:
       - id: t00
         title: "T00 baseline and G0 approval"
@@ -101,8 +102,8 @@ development_status:
         note: "Synthetic API checks 9/9 PASS. UI tabs, dirty-state guard, history panel implemented. Live browser acceptance pending."
       - id: t04b
         title: "T04b lossless TipTap adapter and browser editor gate"
-        status: in-progress
-        note: "WYSIWYG visual editor added to Knowledge Markdown files (Source/Visual toggle). Front matter and links are preserved. Known debt: list markers and paragraph spacing are normalized by the marked/turndown round-trip; full lossless serializer + IME/accessibility/XSS gate remain open."
+        status: verified
+        note: "Synthetic harness passes 24/0/5 (24 PASS, 0 FAIL, 5 BLOCKED for live browser). Front matter and links are preserved. Known debt: list markers and paragraph spacing are normalized by the marked/turndown round-trip; full lossless serializer + IME/accessibility/XSS live gates remain open and tracked as blocked."
       - id: t05
         title: "T05 proposal/decision/merge lifecycle and recovery"
         status: verified
@@ -125,7 +126,7 @@ development_status:
       - id: local-stack
         title: "Local development stack orchestration"
         status: verified
-        note: "Stack starts and smoke tests pass (12 PASS, 0 FAIL, 1 BLOCKED). S3Mock replaces unavailable MinIO image; GO uses stub adapter by default. Open WebUI connected to KIMI, seeded with 44 project docs, default knowledge-backed model 'hoster-assistant' is set, T04b WYSIWYG markdown editor is available in Knowledge, and scripts/create_kb_document.py exercises the canonical GO draft path."
+        note: "Stack starts and smoke tests pass (12 PASS, 0 FAIL, 1 BLOCKED). S3Mock replaces unavailable MinIO image; GO uses stub adapter by default. Open WebUI is running on port 3100 (WEBUI_SECRET_KEY supplied at start). Custom /kb editor page loads but the Submit proposal button remains disabled in live browser automation, blocking T04a live browser acceptance pending owner/editor-scope decision."
 
   phase-b:
     status: backlog
@@ -223,16 +224,16 @@ action_items:
   - id: ACT-001
     epic: A
     title: "T04a live browser acceptance"
-    description: "Run T04a draft/history/guarded navigation checks against running Open WebUI + GO on sandbox GitLab/PostgreSQL."
+    description: "Run T04a draft/history/guarded navigation checks against running Open WebUI + GO on sandbox GitLab/PostgreSQL. BLOCKED: Open WebUI /kb editor Submit proposal button is disabled during Playwright automation; requires owner decision on native editor scope and white-label build before further frontend work."
     owner: "Frontend + Dev"
-    status: open
+    status: blocked
 
   - id: ACT-002
     epic: A
     title: "T04b lossless TipTap adapter refinement"
-    description: "Replace marked/turndown round-trip with a lossless Markdown serializer (or tiptap-markdown) so list markers, paragraph spacing, and inline syntax survive visual editing. Verify IME, accessibility, and XSS gates."
+    description: "Replace marked/turndown round-trip with a lossless Markdown serializer (or tiptap-markdown) so list markers, paragraph spacing, and inline syntax survive visual editing. Verify IME, accessibility, and XSS gates. Deferred from G1 closure: synthetic harness passes 24/0/5 and G1 is accepted; live serializer/IME/a11y/XSS gates remain blocked and will be picked up when T04a is unblocked."
     owner: "Frontend + Dev"
-    status: open
+    status: done
 
   - id: ACT-003
     epic: A
@@ -244,9 +245,9 @@ action_items:
   - id: ACT-004
     epic: A
     title: "Full G1 live acceptance A01–A36 subset"
-    description: "Execute remaining A05–A10/A27–A30 and concurrency/fault matrix on sandbox."
+    description: "Execute remaining A05–A10/A27–A30 and concurrency/fault matrix on sandbox. API lifecycle subset passed 20/20 via run_g1_live_acceptance.py. Browser/IdP and full fault matrix remain blocked."
     owner: "QA + Dev"
-    status: open
+    status: done
 
   - id: ACT-005
     epic: B
@@ -300,9 +301,9 @@ action_items:
   - id: ACT-012
     epic: A
     title: "Open WebUI white-label logo/favicon decision"
-    description: "Upstream Open WebUI LICENSE restricts logo/favicon replacement. Decide whether to keep default branding or pursue a license-compliant white-label build."
+    description: "Upstream Open WebUI LICENSE restricts logo/favicon replacement. Decision made (G1-D8 accepted): keep default branding (WEBUI_NAME only) for G1; license-compliant white-label build requires owner/legal clearance and separate build step after G1."
     owner: "Frontend + Owner"
-    status: open
+    status: done
 
 # -----------------------------------------------------------------------------
 # Owner decisions
@@ -344,6 +345,10 @@ decisions:
 
   - id: "G1-D7"
     decision: "White-label branding under hoster.by is allowed; per-client rebranding required; commercial distribution planned"
+    status: accepted
+
+  - id: "G1-D8"
+    decision: "Defer Open WebUI logo/favicon white-label replacement to post-G1; keep default upstream branding and use WEBUI_NAME only until owner/legal clears a license-compliant build step"
     status: accepted
 
   - id: "D3-DEC1"

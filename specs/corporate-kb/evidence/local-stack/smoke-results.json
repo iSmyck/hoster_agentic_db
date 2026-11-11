@@ -77,7 +77,7 @@
       "status": "PASS"
     },
     {
-      "actual": "status=200, body={\"session_id\":\"dba4b98d-fa62-47d5-acdd-ab313b461671\",\"stable_id\":\"author-1\",\"access_policy_revision\":\"0000000000000000000000000000000000000000\",\"approval_policy_revision\":\"0000000000000000000000000000",
+      "actual": "status=200, body={\"session_id\":\"e0ea0ee1-5b26-470e-abf7-ff2e0d98167b\",\"stable_id\":\"author-1\",\"access_policy_revision\":\"0000000000000000000000000000000000000000\",\"approval_policy_revision\":\"0000000000000000000000000000",
       "details": {},
       "expected": "session token validates and returns author-1 stable_id",
       "id": "session.validate_author",
@@ -130,6 +130,6 @@
       "session": "http://127.0.0.1:8004/health"
     }
   },
-  "generated_at": "2026-11-10T21:58:53.870054+00:00",
+  "generated_at": "2026-11-11T20:04:22.930710+00:00",
   "schema_version": "local-stack-smoke-v1"
 }

@@ -1,6 +1,6 @@
 # Local stack smoke test
 
-Generated: 2026-11-10T21:58:53.870054+00:00
+Generated: 2026-11-11T20:04:22.930710+00:00
 
 - PASS: 12
 - FAIL: 0
@@ -50,7 +50,7 @@ Generated: 2026-11-10T21:58:53.870054+00:00
 ## session.validate_author — PASS
 
 - Expected: session token validates and returns author-1 stable_id
-- Actual: status=200, body={"session_id":"dba4b98d-fa62-47d5-acdd-ab313b461671","stable_id":"author-1","access_policy_revision":"0000000000000000000000000000000000000000","approval_policy_revision":"0000000000000000000000000000
+- Actual: status=200, body={"session_id":"e0ea0ee1-5b26-470e-abf7-ff2e0d98167b","stable_id":"author-1","access_policy_revision":"0000000000000000000000000000000000000000","approval_policy_revision":"0000000000000000000000000000
 
 ## go.draft_save — PASS
 

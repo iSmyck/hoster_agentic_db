@@ -38,34 +38,34 @@
       "status": "PASS"
     },
     {
-      "actual": "status=201, body={'id': '4cb66886-e2db-4ea3-9263-6d5bc850373f', 'space_id': 'corp-kb/sales', 'proposal_sha': 'fbbd3f68c52fdac053e0d31f9d0767adc16143f9', 'base_sha': '76772cc3a475a93f1608dc01012a8b7d9a13f0d4', 'target_sha': None, 'status': 'in_review', 'idempotency_key': 'g1-acceptance-51c73670', 'proposal_data': {'author_stable_id': 'user-sales-editor', 'requester_stable_id': 'user-sales-editor', 'target_branch': 'main', 'mr_iid': 64}, 'created_at': '2026-11-10T10:19:46.575823Z'}",
+      "actual": "status=201, body={'id': '409ef1a3-55ec-4115-8609-52c6cff431bd', 'space_id': 'corp-kb/sales', 'proposal_sha': '764bd90d10a15389fef8a292d7078da11bd78cfc', 'base_sha': '1373dc28929ecc91a36fe130fa87b0e6dbdcc21f', 'target_sha': None, 'status': 'in_review', 'idempotency_key': 'g1-acceptance-e925796a', 'proposal_data': {'author_stable_id': 'user-sales-editor', 'requester_stable_id': 'user-sales-editor', 'target_branch': 'main', 'mr_iid': 69}, 'created_at': '2026-11-11T20:01:45.541327Z'}",
       "details": {},
       "expected": "proposal accepted and MR created",
       "id": "flow.submit_proposal",
       "status": "PASS"
     },
     {
-      "actual": "status=201, body={'id': 'd93627af-4702-5a7f-939f-9d5616cba658', 'proposal_id': '4cb66886-e2db-4ea3-9263-6d5bc850373f', 'outcome': 'accepted', 'actor_id': 'user-sales-approver', 'idempotency_key': 'g1-decision-a2bbb27b', 'record_sha256': '18e5bf4fd9d6ad0085f6a8d344bc6a66f2c9d5d4000027fcca83c6786a174f88', 'note_id': 139, 'tag_name': 'kb-decisions/d93627af-4702-5a7f-939f-9d5616cba658', 'state': 'recorded', 'supersedes_decision_id': None, 'created_at': '2026-11-10T10:19:49.519250Z'}",
+      "actual": "status=201, body={'id': '0152e83e-cd19-58d0-aebc-6167f87cf240', 'proposal_id': '409ef1a3-55ec-4115-8609-52c6cff431bd', 'outcome': 'accepted', 'actor_id': 'user-sales-approver', 'idempotency_key': 'g1-decision-9e3269b1', 'record_sha256': '58da9c8f839690ee142eb5666e7a4cb2c48d20981dc90eb3a004a6cd19ee4675', 'note_id': 148, 'tag_name': 'kb-decisions/0152e83e-cd19-58d0-aebc-6167f87cf240', 'state': 'recorded', 'supersedes_decision_id': None, 'created_at': '2026-11-11T20:01:48.442426Z'}",
       "details": {},
       "expected": "independent human decision recorded with note+tag",
       "id": "flow.record_decision",
       "status": "PASS"
     },
     {
-      "actual": "status=200, body={'proposal_id': '4cb66886-e2db-4ea3-9263-6d5bc850373f', 'status': 'merged', 'merge_sha': '666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22', 'detail': 'merged via GitLab with verified parentage', 'fence_token': 1, 'recovery_required': False}",
+      "actual": "status=200, body={'proposal_id': '409ef1a3-55ec-4115-8609-52c6cff431bd', 'status': 'merged', 'merge_sha': 'f70ee4152588b2f7e4c3fbd4e59f42aef1e1a81b', 'detail': 'merged via GitLab with verified parentage', 'fence_token': 1, 'recovery_required': False}",
       "details": {},
       "expected": "GO merge succeeds and returns merge_sha",
       "id": "flow.execute_merge",
       "status": "PASS"
     },
     {
-      "actual": "parents=['76772cc3a475a93f1608dc01012a8b7d9a13f0d4', 'fbbd3f68c52fdac053e0d31f9d0767adc16143f9']",
+      "actual": "parents=['1373dc28929ecc91a36fe130fa87b0e6dbdcc21f', '764bd90d10a15389fef8a292d7078da11bd78cfc']",
       "details": {
         "first_parent_matches_base": true,
-        "message": "Merge proposal 4cb66886-e2db-4ea3-9263-6d5bc850373f\n\nDecision-ID: d93627af-4702-5a7f-939f-9d5616cba658\nDecision-Note-ID: 139\nDecision-Hash: 18e5bf4fd9d6ad0085f6a8d344bc6a66f2c9d5d4000027fcca83c6786a174f88\nApproved-by: user-sales-approver",
+        "message": "Merge proposal 409ef1a3-55ec-4115-8609-52c6cff431bd\n\nDecision-ID: 0152e83e-cd19-58d0-aebc-6167f87cf240\nDecision-Note-ID: 148\nDecision-Hash: 58da9c8f839690ee142eb5666e7a4cb2c48d20981dc90eb3a004a6cd19ee4675\nApproved-by: user-sales-approver",
         "parents": [
-          "76772cc3a475a93f1608dc01012a8b7d9a13f0d4",
-          "fbbd3f68c52fdac053e0d31f9d0767adc16143f9"
+          "1373dc28929ecc91a36fe130fa87b0e6dbdcc21f",
+          "764bd90d10a15389fef8a292d7078da11bd78cfc"
         ],
         "second_parent_matches_proposal": true,
         "trailers": {}
@@ -75,13 +75,13 @@
       "status": "PASS"
     },
     {
-      "actual": "Merge proposal 4cb66886-e2db-4ea3-9263-6d5bc850373f\n\nDecision-ID: d93627af-4702-5a7f-939f-9d5616cba658\nDecision-Note-ID: 139\nDecision-Hash: 18e5bf4fd9d6ad0085f6a8d344bc6a66f2c9d5d4000027fcca83c6786a174f88\nApproved-by: user-sales-approver",
+      "actual": "Merge proposal 409ef1a3-55ec-4115-8609-52c6cff431bd\n\nDecision-ID: 0152e83e-cd19-58d0-aebc-6167f87cf240\nDecision-Note-ID: 148\nDecision-Hash: 58da9c8f839690ee142eb5666e7a4cb2c48d20981dc90eb3a004a6cd19ee4675\nApproved-by: user-sales-approver",
       "details": {
         "first_parent_matches_base": true,
-        "message": "Merge proposal 4cb66886-e2db-4ea3-9263-6d5bc850373f\n\nDecision-ID: d93627af-4702-5a7f-939f-9d5616cba658\nDecision-Note-ID: 139\nDecision-Hash: 18e5bf4fd9d6ad0085f6a8d344bc6a66f2c9d5d4000027fcca83c6786a174f88\nApproved-by: user-sales-approver",
+        "message": "Merge proposal 409ef1a3-55ec-4115-8609-52c6cff431bd\n\nDecision-ID: 0152e83e-cd19-58d0-aebc-6167f87cf240\nDecision-Note-ID: 148\nDecision-Hash: 58da9c8f839690ee142eb5666e7a4cb2c48d20981dc90eb3a004a6cd19ee4675\nApproved-by: user-sales-approver",
         "parents": [
-          "76772cc3a475a93f1608dc01012a8b7d9a13f0d4",
-          "fbbd3f68c52fdac053e0d31f9d0767adc16143f9"
+          "1373dc28929ecc91a36fe130fa87b0e6dbdcc21f",
+          "764bd90d10a15389fef8a292d7078da11bd78cfc"
         ],
         "second_parent_matches_proposal": true,
         "trailers": {}
@@ -94,9 +94,9 @@
       "actual": "found=True, target_matches=True, protected=True",
       "details": {
         "found": true,
-        "message": "{\"access_policy_revision\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"action\":\"accepted\",\"actor_stable_id\":\"user-sales-approver\",\"approval_policy_revision\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"base_sha\":\"76772cc3a475a93f1608dc01012a8b7d9a13f0d4\",\"decision_id\":\"d93627af-4702-5a7f-939f-9d5616cba658\",\"evidence\":[],\"policy_bundle_id\":\"sales-policy-bundle\",\"proposal_id\":\"4cb66886-e2db-4ea3-9263-6d5bc850373f\",\"proposal_sha\":\"fbbd3f68c52fdac053e0d31f9d0767adc16143f9\",\"record_sha256\":\"18e5bf4fd9d6ad0085f6a8d344bc6a66f2c9d5d4000027fcca83c6786a174f88\",\"timestamp\":\"2026-11-10T10:19:49.538361+00:00\"}",
+        "message": "{\"access_policy_revision\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"action\":\"accepted\",\"actor_stable_id\":\"user-sales-approver\",\"approval_policy_revision\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"base_sha\":\"1373dc28929ecc91a36fe130fa87b0e6dbdcc21f\",\"decision_id\":\"0152e83e-cd19-58d0-aebc-6167f87cf240\",\"evidence\":[],\"policy_bundle_id\":\"sales-policy-bundle\",\"proposal_id\":\"409ef1a3-55ec-4115-8609-52c6cff431bd\",\"proposal_sha\":\"764bd90d10a15389fef8a292d7078da11bd78cfc\",\"record_sha256\":\"58da9c8f839690ee142eb5666e7a4cb2c48d20981dc90eb3a004a6cd19ee4675\",\"timestamp\":\"2026-11-11T20:01:48.453209+00:00\"}",
         "protected": true,
-        "target": "fbbd3f68c52fdac053e0d31f9d0767adc16143f9",
+        "target": "764bd90d10a15389fef8a292d7078da11bd78cfc",
         "target_matches_proposal_sha": true
       },
       "expected": "protected annotated tag exists on proposal_sha",
@@ -140,13 +140,13 @@
       "status": "PASS"
     },
     {
-      "actual": "status=200, merge_sha=666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22",
+      "actual": "status=200, merge_sha=f70ee4152588b2f7e4c3fbd4e59f42aef1e1a81b",
       "details": {
         "response": {
           "detail": "idempotent merge replay",
           "fence_token": 1,
-          "merge_sha": "666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22",
-          "proposal_id": "4cb66886-e2db-4ea3-9263-6d5bc850373f",
+          "merge_sha": "f70ee4152588b2f7e4c3fbd4e59f42aef1e1a81b",
+          "proposal_id": "409ef1a3-55ec-4115-8609-52c6cff431bd",
           "recovery_required": false,
           "status": "merged"
         },
@@ -157,34 +157,34 @@
       "status": "PASS"
     },
     {
-      "actual": "status=201, body={'id': '032063f3-25a3-488b-a184-34f5ba7372b2', 'space_id': 'corp-kb/sales', 'proposal_sha': 'e33305ddaf6927e6590ee01ab87309998742d54d', 'base_sha': '666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22', 'target_sha': None, 'status': 'in_review', 'idempotency_key': 'g1-revert-6db28780', 'proposal_data': {'author_stable_id': 'user-sales-editor', 'requester_stable_id': 'user-sales-editor', 'target_branch': 'main', 'reverts_decision_id': 'd93627af-4702-5a7f-939f-9d5616cba658', 'mr_iid': 67}, 'created_at': '2026-11-10T10:20:15.876074Z'}",
+      "actual": "status=201, body={'id': '6aae8625-bb0e-48fb-8dcb-0b156fce8783', 'space_id': 'corp-kb/sales', 'proposal_sha': 'a13a7206dacad9f8c6948723475abb29d94deaba', 'base_sha': 'f70ee4152588b2f7e4c3fbd4e59f42aef1e1a81b', 'target_sha': None, 'status': 'in_review', 'idempotency_key': 'g1-revert-31e1f851', 'proposal_data': {'author_stable_id': 'user-sales-editor', 'requester_stable_id': 'user-sales-editor', 'target_branch': 'main', 'reverts_decision_id': '0152e83e-cd19-58d0-aebc-6167f87cf240', 'mr_iid': 72}, 'created_at': '2026-11-11T20:02:24.732908Z'}",
       "details": {},
       "expected": "revert proposal accepted and MR created",
       "id": "flow.revert.submit_proposal",
       "status": "PASS"
     },
     {
-      "actual": "status=201, body={'id': '8a860871-65ac-51fd-9fe7-39f8f3128a00', 'proposal_id': '032063f3-25a3-488b-a184-34f5ba7372b2', 'outcome': 'accepted', 'actor_id': 'user-sales-approver', 'idempotency_key': 'g1-revert-decision-d95590e8', 'record_sha256': 'f56d2c13534b1011b9e7fa0fa7fa750ddb6e2d992180fba05a91180ad61d222c', 'note_id': 141, 'tag_name': 'kb-decisions/8a860871-65ac-51fd-9fe7-39f8f3128a00', 'state': 'recorded', 'supersedes_decision_id': None, 'created_at': '2026-11-10T10:20:16.537720Z'}",
+      "actual": "status=201, body={'id': '3d1967ac-d93c-5b61-89d5-61c66386f3d9', 'proposal_id': '6aae8625-bb0e-48fb-8dcb-0b156fce8783', 'outcome': 'accepted', 'actor_id': 'user-sales-approver', 'idempotency_key': 'g1-revert-decision-7f2f6c0a', 'record_sha256': '9a9b19f4921704f44156331eb3412c38039313c7821564e37c8d3e43b6c4d696', 'note_id': 150, 'tag_name': 'kb-decisions/3d1967ac-d93c-5b61-89d5-61c66386f3d9', 'state': 'recorded', 'supersedes_decision_id': None, 'created_at': '2026-11-11T20:02:25.422671Z'}",
       "details": {},
       "expected": "revert decision recorded with note+tag",
       "id": "flow.revert.record_decision",
       "status": "PASS"
     },
     {
-      "actual": "status=200, body={'proposal_id': '032063f3-25a3-488b-a184-34f5ba7372b2', 'status': 'merged', 'merge_sha': 'ed79b829a7063f637c6757afb1a4665ecc052ff8', 'detail': 'merged via GitLab with verified parentage', 'fence_token': 2, 'recovery_required': False}",
+      "actual": "status=200, body={'proposal_id': '6aae8625-bb0e-48fb-8dcb-0b156fce8783', 'status': 'merged', 'merge_sha': '1e0510b6dc706f42c2c190c4f58f25f2505c0f18', 'detail': 'merged via GitLab with verified parentage', 'fence_token': 2, 'recovery_required': False}",
       "details": {},
       "expected": "revert merge succeeds and returns merge_sha",
       "id": "flow.revert.execute_merge",
       "status": "PASS"
     },
     {
-      "actual": "parents=['666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22', 'e33305ddaf6927e6590ee01ab87309998742d54d']",
+      "actual": "parents=['f70ee4152588b2f7e4c3fbd4e59f42aef1e1a81b', 'a13a7206dacad9f8c6948723475abb29d94deaba']",
       "details": {
         "first_parent_matches_base": true,
-        "message": "Merge proposal 032063f3-25a3-488b-a184-34f5ba7372b2\n\nDecision-ID: 8a860871-65ac-51fd-9fe7-39f8f3128a00\nDecision-Note-ID: 141\nDecision-Hash: f56d2c13534b1011b9e7fa0fa7fa750ddb6e2d992180fba05a91180ad61d222c\nApproved-by: user-sales-approver",
+        "message": "Merge proposal 6aae8625-bb0e-48fb-8dcb-0b156fce8783\n\nDecision-ID: 3d1967ac-d93c-5b61-89d5-61c66386f3d9\nDecision-Note-ID: 150\nDecision-Hash: 9a9b19f4921704f44156331eb3412c38039313c7821564e37c8d3e43b6c4d696\nApproved-by: user-sales-approver",
         "parents": [
-          "666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22",
-          "e33305ddaf6927e6590ee01ab87309998742d54d"
+          "f70ee4152588b2f7e4c3fbd4e59f42aef1e1a81b",
+          "a13a7206dacad9f8c6948723475abb29d94deaba"
         ],
         "second_parent_matches_proposal": true,
         "trailers": {}
@@ -194,13 +194,13 @@
       "status": "PASS"
     },
     {
-      "actual": "Merge proposal 032063f3-25a3-488b-a184-34f5ba7372b2\n\nDecision-ID: 8a860871-65ac-51fd-9fe7-39f8f3128a00\nDecision-Note-ID: 141\nDecision-Hash: f56d2c13534b1011b9e7fa0fa7fa750ddb6e2d992180fba05a91180ad61d222c\nApproved-by: user-sales-approver",
+      "actual": "Merge proposal 6aae8625-bb0e-48fb-8dcb-0b156fce8783\n\nDecision-ID: 3d1967ac-d93c-5b61-89d5-61c66386f3d9\nDecision-Note-ID: 150\nDecision-Hash: 9a9b19f4921704f44156331eb3412c38039313c7821564e37c8d3e43b6c4d696\nApproved-by: user-sales-approver",
       "details": {
         "first_parent_matches_base": true,
-        "message": "Merge proposal 032063f3-25a3-488b-a184-34f5ba7372b2\n\nDecision-ID: 8a860871-65ac-51fd-9fe7-39f8f3128a00\nDecision-Note-ID: 141\nDecision-Hash: f56d2c13534b1011b9e7fa0fa7fa750ddb6e2d992180fba05a91180ad61d222c\nApproved-by: user-sales-approver",
+        "message": "Merge proposal 6aae8625-bb0e-48fb-8dcb-0b156fce8783\n\nDecision-ID: 3d1967ac-d93c-5b61-89d5-61c66386f3d9\nDecision-Note-ID: 150\nDecision-Hash: 9a9b19f4921704f44156331eb3412c38039313c7821564e37c8d3e43b6c4d696\nApproved-by: user-sales-approver",
         "parents": [
-          "666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22",
-          "e33305ddaf6927e6590ee01ab87309998742d54d"
+          "f70ee4152588b2f7e4c3fbd4e59f42aef1e1a81b",
+          "a13a7206dacad9f8c6948723475abb29d94deaba"
         ],
         "second_parent_matches_proposal": true,
         "trailers": {}
@@ -210,7 +210,7 @@
       "status": "PASS"
     },
     {
-      "actual": "file_path=docs/g1-proposal-8fe727fde0b4.md, exists=False",
+      "actual": "file_path=docs/g1-proposal-275214b92f8e.md, exists=False",
       "details": {},
       "expected": "merged file no longer exists after revert merge",
       "id": "flow.revert.file_restored",
@@ -220,9 +220,9 @@
       "actual": "found=True, target_matches=True, protected=True",
       "details": {
         "found": true,
-        "message": "{\"access_policy_revision\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"action\":\"accepted\",\"actor_stable_id\":\"user-sales-approver\",\"approval_policy_revision\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"base_sha\":\"666dc259d6e5edea93a1b0fe0cf04f9d3c8c8f22\",\"decision_id\":\"8a860871-65ac-51fd-9fe7-39f8f3128a00\",\"evidence\":[],\"policy_bundle_id\":\"sales-policy-bundle\",\"proposal_id\":\"032063f3-25a3-488b-a184-34f5ba7372b2\",\"proposal_sha\":\"e33305ddaf6927e6590ee01ab87309998742d54d\",\"record_sha256\":\"f56d2c13534b1011b9e7fa0fa7fa750ddb6e2d992180fba05a91180ad61d222c\",\"timestamp\":\"2026-11-10T10:20:16.547924+00:00\"}",
+        "message": "{\"access_policy_revision\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"action\":\"accepted\",\"actor_stable_id\":\"user-sales-approver\",\"approval_policy_revision\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"base_sha\":\"f70ee4152588b2f7e4c3fbd4e59f42aef1e1a81b\",\"decision_id\":\"3d1967ac-d93c-5b61-89d5-61c66386f3d9\",\"evidence\":[],\"policy_bundle_id\":\"sales-policy-bundle\",\"proposal_id\":\"6aae8625-bb0e-48fb-8dcb-0b156fce8783\",\"proposal_sha\":\"a13a7206dacad9f8c6948723475abb29d94deaba\",\"record_sha256\":\"9a9b19f4921704f44156331eb3412c38039313c7821564e37c8d3e43b6c4d696\",\"timestamp\":\"2026-11-11T20:02:25.428264+00:00\"}",
         "protected": true,
-        "target": "e33305ddaf6927e6590ee01ab87309998742d54d",
+        "target": "a13a7206dacad9f8c6948723475abb29d94deaba",
         "target_matches_proposal_sha": true
       },
       "expected": "protected annotated tag exists on revert proposal_sha",
@@ -249,7 +249,7 @@
     },
     "sandbox": "live_local_gitlab_ce"
   },
-  "generated_at": "2026-11-10T10:19:38.830806+00:00",
+  "generated_at": "2026-11-11T20:01:40.335974+00:00",
   "schema_version": "g1-live-acceptance-v1",
   "sensitive_data_included": false
 }
