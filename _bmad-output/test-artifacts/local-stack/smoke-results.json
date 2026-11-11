@@ -1,0 +1,135 @@
+{
+  "checks": [
+    {
+      "actual": "status=200",
+      "details": {
+        "body": "{\"status\":\"ok\"}",
+        "url": "http://127.0.0.1:8001/health"
+      },
+      "expected": "identity health endpoint returns 200",
+      "id": "health.identity",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200",
+      "details": {
+        "body": "{\"status\":\"ok\"}",
+        "url": "http://127.0.0.1:8004/health"
+      },
+      "expected": "session health endpoint returns 200",
+      "id": "health.session",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200",
+      "details": {
+        "body": "{\"status\":\"ok\"}",
+        "url": "http://127.0.0.1:8002/health"
+      },
+      "expected": "go health endpoint returns 200",
+      "id": "health.go",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200",
+      "details": {
+        "body": "{\"status\":\"ok\"}",
+        "url": "http://127.0.0.1:8003/health"
+      },
+      "expected": "retrieval health endpoint returns 200",
+      "id": "health.retrieval",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200",
+      "details": {
+        "body": "{\"status\":\"ok\"}",
+        "url": "http://127.0.0.1:8005/health"
+      },
+      "expected": "backup health endpoint returns 200",
+      "id": "health.backup",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200",
+      "details": {
+        "body": "{\"status\":true,\"name\":\"hoster.by Knowledge Base (Open WebUI)\",\"version\":\"0.13.0\",\"default_locale\":\"\",\"i18n\":{},\"oauth\":{\"providers\":{},\"auto_redirect\":false},\"features\":{\"slim\":false,\"auth\":true,\"auth",
+        "url": "http://127.0.0.1:3100/api/config"
+      },
+      "expected": "openwebui health endpoint returns 200",
+      "id": "health.openwebui",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=401, no GITLAB_TOKEN configured",
+      "details": {
+        "url": "http://localhost:8081/api/v4/version"
+      },
+      "expected": "GitLab API is reachable (requires token)",
+      "id": "health.gitlab",
+      "status": "BLOCKED"
+    },
+    {
+      "actual": "token issued",
+      "details": {},
+      "expected": "session service creates a token for author-1",
+      "id": "session.create_author",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200, body={\"session_id\":\"dba4b98d-fa62-47d5-acdd-ab313b461671\",\"stable_id\":\"author-1\",\"access_policy_revision\":\"0000000000000000000000000000000000000000\",\"approval_policy_revision\":\"0000000000000000000000000000",
+      "details": {},
+      "expected": "session token validates and returns author-1 stable_id",
+      "id": "session.validate_author",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200",
+      "details": {},
+      "expected": "GO saves a draft for author-1",
+      "id": "go.draft_save",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200",
+      "details": {},
+      "expected": "GO returns the saved draft",
+      "id": "go.draft_get",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200, commits=0",
+      "details": {},
+      "expected": "GO returns commit history for docs/g1-proposal.md",
+      "id": "go.history",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200",
+      "details": {},
+      "expected": "Open WebUI /kb page is reachable",
+      "id": "openwebui.kb_page",
+      "status": "PASS"
+    }
+  ],
+  "command": "uv run python scripts/smoke_local_stack.py",
+  "counts": {
+    "BLOCKED": 1,
+    "FAIL": 0,
+    "PASS": 12,
+    "TOTAL": 13
+  },
+  "environment": {
+    "services": {
+      "backup": "http://127.0.0.1:8005/health",
+      "gitlab": "http://localhost:8081/api/v4/version",
+      "go": "http://127.0.0.1:8002/health",
+      "identity": "http://127.0.0.1:8001/health",
+      "openwebui": "http://127.0.0.1:3100/api/config",
+      "retrieval": "http://127.0.0.1:8003/health",
+      "session": "http://127.0.0.1:8004/health"
+    }
+  },
+  "generated_at": "2026-11-10T21:58:53.870054+00:00",
+  "schema_version": "local-stack-smoke-v1"
+}

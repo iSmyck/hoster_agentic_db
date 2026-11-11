@@ -1,0 +1,132 @@
+diff --git a/src/lib/components/workspace/Knowledge/KnowledgeBase/FileViewer.svelte b/src/lib/components/workspace/Knowledge/KnowledgeBase/FileViewer.svelte
+index f2651e7..80991ba 100644
+--- a/src/lib/components/workspace/Knowledge/KnowledgeBase/FileViewer.svelte
++++ b/src/lib/components/workspace/Knowledge/KnowledgeBase/FileViewer.svelte
+@@ -11,6 +11,7 @@
+ 	} from '$lib/apis/files';
+ 	import FilePreview from '$lib/components/chat/FileNav/FilePreview.svelte';
+ 	import FileCodeEditor from '$lib/components/chat/FileNav/FileCodeEditor.svelte';
++	import RichTextInput from '$lib/components/common/RichTextInput.svelte';
+ 	import Dropdown from '$lib/components/common/Dropdown.svelte';
+ 	import DropdownMenu from '$lib/components/common/DropdownMenu.svelte';
+ 	import Spinner from '$lib/components/common/Spinner.svelte';
+@@ -44,6 +45,39 @@
+ 	let excelSheetNames: string[] = [];
+ 	let indexedEditor: FileCodeEditor;
+ 	let mounted = false;
++
++	// Visual (WYSIWYG) markdown editor state
++	let visualMode = false;
++	let visualFrontMatter = '';
++	let visualBody = '';
++	let richTextEditor: RichTextInput;
++
++	const isMarkdownFile = (path: string) => /\.(md|markdown|mdx)$/i.test(path);
++	const extractFrontMatter = (content: string) => {
++		const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
++		if (match) {
++			return { front: match[0], body: content.slice(match[0].length) };
++		}
++		return { front: '', body: content };
++	};
++	const syncVisualDraft = () => {
++		state = { ...state, draft: visualFrontMatter + visualBody };
++	};
++	const enterVisualMode = () => {
++		const source = state.draft ?? state.indexed ?? '';
++		const parsed = extractFrontMatter(source);
++		visualFrontMatter = parsed.front;
++		visualBody = parsed.body;
++		visualMode = true;
++	};
++	const exitVisualMode = () => {
++		visualMode = false;
++	};
++	const onVisualChange = (e: { md: string }) => {
++		visualBody = e.md;
++		syncVisualDraft();
++	};
++
+ 	$: name = fileName(file);
+ 	$: noOriginal = file.has_original === false || !!state.originalUnavailable;
+ 	$: if (
+@@ -243,12 +277,28 @@
+ 		>
+ 		{#if writeAccess}
+ 			{#if state.editing}
++				{#if isMarkdownFile(name)}
++					<button
++						type="button"
++						class="shrink-0 px-1 py-0.5 {visualMode ? 'text-gray-400' : ''}"
++						aria-pressed={!visualMode}
++						on:click={exitVisualMode}>{$i18n.t('Source')}</button
++					>
++					<button
++						type="button"
++						class="shrink-0 px-1 py-0.5 {visualMode ? '' : 'text-gray-400'}"
++						aria-pressed={visualMode}
++						on:click={enterVisualMode}>{$i18n.t('Visual')}</button
++					>
++				{/if}
+ 				<button
+ 					type="button"
+ 					class="flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-normal text-gray-600 transition hover:bg-gray-100 hover:text-gray-900 disabled:opacity-60 dark:text-gray-400 dark:hover:bg-gray-850 dark:hover:text-white"
+ 					disabled={saving}
+-					on:click={() => (state = { ...state, draft: state.indexed ?? '', editing: false })}
+-					>{$i18n.t('Cancel')}</button
++					on:click={() => {
++						visualMode = false;
++						state = { ...state, draft: state.indexed ?? '', editing: false };
++					}}>{$i18n.t('Cancel')}</button
+ 				>
+ 				<button
+ 					type="button"
+@@ -263,6 +313,7 @@
+ 					type="button"
+ 					class="flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-normal text-gray-600 transition hover:bg-gray-100 hover:text-gray-900 disabled:opacity-60 dark:text-gray-400 dark:hover:bg-gray-850 dark:hover:text-white"
+ 					on:click={() => {
++						visualMode = false;
+ 						state = { ...state, mode: 'indexed', editing: true, draft: state.indexed ?? '' };
+ 					}}>{$i18n.t('Edit')}</button
+ 				>
+@@ -311,15 +362,31 @@
+ 		</div>
+ 	{:else if state.indexed !== null}
+ 		<div class="min-h-0 flex-1">
+-			<FileCodeEditor
+-				bind:this={indexedEditor}
+-				bind:value={state.draft}
+-				filePath="indexed.txt"
+-				ariaLabel={$i18n.t('File content')}
+-				placeholder={state.editing ? $i18n.t('Add content here') : ''}
+-				readOnly={!writeAccess || !state.editing || saving}
+-				onSave={save}
+-			/>
++			{#if state.editing && visualMode}
++				<RichTextInput
++					bind:this={richTextEditor}
++					value={visualBody}
++					editable={!saving}
++					placeholder={$i18n.t('Add content here')}
++					onChange={onVisualChange}
++					link={true}
++					autoFormat={false}
++					className="prose dark:prose-invert flex-1 h-full overflow-y-auto px-4 py-2"
++				/>
++				<p class="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400">
++					{$i18n.t('Visual mode preserves content but may normalize Markdown formatting (list markers, spacing). Use Source for exact edits.')}
++				</p>
++			{:else}
++				<FileCodeEditor
++					bind:this={indexedEditor}
++					bind:value={state.draft}
++					filePath="indexed.txt"
++					ariaLabel={$i18n.t('File content')}
++					placeholder={state.editing ? $i18n.t('Add content here') : ''}
++					readOnly={!writeAccess || !state.editing || saving}
++					onSave={save}
++				/>
++			{/if}
+ 		</div>
+ 		{#if !state.indexed && !state.editing}<p class="px-3 py-2 text-xs text-gray-500">
+ 				{$i18n.t('No content found')}
