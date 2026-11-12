@@ -4,6 +4,7 @@
   "src/lib/components/KBEditor.svelte",
   "src/lib/components/KBReview.svelte",
   "src/lib/components/KBTree.svelte",
+  "src/lib/kb/markdown-serializer.ts",
   "src/lib/plugins/kb-proxy.ts",
   "src/routes/kb/+page.svelte"
 ]

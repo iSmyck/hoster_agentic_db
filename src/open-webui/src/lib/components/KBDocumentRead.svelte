@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { KBDocumentReadView } from '$lib/api/kb.js';
+	import { marked } from 'marked';
+	import DOMPurify from 'dompurify';
 
 	interface Props {
 		document?: KBDocumentReadView;
@@ -8,6 +10,11 @@
 	}
 
 	let { document, loading = false, error = '' }: Props = $props();
+
+	function renderBody(body: string): string {
+		const html = marked.parse(body, { async: false }) as string;
+		return DOMPurify.sanitize(html);
+	}
 </script>
 
 <div class="kb-document flex flex-col h-full overflow-auto">
@@ -26,8 +33,8 @@
 				</p>
 			</header>
 
-			<section class="whitespace-pre-wrap text-sm leading-relaxed">
-				{document.body}
+			<section class="text-sm leading-relaxed">
+				{@html renderBody(document.body)}
 			</section>
 
 			{#if document.attachments.length > 0}

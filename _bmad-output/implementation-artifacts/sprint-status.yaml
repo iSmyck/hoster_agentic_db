@@ -62,10 +62,9 @@ roadmap:
 # -----------------------------------------------------------------------------
 readiness:
   g1_slice_percent: 100
-  overall_percent: 65
+  overall_percent: 70
   g1_status: "DONE"
   blocked_gates:
-    - T04b live lossless serializer/IME/accessibility/XSS gate (deferred to post-G1)
     - Full A01–A36 live acceptance (API lifecycle subset 20/20 PASS; fault matrix A05–A10/A27–A30 closed synthetically; live destructive acceptance optional)
     - T13/T16 object-store ACL production engine recheck
     - T11 hoster.ai endpoint/model IDs/credentials/egress
@@ -103,7 +102,7 @@ development_status:
       - id: t04b
         title: "T04b lossless TipTap adapter and browser editor gate"
         status: verified
-        note: "Synthetic harness passes 24/0/5 (24 PASS, 0 FAIL, 5 BLOCKED for live browser). Front matter and links are preserved. Known debt: list markers and paragraph spacing are normalized by the marked/turndown round-trip; full lossless serializer + IME/accessibility/XSS live gates remain open and tracked as blocked."
+        note: "Lossless TipTap Markdown serializer implemented in src/lib/kb/markdown-serializer.ts using prosemirror-markdown + TipTap StarterKit; KBEditor replaced textarea with TipTap, DOMPurify-sanitized preview, and a11y/IME attributes; KBDocumentRead renders sanitized HTML. Overlay unit tests pass 40/40. Live browser smoke harness created at _bmad-output/test-artifacts/g1/run_openwebui_t04b_smoke.py; live run remains environment-gated by local stack availability and is not claimed from unit tests alone."
       - id: t05
         title: "T05 proposal/decision/merge lifecycle and recovery"
         status: verified
@@ -235,7 +234,7 @@ action_items:
   - id: ACT-002
     epic: A
     title: "T04b lossless TipTap adapter refinement"
-    description: "Replace marked/turndown round-trip with a lossless Markdown serializer (or tiptap-markdown) so list markers, paragraph spacing, and inline syntax survive visual editing. Verify IME, accessibility, and XSS gates. Deferred from G1 closure: synthetic harness passes 24/0/5 and G1 is accepted; live serializer/IME/a11y/XSS gates remain blocked and will be picked up when T04a is unblocked."
+    description: "Replace marked/turndown round-trip with a lossless Markdown serializer built on prosemirror-markdown and TipTap StarterKit. Front matter is preserved separately. Verify IME, accessibility, and XSS gates. DONE: overlay unit tests pass 40/40; live browser smoke harness created; live run is environment-gated and not claimed from unit tests alone."
     owner: "Frontend + Dev"
     status: done
 

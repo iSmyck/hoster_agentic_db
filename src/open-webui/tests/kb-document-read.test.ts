@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/svelte';
 import KBDocumentRead from '$lib/components/KBDocumentRead.svelte';
 import type { KBDocumentReadView } from '$lib/api/kb.js';
 
-const document: KBDocumentReadView = {
+const doc: KBDocumentReadView = {
 	title: 'README.md',
 	body: '# Hello KB',
 	sha: 'c38885a1a737da4968f157092f304f3b5481d0bf',
@@ -29,16 +29,35 @@ describe('KBDocumentRead', () => {
 		expect(screen.getByRole('alert')).toHaveTextContent('Read failed');
 	});
 
-	it('renders document title, body and sha', () => {
-		render(KBDocumentRead, { props: { document } });
+	it('renders document title and sha', () => {
+		render(KBDocumentRead, { props: { document: doc } });
 
 		expect(screen.getByRole('heading', { name: 'README.md' })).toBeInTheDocument();
-		expect(screen.getByText('# Hello KB')).toBeInTheDocument();
 		expect(screen.getByText(/SHA:/)).toBeInTheDocument();
 	});
 
+	it('renders Markdown body as sanitized HTML', () => {
+		render(KBDocumentRead, { props: { document: doc } });
+
+		expect(screen.getByRole('heading', { name: 'Hello KB' })).toBeInTheDocument();
+	});
+
+	it('removes script tags from rendered body', () => {
+		render(KBDocumentRead, {
+			props: {
+				document: {
+					...doc,
+					body: '# Safe\n\n<script>alert(1)</script>'
+				}
+			}
+		});
+
+		expect(screen.getByRole('heading', { name: 'Safe' })).toBeInTheDocument();
+		expect(window.document.querySelector('script')).not.toBeInTheDocument();
+	});
+
 	it('renders attachment links', () => {
-		render(KBDocumentRead, { props: { document } });
+		render(KBDocumentRead, { props: { document: doc } });
 
 		const link = screen.getByRole('link', { name: 'diagram.png' }) as HTMLAnchorElement;
 		expect(link).toBeInTheDocument();
@@ -46,7 +65,7 @@ describe('KBDocumentRead', () => {
 	});
 
 	it('does not render attachments section when empty', () => {
-		render(KBDocumentRead, { props: { document: { ...document, attachments: [] } } });
+		render(KBDocumentRead, { props: { document: { ...doc, attachments: [] } } });
 
 		expect(screen.queryByText('Attachments')).not.toBeInTheDocument();
 	});
