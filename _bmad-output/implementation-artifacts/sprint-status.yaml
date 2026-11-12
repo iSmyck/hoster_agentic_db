@@ -15,7 +15,7 @@
 #   - blocked: cannot proceed without owner/external input
 
 generated: "2026-11-11 01:05"
-last_updated: "2026-11-12 13:30"
+last_updated: "2026-11-12 13:48"
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -62,7 +62,7 @@ roadmap:
 # -----------------------------------------------------------------------------
 readiness:
   g1_slice_percent: 100
-  overall_percent: 85
+  overall_percent: 90
   g1_status: "DONE"
   blocked_gates:
     - Full A01–A36 live acceptance (API lifecycle subset 20/20 PASS; fault matrix A05–A10/A27–A30 closed synthetically; live destructive acceptance optional)
@@ -288,9 +288,9 @@ action_items:
   - id: ACT-010
     epic: E
     title: "Second-client deployment resources"
-    description: "Owner approved internal sandbox tenant for multi-tenant validation. Implementation team to prepare tenant specification and provisioning checklist."
+    description: "Owner approved internal sandbox tenant for multi-tenant validation. Implementation team prepared tenant isolation specification, parameterized provisioning skeleton and validation checklist. Artifacts: specs/corporate-kb/evidence/phase-e/internal-sandbox-tenant-spec.md, _bmad-output/test-artifacts/t18/provision-sandbox-tenant.sh, _bmad-output/test-artifacts/t18/tenant-validation-checklist.md, specs/corporate-kb/evidence/phase-e/act010-closure-evidence.md. Live T18a/T18b runtime remains environment-gated."
     owner: "DevOps + QA + Owner"
-    status: in_progress
+    status: done
 
   - id: ACT-011
     epic: E
