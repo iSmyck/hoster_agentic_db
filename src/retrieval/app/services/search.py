@@ -42,6 +42,32 @@ def _exact_score(query: str, content: str) -> float:
     return matches / len(query_terms)
 
 
+def score_chunk(
+    query: str,
+    chunk: Chunk,
+    query_embedding: list[float] | None = None,
+) -> dict[str, float]:
+    """Return the semantic, exact, and hybrid scores for a single chunk.
+
+    This helper is intentionally small and stable so benchmark harnesses and
+    tests can compute deterministic scores without reimplementing the ranking
+    logic. It does not mutate the chunk or perform authorization checks.
+    """
+    vector = _to_floats(chunk.embedding)
+    semantic_score = 0.0
+    if query_embedding is not None and vector:
+        semantic_score = cosine_similarity(query_embedding, vector)
+
+    exact_score = _exact_score(query, chunk.content)
+    hybrid_score = 0.7 * semantic_score + 0.3 * exact_score
+
+    return {
+        "semantic": semantic_score,
+        "exact": exact_score,
+        "hybrid": hybrid_score,
+    }
+
+
 def _rank_chunks(
     chunks: list[Chunk],
     query: str,
@@ -50,24 +76,17 @@ def _rank_chunks(
 ) -> list[tuple[Chunk, float, str]]:
     """Return chunks annotated with score and contributing mode."""
     scored: list[tuple[Chunk, float, str]] = []
+    # Avoid computing the semantic score when it will not be used.
+    embedding_for_mode = query_embedding if mode in ("semantic", "hybrid") else None
     for chunk in chunks:
-        semantic_score = 0.0
-        exact_score = 0.0
-
-        if mode in ("semantic", "hybrid"):
-            vector = _to_floats(chunk.embedding)
-            semantic_score = cosine_similarity(query_embedding, vector)
-
-        if mode in ("exact", "hybrid"):
-            exact_score = _exact_score(query, chunk.content)
+        scores = score_chunk(query, chunk, embedding_for_mode)
 
         if mode == "semantic":
-            score = semantic_score
+            score = scores["semantic"]
         elif mode == "exact":
-            score = exact_score
+            score = scores["exact"]
         else:
-            # Weighted hybrid: 70 % semantic, 30 % exact overlap.
-            score = 0.7 * semantic_score + 0.3 * exact_score
+            score = scores["hybrid"]
 
         if score > 0:
             scored.append((chunk, score, mode))

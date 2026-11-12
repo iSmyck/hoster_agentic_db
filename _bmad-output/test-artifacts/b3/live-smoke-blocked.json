@@ -1,0 +1,10 @@
+{
+  "title": "Phase B live smoke test — blocked run record",
+  "service": "src/retrieval/scripts/smoke_retrieval.py",
+  "blocked_at": "2026-11-12T11:30:00Z",
+  "reason": "Identity service (localhost:8001) and Retrieval service (localhost:8003) are not currently listening; connection refused during health check.",
+  "command": "uv run python src/retrieval/scripts/smoke_retrieval.py",
+  "command_exit_code": 1,
+  "last_error": "identity health check failed: [Errno 61] Connection refused",
+  "note": "The script is unchanged and ready to run once the local stack is started. This record is evidence that the live gate was attempted and explicitly blocked, not skipped."
+}

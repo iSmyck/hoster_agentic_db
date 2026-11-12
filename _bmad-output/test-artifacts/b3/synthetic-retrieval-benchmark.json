@@ -1,0 +1,402 @@
+{
+  "title": "Phase B synthetic retrieval benchmark",
+  "synthetic": true,
+  "live_blocked": true,
+  "generated_at": "2026-11-12T11:38:45.967903+00:00",
+  "config": {
+    "embedding_model": "stub-deterministic",
+    "embedding_dimensions": 1024,
+    "database": "sqlite:///:memory:",
+    "k": 5,
+    "mode": "exact",
+    "corpus_size": 10,
+    "query_count": 20,
+    "thresholds": {
+      "recall@k": 0.5,
+      "mrr": 0.5,
+      "p95_latency_ms": 1000.0
+    }
+  },
+  "metrics": {
+    "recall@k": 1.0,
+    "mrr": 1.0,
+    "p95_latency_ms": 10.403,
+    "mean_latency_ms": 10.063,
+    "p95_method": "nearest-rank (conservative for small samples)",
+    "queries_run": 20,
+    "k": 5,
+    "mode": "exact",
+    "corpus_size": 10
+  },
+  "edge_cases": {
+    "empty_corpus": {
+      "passed": true
+    },
+    "stale_cursor": {
+      "passed": true,
+      "error": {
+        "code": "STALE_SNAPSHOT",
+        "message": "cursor is bound to a generation that is no longer active"
+      }
+    },
+    "unauthorized_filter": {
+      "passed": true
+    },
+    "outsider_filter": {
+      "passed": true
+    }
+  },
+  "per_query": [
+    {
+      "query": "документ посвящен анализ данных",
+      "actor_role": "reader",
+      "retrieved": [
+        "docs/ru/анализ_данных.md",
+        "docs/ru/базы_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/облачные_технологии.md",
+        "docs/ru/управление_проектами.md"
+      ],
+      "relevant": [
+        "docs/ru/анализ_данных.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 13.753
+    },
+    {
+      "query": "документ посвящен анализ данных",
+      "actor_role": "approver",
+      "retrieved": [
+        "docs/ru/анализ_данных.md",
+        "secret/ru/анализ_данных.md",
+        "docs/ru/базы_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/облачные_технологии.md"
+      ],
+      "relevant": [
+        "docs/ru/анализ_данных.md",
+        "secret/ru/анализ_данных.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 10.131
+    },
+    {
+      "query": "документ посвящен информационная безопасность",
+      "actor_role": "reader",
+      "retrieved": [
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/облачные_технологии.md",
+        "docs/ru/управление_проектами.md",
+        "docs/ru/машинное_обучение.md"
+      ],
+      "relevant": [
+        "docs/ru/информационная_безопасность.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 9.418
+    },
+    {
+      "query": "документ посвящен информационная безопасность",
+      "actor_role": "approver",
+      "retrieved": [
+        "docs/ru/информационная_безопасность.md",
+        "secret/ru/информационная_безопасность.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/облачные_технологии.md",
+        "docs/ru/управление_проектами.md"
+      ],
+      "relevant": [
+        "docs/ru/информационная_безопасность.md",
+        "secret/ru/информационная_безопасность.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 9.947
+    },
+    {
+      "query": "документ посвящен облачные технологии",
+      "actor_role": "reader",
+      "retrieved": [
+        "docs/ru/облачные_технологии.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/управление_проектами.md",
+        "docs/ru/машинное_обучение.md"
+      ],
+      "relevant": [
+        "docs/ru/облачные_технологии.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 10.403
+    },
+    {
+      "query": "документ посвящен облачные технологии",
+      "actor_role": "approver",
+      "retrieved": [
+        "docs/ru/облачные_технологии.md",
+        "secret/ru/облачные_технологии.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/управление_проектами.md"
+      ],
+      "relevant": [
+        "docs/ru/облачные_технологии.md",
+        "secret/ru/облачные_технологии.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 9.865
+    },
+    {
+      "query": "документ посвящен управление проектами",
+      "actor_role": "reader",
+      "retrieved": [
+        "docs/ru/управление_проектами.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/облачные_технологии.md",
+        "docs/ru/машинное_обучение.md"
+      ],
+      "relevant": [
+        "docs/ru/управление_проектами.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 10.103
+    },
+    {
+      "query": "документ посвящен управление проектами",
+      "actor_role": "approver",
+      "retrieved": [
+        "docs/ru/управление_проектами.md",
+        "secret/ru/управление_проектами.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/облачные_технологии.md"
+      ],
+      "relevant": [
+        "docs/ru/управление_проектами.md",
+        "secret/ru/управление_проектами.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 9.499
+    },
+    {
+      "query": "документ посвящен машинное обучение",
+      "actor_role": "reader",
+      "retrieved": [
+        "docs/ru/машинное_обучение.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/облачные_технологии.md",
+        "docs/ru/управление_проектами.md"
+      ],
+      "relevant": [
+        "docs/ru/машинное_обучение.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 9.98
+    },
+    {
+      "query": "документ посвящен машинное обучение",
+      "actor_role": "approver",
+      "retrieved": [
+        "docs/ru/машинное_обучение.md",
+        "secret/ru/машинное_обучение.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/облачные_технологии.md"
+      ],
+      "relevant": [
+        "docs/ru/машинное_обучение.md",
+        "secret/ru/машинное_обучение.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 9.864
+    },
+    {
+      "query": "документ посвящен корпоративная архитектура",
+      "actor_role": "reader",
+      "retrieved": [
+        "docs/ru/корпоративная_архитектура.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/облачные_технологии.md",
+        "docs/ru/управление_проектами.md"
+      ],
+      "relevant": [
+        "docs/ru/корпоративная_архитектура.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 9.776
+    },
+    {
+      "query": "документ посвящен корпоративная архитектура",
+      "actor_role": "approver",
+      "retrieved": [
+        "docs/ru/корпоративная_архитектура.md",
+        "secret/ru/корпоративная_архитектура.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/облачные_технологии.md"
+      ],
+      "relevant": [
+        "docs/ru/корпоративная_архитектура.md",
+        "secret/ru/корпоративная_архитектура.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 9.97
+    },
+    {
+      "query": "документ посвящен разработка программного обеспечения",
+      "actor_role": "reader",
+      "retrieved": [
+        "docs/ru/разработка_программного_обеспечения.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/облачные_технологии.md",
+        "docs/ru/управление_проектами.md"
+      ],
+      "relevant": [
+        "docs/ru/разработка_программного_обеспечения.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 9.478
+    },
+    {
+      "query": "документ посвящен разработка программного обеспечения",
+      "actor_role": "approver",
+      "retrieved": [
+        "docs/ru/разработка_программного_обеспечения.md",
+        "secret/ru/разработка_программного_обеспечения.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/облачные_технологии.md"
+      ],
+      "relevant": [
+        "docs/ru/разработка_программного_обеспечения.md",
+        "secret/ru/разработка_программного_обеспечения.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 10.257
+    },
+    {
+      "query": "документ посвящен сетевые протоколы",
+      "actor_role": "reader",
+      "retrieved": [
+        "docs/ru/сетевые_протоколы.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/облачные_технологии.md",
+        "docs/ru/управление_проектами.md"
+      ],
+      "relevant": [
+        "docs/ru/сетевые_протоколы.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 9.881
+    },
+    {
+      "query": "документ посвящен сетевые протоколы",
+      "actor_role": "approver",
+      "retrieved": [
+        "docs/ru/сетевые_протоколы.md",
+        "secret/ru/сетевые_протоколы.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/облачные_технологии.md"
+      ],
+      "relevant": [
+        "docs/ru/сетевые_протоколы.md",
+        "secret/ru/сетевые_протоколы.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 9.846
+    },
+    {
+      "query": "документ посвящен базы данных",
+      "actor_role": "reader",
+      "retrieved": [
+        "docs/ru/базы_данных.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/облачные_технологии.md",
+        "docs/ru/управление_проектами.md"
+      ],
+      "relevant": [
+        "docs/ru/базы_данных.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 10.288
+    },
+    {
+      "query": "документ посвящен базы данных",
+      "actor_role": "approver",
+      "retrieved": [
+        "docs/ru/базы_данных.md",
+        "docs/ru/анализ_данных.md",
+        "secret/ru/базы_данных.md",
+        "secret/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md"
+      ],
+      "relevant": [
+        "docs/ru/базы_данных.md",
+        "secret/ru/базы_данных.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 9.339
+    },
+    {
+      "query": "документ посвящен цифровая трансформация",
+      "actor_role": "reader",
+      "retrieved": [
+        "docs/ru/цифровая_трансформация.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/облачные_технологии.md",
+        "docs/ru/управление_проектами.md"
+      ],
+      "relevant": [
+        "docs/ru/цифровая_трансформация.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 9.975
+    },
+    {
+      "query": "документ посвящен цифровая трансформация",
+      "actor_role": "approver",
+      "retrieved": [
+        "docs/ru/цифровая_трансформация.md",
+        "secret/ru/цифровая_трансформация.md",
+        "docs/ru/анализ_данных.md",
+        "docs/ru/информационная_безопасность.md",
+        "docs/ru/облачные_технологии.md"
+      ],
+      "relevant": [
+        "docs/ru/цифровая_трансформация.md",
+        "secret/ru/цифровая_трансформация.md"
+      ],
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 9.495
+    }
+  ],
+  "pass": true
+}

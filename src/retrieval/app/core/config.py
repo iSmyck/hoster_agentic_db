@@ -80,6 +80,54 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("RETRIEVAL_LOG_LEVEL", "LOG_LEVEL"),
     )
 
+    # Benchmark harness configuration. These only affect the synthetic
+    # retrieval benchmark and are ignored by the production service.
+    BENCHMARK_QUERY_COUNT: int = Field(
+        default=-1,
+        ge=-1,
+        description="Number of golden queries to run; -1 runs the full synthetic set.",
+    )
+    BENCHMARK_K: int = Field(
+        default=5,
+        ge=1,
+        description="Cut-off rank for recall@k and MRR computations.",
+    )
+    BENCHMARK_MODE: Literal["semantic", "exact", "hybrid"] = Field(
+        default="exact",
+        description="Search mode used by the benchmark harness.",
+    )
+    BENCHMARK_CORPUS_SIZE: int = Field(
+        default=10,
+        ge=1,
+        description="Number of topics in the synthetic Russian corpus.",
+    )
+    BENCHMARK_RECALL_THRESHOLD: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Minimum average recall@k for a passing synthetic run.",
+    )
+    BENCHMARK_MRR_THRESHOLD: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Minimum mean reciprocal rank for a passing synthetic run.",
+    )
+    BENCHMARK_P95_MS_THRESHOLD: float = Field(
+        default=1000.0,
+        ge=0.0,
+        description="Maximum p95 latency (ms) for a passing synthetic run.",
+    )
+    BENCHMARK_OUTPUT_PATH: str = Field(
+        default="_bmad-output/test-artifacts/b3/synthetic-retrieval-benchmark.json",
+        description="Path to the JSON benchmark report, relative to the project root.",
+    )
+    BENCHMARK_EMBEDDING_MODEL: str = Field(
+        default="stub-deterministic",
+        description="Embedding model used by the benchmark harness; 'stub-deterministic' or 'kimi'.",
+        validation_alias=AliasChoices("RETRIEVAL_BENCHMARK_EMBEDDING_MODEL", "BENCHMARK_EMBEDDING_MODEL"),
+    )
+
     @field_validator("KB_INDEX_SCHEMA", mode="before")
     @classmethod
     def _empty_schema_means_none(cls, value: object) -> str | None:
