@@ -15,7 +15,7 @@
 #   - blocked: cannot proceed without owner/external input
 
 generated: "2026-11-11 01:05"
-last_updated: "2026-11-12 12:48"
+last_updated: "2026-11-12 13:08"
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -62,7 +62,7 @@ roadmap:
 # -----------------------------------------------------------------------------
 readiness:
   g1_slice_percent: 100
-  overall_percent: 75
+  overall_percent: 80
   g1_status: "DONE"
   blocked_gates:
     - Full A01–A36 live acceptance (API lifecycle subset 20/20 PASS; fault matrix A05–A10/A27–A30 closed synthetically; live destructive acceptance optional)
@@ -276,7 +276,7 @@ action_items:
     title: "Backup encryption, retention and runbook decisions"
     description: "Owner decisions on key management, retention policy, runbook format."
     owner: "Backend + Owner"
-    status: open
+    status: done
 
   - id: ACT-009
     epic: E
@@ -297,7 +297,7 @@ action_items:
     title: "Production readiness decisions"
     description: "Owner approved minimal production target: single-node PostgreSQL with daily backups, basic hoster monitoring, security checklist review, and Markdown runbooks in repo. HA/DR and external pen-tests deferred post-launch."
     owner: "DevOps + Security + Owner"
-    status: in_progress
+    status: done
 
   - id: ACT-012
     epic: A
