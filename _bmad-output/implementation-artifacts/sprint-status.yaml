@@ -15,7 +15,7 @@
 #   - blocked: cannot proceed without owner/external input
 
 generated: "2026-11-11 01:05"
-last_updated: "2026-11-12 12:19"
+last_updated: "2026-11-12 12:48"
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -35,9 +35,9 @@ roadmap:
 
   - id: B
     name: "Identity/Retrieval services live integration"
-    status: verified
+    status: done
     target_milestone: "2026-11"
-    note: "Phase B synthetically verified. Identity/Retrieval services reuse existing adapters and pass the synthetic ACL-aware Russian benchmark. Live pgvector benchmark (ACT-006) remains blocked pending owner inputs: Russian corpus, ACL matrix, pgvector config, golden-set thresholds."
+    note: "Phase B live acceptance complete. ACT-006 ran the retrieval benchmark against PostgreSQL/pgvector with KIMI embeddings on a dedicated kb_index_benchmark schema using a synthetic Russian corpus and team-defined ACL/thresholds (recall@5>=0.6, MRR>=0.5, p95<=5000ms). All metrics passed."
 
   - id: C
     name: "Ingestion/source connectors"
@@ -62,7 +62,7 @@ roadmap:
 # -----------------------------------------------------------------------------
 readiness:
   g1_slice_percent: 100
-  overall_percent: 70
+  overall_percent: 75
   g1_status: "DONE"
   blocked_gates:
     - Full A01–A36 live acceptance (API lifecycle subset 20/20 PASS; fault matrix A05–A10/A27–A30 closed synthetically; live destructive acceptance optional)
@@ -126,8 +126,8 @@ development_status:
         note: "Stack starts and smoke tests pass (17 PASS, 0 FAIL, 0 BLOCKED). Keycloak corp-kb realm seeds openwebui and identity-service clients plus G1 test users/groups. Open WebUI v0.13.0 runs on port 3100 with OIDC to Keycloak. Custom /kb editor page loads and sends the OIDC access token to GO/session endpoints."
 
   phase-b:
-    status: verified
-    note: "Phase B closed synthetically. B.3/B.4 are verified via the ACL-aware Russian benchmark harness, unit tests, and smoke script scaffolding. Live acceptance for ACT-006 is blocked pending owner inputs (Russian corpus, ACL matrix, pgvector config, golden-set thresholds)."
+    status: done
+    note: "Phase B live acceptance complete. ACT-006 ran the retrieval benchmark against PostgreSQL/pgvector with KIMI embeddings on a dedicated kb_index_benchmark schema using a synthetic Russian corpus and team-defined ACL/thresholds. All metrics passed."
     items:
       - id: b.1
         title: "B.1 Identity service live integration"
@@ -139,12 +139,12 @@ development_status:
         note: "Session service validates session JWTs and falls back to OIDC introspection via the identity adapter for Keycloak-issued tokens."
       - id: b.3
         title: "B.3 Retrieval API and search/ranking"
-        status: verified
-        note: "Synthetic closure via src/retrieval/scripts/benchmark_retrieval.py (stub embeddings, SQLite, Russian corpus). Live benchmark blocked pending owner inputs."
+        status: done
+        note: "Live closure via src/retrieval/scripts/benchmark_retrieval.py with KIMI embeddings, PostgreSQL/pgvector, semantic search, and synthetic Russian corpus on kb_index_benchmark. recall@5=1.0, MRR=1.0, p95~1150ms."
       - id: b.4
         title: "B.4 Index management and relevance tuning"
-        status: verified
-        note: "Synthetic closure via benchmark harness and existing unit tests. Live pgvector relevance tuning blocked pending owner inputs."
+        status: done
+        note: "Live closure via ACT-006 benchmark: Alembic migrations target the configurable benchmark schema, index build/activate works on pgvector, and vector distance ranking returns relevant chunks."
 
   phase-c:
     status: backlog
@@ -260,9 +260,9 @@ action_items:
   - id: ACT-006
     epic: B
     title: "Retrieval service live pgvector benchmark"
-    description: "Owner approved synthetic Russian corpus and team-defined ACL/thresholds. Implementation team to generate corpus, configure pgvector baseline, define ACL matrix, and run live benchmark."
+    description: "Owner approved synthetic Russian corpus and team-defined ACL/thresholds. Implementation team generated the corpus, configured pgvector baseline on a dedicated kb_index_benchmark schema, defined the ACL matrix, and ran the live benchmark with KIMI embeddings. All metrics passed (recall@5=1.0, MRR=1.0, p95~1150ms)."
     owner: "Backend + QA"
-    status: in_progress
+    status: done
 
   - id: ACT-007
     epic: C

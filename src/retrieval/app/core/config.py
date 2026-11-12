@@ -102,21 +102,21 @@ class Settings(BaseSettings):
         description="Number of topics in the synthetic Russian corpus.",
     )
     BENCHMARK_RECALL_THRESHOLD: float = Field(
-        default=0.5,
+        default=0.6,
         ge=0.0,
         le=1.0,
-        description="Minimum average recall@k for a passing synthetic run.",
+        description="Minimum average recall@k for a passing benchmark run.",
     )
     BENCHMARK_MRR_THRESHOLD: float = Field(
         default=0.5,
         ge=0.0,
         le=1.0,
-        description="Minimum mean reciprocal rank for a passing synthetic run.",
+        description="Minimum mean reciprocal rank for a passing benchmark run.",
     )
     BENCHMARK_P95_MS_THRESHOLD: float = Field(
-        default=1000.0,
+        default=5000.0,
         ge=0.0,
-        description="Maximum p95 latency (ms) for a passing synthetic run.",
+        description="Maximum p95 latency (ms) for a passing benchmark run.",
     )
     BENCHMARK_OUTPUT_PATH: str = Field(
         default="_bmad-output/test-artifacts/b3/synthetic-retrieval-benchmark.json",

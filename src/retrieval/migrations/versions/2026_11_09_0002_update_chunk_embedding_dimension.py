@@ -19,7 +19,18 @@ down_revision = "0001"
 branch_labels = None
 depends_on = None
 
-SCHEMA = "kb_index"
+def _schema() -> str:
+    """Return the target schema from the environment, defaulting to kb_index."""
+    import os
+
+    return (
+        os.environ.get("RETRIEVAL_KB_INDEX_SCHEMA")
+        or os.environ.get("KB_INDEX_SCHEMA")
+        or "kb_index"
+    )
+
+
+SCHEMA = _schema()
 
 
 def _embedding_dim() -> int:

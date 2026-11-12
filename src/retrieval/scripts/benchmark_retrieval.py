@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
-"""Synthetic ACL-aware Russian corpus benchmark for the Retrieval adapter.
+"""ACL-aware Russian corpus benchmark for the Retrieval adapter.
 
-The harness runs without owner credentials or a real corpus. It uses:
+The harness can run in two modes:
 
-* SQLite in-memory database (no PostgreSQL/pgvector required).
-* The ``stub-deterministic`` embedding adapter by default.
-* A generated Russian-language corpus with public and restricted documents.
-* A configurable ACL matrix enforced by the stub identity client.
+* SQLite in-memory with the ``stub-deterministic`` embedding adapter (default).
+* PostgreSQL/pgvector with a real embedding adapter such as ``kimi`` when
+  ``DATABASE_URL`` is configured.
 
-Metrics reported: recall@k, mean reciprocal rank (MRR), and p95 search latency.
-The harness also exercises the empty-corpus, unauthorized-filtering, and stale-
-cursor edge cases.
+It uses a generated Russian-language corpus with public and restricted
+documents, a configurable ACL matrix enforced by the stub identity client, and
+reports recall@k, mean reciprocal rank (MRR), and p95 search latency.
 
 Run from the project root:
     uv run python src/retrieval/scripts/benchmark_retrieval.py
 
 Environment variables (see ``src/retrieval/app/core/config.py``):
+    DATABASE_URL                SQLAlchemy database URL; unset defaults to SQLite
+    KB_INDEX_SCHEMA             PostgreSQL schema for index tables (default kb_index)
     BENCHMARK_K                 cut-off rank (default 5)
     BENCHMARK_CORPUS_SIZE       number of topics (default 10; max 10)
     BENCHMARK_QUERY_COUNT       number of golden queries to run; -1 runs all (default -1)
@@ -37,22 +38,35 @@ import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse, urlunparse
 
 # Make the ``src`` package root importable when the script is run directly.
 SRC_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(SRC_ROOT))
 
-# Force SQLite in-memory mode with schema qualification disabled, and default
-# the benchmark to the stub embedding adapter before the settings singleton is
-# imported. Kimi embeddings can be opted into via BENCHMARK_EMBEDDING_MODEL.
-os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
-os.environ.setdefault("KB_INDEX_SCHEMA", "")
+# Default to SQLite in-memory only when DATABASE_URL is not already configured.
+# This keeps the harness self-contained for local synthetic runs while allowing
+# a wrapper to point it at a real PostgreSQL/pgvector instance.
+if "DATABASE_URL" not in os.environ:
+    os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+    if "KB_INDEX_SCHEMA" not in os.environ and "RETRIEVAL_KB_INDEX_SCHEMA" not in os.environ:
+        os.environ.setdefault("KB_INDEX_SCHEMA", "")
+
+# Allow the unprefixed wrapper variable to override the service-prefixed alias
+# so callers can target a dedicated benchmark schema without editing .env.
+if os.environ.get("KB_INDEX_SCHEMA"):
+    os.environ["RETRIEVAL_KB_INDEX_SCHEMA"] = os.environ["KB_INDEX_SCHEMA"]
 
 # The benchmark must set the embedding model before the settings singleton is
 # imported. It also accepts the service-prefixed alias for consistency.
+# An explicitly exported EMBEDDING_MODEL (e.g. from the live wrapper) is
+# respected; otherwise the BENCHMARK_* variables or the stub default are used.
 os.environ["EMBEDDING_MODEL"] = os.environ.get(
     "BENCHMARK_EMBEDDING_MODEL",
-    os.environ.get("RETRIEVAL_BENCHMARK_EMBEDDING_MODEL", "stub-deterministic"),
+    os.environ.get(
+        "RETRIEVAL_BENCHMARK_EMBEDDING_MODEL",
+        os.environ.get("EMBEDDING_MODEL", "stub-deterministic"),
+    ),
 )
 os.environ["RETRIEVAL_EMBEDDING_MODEL"] = os.environ["EMBEDDING_MODEL"]
 
@@ -117,7 +131,11 @@ def _topic_sha(topic: str, sensitivity: str) -> str:
 
 
 def build_synthetic_corpus(size: int) -> dict[str, str]:
-    """Return a path -> content mapping for ``size`` Russian topics."""
+    """Return a path -> content mapping for ``size`` Russian topics.
+
+    Each topic yields a public and a restricted document, so the full corpus
+    contains ``size * 2`` documents across ``size`` topics.
+    """
     documents: dict[str, str] = {}
     for topic in DEFAULT_TOPICS[:size]:
         for sensitivity in ("public", "secret"):
@@ -206,12 +224,73 @@ def _mean(values: list[float]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
+def _is_sqlite(database_url: str) -> bool:
+    return database_url.startswith("sqlite")
+
+
+def _redact_database_url(database_url: str) -> str:
+    """Return a database URL with the password replaced by '***'."""
+    if _is_sqlite(database_url):
+        return database_url
+    parsed = urlparse(database_url)
+    if parsed.password is None:
+        return database_url
+    netloc = parsed.netloc.replace(f":{parsed.password}", ":***", 1)
+    return urlunparse(parsed._replace(netloc=netloc))
+
+
+def _run_alembic_migrations(database_url: str) -> None:
+    """Run Alembic upgrades for PostgreSQL/pgvector targets."""
+    from alembic import command
+    from alembic.config import Config
+
+    alembic_cfg = Config(str(Path("src/retrieval/migrations/alembic.ini").resolve()))
+    alembic_cfg.set_main_option("sqlalchemy.url", database_url)
+    command.upgrade(alembic_cfg, "head")
+
+
+def _is_benchmark_schema(schema: str | None) -> bool:
+    """Return True when the schema name clearly identifies a benchmark target."""
+    return bool(schema and "benchmark" in schema.lower())
+
+
+def _reset_benchmark_schema(engine: Any, schema: str | None) -> None:
+    """Drop a dedicated benchmark schema so each run starts from a clean state."""
+    if not schema or not _is_benchmark_schema(schema):
+        return
+    from sqlalchemy import text
+
+    with engine.connect() as connection:
+        connection.execution_options(isolation_level="AUTOCOMMIT")
+        connection.execute(text(f"DROP SCHEMA IF EXISTS {schema} CASCADE"))
+        print(f"  reset benchmark schema: {schema}")
+
+
+def _create_engine_and_migrate(database_url: str, schema: str | None) -> Any:
+    """Create the SQLAlchemy engine and bring the schema to HEAD."""
+    if _is_sqlite(database_url):
+        engine = create_engine(
+            database_url,
+            connect_args={"check_same_thread": False},
+            poolclass=None,  # type: ignore[arg-type]
+        )
+        Base.metadata.create_all(engine)
+        return engine
+
+    engine = create_engine(database_url, poolclass=None)  # type: ignore[arg-type]
+    _reset_benchmark_schema(engine, schema)
+    _run_alembic_migrations(database_url)
+    return engine
+
+
 def run_benchmark() -> dict[str, Any]:
-    """Execute the synthetic benchmark and return the report dictionary."""
+    """Execute the benchmark and return the report dictionary."""
     k = settings.BENCHMARK_K
     corpus_size = settings.BENCHMARK_CORPUS_SIZE
     mode = settings.BENCHMARK_MODE
     output_path = Path(settings.BENCHMARK_OUTPUT_PATH)
+    database_url = settings.DATABASE_URL
+    schema = settings.KB_INDEX_SCHEMA
 
     if corpus_size > len(DEFAULT_TOPICS):
         raise ValueError(
@@ -224,12 +303,7 @@ def run_benchmark() -> dict[str, Any]:
     documents = build_synthetic_corpus(corpus_size)
     acl_matrix = build_acl_matrix()
 
-    engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=None,  # type: ignore[arg-type]
-    )
-    Base.metadata.create_all(engine)
+    engine = _create_engine_and_migrate(database_url, schema)
     SessionLocal = sessionmaker(bind=engine)
     db = SessionLocal()
 
@@ -394,9 +468,9 @@ def run_benchmark() -> dict[str, Any]:
         metrics = {
             "recall@k": round(avg_recall, 4),
             "mrr": round(avg_mrr, 4),
-        "p95_latency_ms": round(p95_latency_ms, 3),
-        "mean_latency_ms": round(mean_latency_ms, 3),
-        "p95_method": "nearest-rank (conservative for small samples)",
+            "p95_latency_ms": round(p95_latency_ms, 3),
+            "mean_latency_ms": round(mean_latency_ms, 3),
+            "p95_method": "nearest-rank (conservative for small samples)",
             "queries_run": len(per_query_results),
             "k": k,
             "mode": mode,
@@ -422,20 +496,34 @@ def run_benchmark() -> dict[str, Any]:
             and outsider_filter_pass
         )
 
+        run_mode_title = (
+            "Phase B live pgvector retrieval benchmark"
+            if not _is_sqlite(database_url)
+            else "Phase B synthetic retrieval benchmark"
+        )
         report: dict[str, Any] = {
-            "title": "Phase B synthetic retrieval benchmark",
-            "synthetic": True,
-            "live_blocked": True,
+            "title": run_mode_title,
+            "synthetic_corpus": True,
+            "live_infrastructure": not _is_sqlite(database_url),
             "generated_at": datetime.now(UTC).isoformat(),
             "config": {
                 "embedding_model": settings.EMBEDDING_MODEL,
                 "embedding_dimensions": settings.EMBEDDING_DIMENSIONS,
-                "database": "sqlite:///:memory:",
+                "database": _redact_database_url(database_url),
+                "schema": schema,
                 "k": k,
                 "mode": mode,
                 "corpus_size": corpus_size,
+                "document_count": len(documents),
                 "query_count": len(per_query_results),
                 "thresholds": thresholds,
+            },
+            "acl_matrix": {
+                role: {
+                    "actor_id": str(config["actor_id"]),
+                    "allowed_prefixes": config["allowed_prefixes"],
+                }
+                for role, config in acl_matrix.items()
             },
             "metrics": metrics,
             "edge_cases": {
@@ -457,15 +545,20 @@ def run_benchmark() -> dict[str, Any]:
 
     finally:
         db.close()
-        Base.metadata.drop_all(engine)
+        if _is_sqlite(database_url):
+            Base.metadata.drop_all(engine)
 
 
 def main() -> int:
-    print("Running synthetic ACL-aware Russian retrieval benchmark...")
+    run_mode = "live" if not _is_sqlite(settings.DATABASE_URL) else "synthetic"
+    print(f"Running {run_mode} ACL-aware Russian retrieval benchmark...")
     report = run_benchmark()
 
+    print(f"  database: {report['config']['database']}")
+    print(f"  schema: {report['config']['schema']}")
     print(f"  embedding model: {report['config']['embedding_model']}")
     print(f"  mode: {report['config']['mode']}")
+    print(f"  documents: {report['config']['document_count']}")
     print(f"  queries: {report['metrics']['queries_run']}")
     print(f"  recall@{report['metrics']['k']}: {report['metrics']['recall@k']}")
     print(f"  MRR: {report['metrics']['mrr']}")
