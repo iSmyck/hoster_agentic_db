@@ -164,11 +164,38 @@ def record_decision(
     proposal = db.get(ProposalRecord, request.proposal_id)
     if proposal is None:
         raise GitOrchestratorError("NOT_FOUND", "proposal not found")
+
+    # G1 fault matrix: at most one decision per proposal unless explicitly
+    # superseding the prior decision. This closes the concurrent-decision race
+    # (A09) and provides a deterministic path to cancel/supersede (A28).
+    prior_decision = (
+        db.query(DecisionRecord).filter_by(proposal_id=proposal.id).first()
+    )
+    if prior_decision is not None:
+        if request.supersedes_decision_id != prior_decision.id:
+            raise GitOrchestratorError(
+                "INVALID_STATE",
+                "proposal already has a decision; use supersedes_decision_id to replace it",
+            )
+        if proposal.status == "merged":
+            raise GitOrchestratorError(
+                "INVALID_STATE",
+                "cannot supersede a decision for an already-merged proposal",
+            )
+        prior_decision.state = "superseded"
+        if proposal.status in ("rejected", "cancelled"):
+            proposal.status = "in_review"
+    elif request.supersedes_decision_id is not None:
+        raise GitOrchestratorError(
+            "NOT_FOUND", "superseded decision not found for this proposal"
+        )
+
     if proposal.status in ("rejected", "cancelled", "merged"):
         raise GitOrchestratorError(
             "INVALID_STATE",
             f"proposal is already {proposal.status}",
         )
+
     principals = {
         proposal.proposal_data.get("author_stable_id"),
         proposal.proposal_data.get("requester_stable_id"),
@@ -239,6 +266,7 @@ def record_decision(
         note_id=note.get("id"),
         tag_name=tag_name,
         state="recorded",
+        supersedes_decision_id=request.supersedes_decision_id,
     )
     db.add(record)
 

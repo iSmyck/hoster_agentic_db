@@ -15,7 +15,7 @@
 #   - blocked: cannot proceed without owner/external input
 
 generated: "2026-11-11 01:05"
-last_updated: "2026-11-12 11:28"
+last_updated: "2026-11-12 11:45"
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -66,7 +66,7 @@ readiness:
   g1_status: "DONE"
   blocked_gates:
     - T04b live lossless serializer/IME/accessibility/XSS gate (deferred to post-G1)
-    - Full A01–A36 live acceptance (API lifecycle subset 20/20 PASS; full fault matrix pending)
+    - Full A01–A36 live acceptance (API lifecycle subset 20/20 PASS; fault matrix A05–A10/A27–A30 closed synthetically; live destructive acceptance optional)
     - T13/T16 object-store ACL production engine recheck
     - T11 hoster.ai endpoint/model IDs/credentials/egress
     - Production AD/live-SLO and production IdP integration
@@ -107,7 +107,7 @@ development_status:
       - id: t05
         title: "T05 proposal/decision/merge lifecycle and recovery"
         status: verified
-        note: "Live API subset 20/20 PASS; Open WebUI subset 17/17 PASS. Full A05–A10/A27–A30 and fault matrix pending."
+        note: "Live API subset 20/20 PASS; Open WebUI subset 17/17 PASS. A05–A10/A27–A30 and concurrency/fault matrix closed synthetically (20/20 PASS) with decision supersede support and unified error shape. Live destructive acceptance remains optional."
       - id: t06
         title: "T06 merge-only GO enforcement, fencing and quarantine"
         status: verified
@@ -249,7 +249,7 @@ action_items:
   - id: ACT-004
     epic: A
     title: "Full G1 live acceptance A01–A36 subset"
-    description: "Execute remaining A05–A10/A27–A30 and concurrency/fault matrix on sandbox. API lifecycle subset passed 20/20 via run_g1_live_acceptance.py. Browser/IdP and full fault matrix remain blocked."
+    description: "A05–A10/A27–A30 and concurrency/fault matrix closed synthetically via src/git-orchestrator/tests/test_g1_fault_matrix.py (20/20 PASS) and _bmad-output/test-artifacts/g1/run_g1_fault_matrix.py. API lifecycle happy path passed 20/20 via run_g1_live_acceptance.py. Live GitLab/PostgreSQL destructive acceptance remains optional and gated by G1_ALLOW_DESTRUCTIVE_RESET=1."
     owner: "QA + Dev"
     status: done
 

@@ -92,6 +92,7 @@ class DecisionRecordRequest(BaseModel):
     actor_id: str = Field(..., max_length=512)
     idempotency_key: str = Field(..., max_length=255)
     decision_data: dict[str, Any] = Field(default_factory=dict)
+    supersedes_decision_id: uuid.UUID | None = Field(default=None)
 
 
 class DecisionResponse(BaseModel):

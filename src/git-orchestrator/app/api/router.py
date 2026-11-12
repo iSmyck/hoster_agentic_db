@@ -75,37 +75,76 @@ def _handle_domain_error(exc: GitOrchestratorError) -> HTTPException:
         "ACTOR_MISMATCH": status.HTTP_403_FORBIDDEN,
         "APPROVER_MISMATCH": status.HTTP_403_FORBIDDEN,
     }
+    # Transient faults where a retry may succeed after state changes/reconcile.
+    retryable_codes = {
+        "BASE_MISMATCH",
+        "MERGE_FAILED",
+        "MERGE_UNKNOWN_OUTCOME",
+        "MERGE_PARENT_MISMATCH",
+        "DECISION_ANCHOR_FAILED",
+    }
     return HTTPException(
         status_code=code_map.get(exc.code, status.HTTP_400_BAD_REQUEST),
-        detail={"code": exc.code, "message": exc.message},
+        detail={
+            "code": exc.code,
+            "message": exc.message,
+            "request_id": uuid.uuid4().hex,
+            "retryable": exc.code in retryable_codes,
+        },
     )
 
 
 def _handle_adapter_error(exc: Exception) -> HTTPException:
+    request_id = uuid.uuid4().hex
     if isinstance(exc, httpx.HTTPStatusError):
         status_code = exc.response.status_code
         if status_code == 404:
             return HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail={"code": "NOT_FOUND", "message": "resource not found"},
+                detail={
+                    "code": "NOT_FOUND",
+                    "message": "resource not found",
+                    "request_id": request_id,
+                    "retryable": False,
+                },
             )
         if status_code >= 500:
             return HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail={"code": "ADAPTER_ERROR", "message": str(exc)},
+                detail={
+                    "code": "ADAPTER_ERROR",
+                    "message": str(exc),
+                    "request_id": request_id,
+                    "retryable": True,
+                },
             )
         return HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"code": "ADAPTER_ERROR", "message": str(exc)},
+            detail={
+                "code": "ADAPTER_ERROR",
+                "message": str(exc),
+                "request_id": request_id,
+                "retryable": False,
+            },
         )
     if isinstance(exc, GitLabAdapterError):
         return HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={"code": "NOT_FOUND", "message": str(exc)},
+            detail={
+                "code": "NOT_FOUND",
+                "message": str(exc),
+                "request_id": request_id,
+                "retryable": False,
+            },
         )
     return HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail={"code": "INTERNAL_ERROR", "message": str(exc)},
+        detail={
+            "code": "INTERNAL_ERROR",
+            "message": str(exc),
+            "request_id": request_id,
+            "retryable": False,
+        },
     )
 
 
@@ -128,12 +167,9 @@ def _bind_author(
     for key in ("author_stable_id", "requester_stable_id", "version_author_stable_id"):
         supplied = proposal_data.get(key)
         if supplied is not None and supplied != identity.stable_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "code": "ACTOR_MISMATCH",
-                    "message": f"{key} does not match session identity",
-                },
+            raise GitOrchestratorError(
+                "ACTOR_MISMATCH",
+                f"{key} does not match session identity",
             )
     proposal_data["author_stable_id"] = identity.stable_id
     proposal_data["requester_stable_id"] = identity.stable_id
@@ -146,12 +182,9 @@ def _bind_decision(
     request: DecisionRecordRequest, identity: AuthenticatedIdentity
 ) -> DecisionRecordRequest:
     if request.actor_id != identity.stable_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "ACTOR_MISMATCH",
-                "message": "actor_id does not match session identity",
-            },
+        raise GitOrchestratorError(
+            "ACTOR_MISMATCH",
+            "actor_id does not match session identity",
         )
     decision_data = {
         **request.decision_data,

@@ -1,0 +1,204 @@
+{
+  "checks": [
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixInvalidStateTransitions.test_merge_before_decision_rejected",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixInvalidStateTransitions.test_merge_after_rejected_decision_rejected",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixActorMismatch.test_decision_actor_spoofing_rejected",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixActorMismatch.test_proposal_author_binding_rejects_spoofed_author",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixSelfApproval.test_author_cannot_accept_own_proposal",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixIdempotency.test_proposal_idempotency_key_reused_with_different_sha",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixIdempotency.test_decision_idempotency_key_reused_with_different_action",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixConcurrentDecisions.test_second_decision_for_same_proposal_rejected",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixConcurrentDecisions.test_second_decision_idempotent_when_identical_key",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixMalformedPayload.test_invalid_proposal_sha_returns_422",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixMalformedPayload.test_short_proposal_sha_returns_422",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixRejectDecision.test_rejected_decision_persisted_and_blocks_merge",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixCancelSupersede.test_supersede_rejected_with_accepted_and_merge",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixCancelSupersede.test_supersede_wrong_prior_decision_rejected",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixCancelSupersede.test_supersede_without_prior_decision_rejected",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixCancelSupersede.test_supersede_already_merged_proposal_rejected",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixConcurrentMergeBarrier.test_recovery_required_blocks_new_merge_on_same_target",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixConcurrentMergeBarrier.test_base_mismatch_blocks_merge",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixErrorShape.test_domain_error_includes_code_message_request_id_retryable",
+      "status": "PASS"
+    },
+    {
+      "actual": "passed",
+      "details": {
+        "longrepr": ""
+      },
+      "expected": "test passes",
+      "id": "TestFaultMatrixErrorShape.test_adapter_error_includes_unified_shape",
+      "status": "PASS"
+    }
+  ],
+  "command": "uv run python _bmad-output/test-artifacts/g1/run_g1_fault_matrix.py",
+  "counts": {
+    "FAIL": 0,
+    "PASS": 20,
+    "TOTAL": 20
+  },
+  "environment": {
+    "database": "sqlite_in_memory",
+    "pinned_toolchain": {
+      "open_webui": "v0.13.0",
+      "open_webui_commit": "c38885a1a737da4968f157092f304f3b5481d0bf",
+      "python": "3.12.13",
+      "uv": "0.11.13"
+    },
+    "sandbox": "synthetic_stub_gitlab"
+  },
+  "generated_at": "2026-11-12T11:52:30.004218+00:00",
+  "live_gitlab_acceptance": "optional; requires G1_ALLOW_DESTRUCTIVE_RESET=1",
+  "schema_version": "g1-fault-matrix-v1",
+  "sensitive_data_included": false
+}
