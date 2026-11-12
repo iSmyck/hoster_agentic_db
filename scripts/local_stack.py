@@ -105,6 +105,31 @@ def _wait_for_postgres(timeout: float = 60.0) -> None:
     raise RuntimeError("PostgreSQL did not become healthy in time")
 
 
+def _wait_for_keycloak(timeout: float = 60.0) -> None:
+    keycloak_url = os.environ.get("KEYCLOAK_URL", "http://localhost:8082").rstrip("/")
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            r = httpx.get(f"{keycloak_url}/realms/master", timeout=5)
+            if r.status_code == 200:
+                print("Keycloak is healthy.")
+                return
+        except Exception as exc:  # noqa: BLE001
+            print(f"Waiting for Keycloak... ({exc})")
+        time.sleep(1)
+    raise RuntimeError("Keycloak did not become healthy in time")
+
+
+def _setup_keycloak() -> dict[str, Any]:
+    """Configure the sandbox Keycloak realm and return client secrets."""
+    sys.path.insert(0, str(REPO_ROOT / "src" / "identity"))
+    from scripts.setup_keycloak import setup_keycloak
+
+    result = setup_keycloak()
+    print("Keycloak realm configured.")
+    return result
+
+
 def _run_alembic(migrations_dir: str) -> None:
     from alembic import command
     from alembic.config import Config
@@ -279,6 +304,21 @@ def _start_openwebui() -> subprocess.Popen[Any] | None:
     if not env.get("WEBUI_SECRET_KEY"):
         env["WEBUI_SECRET_KEY"] = secrets.token_urlsafe(32)
 
+    # Open WebUI OIDC configuration for the Keycloak sandbox realm.
+    env["ENABLE_OAUTH"] = "true"
+    env["OAUTH_CLIENT_ID"] = os.environ.get("OAUTH_CLIENT_ID", "openwebui")
+    env["OAUTH_CLIENT_SECRET"] = os.environ.get("OAUTH_CLIENT_SECRET", "")
+    env["OPENID_PROVIDER_URL"] = os.environ.get(
+        "OPENID_PROVIDER_URL", "http://localhost:8082/realms/corp-kb/.well-known/openid-configuration"
+    )
+    env["OPENID_REDIRECT_URI"] = os.environ.get(
+        "OPENID_REDIRECT_URI", "http://localhost:3100/oauth/oidc/callback"
+    )
+    env["OAUTH_PROVIDER_NAME"] = os.environ.get("OAUTH_PROVIDER_NAME", "Keycloak")
+    env["OAUTH_SCOPES"] = os.environ.get("OAUTH_SCOPES", "openid email profile")
+    env["ENABLE_OAUTH_SIGNUP"] = "true"
+    env["OAUTH_MERGE_ACCOUNTS_BY_EMAIL"] = "true"
+
     if _openwebui_has_users():
         print("Open WebUI has existing users; authentication remains enabled.")
     else:
@@ -330,6 +370,11 @@ def _stop_processes(processes: list[subprocess.Popen[Any]]) -> None:
 def start_stack(openwebui: bool = True) -> list[subprocess.Popen[Any]]:
     _run(INFRA_COMMAND)
     _wait_for_postgres()
+    _wait_for_keycloak()
+    keycloak_cfg = _setup_keycloak()
+    os.environ["KEYCLOAK_CLIENT_SECRET"] = keycloak_cfg["identity_client_secret"]
+    os.environ["OAUTH_CLIENT_SECRET"] = keycloak_cfg["openwebui_client_secret"]
+
     for svc in SERVICES:
         if svc["migrations"]:
             _run_alembic(svc["migrations"])

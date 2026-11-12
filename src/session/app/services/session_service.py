@@ -6,10 +6,11 @@ Issues, validates, refreshes and revokes identity-bound access/refresh tokens.
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import httpx
 import jwt
 from sqlalchemy.orm import Session
 
@@ -50,6 +51,8 @@ class ValidationResult:
     stable_id: str
     access_policy_revision: str
     approval_policy_revision: str
+    role: str = "user"
+    groups: list[str] = field(default_factory=list)
 
 
 def _now() -> datetime:
@@ -165,14 +168,97 @@ def create_session(
     )
 
 
+def _looks_like_oidc_token(token: str) -> bool:
+    """Heuristic: does the raw JWT look like an external OIDC token?
+
+    Session JWTs issued by this service have ``iss`` set to the session
+    service itself. External OIDC tokens (Keycloak) have a different issuer.
+    This is only a routing hint; the token is fully validated by
+    ``_resolve_oidc_token`` before it is accepted.
+    """
+    if not settings.OIDC_ISSUER:
+        return False
+    try:
+        payload = jwt.decode(token, options={"verify_signature": False})
+    except Exception:  # noqa: BLE001
+        return False
+    issuer = payload.get("iss", "")
+    return issuer != "" and issuer != settings.SESSION_ISSUER and settings.OIDC_ISSUER in issuer
+
+
+def _resolve_oidc_token(token: str) -> ValidationResult:
+    """Resolve a Keycloak OIDC access token to a ValidationResult.
+
+    Calls the Identity + AuthZ adapter to introspect the token and fetch
+    upstream groups. The returned ``stable_id`` is ``issuer:sub`` so it
+    matches the identity service's canonical identifier.
+    """
+    try:
+        identity_resp = httpx.post(
+            f"{settings.IDENTITY_SERVICE_URL}/api/kb/v1/identity/resolve-token",
+            json={"access_token": token},
+            timeout=10.0,
+        )
+    except httpx.HTTPError as exc:
+        raise SessionServiceError("TOKEN_INVALID", f"identity service unreachable: {exc}") from exc
+
+    if identity_resp.status_code != 200:
+        raise SessionServiceError("TOKEN_INVALID", "OIDC token rejected by identity service")
+
+    identity = identity_resp.json()
+    external_refs = identity.get("external_refs") or []
+    ref = external_refs[0] if external_refs else identity
+    issuer = ref.get("issuer")
+    sub = ref.get("sub")
+    if not issuer or not sub:
+        raise SessionServiceError("TOKEN_INVALID", "OIDC token missing issuer or sub")
+
+    stable_id = f"{issuer}:{sub}"
+
+    try:
+        groups_resp = httpx.get(
+            f"{settings.IDENTITY_SERVICE_URL}/api/kb/v1/identity/groups",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10.0,
+        )
+    except httpx.HTTPError as exc:
+        raise SessionServiceError("TOKEN_INVALID", f"OIDC groups unreachable: {exc}") from exc
+
+    if groups_resp.status_code != 200:
+        raise SessionServiceError("TOKEN_INVALID", "OIDC groups rejected by identity service")
+
+    groups = groups_resp.json().get("groups", []) or []
+    role = "admin" if settings.OIDC_ADMIN_GROUP in groups else "user"
+    access_rev, approval_rev = _default_policy_revisions()
+    return ValidationResult(
+        session_id=uuid.uuid5(uuid.NAMESPACE_URL, stable_id),
+        stable_id=stable_id,
+        access_policy_revision=access_rev,
+        approval_policy_revision=approval_rev,
+        role=role,
+        groups=groups,
+    )
+
+
 def validate_access_token(db: Session, token: str) -> ValidationResult:
     """Validate a Bearer access token.
 
     Checks signature, expiry, issuer, token type, and DB revocation state.
+    If the token is not a session JWT, falls back to OIDC introspection via
+    the identity service so Open WebUI's Keycloak access token is accepted.
     """
-    claims = _decode(token)
+    try:
+        claims = _decode(token)
+    except SessionServiceError as exc:
+        # Fall back to OIDC token validation only for tokens that look external.
+        if exc.code == "TOKEN_INVALID" and _looks_like_oidc_token(token):
+            return _resolve_oidc_token(token)
+        raise
+
     if claims.get("type") != ACCESS_TYPE:
-        raise SessionServiceError("TOKEN_INVALID", "token type mismatch")
+        # Open WebUI JWTs and other foreign tokens are not session tokens;
+        # try OIDC introspection instead of failing immediately.
+        return _resolve_oidc_token(token)
 
     session_id_str = claims.get("session_id")
     stable_id = claims.get("stable_id")
@@ -202,6 +288,7 @@ def validate_access_token(db: Session, token: str) -> ValidationResult:
         stable_id=record.stable_id,
         access_policy_revision=record.access_policy_revision,
         approval_policy_revision=record.approval_policy_revision,
+        role=record.extra_claims.get("role", "user"),
     )
 
 

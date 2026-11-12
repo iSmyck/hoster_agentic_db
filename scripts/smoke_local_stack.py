@@ -287,6 +287,136 @@ def _openwebui_kb_page(client: httpx.Client, checks: list[dict[str, Any]]) -> No
         )
 
 
+def _openwebui_oidc_config(client: httpx.Client, checks: list[dict[str, Any]]) -> None:
+    try:
+        r = client.get("http://127.0.0.1:3100/api/config", timeout=10)
+        body = r.json() if r.status_code == 200 else {}
+        oauth = body.get("oauth", {})
+        features = body.get("features", {})
+        auth_enabled = bool(features.get("auth"))
+        providers = oauth.get("providers", {})
+        has_oidc = "oidc" in providers
+        # Some Open WebUI builds omit the explicit oauth.enabled field;
+        # presence of the OIDC provider plus auth feature is sufficient.
+        _check(
+            checks,
+            "openwebui.oidc_config",
+            "PASS" if auth_enabled and has_oidc else "FAIL",
+            "Open WebUI /api/config shows auth and OIDC provider enabled",
+            f"status={r.status_code}, auth={auth_enabled}, providers={list(providers.keys())}",
+        )
+    except Exception as exc:  # noqa: BLE001
+        _check(
+            checks,
+            "openwebui.oidc_config",
+            "FAIL",
+            "Open WebUI /api/config shows auth and OIDC provider enabled",
+            f"{type(exc).__name__}: {exc}",
+        )
+
+
+def _keycloak_oidc_token(client: httpx.Client, checks: list[dict[str, Any]]) -> str | None:
+    keycloak_url = os.environ.get("KEYCLOAK_URL", "http://localhost:8082").rstrip("/")
+    realm = os.environ.get("KEYCLOAK_REALM", "corp-kb")
+    client_id = os.environ.get("OAUTH_CLIENT_ID", "openwebui")
+    client_secret = os.environ.get("OAUTH_CLIENT_SECRET", "")
+    username = os.environ.get("KEYCLOAK_TEST_USERNAME", "g1-author")
+    password = os.environ.get("KEYCLOAK_TEST_PASSWORD", "g1-author-pass")
+    try:
+        r = client.post(
+            f"{keycloak_url}/realms/{realm}/protocol/openid-connect/token",
+            data={
+                "grant_type": "password",
+                "username": username,
+                "password": password,
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "scope": "openid email profile",
+            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=10,
+        )
+        if r.status_code != 200:
+            _check(
+                checks,
+                "keycloak.oidc_token",
+                "FAIL",
+                "Keycloak issues an OIDC access token for the test user",
+                f"status={r.status_code}, body={r.text[:500]}",
+            )
+            return None
+        token = r.json().get("access_token")
+        _check(
+            checks,
+            "keycloak.oidc_token",
+            "PASS" if token else "FAIL",
+            "Keycloak issues an OIDC access token for the test user",
+            "token present" if token else "no access_token in response",
+        )
+        return token
+    except Exception as exc:  # noqa: BLE001
+        _check(
+            checks,
+            "keycloak.oidc_token",
+            "FAIL",
+            "Keycloak issues an OIDC access token for the test user",
+            f"{type(exc).__name__}: {exc}",
+        )
+        return None
+
+
+def _session_oidc_validate(client: httpx.Client, token: str, checks: list[dict[str, Any]]) -> None:
+    try:
+        r = client.get(
+            "http://127.0.0.1:8004/api/kb/v1/session/validate",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+        body = r.json() if r.status_code == 200 else {}
+        ok = r.status_code == 200 and bool(body.get("stable_id"))
+        _check(
+            checks,
+            "session.oidc_validate",
+            "PASS" if ok else "FAIL",
+            "Session service accepts the Keycloak OIDC access token",
+            f"status={r.status_code}, stable_id={body.get('stable_id')}, role={body.get('role')}",
+        )
+    except Exception as exc:  # noqa: BLE001
+        _check(
+            checks,
+            "session.oidc_validate",
+            "FAIL",
+            "Session service accepts the Keycloak OIDC access token",
+            f"{type(exc).__name__}: {exc}",
+        )
+
+
+def _go_identity_me(client: httpx.Client, token: str, checks: list[dict[str, Any]]) -> None:
+    try:
+        r = client.get(
+            "http://127.0.0.1:8002/api/kb/v1/identity/me",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+        body = r.json() if r.status_code == 200 else {}
+        ok = r.status_code == 200 and bool(body.get("stable_id"))
+        _check(
+            checks,
+            "go.identity_me_oidc",
+            "PASS" if ok else "FAIL",
+            "GO /api/kb/v1/identity/me returns stable identity for OIDC token",
+            f"status={r.status_code}, stable_id={body.get('stable_id')}, role={body.get('role')}",
+        )
+    except Exception as exc:  # noqa: BLE001
+        _check(
+            checks,
+            "go.identity_me_oidc",
+            "FAIL",
+            "GO /api/kb/v1/identity/me returns stable identity for OIDC token",
+            f"{type(exc).__name__}: {exc}",
+        )
+
+
 def main() -> int:
     checks: list[dict[str, Any]] = []
     generated_at = datetime.now(UTC).isoformat()
@@ -307,6 +437,26 @@ def main() -> int:
                 "session creation failed",
             )
         _openwebui_kb_page(client, checks)
+        _openwebui_oidc_config(client, checks)
+        oidc_token = _keycloak_oidc_token(client, checks)
+        if oidc_token:
+            _session_oidc_validate(client, oidc_token, checks)
+            _go_identity_me(client, oidc_token, checks)
+        else:
+            _check(
+                checks,
+                "session.oidc_validate",
+                "BLOCKED",
+                "Session service accepts the Keycloak OIDC access token",
+                "OIDC token not available",
+            )
+            _check(
+                checks,
+                "go.identity_me_oidc",
+                "BLOCKED",
+                "GO /api/kb/v1/identity/me returns stable identity for OIDC token",
+                "OIDC token not available",
+            )
 
     pass_count = sum(1 for c in checks if c["status"] == "PASS")
     fail_count = sum(1 for c in checks if c["status"] == "FAIL")

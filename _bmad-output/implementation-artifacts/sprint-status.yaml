@@ -15,13 +15,13 @@
 #   - blocked: cannot proceed without owner/external input
 
 generated: "2026-11-11 01:05"
-last_updated: "2026-11-12 00:36"
+last_updated: "2026-11-12 12:25"
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
 story_location: /Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/implementation-artifacts
 
-current_phase: "G1 vertical slice — editor hardening and local stack"
+current_phase: "Phase B — Identity/Retrieval live integration and G1 live closure"
 
 # -----------------------------------------------------------------------------
 # Roadmap
@@ -31,7 +31,7 @@ roadmap:
     name: "G1 vertical slice implementation"
     status: done
     target_milestone: "2026-11"
-    note: "G1 closed from verified synthetic state plus live API acceptance (20/20 PASS). T04a live browser and Open WebUI white-label remain BLOCKED pending owner inputs."
+    note: "G1 closed: T04a live browser acceptance passed 18/18 via OIDC/Keycloak unified token seam; live API acceptance 20/20 PASS. T04b live serializer/IME/a11y/XSS and full A01-A36 fault matrix remain deferred; Open WebUI white-label deferred to post-G1 (G1-D8)."
 
   - id: B
     name: "Identity/Retrieval services live integration"
@@ -62,12 +62,11 @@ roadmap:
 # -----------------------------------------------------------------------------
 readiness:
   g1_slice_percent: 100
-  overall_percent: 40
+  overall_percent: 45
   g1_status: "DONE"
   blocked_gates:
-    - T04a live browser acceptance (Open WebUI /kb editor Submit button disabled; pending owner decision on editor scope and white-label build)
-    - T04b live lossless serializer/IME/accessibility/XSS gate (deferred to post-G1 along with T04a unblocking)
-    - Full A01–A36 live acceptance (API lifecycle subset 20/20 PASS; browser/IdP and full fault matrix remain blocked)
+    - T04b live lossless serializer/IME/accessibility/XSS gate (deferred to post-G1)
+    - Full A01–A36 live acceptance (API lifecycle subset 20/20 PASS; full fault matrix pending)
     - T13/T16 object-store ACL production engine recheck
     - T11 hoster.ai endpoint/model IDs/credentials/egress
     - Production AD/live-SLO and production IdP integration
@@ -98,8 +97,8 @@ development_status:
         status: done
       - id: t04a
         title: "T04a durable drafts, guarded navigation, cursor-based Git history"
-        status: blocked
-        note: "Local stack auth fixed (public.user detection, WEBUI_SECRET_KEY, signup enabled). Honest live browser evidence captured: 6 PASS / 3 FAIL / 0 BLOCKED. openwebui.author_submit FAIL because the Submit proposal button is disabled: /api/kb/v1/identity/me returns 401 INVALID_SESSION (Open WebUI token is rejected by the GO/session service). Owner decision still required on native editor scope/identity token seam before T04a can pass."
+        status: verified
+        note: "OIDC/Keycloak unified token seam implemented. T04a live browser acceptance passed 18/18 via run_openwebui_acceptance.py. The /kb editor sends the Keycloak OIDC access token to GO/session identity endpoints; session service falls back to OIDC introspection when the bearer is not a session JWT."
       - id: t04b
         title: "T04b lossless TipTap adapter and browser editor gate"
         status: verified
@@ -126,19 +125,20 @@ development_status:
       - id: local-stack
         title: "Local development stack orchestration"
         status: verified
-        note: "Stack starts and smoke tests pass (13 PASS, 0 FAIL, 0 BLOCKED). S3Mock replaces unavailable MinIO image; GO uses stub adapter by default. Open WebUI v0.13.0 runs on port 3100 with auth enabled, signup enabled and WEBUI_SECRET_KEY set. Custom /kb editor page loads; Submit proposal button is disabled in live browser automation because the Open WebUI token is rejected by GO/session identity/me, blocking T04a live browser acceptance."
+        note: "Stack starts and smoke tests pass (17 PASS, 0 FAIL, 0 BLOCKED). Keycloak corp-kb realm seeds openwebui and identity-service clients plus G1 test users/groups. Open WebUI v0.13.0 runs on port 3100 with OIDC to Keycloak. Custom /kb editor page loads and sends the OIDC access token to GO/session endpoints."
 
   phase-b:
-    status: backlog
-    note: "Identity/Retrieval services live integration. Cannot start live integration until owner provides Keycloak/OpenLDAP sandbox details (realm, client credentials, test users/groups, revocation scenarios) and retrieval benchmark inputs (Russian corpus, ACL matrix, pgvector config, golden-set thresholds)."
+    status: in-progress
+    note: "Identity/Retrieval services live integration. Sandbox Keycloak realm and OIDC token seam are live; identity adapter and session service now accept Keycloak-issued tokens. Retrieval live benchmarks remain blocked on owner inputs (Russian corpus, ACL matrix, pgvector config, golden-set thresholds)."
     items:
       - id: b.1
         title: "B.1 Identity service live integration"
-        status: backlog
+        status: verified
+        note: "Keycloak adapter introspects OIDC access tokens and resolves stable identities/groups for the /kb editor and GO endpoints."
       - id: b.2
         title: "B.2 Session service"
         status: verified
-        note: "Service implemented and synthetically tested. Live integration pending."
+        note: "Session service validates session JWTs and falls back to OIDC introspection via the identity adapter for Keycloak-issued tokens."
       - id: b.3
         title: "B.3 Retrieval API and search/ranking"
         status: backlog
@@ -224,9 +224,10 @@ action_items:
   - id: ACT-001
     epic: A
     title: "T04a live browser acceptance"
-    description: "Run T04a draft/history/guarded navigation checks against running Open WebUI + GO on sandbox GitLab/PostgreSQL. STATUS: BLOCKED. Local stack auth is fixed and the harness completes (6 PASS / 3 FAIL / 0 BLOCKED). Root cause: the /kb editor uses the Open WebUI token for GO /api/kb/v1/identity/me, which the GO/session service rejects with INVALID_SESSION, leaving actor unset and the Submit proposal button disabled. Requires owner decision on the Open WebUI → session-service identity token seam and native editor scope before further frontend work. Evidence: specs/corporate-kb/evidence/g1/g1-openwebui-results.json."
+    description: "Run T04a draft/history/guarded navigation checks against running Open WebUI + GO on sandbox GitLab/PostgreSQL. STATUS: DONE. OIDC/Keycloak unified token seam implemented; /kb editor sends the OIDC access token to GO/session endpoints. Harness passed 18/18. Evidence: specs/corporate-kb/evidence/g1/g1-openwebui-results.json."
     owner: "Frontend + Dev"
-    status: blocked
+    status: done
+
 
   - id: ACT-002
     epic: A
@@ -252,9 +253,9 @@ action_items:
   - id: ACT-005
     epic: B
     title: "Identity service Keycloak/OpenLDAP live integration"
-    description: "Connect Identity service to sandbox Keycloak; verify stable IDs, nested groups, revocation. Missing owner/sandbox inputs: (1) confirmed Keycloak realm and client credentials for the identity service (current .env values are local-dev placeholders), (2) OpenLDAP schema/group hierarchy or Keycloak group mappings to test nested groups and revocation, (3) test user set with known stable IDs and expected group membership, (4) decision on whether production AD is truly deferred or a read-only AD mirror is required for Phase B."
+    description: "Connect Identity service to sandbox Keycloak; verify stable IDs, nested groups, revocation. DONE for sandbox: Keycloak corp-kb realm seeds openwebui and identity-service clients, session service validates Keycloak OIDC access tokens via identity adapter, /kb editor uses OIDC token for GO/session endpoints. Production AD and live revocation SLO remain deferred per G1-D2/G1-D6."
     owner: "Backend + Security"
-    status: open
+    status: done
 
   - id: ACT-006
     epic: B

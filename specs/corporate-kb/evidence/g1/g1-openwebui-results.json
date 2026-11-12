@@ -29,6 +29,13 @@
       "status": "PASS"
     },
     {
+      "actual": "both tokens present",
+      "details": {},
+      "expected": "Keycloak OIDC tokens obtained for g1-author and g1-approver",
+      "id": "openwebui.oidc_tokens",
+      "status": "PASS"
+    },
+    {
       "actual": "status=401",
       "details": {},
       "expected": "prepare-branch rejects unauthenticated writes",
@@ -36,18 +43,18 @@
       "status": "PASS"
     },
     {
-      "actual": "status=401",
+      "actual": "status=400",
       "details": {},
       "expected": "prepare-branch rejects CI/service paths",
       "id": "security.prepare_rejects_ci_path",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
-      "actual": "first=401:{\"detail\":{\"code\":\"INVALID_SESSION\",\"message\":\"session token rejected\"}}, second=401:{\"detail\":{\"code\":\"INVALID_SESSION\",\"message\":\"session token rejected\"}}",
+      "actual": "first=200:{\"space_id\":\"corp-kb/sales\",\"proposal_sha\":\"18bd8f5fffaf85e346666ac490fed1dacc114910\",\"base_sha\":\"7958c41697b23af49586d0bd23439973f525abda\",\"proposal_branch\":\"proposal/18bd8f5f\",\"file_path\":\"docs/g1-p, second=200:{\"space_id\":\"corp-kb/sales\",\"proposal_sha\":\"18bd8f5fffaf85e346666ac490fed1dacc114910\",\"base_sha\":\"7958c41697b23af49586d0bd23439973f525abda\",\"proposal_branch\":\"proposal/18bd8f5f\",\"file_path\":\"docs/g1-p",
       "details": {},
       "expected": "prepare retry returns identical proposal/base SHA",
       "id": "security.prepare_replay_idempotent",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "actual": "http://localhost:3100/kb",
@@ -57,19 +64,95 @@
       "status": "PASS"
     },
     {
-      "actual": "Submit proposal button is disabled; status=Ready. Select actor, edit content, then submit proposal.\nWARN: initialization failed: GET /api/kb/v1/identity/me -> 401: INVALID_SESSION: session token rejected",
+      "actual": "proposal_id=5cb4f999-f0b9-4e98-9fea-4997b1d00c20",
       "details": {},
       "expected": "author submits proposal via Open WebUI",
       "id": "openwebui.author_submit",
-      "status": "FAIL"
+      "status": "PASS"
+    },
+    {
+      "actual": "role\":\"user\"}\nCreating branch and commit in GitLab...\n{\"merge_only\":true,\"protected\":true}\nWARN: initialization failed: POST /api/kb/v1/drafts/get -> 404: NOT_FOUND: draft not found\nSubmitting proposal to GO...\n{\"proposal_id\":\"5cb4f999-f0b9-4e98-9fea-4997b1d00c20\",\"proposal_sha\":\"be0cef00e67bc3a3fd78c47cb70e95babdb87768\",\"base_sha\":\"7958c41697b23af49586d0bd23439973f525abda\"}\nRecording decision...\nERROR: POST /api/kb/v1/decisions -> 403: APPROVER_REQUIRED: independent approver capability required",
+      "details": {},
+      "expected": "author session cannot record an approval",
+      "id": "openwebui.author_cannot_approve",
+      "status": "PASS"
+    },
+    {
+      "actual": "decision_id=b6947da4-68ca-561d-b60f-4a2818faca65",
+      "details": {},
+      "expected": "approver records decision in independent session",
+      "id": "openwebui.approver_decision",
+      "status": "PASS"
+    },
+    {
+      "actual": "merge_sha=9ed8082f1d748968a165c2cc2ec2820bc84c110e",
+      "details": {},
+      "expected": "approver executes merge in independent session",
+      "id": "openwebui.approver_merge",
+      "status": "PASS"
+    },
+    {
+      "actual": "two isolated browser contexts",
+      "details": {},
+      "expected": "author and approver use independent browser sessions",
+      "id": "openwebui.independent_sessions",
+      "status": "PASS"
+    },
+    {
+      "actual": "parents=['7958c41697b23af49586d0bd23439973f525abda', 'be0cef00e67bc3a3fd78c47cb70e95babdb87768']",
+      "details": {
+        "first_parent_matches_base": true,
+        "message": "Merge proposal 5cb4f999-f0b9-4e98-9fea-4997b1d00c20\n\nDecision-ID: b6947da4-68ca-561d-b60f-4a2818faca65\nDecision-Note-ID: 156\nDecision-Hash: 7441abb59baa9df0d49067f1751ab209a0db807f8d2ed3ff7fa143b9d5d30511\nApproved-by: http://localhost:8082/realms/corp-kb:a51015d8-8ba1-47a3-bc52-7bfdac96ac15",
+        "parents": [
+          "7958c41697b23af49586d0bd23439973f525abda",
+          "be0cef00e67bc3a3fd78c47cb70e95babdb87768"
+        ],
+        "second_parent_matches_proposal": true
+      },
+      "expected": "merge commit parents equal base_sha and proposal_sha",
+      "id": "openwebui.merge_parentage",
+      "status": "PASS"
+    },
+    {
+      "actual": "Merge proposal 5cb4f999-f0b9-4e98-9fea-4997b1d00c20\n\nDecision-ID: b6947da4-68ca-561d-b60f-4a2818faca65\nDecision-Note-ID: 156\nDecision-Hash: 7441abb59baa9df0d49067f1751ab209a0db807f8d2ed3ff7fa143b9d5d30511\nApproved-by: http://localhost:8082/realms/corp-kb:a51015d8-8ba1-47a3-bc52-7bfdac96ac15",
+      "details": {
+        "first_parent_matches_base": true,
+        "message": "Merge proposal 5cb4f999-f0b9-4e98-9fea-4997b1d00c20\n\nDecision-ID: b6947da4-68ca-561d-b60f-4a2818faca65\nDecision-Note-ID: 156\nDecision-Hash: 7441abb59baa9df0d49067f1751ab209a0db807f8d2ed3ff7fa143b9d5d30511\nApproved-by: http://localhost:8082/realms/corp-kb:a51015d8-8ba1-47a3-bc52-7bfdac96ac15",
+        "parents": [
+          "7958c41697b23af49586d0bd23439973f525abda",
+          "be0cef00e67bc3a3fd78c47cb70e95babdb87768"
+        ],
+        "second_parent_matches_proposal": true
+      },
+      "expected": "merge commit contains Decision-ID trailer",
+      "id": "openwebui.merge_trailers",
+      "status": "PASS"
+    },
+    {
+      "actual": "found=True, target_matches=True, protected=True",
+      "details": {
+        "found": true,
+        "protected": true,
+        "target_matches_proposal_sha": true
+      },
+      "expected": "protected annotated tag exists on proposal_sha",
+      "id": "openwebui.decision_tag",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200, len=61",
+      "details": {},
+      "expected": "merged page is readable on target branch",
+      "id": "openwebui.merged_file_visible",
+      "status": "PASS"
     }
   ],
   "command": "uv run python _bmad-output/test-artifacts/g1/run_openwebui_acceptance.py",
   "counts": {
     "BLOCKED": 0,
-    "FAIL": 3,
-    "PASS": 6,
-    "TOTAL": 9
+    "FAIL": 0,
+    "PASS": 18,
+    "TOTAL": 18
   },
   "environment": {
     "database": "postgresql+psycopg://localhost:5432/corp_kb",
@@ -77,7 +160,7 @@
     "openwebui_url": "http://localhost:3100",
     "space_id": "corp-kb/sales"
   },
-  "generated_at": "2026-11-11T21:30:55.291318+00:00",
+  "generated_at": "2026-11-12T08:37:00.215217+00:00",
   "schema_version": "g1-openwebui-acceptance-v1",
   "sensitive_data_included": false
 }

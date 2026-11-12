@@ -1,11 +1,11 @@
 # Local stack smoke test
 
-Generated: 2026-11-11T21:11:44.296499+00:00
+Generated: 2026-11-12T08:39:58.345821+00:00
 
-- PASS: 13
+- PASS: 17
 - FAIL: 0
 - BLOCKED: 0
-- TOTAL: 13
+- TOTAL: 17
 
 ## health.identity — PASS
 
@@ -50,7 +50,7 @@ Generated: 2026-11-11T21:11:44.296499+00:00
 ## session.validate_author — PASS
 
 - Expected: session token validates and returns author-1 stable_id
-- Actual: status=200, body={"session_id":"eb4d56a5-11f2-451d-9832-86464aeb20f8","stable_id":"author-1","access_policy_revision":"0000000000000000000000000000000000000000","approval_policy_revision":"0000000000000000000000000000
+- Actual: status=200, body={"session_id":"67ff85a5-d654-4144-9a74-be13f44a03dc","stable_id":"author-1","access_policy_revision":"0000000000000000000000000000000000000000","approval_policy_revision":"0000000000000000000000000000
 
 ## go.draft_save — PASS
 
@@ -71,3 +71,23 @@ Generated: 2026-11-11T21:11:44.296499+00:00
 
 - Expected: Open WebUI /kb page is reachable
 - Actual: status=200
+
+## openwebui.oidc_config — PASS
+
+- Expected: Open WebUI /api/config shows auth and OIDC provider enabled
+- Actual: status=200, auth=True, providers=['oidc']
+
+## keycloak.oidc_token — PASS
+
+- Expected: Keycloak issues an OIDC access token for the test user
+- Actual: token present
+
+## session.oidc_validate — PASS
+
+- Expected: Session service accepts the Keycloak OIDC access token
+- Actual: status=200, stable_id=http://localhost:8082/realms/corp-kb:a32bd08b-ab6f-4992-86b9-3aff36229078, role=user
+
+## go.identity_me_oidc — PASS
+
+- Expected: GO /api/kb/v1/identity/me returns stable identity for OIDC token
+- Actual: status=200, stable_id=http://localhost:8082/realms/corp-kb:a32bd08b-ab6f-4992-86b9-3aff36229078, role=user

@@ -10,7 +10,14 @@
 # ]
 # ///
 
-"""Open WebUI native KB editor acceptance test (T04a/T04b live)."""
+"""Open WebUI native KB editor acceptance test (T04a/T04b live).
+
+This harness now exercises the OIDC/Keycloak unified token seam:
+- Open WebUI loads using its native JWT (localStorage.token) so the /kb page
+  renders.
+- The /kb editor sends the Keycloak OIDC access token to GO/session endpoints
+  via localStorage.oidcToken, proving the identity seam works end-to-end.
+"""
 
 from __future__ import annotations
 
@@ -38,18 +45,26 @@ SUMMARY_MD = OUTPUT_DIR / "g1-openwebui-summary.md"
 EVIDENCE_JSON = EVIDENCE_DIR / "g1-openwebui-results.json"
 EVIDENCE_MD = EVIDENCE_DIR / "g1-openwebui-summary.md"
 
-OPENWEBUI_URL = os.environ.get("OPENWEBUI_URL", "http://localhost:5050")
+OPENWEBUI_URL = os.environ.get("OPENWEBUI_URL", "http://localhost:3100")
 GO_URL = os.environ.get("GO_URL", "http://localhost:8002")
+KEYCLOAK_URL = os.environ.get("KEYCLOAK_URL", "http://localhost:8082").rstrip("/")
+KEYCLOAK_REALM = os.environ.get("KEYCLOAK_REALM", "corp-kb")
+OAUTH_CLIENT_ID = os.environ.get("OAUTH_CLIENT_ID", "openwebui")
+OAUTH_CLIENT_SECRET = os.environ.get("OAUTH_CLIENT_SECRET", "")
 SPACE_ID = os.environ.get("G1_SPACE_ID", "corp-kb/sales")
 TARGET_BRANCH = os.environ.get("G1_TARGET_BRANCH", "main")
 
 RUN_ID = uuid.uuid4().hex[:12]
 ADMIN_EMAIL = f"g1-admin-{RUN_ID}@hoster.test"
 ADMIN_PASSWORD = secrets.token_urlsafe(24)
-AUTHOR_EMAIL = f"g1-author-{RUN_ID}@hoster.test"
-AUTHOR_PASSWORD = secrets.token_urlsafe(24)
-APPROVER_EMAIL = f"g1-approver-{RUN_ID}@hoster.test"
-APPROVER_PASSWORD = secrets.token_urlsafe(24)
+AUTHOR_EMAIL = "g1-author@hoster.test"
+AUTHOR_PASSWORD = os.environ.get("KEYCLOAK_G1_AUTHOR_PASSWORD")
+APPROVER_EMAIL = "g1-approver@hoster.test"
+APPROVER_PASSWORD = os.environ.get("KEYCLOAK_G1_APPROVER_PASSWORD")
+if not AUTHOR_PASSWORD or not APPROVER_PASSWORD:
+    raise RuntimeError(
+        "Set KEYCLOAK_G1_AUTHOR_PASSWORD and KEYCLOAK_G1_APPROVER_PASSWORD environment variables"
+    )
 
 
 def _check(
@@ -72,14 +87,22 @@ def _check(
 
 
 def _dismiss_onboarding(page: Page) -> None:
-    get_started = page.locator('button[aria-label="Get started"]')
-    if get_started.count() > 0:
-        get_started.first.click()
-        page.wait_for_timeout(1000)
-    close = page.locator('div[role="dialog"] button[aria-label="Close"]')
-    if close.count() > 0 and close.first.is_visible():
-        close.first.click()
-        page.wait_for_timeout(500)
+    """Dismiss Open WebUI onboarding / What's New dialogs robustly."""
+    for _ in range(3):
+        get_started = page.locator('button[aria-label="Get started"]')
+        if get_started.count() > 0 and get_started.first.is_visible():
+            get_started.first.click()
+            page.wait_for_timeout(1000)
+        close = page.locator('div[role="dialog"] button[aria-label="Close"]')
+        if close.count() > 0:
+            for btn in close.all():
+                if btn.is_visible():
+                    btn.click()
+                    page.wait_for_timeout(500)
+                    break
+        # Also dismiss any modal backdrop by pressing Escape.
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(300)
 
 
 def _signin_via_api(email: str, password: str) -> str | None:
@@ -97,10 +120,28 @@ def _signin_via_api(email: str, password: str) -> str | None:
         return None
 
 
+def _ensure_signup_enabled() -> None:
+    """Force Open WebUI signup on when the DB config is stale."""
+    try:
+        from sqlalchemy import create_engine, text
+
+        dsn = os.environ.get("GO_DATABASE_URL") or os.environ.get("DATABASE_URL")
+        if not dsn:
+            raise RuntimeError("Set GO_DATABASE_URL or DATABASE_URL")
+        engine = create_engine(dsn)
+        with engine.begin() as conn:
+            conn.execute(
+                text("INSERT INTO public.config (key, value) VALUES ('ui.enable_signup', 'true') ON CONFLICT (key) DO UPDATE SET value = 'true'")
+            )
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def _signup_via_api(email: str, password: str, name: str) -> str | None:
     token = _signin_via_api(email, password)
     if token:
         return token
+    _ensure_signup_enabled()
     try:
         r = httpx.post(
             f"{OPENWEBUI_URL}/api/v1/auths/signup",
@@ -142,6 +183,31 @@ def _create_user_via_api(
         if r.status_code == 200:
             data = r.json()
             return data.get("token")
+        return None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _keycloak_token(username: str, password: str) -> str | None:
+    """Obtain an OIDC access token via Keycloak direct access grant."""
+    if not OAUTH_CLIENT_SECRET:
+        return None
+    try:
+        r = httpx.post(
+            f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/token",
+            data={
+                "grant_type": "password",
+                "username": username,
+                "password": password,
+                "client_id": OAUTH_CLIENT_ID,
+                "client_secret": OAUTH_CLIENT_SECRET,
+                "scope": "openid email profile",
+            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=30,
+        )
+        if r.status_code == 200:
+            return r.json().get("access_token")
         return None
     except Exception:  # noqa: BLE001
         return None
@@ -240,14 +306,25 @@ def _verify_decision_tag(decision_id: str, expected_proposal_sha: str) -> dict[s
 
 
 def _run_author_flow(
-    browser: Browser, token: str, checks: list[dict[str, Any]]
+    browser: Browser,
+    webui_token: str,
+    oidc_token: str,
+    checks: list[dict[str, Any]],
 ) -> dict[str, Any] | None:
     context = browser.new_context(viewport={"width": 1280, "height": 900})
     page = context.new_page()
+    logs: list[str] = []
+    page.on("console", lambda msg: logs.append(f"[{msg.type}] {msg.text}"))
+    page.on("pageerror", lambda err: logs.append(f"[pageerror] {err}"))
     page.goto(f"{OPENWEBUI_URL}/")
-    page.evaluate(f"() => localStorage.token = '{token}'")
+    page.evaluate(
+        "(token) => localStorage.token = token", json.dumps(webui_token)
+    )
+    page.evaluate(
+        "(token) => localStorage.oidcToken = token", json.dumps(oidc_token)
+    )
     page.goto(f"{OPENWEBUI_URL}/kb")
-    page.wait_for_timeout(2000)
+    page.wait_for_timeout(4000)
     _dismiss_onboarding(page)
     expect(page.locator("h1")).to_contain_text("Managed KB Editor")
     _check(checks, "openwebui.kb_page_loads", "PASS", "KB editor page loads", f"{OPENWEBUI_URL}/kb")
@@ -274,7 +351,7 @@ def _run_author_flow(
             "openwebui.author_submit",
             "FAIL",
             "author submits proposal via Open WebUI",
-            f"{exc}; status={status_text[:500]}",
+            f"{exc}; status={status_text[:500]}; logs={logs[-20:]}",
         )
         context.close()
         return None
@@ -325,14 +402,23 @@ def _run_author_flow(
 
 
 def _run_approver_flow(
-    browser: Browser, token: str, flow: dict[str, Any], checks: list[dict[str, Any]]
+    browser: Browser,
+    webui_token: str,
+    oidc_token: str,
+    flow: dict[str, Any],
+    checks: list[dict[str, Any]],
 ) -> dict[str, Any] | None:
     context = browser.new_context(viewport={"width": 1280, "height": 900})
     page = context.new_page()
     page.goto(f"{OPENWEBUI_URL}/")
-    page.evaluate(f"() => localStorage.token = '{token}'")
+    page.evaluate(
+        "(token) => localStorage.token = token", json.dumps(webui_token)
+    )
+    page.evaluate(
+        "(token) => localStorage.oidcToken = token", json.dumps(oidc_token)
+    )
     page.goto(f"{OPENWEBUI_URL}/kb?proposal={flow['proposal_id']}")
-    page.wait_for_timeout(2500)
+    page.wait_for_timeout(4000)
     _dismiss_onboarding(page)
 
     page.locator("button:has-text('2. Record decision')").click()
@@ -394,6 +480,20 @@ def _validate_reset_target(database_url: str, schema: str) -> None:
         raise RuntimeError("destructive G1 reset is allowed only on localhost")
 
 
+def _truncate_openwebui_users(database_url: str) -> None:
+    """Truncate Open WebUI user tables so the first signup becomes admin."""
+    if os.environ.get("G1_ALLOW_DESTRUCTIVE_RESET", "").lower() not in {"1", "true", "yes"}:
+        return
+    try:
+        from sqlalchemy import create_engine, text
+
+        engine = create_engine(database_url)
+        with engine.begin() as conn:
+            conn.execute(text('TRUNCATE TABLE public."user", public.auth CASCADE'))
+    except Exception as exc:  # noqa: BLE001
+        print(f"Warning: could not truncate Open WebUI users: {exc}", file=sys.stderr)
+
+
 def _safe_dsn(database_url: str) -> str:
     from urllib.parse import urlsplit, urlunsplit
 
@@ -403,7 +503,7 @@ def _safe_dsn(database_url: str) -> str:
     )
 
 
-def _security_api_checks(author_token: str, checks: list[dict[str, Any]]) -> None:
+def _security_api_checks(author_oidc_token: str, checks: list[dict[str, Any]]) -> None:
     payload = {
         "space_id": SPACE_ID,
         "branch": TARGET_BRANCH,
@@ -420,7 +520,7 @@ def _security_api_checks(author_token: str, checks: list[dict[str, Any]]) -> Non
         f"status={unauthenticated.status_code}",
     )
 
-    headers = {"Authorization": f"Bearer {author_token}"}
+    headers = {"Authorization": f"Bearer {author_oidc_token}"}
     forbidden = httpx.post(
         f"{GO_URL}/api/g1-editor/prepare-branch",
         headers=headers,
@@ -539,6 +639,7 @@ def main() -> int:
         with engine.begin() as conn:
             conn.execute(text(f"DROP SCHEMA IF EXISTS {schema} CASCADE"))
             conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))
+        _truncate_openwebui_users(db_url)
         engine.dispose()
 
         os.environ["DATABASE_URL"] = db_url
@@ -587,23 +688,23 @@ def main() -> int:
             return _write_report(checks, generated_at, db_url)
         _check(checks, "openwebui.admin_token", "PASS", "admin token available", "token present")
 
-        author_token = _create_user_via_api(
+        author_webui_token = _create_user_via_api(
             admin_token, AUTHOR_EMAIL, AUTHOR_PASSWORD, "G1 Author", role="user"
         )
-        approver_token = _create_user_via_api(
+        approver_webui_token = _create_user_via_api(
             admin_token, APPROVER_EMAIL, APPROVER_PASSWORD, "G1 Approver", role="admin"
         )
         print(
-            f"User creation: author={bool(author_token)}, approver={bool(approver_token)}",
+            f"User creation: author={bool(author_webui_token)}, approver={bool(approver_webui_token)}",
             flush=True,
         )
-        if not author_token or not approver_token:
+        if not author_webui_token or not approver_webui_token:
             _check(
                 checks,
                 "openwebui.create_users",
                 "FAIL",
                 "random per-run author and approver created",
-                f"author={bool(author_token)}, approver={bool(approver_token)}",
+                f"author={bool(author_webui_token)}, approver={bool(approver_webui_token)}",
             )
             browser.close()
             return _write_report(checks, generated_at, db_url)
@@ -614,15 +715,40 @@ def main() -> int:
             "random per-run author and approver created",
             "both tokens present",
         )
-        _security_api_checks(author_token, checks)
+
+        author_oidc_token = _keycloak_token("g1-author", AUTHOR_PASSWORD)
+        approver_oidc_token = _keycloak_token("g1-approver", APPROVER_PASSWORD)
+        print(
+            f"OIDC tokens: author={bool(author_oidc_token)}, approver={bool(approver_oidc_token)}",
+            flush=True,
+        )
+        if not author_oidc_token or not approver_oidc_token:
+            _check(
+                checks,
+                "openwebui.oidc_tokens",
+                "FAIL",
+                "Keycloak OIDC tokens obtained for g1-author and g1-approver",
+                f"author={bool(author_oidc_token)}, approver={bool(approver_oidc_token)}",
+            )
+            browser.close()
+            return _write_report(checks, generated_at, db_url)
+        _check(
+            checks,
+            "openwebui.oidc_tokens",
+            "PASS",
+            "Keycloak OIDC tokens obtained for g1-author and g1-approver",
+            "both tokens present",
+        )
+
+        _security_api_checks(author_oidc_token, checks)
         print("Security API checks completed", flush=True)
 
-        flow = _run_author_flow(browser, author_token, checks)
+        flow = _run_author_flow(browser, author_webui_token, author_oidc_token, checks)
         print(f"Author flow: {bool(flow)}", flush=True)
         if flow is None:
             browser.close()
             return _write_report(checks, generated_at, db_url)
-        flow = _run_approver_flow(browser, approver_token, flow, checks)
+        flow = _run_approver_flow(browser, approver_webui_token, approver_oidc_token, flow, checks)
         if flow is None:
             browser.close()
             return _write_report(checks, generated_at, db_url)

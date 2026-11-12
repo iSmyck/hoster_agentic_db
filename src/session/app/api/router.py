@@ -123,6 +123,8 @@ def validate_session(
         "stable_id": result.stable_id,
         "access_policy_revision": result.access_policy_revision,
         "approval_policy_revision": result.approval_policy_revision,
+        "role": result.role,
+        "groups": result.groups,
     }
 
 

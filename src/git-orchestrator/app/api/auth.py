@@ -59,7 +59,10 @@ def get_current_identity(request: Request) -> AuthenticatedIdentity:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"code": "INVALID_SESSION", "message": "session identity missing"},
         )
-    return AuthenticatedIdentity(stable_id=stable_id, role="user")
+    role = str(data.get("role") or "user").strip()
+    if role not in {"user", "admin"}:
+        role = "user"
+    return AuthenticatedIdentity(stable_id=stable_id, role=role)
 
 
 def require_approver(identity: AuthenticatedIdentity) -> None:

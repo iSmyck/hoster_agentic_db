@@ -53,7 +53,7 @@
     {
       "actual": "status=200",
       "details": {
-        "body": "{\"onboarding\":true,\"status\":true,\"name\":\"hoster.by Knowledge Base (Open WebUI)\",\"version\":\"0.13.0\",\"default_locale\":\"\",\"i18n\":{},\"oauth\":{\"providers\":{},\"auto_redirect\":false},\"features\":{\"slim\":false",
+        "body": "{\"status\":true,\"name\":\"hoster.by Knowledge Base (Open WebUI)\",\"version\":\"0.13.0\",\"default_locale\":\"\",\"i18n\":{},\"oauth\":{\"providers\":{\"oidc\":\"Keycloak\"},\"auto_redirect\":false},\"features\":{\"slim\":false,",
         "url": "http://127.0.0.1:3100/api/config"
       },
       "expected": "openwebui health endpoint returns 200",
@@ -78,7 +78,7 @@
       "status": "PASS"
     },
     {
-      "actual": "status=200, body={\"session_id\":\"eb4d56a5-11f2-451d-9832-86464aeb20f8\",\"stable_id\":\"author-1\",\"access_policy_revision\":\"0000000000000000000000000000000000000000\",\"approval_policy_revision\":\"0000000000000000000000000000",
+      "actual": "status=200, body={\"session_id\":\"67ff85a5-d654-4144-9a74-be13f44a03dc\",\"stable_id\":\"author-1\",\"access_policy_revision\":\"0000000000000000000000000000000000000000\",\"approval_policy_revision\":\"0000000000000000000000000000",
       "details": {},
       "expected": "session token validates and returns author-1 stable_id",
       "id": "session.validate_author",
@@ -111,14 +111,42 @@
       "expected": "Open WebUI /kb page is reachable",
       "id": "openwebui.kb_page",
       "status": "PASS"
+    },
+    {
+      "actual": "status=200, auth=True, providers=['oidc']",
+      "details": {},
+      "expected": "Open WebUI /api/config shows auth and OIDC provider enabled",
+      "id": "openwebui.oidc_config",
+      "status": "PASS"
+    },
+    {
+      "actual": "token present",
+      "details": {},
+      "expected": "Keycloak issues an OIDC access token for the test user",
+      "id": "keycloak.oidc_token",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200, stable_id=http://localhost:8082/realms/corp-kb:a32bd08b-ab6f-4992-86b9-3aff36229078, role=user",
+      "details": {},
+      "expected": "Session service accepts the Keycloak OIDC access token",
+      "id": "session.oidc_validate",
+      "status": "PASS"
+    },
+    {
+      "actual": "status=200, stable_id=http://localhost:8082/realms/corp-kb:a32bd08b-ab6f-4992-86b9-3aff36229078, role=user",
+      "details": {},
+      "expected": "GO /api/kb/v1/identity/me returns stable identity for OIDC token",
+      "id": "go.identity_me_oidc",
+      "status": "PASS"
     }
   ],
   "command": "uv run python scripts/smoke_local_stack.py",
   "counts": {
     "BLOCKED": 0,
     "FAIL": 0,
-    "PASS": 13,
-    "TOTAL": 13
+    "PASS": 17,
+    "TOTAL": 17
   },
   "environment": {
     "services": {
@@ -131,6 +159,6 @@
       "session": "http://127.0.0.1:8004/health"
     }
   },
-  "generated_at": "2026-11-11T21:11:44.296499+00:00",
+  "generated_at": "2026-11-12T08:39:58.345821+00:00",
   "schema_version": "local-stack-smoke-v1"
 }

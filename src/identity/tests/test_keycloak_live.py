@@ -117,23 +117,25 @@ def live_db() -> Any:
 def test_introspection_returns_active_token_with_groups(
     live_adapter: KeycloakIdentityAdapter,
     access_token: str,
+    keycloak_urls: dict[str, str],
 ) -> None:
     introspection = live_adapter.introspect_token(access_token)
     assert introspection.get("active") is True
     assert "sub" in introspection
-    assert introspection.get("preferred_username") == "testuser"
+    assert introspection.get("preferred_username") == keycloak_urls["username"]
     assert "sales" in introspection.get("groups", [])
 
 
 def test_resolve_external_refs_normalizes_identity(
     live_adapter: KeycloakIdentityAdapter,
     access_token: str,
+    keycloak_urls: dict[str, str],
 ) -> None:
     refs = live_adapter.resolve_external_refs(access_token)
     assert refs["issuer"] == f"{settings.KEYCLOAK_URL}/realms/{settings.KEYCLOAK_REALM}"
     assert refs["sub"]
-    assert refs["preferred_username"] == "testuser"
-    assert refs["email"].endswith("@example.com")
+    assert refs["preferred_username"] == keycloak_urls["username"]
+    assert "@" in refs["email"]
 
 
 def test_fetch_groups_returns_sales(

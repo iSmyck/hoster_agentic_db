@@ -49,6 +49,21 @@ class Settings(BaseSettings):
         description="JWT issuer claim.",
         validation_alias=AliasChoices("SESSION_ISSUER", "ISSUER"),
     )
+    IDENTITY_SERVICE_URL: str = Field(
+        default="http://localhost:8001",
+        description="Base URL of the Identity + AuthZ adapter for OIDC token resolution.",
+        validation_alias=AliasChoices("SESSION_IDENTITY_SERVICE_URL", "IDENTITY_SERVICE_URL"),
+    )
+    OIDC_ADMIN_GROUP: str = Field(
+        default="kb-approvers",
+        description="Keycloak group that grants admin/approver role in G1.",
+        validation_alias=AliasChoices("SESSION_OIDC_ADMIN_GROUP", "OIDC_ADMIN_GROUP"),
+    )
+    OIDC_ISSUER: str = Field(
+        default="",
+        description="Expected OIDC issuer URL substring. When empty, OIDC fallback is disabled.",
+        validation_alias=AliasChoices("SESSION_OIDC_ISSUER", "OIDC_ISSUER"),
+    )
     LOG_LEVEL: str = Field(
         default="INFO",
         validation_alias=AliasChoices("SESSION_LOG_LEVEL", "LOG_LEVEL"),

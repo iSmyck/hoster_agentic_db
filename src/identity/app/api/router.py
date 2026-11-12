@@ -28,6 +28,22 @@ from identity.app.services.identity_service import IdentityServiceError
 router = APIRouter()
 
 
+def _extract_bearer(request: Request) -> str:
+    authorization = request.headers.get("Authorization", "")
+    if not authorization.lower().startswith("bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "AUTH_REQUIRED", "message": "Bearer token required"},
+        )
+    token = authorization[len("Bearer "):].strip()
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "AUTH_REQUIRED", "message": "Bearer token required"},
+        )
+    return token
+
+
 def _require_authz_context(request: Request, space_id: str) -> None:
     """Require an authenticated principal with manage_grants capability.
 
@@ -101,6 +117,19 @@ def resolve_identity_token(
     except IdentityServiceError as exc:
         raise _handle_domain_error(exc) from exc
     return identity
+
+
+@router.get("/api/kb/v1/identity/groups")
+def identity_groups(
+    http_request: Request,
+) -> dict[str, list[str]]:
+    """Return the upstream group memberships for the bearer access token."""
+    token = _extract_bearer(http_request)
+    try:
+        groups = identity_service.fetch_upstream_groups(token)
+    except IdentityServiceError as exc:
+        raise _handle_domain_error(exc) from exc
+    return {"groups": groups}
 
 
 @router.post("/api/kb/v1/authz/context", response_model=AuthzContextResponse)

@@ -56,6 +56,8 @@ class ValidationResponse(BaseModel):
     stable_id: str
     access_policy_revision: str
     approval_policy_revision: str
+    role: str = "user"
+    groups: list[str] = Field(default_factory=list)
 
 
 class RevokeAllRequest(BaseModel):
