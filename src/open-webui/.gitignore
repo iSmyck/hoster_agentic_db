@@ -13,3 +13,6 @@ dist/
 # Logs / local state
 *.log
 .DS_Store
+
+# Local white-label environment (may contain real asset paths)
+.white-label-env

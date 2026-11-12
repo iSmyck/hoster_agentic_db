@@ -55,7 +55,44 @@ npm run kb:check
 
 # Build production bundle using upstream Vite/SvelteKit
 npm run kb:build
+
+# Optional license-compliant white-label build (requires legal clearance)
+npm run kb:build:white-label
 ```
+
+## White-label build
+
+The overlay supports an optional, opt-in white-label build that injects custom
+brand assets at build time without modifying tracked upstream source files.
+
+Requirements:
+
+- Set `WHITE_LABEL_LEGAL_CLEARANCE=1`. The script refuses to run without this
+  guard because final asset ownership and license compliance are the owner's
+  responsibility.
+- Provide absolute paths to approved assets via environment variables:
+  - `WEBUI_LOGO_PATH`
+  - `WEBUI_FAVICON_PATH`
+  - `WEBUI_SPLASH_LIGHT_PATH`
+  - `WEBUI_SPLASH_DARK_PATH`
+
+Example:
+
+```bash
+cp .white-label-env.example .white-label-env
+# edit .white-label-env with real asset paths
+source .white-label-env
+npm run kb:build:white-label
+```
+
+The script copies the assets into `upstream/static/kb-brand/`, generates a CSS
+override for the splash screen, injects the CSS link into `upstream/src/app.html`
+only for the current build, and then restores `app.html` so the default
+`npm run kb:build` still uses upstream branding. If `WEBUI_FAVICON_PATH` is set,
+a custom favicon `<link>` is injected as well.
+
+If no asset paths are set, the white-label build succeeds but keeps the default
+Open WebUI branding and creates only an empty CSS shell.
 
 ## Service wiring
 

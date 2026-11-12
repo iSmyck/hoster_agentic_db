@@ -8,6 +8,7 @@
 		"kb:merge": "node scripts/merge-overlay.js",
 		"kb:check": "npm run kb:merge && cd upstream && npm run check",
 		"kb:build": "npm run kb:merge && cd upstream && node --max-old-space-size=6144 node_modules/vite/bin/vite.js build",
+		"kb:build:white-label": "node scripts/white-label-build.js",
 		"kb:test": "vitest run --config vitest.config.ts",
 		"kb:test:watch": "vitest --config vitest.config.ts",
 		"kb:syntax": "node --check scripts/merge-overlay.js"

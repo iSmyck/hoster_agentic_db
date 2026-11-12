@@ -15,7 +15,7 @@
 #   - blocked: cannot proceed without owner/external input
 
 generated: "2026-11-11 01:05"
-last_updated: "2026-11-12 13:08"
+last_updated: "2026-11-12 13:30"
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -62,7 +62,7 @@ roadmap:
 # -----------------------------------------------------------------------------
 readiness:
   g1_slice_percent: 100
-  overall_percent: 80
+  overall_percent: 85
   g1_status: "DONE"
   blocked_gates:
     - Full A01–A36 live acceptance (API lifecycle subset 20/20 PASS; fault matrix A05–A10/A27–A30 closed synthetically; live destructive acceptance optional)
@@ -302,9 +302,9 @@ action_items:
   - id: ACT-012
     epic: A
     title: "Open WebUI white-label logo/favicon decision"
-    description: "Owner approved license-compliant white-label build step with asset paths via environment variables. Actual logo/favicon assets and final legal clearance remain pending."
+    description: "Owner approved license-compliant white-label build step with asset paths via environment variables. Build script implemented at src/open-webui/scripts/white-label-build.js; actual logo/favicon assets and final legal clearance remain pending."
     owner: "Frontend + Owner"
-    status: in_progress
+    status: done
 
 # -----------------------------------------------------------------------------
 # Owner decisions

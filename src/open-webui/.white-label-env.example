@@ -1,0 +1,15 @@
+# Copy this file to .white-label-env, fill in absolute paths to the approved
+# brand assets, and source it before running the white-label build.
+#
+# IMPORTANT: Final asset ownership, license compliance, and legal clearance are
+# the owner's responsibility. Do not commit real brand assets or this file.
+
+# Required guard. The build script refuses to run without it.
+WHITE_LABEL_LEGAL_CLEARANCE=1
+
+# Optional asset paths. If a variable is unset, the build falls back to the
+# default Open WebUI asset for that surface.
+WEBUI_LOGO_PATH=/absolute/path/to/logo.png
+WEBUI_FAVICON_PATH=/absolute/path/to/favicon.png
+WEBUI_SPLASH_LIGHT_PATH=/absolute/path/to/splash-light.png
+WEBUI_SPLASH_DARK_PATH=/absolute/path/to/splash-dark.png
