@@ -49,6 +49,10 @@ ACT-006 stays `blocked`; Phase B remains `verified` (synthetic) only.
 
 `_bmad-output/test-artifacts/b3/live-retrieval-benchmark.json` and `specs/corporate-kb/evidence/phase-b/phase-b-retrieval-benchmark.md`.
 
+### Owner decision
+
+**Approve synthetic corpus.** The implementation team will generate a representative Russian-language corpus and golden-query set, pick a reasonable pgvector baseline config, define an ACL matrix, and set target thresholds. ACT-006 will move from `blocked` to `done` once the live benchmark passes.
+
 ---
 
 ## 2. Source / connector scope for Phase C (ACT-007)
@@ -80,6 +84,10 @@ Phase C remains `backlog`; ingestion is limited to Git-managed Markdown and manu
 ### Evidence destination
 
 `specs/corporate-kb/adr/adr-source-connector-scope.md` and updated `sprint-status.yaml`.
+
+### Owner decision
+
+**Git-only source.** Phase C source connectors are rejected for the first launch. The sole canonical source is Git-managed Spaces plus manual Markdown uploads through the /kb editor. ACT-007 can be closed and Phase C remains in backlog except for the already-completed C.1.1 MinIO staging.
 
 ---
 
@@ -114,6 +122,10 @@ KIMI remains the inference provider; hoster.ai integration stays deferred.
 
 `_bmad-output/test-artifacts/t14/` and `specs/corporate-kb/evidence/t14/`.
 
+### Owner decision
+
+**Keep KIMI as production provider.** hoster.ai integration is deferred from the first launch. The existing KIMI adapter remains the production inference path. ACT-009 is closed as `deferred`; hoster.ai can be revisited in a future phase.
+
 ---
 
 ## 4. Second-client deployment resources (ACT-010)
@@ -145,6 +157,10 @@ Single-tenant launch; second-client deployment remains backlog.
 ### Evidence destination
 
 `_bmad-output/test-artifacts/t18/` and `specs/corporate-kb/evidence/t18/`.
+
+### Owner decision
+
+**Provision an internal sandbox tenant now.** The implementation team will prepare a second-tenant specification (GitLab group, PostgreSQL schema/bucket separation, object-store bucket, Keycloak realm) for sandbox validation. Real external-client provisioning remains deferred until after internal validation passes.
 
 ---
 
@@ -179,6 +195,10 @@ Production hardening stays `backlog`; launch is blocked until at least a minimal
 
 `specs/corporate-kb/runbooks/`, `specs/corporate-kb/adr/`, and `sprint-status.yaml`.
 
+### Owner decision
+
+**Minimal production target.** Launch target: single-node PostgreSQL with daily backups, basic hoster-provided monitoring, a security checklist review, and Markdown runbooks in the repo. HA/DR (Patroni, cross-DC backup) and external pen-tests are deferred to a post-launch hardening phase. Privileged bypass governance will be documented in the runbook.
+
 ---
 
 ## 6. Open WebUI white-label branding (G1-D8 follow-up)
@@ -209,17 +229,21 @@ Default Open WebUI branding with `WEBUI_NAME` customization only.
 
 `specs/corporate-kb/evidence/g1/g1-white-label-decision.md` and build artifacts.
 
+### Owner decision
+
+**Provide cleared assets and approve a white-label build step.** The implementation team will prepare a license-compliant white-label build configuration. Actual logo/favicon assets and final legal clearance remain pending; the build step will accept asset paths via environment variables so assets can be swapped without code changes.
+
 ---
 
-## Consolidated request for owner
+## Consolidated owner decisions
 
-| # | Item | Decision / input needed | Urgency |
-|---|------|-------------------------|---------|
-| 1 | ACT-006 | Russian corpus, ACL matrix, pgvector config, thresholds | Medium — blocks live Phase B acceptance |
-| 2 | ACT-007 | First source connector scope and sample formats | Medium — blocks Phase C start |
-| 3 | ACT-009 | hoster.ai endpoints, model IDs, credentials, egress | High — blocks production inference under hoster.by |
-| 4 | ACT-010 | Second-client scope and resources | Medium — blocks multi-tenant validation |
-| 5 | ACT-011 | HA/monitoring/security/runbook decisions | High — blocks production hardening |
-| 6 | G1-D8 | White-label assets and legal clearance | Low — blocks final branding only |
+| # | Item | Owner decision | Status |
+|---|------|----------------|--------|
+| 1 | ACT-006 | Approve synthetic Russian corpus + team-defined ACL/thresholds | Unblocked — team to execute live benchmark |
+| 2 | ACT-007 | Git-only source; reject external connectors for launch | Closed; Phase C stays backlog except C.1.1 |
+| 3 | ACT-009 | Keep KIMI provider; defer hoster.ai integration | Closed as deferred |
+| 4 | ACT-010 | Provision internal sandbox tenant for validation | Unblocked — team to prepare tenant spec |
+| 5 | ACT-011 | Minimal production target (single-node PG, daily backups, basic monitoring, repo runbooks) | Unblocked — team to create runbooks/checklists |
+| 6 | G1-D8 | Provide cleared assets + approve white-label build step | Unblocked — team to prepare build config; assets pending |
 
-Please return decisions in the order above. The implementation team will convert each approved decision into ADR/runbook/spec updates and execute the unblocked work.
+Decisions recorded 2026-11-12. The implementation team will convert each decision into ADR/runbook/spec updates and execute the unblocked work.

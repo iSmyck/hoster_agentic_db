@@ -15,7 +15,7 @@
 #   - blocked: cannot proceed without owner/external input
 
 generated: "2026-11-11 01:05"
-last_updated: "2026-11-12 11:54"
+last_updated: "2026-11-12 12:19"
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -67,10 +67,8 @@ readiness:
   blocked_gates:
     - Full A01–A36 live acceptance (API lifecycle subset 20/20 PASS; fault matrix A05–A10/A27–A30 closed synthetically; live destructive acceptance optional)
     - T13/T16 object-store ACL production engine recheck
-    - T11 hoster.ai endpoint/model IDs/credentials/egress
     - Production AD/live-SLO and production IdP integration
     - Full product migrations/HA and cross-client deployment
-    - Phase B live pgvector benchmark (ACT-006) pending owner corpus/ACL/config/threshold inputs
 
 # -----------------------------------------------------------------------------
 # Development status
@@ -262,16 +260,16 @@ action_items:
   - id: ACT-006
     epic: B
     title: "Retrieval service live pgvector benchmark"
-    description: "Run ACL-aware Russian corpus benchmark and agree golden-set thresholds. Synthetic harness (src/retrieval/scripts/benchmark_retrieval.py) passes with stub embeddings and SQLite, providing deterministic closure while live gates are blocked. Missing owner/sandbox inputs: (1) Russian-language knowledge-base corpus or representative sample documents and expected queries, (2) pgvector index configuration (chunk size, overlap, embedding model baseline) and target recall@k / MRR thresholds, (3) ACL matrix defining which users/groups may retrieve which documents, (4) SLO targets (p95 latency, relevance floor) and hardware baseline for the benchmark."
+    description: "Owner approved synthetic Russian corpus and team-defined ACL/thresholds. Implementation team to generate corpus, configure pgvector baseline, define ACL matrix, and run live benchmark."
     owner: "Backend + QA"
-    status: blocked
+    status: in_progress
 
   - id: ACT-007
     epic: C
     title: "Owner source/connector selection"
-    description: "Select first real source connector scope and sample formats."
+    description: "Owner decided Git-only source for launch; external source connectors rejected. Phase C remains in backlog except already-completed C.1.1 MinIO staging."
     owner: "Owner"
-    status: open
+    status: done
 
   - id: ACT-008
     epic: D
@@ -283,30 +281,30 @@ action_items:
   - id: ACT-009
     epic: E
     title: "hoster.ai endpoint and model inputs"
-    description: "Provide endpoint, model IDs, credentials, egress config for T14."
+    description: "Owner decided to keep KIMI as production provider and defer hoster.ai integration to a future phase."
     owner: "ML + Owner"
-    status: open
+    status: done
 
   - id: ACT-010
     epic: E
     title: "Second-client deployment resources"
-    description: "Agree second-client scope and provision resources for T18a/T18b."
+    description: "Owner approved internal sandbox tenant for multi-tenant validation. Implementation team to prepare tenant specification and provisioning checklist."
     owner: "DevOps + QA + Owner"
-    status: open
+    status: in_progress
 
   - id: ACT-011
     epic: E
     title: "Production readiness decisions"
-    description: "HA PostgreSQL, monitoring/alerting, runbooks, security review, privileged bypass governance."
+    description: "Owner approved minimal production target: single-node PostgreSQL with daily backups, basic hoster monitoring, security checklist review, and Markdown runbooks in repo. HA/DR and external pen-tests deferred post-launch."
     owner: "DevOps + Security + Owner"
-    status: open
+    status: in_progress
 
   - id: ACT-012
     epic: A
     title: "Open WebUI white-label logo/favicon decision"
-    description: "Upstream Open WebUI LICENSE restricts logo/favicon replacement. Decision made (G1-D8 accepted): keep default branding (WEBUI_NAME only) for G1; license-compliant white-label build requires owner/legal clearance and separate build step after G1."
+    description: "Owner approved license-compliant white-label build step with asset paths via environment variables. Actual logo/favicon assets and final legal clearance remain pending."
     owner: "Frontend + Owner"
-    status: done
+    status: in_progress
 
 # -----------------------------------------------------------------------------
 # Owner decisions
