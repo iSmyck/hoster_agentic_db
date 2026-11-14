@@ -253,6 +253,24 @@ Acceptance IDs ниже — прямые ссылки из backlog spec v1.3, а
 - **Available baseline/approval inputs:** [baseline.md](baseline.md), pinned code references и owner [g0-review.md](g0-review.md) APPROVED 2026-11-08 имеются; **T00 DONE, G0 APPROVED**.
 - **Отсутствующие verification inputs:** product contract/conformance execution, real application integration outputs, T04 browser, T11 hoster inputs, T13/T16 object-store ACL, operational rehearsals и production/legal gates остаются BLOCKED/DESIGN по соответствующим tasks; отсутствие этих inputs не falsify как PASS.
 - **Test-plan:** полные A01–A36 и fault matrix сохранены; R04−A02, R05+A31, R11+A22, R18−A34 больше не имеют расходящегося duplicate index. [operations.md](operations.md) существует как `design_not_executed`; rehearsals не выполнялись.
+- **Proposed Epic 14:** ED requirements/stories отслеживаются отдельно в §7 и не меняют approved R/I/A counts, statuses, Full/Supporting ownership или coverage totals. Новые A37+ не создаются; существующие A IDs ниже — candidate dependency/regression navigation, не присвоение нового acceptance.
+
+## 7. Proposed Epic 14 design navigation
+
+**Статус:** non-normative DESIGN / implementation BLOCKED. Источник: [Epic 14 requirements/stories](../../_bmad-output/planning-artifacts/epics.md#proposed-implementation-phase-epic-14-editorial-publishing) и [approved planning SCP](../../_bmad-output/planning-artifacts/sprint-change-proposal-2026-11-12.md). Этот раздел не добавляет Epic 14 в Approved Delivery Structure, не изменяет §§2–6 и не утверждает новые contracts или tests.
+
+| Story | ED requirements | Existing R/I/A candidate dependency/conflict navigation only | Reuse / boundary | Required gated decisions и planned evidence | State |
+|---|---|---|---|---|---|
+| **14.1 (F01)** | ED-F-01/07/15/17; ED-UX-01/02/05/07 | R01,R02,R09,R17,R18; I01,I02,I06,I14; A01,A08,A20,A33 — regression/dependency, не coverage | E11.1, pinned Open WebUI overlay/BFF, G1 editor/history; no second write route | Current G1 permission; pristine overlay/patch manifest, collision/dirty-tree refusal, BFF auth, Notes/chats regression, Vitest/direct Vite, feature-off rollback | **BLOCKED** |
+| **14.2 (F02)** | ED-F-04/05/06/09/16/17; ED-UX-03 | R05,R16,R18; I03,I06,I09,I10,I12; A04,A24,A25,A26,A30,A32,A33,A36 | E02/E09 identity/policy seams; per-Space ACL remains independent of editorial scope | Personal registry/grant/governed-write/schema ADR; self/cross-scope/member/CAS/revocation tests, audit/export/rebuild | **BLOCKED** |
+| **14.3 (F03)** | ED-F-02/03/04/07/15/16/17; ED-UX-02/07 | R06–R10,R12,R14; I01–I07,I10,I14; A05–A10,A17,A27–A30,A34,A36 — existing MR regression, не acceptance нового path | E04/E10 exact proposal/merge/recovery primitives; separate no-MR publication record и GO target writer | No-MR canonical/credential/R-I ADR, live protection probes; zero-MR/takeover/attribution/race/crash/replay/export/restore evidence | **BLOCKED** |
+| **14.4 (F04)** | ED-F-02/08/15/16/17; ED-UX-01/05 | R01,R05,R09,R10,R14,R18; I03,I07,I09,I10,I12,I14; A07,A11,A15,A25,A27,A28,A32,A36 | Native Open WebUI inbox через owned adapter; GO `kb_ops` outbox; existing MR closure | Notification/event/identity/retention contracts; byte comparison, post-verification timing, dedupe/DLQ/restart, issuer+sub, socket-after-commit, revocation/a11y/XSS | **BLOCKED** |
+| **14.5 (F05)** | ED-F-04/09/10/11/15/16/17; ED-UX-04/05 | R01,R02,R04,R05,R11,R14,R18; I08–I14; A01,A03,A11,A12,A15,A22,A32,A35,A36 | E05/E12 stable-ID links/dependency closure; GO/Identity ownership; no canonical CI write | Ownership/dependency/event/privacy contracts; graph goldens, exact fanout/coalescing, cross-Space negatives, dashboards, rebuild/backup/index evidence | **BLOCKED** |
+| **14.7 (F07)** | ED-F-07/10/13/14/15/16/17; ED-UX-07 | R06–R14,R16,R18; I01–I07,I10–I14; A14,A17,A18,A21,A23,A27–A29,A32–A34 | Existing link parser + F03 lock/recovery/publication; separate bounded maintenance operation | Deterministic/auto/service ADR и source-managed exclusion/decision; independent recomputation, semantic/unsafe-link negatives, isolated writer, zero-MR/race/kill-switch/export evidence | **BLOCKED** |
+
+**Deferred planning reserve:** Story 14.6 (F06) имеет ED-F-11/12/14/15/16/17 и candidate navigation к R06,R15,R16,R18; I03,I04,I05,I12; A02,A16,A17,A18,A21,A25,A32,A36. Это не active task mapping: nightly semantic agents остаются proposal-only и получают отдельную activation после F05 и owner decisions о cadence/provider/egress/budgets/tools. Executable state, schedule и tests не создаются.
+
+Reverse-check Epic 14 находится в `epics.md` §Epic 14 Coverage Verification; ED-F-07 покрывается 14.1/14.3/14.7, ED-F-10 — 14.5/14.7, ED-F-11 — 14.5/14.6, ED-F-17 — всеми 14.1–14.7. Ни одна связь не превращает ED IDs в approved R/I/A coverage.
 
 [UI]: components/open-webui-fork.md
 [GO]: components/git-orchestrator.md

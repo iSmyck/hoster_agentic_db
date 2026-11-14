@@ -157,6 +157,7 @@ Pinned baseline зафиксирован: [baseline.md](baseline.md) задаё�
 - **F-INDEX:** eligible published snapshots, preflight, pending/rejected branches, inbox/templates/service paths, archive/delete, changed linked dependency, changed attachment/policy включая approval revision, full/incremental closure mismatch/missing independent proof, two generations/profiles и simultaneous old/new publication на одном Space/profile. Cutover имеет separate preflight/published request/run/snapshot IDs при одинаковых SHA/closure/hashes. Никакой ordering по lexicographic SHA.
 - **F-EXPORT:** accepted recorded/merge_attempted/merged/failed/conflicted/invalid и rejected/cancelled Decisions с explicit attempt+recovery, MR note metadata/canonical hashes, protected annotated tag objects и peeled targets, real merge parents/trailers только для merged, policy/grants mapping, refs/documents/decisions/assets/authorization closure hashes, missing/rejected asset без fabricated hash и missing note/decision/batch negative variants.
 - **F-EVAL:** synthetic expert golden questions для exact/semantic search, citations, no-answer, conflict, stale/private cases и single-page proposal. Реальные вопросы продаж добавляются позднее отдельным согласованным sanitized dataset, не подменяются выдуманными сейчас.
+- **F-EDITORIAL (PROPOSED / BLOCKED):** editorial scopes/grants, employee/editor byte pairs, no-MR publication anchors, outbox/dependency/link-fix fixtures и cross-Space negatives определены в [§11](#11-proposed-epic-14-test-design--design-not-executed--blocked); они не добавляются в active A01–A36 execution.
 
 Data profiles:
 
@@ -548,6 +549,7 @@ Supporting ownership: A01,A07,A22,A26,A27,A36; новые A IDs не созда�
 - [A01–A36 coverage](traceability.md#4-acceptance-by-acceptance-coverage-a01a36) — прямые R/I/components/contracts/T/E связи каждого сценария;
 - [T01 CF-01–CF-30 и v2 coverage](traceability.md#41-t01-cf-01cf-30-и-v2-contract-coverage) — semantic/consumer vectors и [projection mappings](contracts/projection-mapping.md);
 - [T00–T20/E00–E08 coverage](traceability.md#5-полное-t00t20-и-e00e08-coverage) — прямые task acceptance links; live statuses только в [tasks.md](tasks.md).
+- [Proposed Epic 14 design navigation](traceability.md#7-proposed-epic-14-design-navigation) и [§11 test design](#11-proposed-epic-14-test-design--design-not-executed--blocked) — отдельная candidate navigation без изменения R/I/A coverage.
 
 Полный сценарный каталог раздела 7 и fault matrix раздела 8 сохраняются без сокращений. Эти ссылки — навигация DESIGN, не executed test matrix и не G0 PASS.
 
@@ -556,3 +558,59 @@ Supporting ownership: A01,A07,A22,A26,A27,A36; новые A IDs не созда�
 Сценарий может быть отмечен VERIFIED только при наличии фактического результата на требуемом уровне, environment/commands, exact versions и sanitized evidence. DONE дополнительно требует связанные критерии задачи, code/design review, обновлённые ADR/contracts/operations и указанный upgrade/rollback impact. BLOCKED реальных интеграций остаётся явным; waiver не создаётся молчаливо.
 
 Для release candidate обязательны: deterministic merge/push/ACL/schema/cutover/export/recovery gates; воспроизводимый corpus SHA и fixture/dataset versions; отсутствие secrets/private payloads в artifacts; зарегистрированные owner thresholds там, где они требуются; явный owner gate review. Этот документ сам по себе не является таким review или evidence.
+
+## 11. Proposed Epic 14 test design — DESIGN NOT EXECUTED / BLOCKED
+
+### 11.1. Status и entry gates
+
+Этот раздел планирует проверки [Epic 14](../../_bmad-output/planning-artifacts/epics.md#proposed-implementation-phase-epic-14-editorial-publishing) после [approved planning SCP](../../_bmad-output/planning-artifacts/sprint-change-proposal-2026-11-12.md). Он не создаёт A37+, не меняет A01–A36/CF-01–CF-30 и не сообщает о выполненных tests. Candidate dependency navigation находится в [traceability §7](traceability.md#7-proposed-epic-14-design-navigation); actual task states — [tasks §16](tasks.md#16-proposed-epic-14-backlog--planning-only--blocked).
+
+До execution обязательны: G1 live acceptance, batch story review, fresh readiness PASS, owner-approved ADR/spec/contracts по scope story, authorized synthetic environments/credentials и owning migration design. F01–F05/F07 остаются BLOCKED; F06 — только deferred reserve. Product migrations, production corpus/destructive tests, paid provider calls и egress не активируются.
+
+### 11.2. Proposed fixture families
+
+- **F-ED-SCOPES:** global `kb_admin`/chief-editor grants; department owner/editor/ordinary member/outsider; self-assignment; active/revoked/expired/mismatched scope; cross-department grantor/grantee; non-member joiner/mover/leaver; duplicate/concurrent grants; stale membership/policy/revocation snapshots; editorial scope ≠ page-level read ACL.
+- **F-ED-CONTENT:** exact employee/editor canonical byte pairs; unchanged employee publication; editor-changed body/front matter; rebase same bytes; later editor revision; Cyrillic/IME/repeated headings/stable IDs; XSS/unsafe Markdown; stale base и proposal superseded после takeover.
+- **F-ED-PUBLICATION:** protected target-writer/proposal-only/employee/agent/CI identities; zero-MR direct create/update; parent/trailer/tag/content hash mismatch; global idempotency same/different payload; concurrent MR/direct target writes; timeout/crash до/после external call/tag/projection; quarantine/reconciliation/export/restore.
+- **F-ED-OUTBOX:** publication/rejection intents, recipient identity issuer+subject variants, unknown/ambiguous recipients, duplicate Git/webhook/reconcile inputs, outbox restart/retry/DLQ, upstream native dedupe, socket-before/after-commit control, revoked recipient и sanitized deep links.
+- **F-ED-GRAPH:** company-common/department scopes; typed dependent→prerequisite and informational links; exact graph/policy snapshots; duplicate/orphan/ambiguous/cyclic dependencies; same-Space fanout; denied cross-Space borrow; repeated source publication/coalescing; unassigned/partial/stale departments.
+- **F-ED-LINKFIX:** exact stable-ID rename, relative depth and unique anchor replacements; no-op/duplicate/restart; hidden prose/title/ownership/policy/attachment changes; `javascript:`, credential-bearing/traversal/external ambiguous targets; Unicode/encoded/Cyrillic anchors; deleted/orphan targets; source-managed content; stale human publication и independent kill switch.
+- **F-ED-UPGRADE:** pristine pinned checkout, clean replay, wrong commit/hash/anchor, dirty destination, overlay collision, interrupted assembly, repeated replay, feature-flag rollback, Notes/chats/auth/inbox regression и modified-file allowlist.
+
+Все identities/content/secrets — synthetic. Raw private text, provider payloads, tokens и unredacted personal data в fixtures/evidence не допускаются.
+
+### 11.3. Levels и обязательные доказательства
+
+| Level | Epic 14 focus | Запрещённое упрощение |
+|---|---|---|
+| Unit | Grant scope/membership state, byte comparison, dependency graph, idempotency, publication/outbox state machines, deterministic transform/AST whitelist | Назвать unit mock доказательством GitLab/IdP/inbox integration |
+| Contract | New closed publication/grant/dependency/event/notification mappings, old→new pending-proposal migration, backup/export/restore mapping, patch manifest | Добавить enum field без canonical mapping или проверить только happy path |
+| Browser | Employee submit, editor publish/takeover/reject, department grants/self/revoke, chief dashboard, inbox states, agent-MR explanation, conflict/recovery; keyboard/a11y/i18n/XSS | UI button visibility как authorization или success до verified commit |
+| Integration | Real GitLab target writer/protection/tag/trailers/zero-MR; real IdP membership/revocation; PostgreSQL owning schemas/locks/outbox; native Open WebUI bridge | Shared powerful token, direct upstream table write, mock-as-PASS |
+| Security | Non-member/cross-department/cross-Space denial, grant escalation, browser/model/claim forgery, semantic masquerading as link fix, IDOR/prompt injection/secrets | Доверие `deterministic=true`, job title, CODEOWNERS или model confidence |
+| Concurrency/fault | Shared MR/direct target serialization, fencing, stale base, crash/response loss, outbox replay, graph fanout duplicates, writer restart/kill switch | Blind retry, auto-clear quarantine, duplicate MR/notification/commit |
+| Restore/rebuild | Publication/grant/graph/outbox evidence, exact policy revisions, conservative barriers, full dependency/index rebuild | Notification или DB status как canonical publication proof |
+| Upgrade | Pristine overlay/BFF/anchor reconstruction, collision refusal, complete patch idempotence, feature-off rollback и focused Vitest/Python/direct Vite | Скрыть known upstream build/lint/typecheck debt или обещать unsupported plugin API |
+
+Для каждого прогона применяются §1.2: environment, versions/commits, fixture/config/policy/rule/model IDs, exact SHAs/hashes, commands, ordering, results, blocked checks и rollback/upgrade impact. Численные thresholds остаются OWNER_TBD.
+
+### 11.4. Per-story acceptance matrix
+
+| Story | Positive/user-value checks | Negative/concurrency/crash checks | Required live/upgrade/recovery evidence |
+|---|---|---|---|
+| **14.1 (F01)** | Pristine canonical `(app)/kb`, BFF/sidebar/inbox seams, existing G1 parity, feature-off stock behavior | Wrong commit/anchor/hash, dirty/collision/interrupted/repeated assembly, unauthorized BFF | Focused Vitest/Python/direct Vite; Notes/chats/auth regression; modified-file allowlist; rollback to pristine baseline |
+| **14.2 (F02)** | Assign/self-assign/revoke editor in own department; server-derived capability and audited grant history | Non-member/cross-scope/grantor spoof, duplicate/conflicting writes, mover/joiner/leaver, stale/revoked grant | Real IdP/membership + `kb_authz` role/migration ownership; browser/API parity; audit/export/rebuild |
+| **14.3 (F03)** | Editor own/employee publication with zero MR; exact content/principals/tag/trailers; source proposal terminal disposition | Employee/wrong-scope denial, stale base, changed same-key payload, concurrent merge/direct, lost grant, timeout/crash/missing anchor | Live protected-target proof, Git-derived reconciliation/quarantine, export/restore, index trigger, ordinary MR regression |
+| **14.4 (F04)** | Exact `опубликовано` / `опубликовано с правками редактора` / `отклонено`; persistent unread/read и authorized deep link | Publication before proof, rejected before closure, front-matter/rebase comparison, duplicate/retry/DLQ, unknown recipient, revoked/XSS | Native inbox bridge/dedupe/socket-after-commit; crash/replay; two-user browser live acceptance; no upstream migration |
+| **14.5 (F05)** | Stable ownership/graph, exact company-common trigger per dependent scope, chief/department dashboards, unassigned/partial visibility | Cycle/orphan/duplicate/ambiguous graph, cross-Space disclosure, duplicate fanout/restart, stale graph hash | Independent per-Space contexts, graph/policy snapshot evidence, backup/rebuild/index closure, no F06 dependency |
+| **14.7 (F07)** | Whitelisted stable-ID/relative/anchor repairs with zero MR and service attribution; independent kill switch | Hidden semantic/prose/policy/attachment/unsafe-link changes, ambiguous target, stale base, duplicate run, agent self-certification | Independent recomputation/golden vectors, isolated credential, live target verification/recovery, source-managed exclusion, export/index evidence |
+
+### 11.5. F06 deferred test reserve
+
+Story 14.6 получает будущие tests для trusted run/exact revisions, proposal-only credentials, rationale/evidence, assigned-editor routing, unassigned escalation, schedule/idempotency/coalescing/restart, bounded cost/documents/bytes, per-Space partial completion и morning-batch UX. **Сейчас schedule, executable task, provider run и expected PASS не создаются.** Activation требует отдельного owner decision и approved provider/egress/tool/budget/retention inputs.
+
+### 11.6. Evidence placement и completion
+
+После authorization machine outputs сохраняются в `_bmad-output/test-artifacts/epic14/<story>/`; sanitized reviewable extracts — `specs/corporate-kb/evidence/epic14/<story>/`. Каждый report включает exact environment/commands/results/blocked checks и ссылки на canonical Git/audit evidence без secrets/private payloads.
+
+Story VERIFIED требует фактических зелёных checks по заявленному scope; DONE дополнительно требует independent review, owner/security gates и обновлённые ADR/contracts/operations/traceability. Deferred/blocked areas не скрываются ради общего Epic 14 PASS.

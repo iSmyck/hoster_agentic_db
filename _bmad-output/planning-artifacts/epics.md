@@ -21,6 +21,13 @@ inputDocuments:
   - specs/corporate-kb/operations.md
   - specs/corporate-kb/delivery-estimates.md
   - specs/corporate-kb/repository-provisioning.md
+proposedExtensions:
+  - id: editorial-publishing
+    requirementsStatus: confirmed
+    epicStructureStatus: approved
+    storiesStatus: validated-pending-batch-review
+    finalValidationStatus: passed
+    updated: '2026-11-14'
 ---
 
 # corp_ai_db - Delivery Breakdown
@@ -30,6 +37,8 @@ inputDocuments:
 Этот документ содержит requirements inventory и approved epic/story breakdown для corp_ai_db. PRD отсутствует; функциональные и нефункциональные требования извлечены из утверждённого `spec.md` и architecture/design package. Отдельный UX contract отсутствует: UX requirements derived from spec/component docs. `content-standard.md` использован только как informational-контекст для DocOps, медиа и уведомлений, а не как источник новых нормативных требований.
 
 Связи R/I/A/CF/AD/ADR/T/E описывают design coverage, а не выполненную реализацию. A01–A36 имеют статус DESIGN, CF-01–CF-30 — DESIGN_NOT_EXECUTED. T00 и G0 завершены/утверждены; deferred gates T04, T11, T13/T16 и production/legal проверки остаются обязательными.
+
+2026-11-12 добавлен **Proposed Requirements Extension — Editorial Publishing**. Пользователь подтвердил product direction и полноту extraction; это не owner-approved ADR, не изменение действующих R01–R18/I01–I14 и не разрешение начать implementation в текущем G1. Существующие E00–E13, их статусы и Approved Delivery Structure сохраняются без изменений.
 
 ## Requirements Inventory
 
@@ -2168,3 +2177,451 @@ Acceptance ownership: Full/direct — A13,A14,A23; Supporting — A31,A35.
 **Evidence:** importer, registry, T12a/T15 fixture-based tests.
 
 <!-- End story repeat -->
+
+---
+
+## Proposed Requirements Extension — Editorial Publishing
+
+**Статус:** PRODUCT DIRECTION подтверждён пользователем 2026-11-12; technical design — PROPOSED; implementation — BLOCKED до G1 live acceptance, owner-approved ADR/spec changes и свежего readiness review. Этот раздел не меняет действующие нормативные R/I и не создаёт acceptance coverage.
+
+### ED-F — Functional Requirements
+
+- **ED-F-01 — Employee proposal flow.** Обычный сотрудник создаёт и сохраняет собственные черновики, отправляет create/edit proposal через GO/MR и видит последующие publication/rejection outcomes в Open WebUI без GitLab account или CLI. Authorship, department membership или job title сами по себе direct-publication capability не дают.
+- **ED-F-02 — Editorial takeover and publication.** Назначенный human editor в пределах активного editorial grant может открыть employee submission, опубликовать её без изменений, отредактировать и опубликовать финальную версию либо отклонить её без второго человеческого review. Исходный author и фактический version editor/publisher остаются различимы; исходный proposal получает одно согласованное terminal disposition и не может быть повторно применён после editorial publication.
+- **ED-F-03 — Editor-originated direct publication.** Editor может создать или изменить документ и опубликовать его **без создания MR и без независимого approval**. Browser не пишет в GitLab/`main`; GO выполняет managed apply от exact immutable input с fresh base/policy checks. Новый canonical publication/audit contract не impersonates accepted independent DecisionRecord.
+- **ED-F-04 — Global editorial authority.** `kb_admin` и отдельный chief editor получают global `edit_and_publish` grants во всех editorial scopes, но не automatic read-ACL bypass, GitLab Maintainer/Owner rights или infrastructure-admin authority. Chief editor дополнительно отвечает за company-common documents и downstream harmonization; department editors не наследуют власть над company-common scope.
+- **ED-F-05 — Department-scoped editor grants.** Department scope owner/head назначает `editor` только stable-person identities, являющиеся текущими участниками того же отдела, и может назначить себя. Grant содержит явный scope, grantor и lifecycle metadata. Должность, CODEOWNERS, upstream/GitLab admin status, department membership или внешняя группа без явного grant не дают editorial capability.
+- **ED-F-06 — Grant lifecycle and fresh enforcement.** Department scope owner может отзывать grants только в своём scope. Mover покидает отдел → его department grants перестают действовать; joiner не получает editor автоматически. Edit/publish/reject/grant-management операции повторно проверяют grant, department membership, scope, policy revision и revocation. Grant writes идемпотентны, аудируемы и не допускают lost update; способ governed administrative apply определяется ADR.
+- **ED-F-07 — Exact-version and conflict safety.** До публикации editor видит полный diff и principals. Publication привязана к exact final content и `expected_base_sha`; более поздняя правка требует нового confirmation. Stale base, target race, lost grant/membership, policy mismatch, invalid preview или unresolved recovery дают ноль новых `main` writes. Automatic conflict merge/rebase/squash/fast-forward и LLM regeneration во время apply запрещены. Multi-scope move проверяет права на каждый source и destination.
+- **ED-F-08 — Author notifications.** После verified Git publication исходный author получает простое `опубликовано`, если опубликованный content совпадает с последней employee-submitted версией, либо ровно `опубликовано с правками редактора`, если content отличается. После durable rejection и verified MR closure отправляется `отклонено`. Timeout/conflict/quarantine/lost grant не создают success notification; accepted decision до verified publication не считается опубликованным. Специальное сообщение — notification kind, не canonical document status.
+- **ED-F-09 — SDD editorial ownership.** Каждый managed document принадлежит одному machine-readable editorial scope со stable scope ID, типом `department` или `company_common`, владельцем и membership rules. Ownership хранится в versioned editorial policy/registry, а не self-declared front matter. Folder names могут поддерживать navigation, но не являются источником полномочий сами по себе.
+- **ED-F-10 — Typed dependency graph.** SDD relations используют stable document IDs и направление `dependent → prerequisite`; harmonization dependency отличается от informational reference. Reverse lookup определяет dependent scopes, а duplicates, orphans, ambiguous targets и cycles явно блокируют automatic processing. Cross-Space dependencies требуют отдельного versioned privacy/contract design и не реализуются скрытым cross-schema join.
+- **ED-F-11 — Company-wide publication triggers.** Verified company-common publication создаёт durable trigger для каждого dependent department scope с source document ID, exact publication SHA, publication actor, dependency evidence/graph hash и idempotency identity. Триггер означает только `requires review/harmonization`, а не обновлённый отдел, active index, agent MR или editor approval. Дедупликация по `(source_publication_sha, dependent_scope_id)` предотвращает notification storm.
+- **ED-F-12 — Nightly semantic harmonization.** В последующей фазе scheduled agents читают только authorized exact source/target revisions и создают MR/ProposalRecords с trusted run ID, rationale/evidence и assigned-editor routing. Semantic agent не публикует, не выдаёт grants и не выбирает tenant/actor. При отсутствии eligible editor run становится `unassigned`, а не auto-published; multi-Space partial completion видима и не маскируется под полную гармонизацию.
+- **ED-F-13 — Deterministic link-fix auto-publication.** Разрешён unattended apply только для closed, code-validated transformation whitelist. Server independently recomputes/validates result и не доверяет `deterministic=true`, classifier или agent assertion. Ambiguous, mixed, unsafe, stale или schema-invalid patch даёт ноль `main` writes и переводится на human review либо terminal failure.
+- **ED-F-14 — Semantic agent publication prohibition.** Любое semantic изменение агента идёт `run → MR → assigned human editor → governed publication`, даже если diff небольшой, run ночной, initiator — editor или agent называет результат link repair. Semantic-agent credential остаётся proposal-only и не разделяется с deterministic writer.
+- **ED-F-15 — Publication/index/notification separation.** Canonical Git publication, validated active index и delivered notification — независимые факты. Notification failure не откатывает Git commit; notification не доказывает publication или indexing; index activation не доказывает notification delivery.
+- **ED-F-16 — Durable audit/export/recovery.** Новые records сохраняют actor/type, original/version authors, scope/grant/grantor evidence, policy revisions, exact input/output SHAs, deterministic rule/version/hashes и notification comparison basis. Editorial policy, dependency declarations, outbox/run state и publication evidence входят в backup/export/restore; historical DecisionRecords не переписываются.
+- **ED-F-17 — Separate modular Open WebUI delivery.** Функциональность поставляется отдельным Epic 14 с feature flags, organic authenticated navigation/editor/inbox UX, repo-owned modules и явными compatibility seams. Personal Notes, обычные chats, upstream-owned migrations и pinned baseline не переписываются; pristine rebuild и upgrade-impact evidence обязательны.
+
+### ED-N — NonFunctional Requirements
+
+- **ED-N-01 — Default deny.** Каждый edit/publish/reject/grant/dependency-read/nightly-run проверяется server-side; browser/model-supplied actor, role, department, scope, tenant, grant или policy не являются источником полномочий.
+- **ED-N-02 — Exact apply and recovery.** Все новые publication paths используют exact-SHA identity, global idempotency, shared per-target serialization/fencing, Git-derived verification, durable recovery barrier и conclusive reconciliation.
+- **ED-N-03 — Reliable notifications.** Author/department intents durable, at-least-once, deduplicated, bounded retry/DLQ, replayable и не образуют распределённую Git+DB+inbox transaction.
+- **ED-N-04 — Automation isolation and kill switch.** Deterministic auto-publication версионируется, feature-flagged и отключается независимо от human flows; semantic-agent и deterministic-writer credentials разделены.
+- **ED-N-05 — Space isolation.** Cross-Space harmonization использует independently authorized per-Space contexts; policy/group snapshots, dependency rows, cursors и payload не переносятся между ACL perimeters.
+- **ED-N-06 — Bounded idempotent schedules.** Nightly runs дедуплицируются по schedule window, exact input revision, target scope и model/configuration; restart/coalescing не создаёт duplicate MR.
+- **ED-N-07 — No long critical sections.** Agent/LLM calls, notification retries и human review не удерживают GO merge или AuthZ DB transactions.
+- **ED-N-08 — Sanitized telemetry.** Grant denials, stale scopes, publication outcomes, validation rejection reasons, outbox age/DLQ, trigger/run counts и stale-base rates наблюдаемы без raw private text, secrets или provider payloads.
+- **ED-N-09 — Restorable additions.** Backup/restore учитывает editorial policy/dependencies, operational outbox/run state и обе версии old/new publication records без fabricated success или duplicate delivery.
+- **ED-N-10 — Historical integrity.** Existing decisions/evidence остаются неизменными; pre-epic pending MRs получают явную migration/review policy и никогда не публикуются молча.
+- **ED-N-11 — Owner-approved thresholds.** Notification latency, nightly completion, fanout/queue capacity, retry backoff, retention, RPO/RTO, cadence и budgets не выдумываются; остаются configuration/owner decisions.
+- **ED-N-12 — Upgrade resilience.** Focused contracts проверяют pristine overlay/patch reconstruction, auth/session/inbox/editor seams, unchanged upstream migration ownership, feature-disabled rollback, Vitest и direct Vite build; известные upstream failures не скрываются.
+
+### ED-A — Additional Architecture Requirements
+
+- Literal no-MR editorial publication требует owner-approved изменения R06–R10/R12–R14 и I01–I07/I10/I14 плюс нового canonical publication record, protected Git anchor/trailers, exact verification, export/restore и reconciliation semantics. Direct browser/human GitLab push не допускается.
+- Routine personal editor grants и department self-assignment требуют пересмотра текущей group-primary/personal-exception policy. Grant management не должен неявно становиться content auto-merge или неаудируемым boolean в user table.
+- Deterministic auto-publication требует scoped исключения из no-auto-merge/source-managed запретов, отдельной service identity и нового non-human publication record. Semantic agents остаются proposal-only.
+- GO владеет publication orchestration и своим `kb_ops` operational state; Identity/AuthZ — effective editorial grants и `kb_authz`; Open WebUI notification adapter использует upstream API/models без прямой записи GO в upstream tables; CI/index не получает canonical write capability.
+- Pinned Open WebUI v0.13.0 не предоставляет достаточного general-purpose plugin API. Допустимый packaging — repo-owned authenticated frontend module, thin backend adapter/BFF, небольшой enumerated compatibility patch set для router/sidebar/inbox и fail-closed upgrade manifest; обещание автоматической совместимости с будущими версиями не допускается.
+- Существующие live и tracked KB frontends должны быть консолидированы в один canonical implementation до добавления новых write paths. Sandbox non-HttpOnly token cookie, direct browser→GO credential handling и divergent prototype submit не переносятся в production design.
+- До feature expansion нужны reproducible overlay/patch manifest, collision/dirty-tree refusal, complete patch application, pristine reconstruction и modified-file allowlist. Новые upstream migrations не создаются для KB notifications.
+- Существующие shared merge/link/recovery primitives переиспользуются; новый сервис добавляется только при отсутствии согласованного capability. Ночной semantic orchestrator и deterministic writer развёртываются как отдельные bounded components/workers без общего powerful token.
+
+### ED-UX — UX Design Requirements
+
+- **ED-UX-01 — Employee.** Основное действие `Отправить на согласование`; собственные drafts/submissions и простые outcomes доступны без Git terminology. Notification открывает только authorized internal target.
+- **ED-UX-02 — Editor.** В активном scope доступны `Опубликовать` и `Редактировать и опубликовать`; до confirmation видны full diff, original author, current exact version и scope. Conflict/failure/quarantine не отображаются как success, а новая правка требует нового confirmation.
+- **ED-UX-03 — Department scope owner.** Organic scope-settings view содержит department-member-only picker, self-assignment, active/revoked grants, grantor/timestamp/scope и revocation. Department owner и editor — разные capabilities; свободный ввод actor/tenant/scope отсутствует.
+- **ED-UX-04 — Chief editor.** Company-common view показывает owned documents, dependent departments, publication triggers, pending harmonization MRs, unassigned departments и partial/failed/stale/completed states без утверждения, что trigger уже актуализировал отдел.
+- **ED-UX-05 — Notifications.** Используется Open WebUI inbox где возможно; special message отображается ровно `опубликовано с правками редактора`. Обычные published/rejected кратки; title/message sanitized, keyboard/screen-reader/unread/i18n behavior сохранены, raw rationale/diff/private content по умолчанию отсутствуют.
+- **ED-UX-06 — Agent proposal.** Nightly MR показывает trusted run/schedule, source revision, affected scopes/documents, evidence/diff, assigned editor и stale/partial/conflict state с явным указанием, что agent output не опубликован до human approval.
+- **ED-UX-07 — Editor fidelity.** TipTap сохраняет canonical serialization, front-matter boundary, full source diff, Cyrillic/IME/accessibility/XSS behavior и не выполняет silent normalization; это необходимо для корректного editor-changed comparison.
+
+### ED-OPEN — Decisions Still Requiring Formal Design/Owner Resolution
+
+- Canonical record/tag/trailer format для no-MR human и deterministic service publication, включая GitLab target-writer/protection profile.
+- Author comparison basis по canonical bytes, включая front matter и formatting normalization; предлагаемый default — exact canonical content bytes с записанными compared revisions/hashes.
+- Versioned storage и governed apply для personal editorial grants/registry; global `kb_admin`/chief-editor appointment authority.
+- Cross-Space dependency contract, dependency backfill, recipients department triggers и поведение после link-only automatic publication.
+- Notification channel beyond proposed Open WebUI inbox, delivery latency/retention, nightly cadence/provider/budgets и threshold values.
+- Exact no-MR recovery/export/restore mappings и migration policy для уже существующих pending proposals.
+- Применимость deterministic auto-publication к source-managed content; без отдельного ADR такой контент исключается.
+
+<!-- End proposed requirements extension -->
+
+---
+
+## Proposed Epic List — Editorial Publishing
+
+### Epic 14: Editorial Publishing — делегированное редактирование и управляемая публикация знаний
+
+**User outcome:** сотрудники предлагают изменения, назначенные редакторы самостоятельно выпускают документы в своих областях ответственности, главред управляет общими знаниями компании, а последующая автоматика поддерживает ссылки и готовит семантические предложения без самостоятельной публикации.
+
+**Coverage:** ED-F-01–ED-F-17; ED-N-01–ED-N-12; ED-A; ED-UX-01–ED-UX-07.
+
+**Implementation notes:** literal no-MR editorial publication с отдельным canonical audit contract; personal scoped editor grants с self-assignment; repo-owned Open WebUI module/BFF и enumerated compatibility patches; transactional outbox и department triggers; последующие nightly semantic agents только через MR; deterministic link-fix auto-publication с независимой кодовой проверкой и отдельным credential. Initial editorial flow не зависит от nightly automation.
+
+**Статус:** APPROVED AS PROPOSED EPIC STRUCTURE 2026-11-12; implementation BLOCKED до G1, owner-approved ADR/spec changes и readiness review. Это не добавление в текущий Approved Delivery Structure и не implementation authorization.
+
+### ED-F Coverage Map
+
+- **ED-F-01:** Epic 14 — employee proposal flow.
+- **ED-F-02:** Epic 14 — редактирование и публикация заявки сотрудника.
+- **ED-F-03:** Epic 14 — прямая публикация собственной правки редактором.
+- **ED-F-04:** Epic 14 — глобальные полномочия `kb_admin` и главреда.
+- **ED-F-05:** Epic 14 — department-scoped editor grants.
+- **ED-F-06:** Epic 14 — назначение, отзыв и fresh enforcement grants.
+- **ED-F-07:** Epic 14 — exact-version и conflict safety.
+- **ED-F-08:** Epic 14 — уведомления автора.
+- **ED-F-09:** Epic 14 — SDD editorial ownership.
+- **ED-F-10:** Epic 14 — typed dependency graph.
+- **ED-F-11:** Epic 14 — company-wide publication triggers.
+- **ED-F-12:** Epic 14 — ночная семантическая гармонизация.
+- **ED-F-13:** Epic 14 — deterministic link-fix auto-publication.
+- **ED-F-14:** Epic 14 — запрет semantic-agent auto-publication.
+- **ED-F-15:** Epic 14 — разделение publication/index/notification.
+- **ED-F-16:** Epic 14 — audit/export/recovery.
+- **ED-F-17:** Epic 14 — модульная Open WebUI поставка.
+
+<!-- End proposed epic list -->
+
+---
+
+## Proposed Implementation Phase Epic 14: Editorial Publishing
+
+**Goal:** делегированное редактирование и управляемая публикация знаний с scoped human editorial authority, органичным Open WebUI UX, durable notifications и последующей bounded automation.
+
+**Статус эпика:** PROPOSED / PENDING BATCH REVIEW. Все stories заблокированы текущим G1 и указанными owner/ADR gates; ночная гармонизация дополнительно DEFERRED. Этот раздел не входит в Approved Delivery Structure и не меняет статусы E00–E13/T00–T20.
+
+### Story 14.1 (F01): Organic and upgrade-resilient Open WebUI editorial module
+
+As a knowledge platform maintainer,
+I want KB editorial functionality delivered through one reproducible Open WebUI module with explicit upstream compatibility seams,
+So that future upgrades do not silently remove the feature or leave divergent document workflows.
+
+Requirements: ED-F-01, ED-F-07, ED-F-15, ED-F-17; ED-N-08, ED-N-09, ED-N-12; ED-A; ED-UX-01, ED-UX-02, ED-UX-05, ED-UX-07.
+Acceptance ownership: Full/direct — upgrade reconstruction, authenticated integration and Notes/chat regression; Supporting — G1 editor/history behavior.
+
+**Acceptance Criteria:**
+
+**Given** a pristine Open WebUI checkout at pinned commit `c38885a1a737da4968f157092f304f3b5481d0bf` and tracked editorial module sources,
+**When** complete overlay/patch assembly runs,
+**Then** it reconstructs one canonical authenticated `(app)/kb` implementation with sidebar integration, typed client and thin backend BFF, without a second prototype document-write route.
+**And** existing G1 draft/history/proposal behavior is preserved, browser code has no GitLab credential or corporate actor authority, and the sandbox non-HttpOnly OIDC cookie is absent.
+
+**Given** the upgrade manifest and pristine upstream hashes,
+**When** the upstream commit is wrong, a patched anchor changed, a destination is unexpectedly dirty or an overlay collision occurs,
+**Then** assembly fails before modifying the checkout and identifies the incompatible seam.
+**And** cleanup never deletes unrecognized or upstream-owned files, all root configs are recorded before manifest completion, and no upstream migration is added or modified.
+
+**Given** the assembled module with editorial feature flags disabled,
+**When** Open WebUI starts,
+**Then** ordinary Notes, chats, authentication and inbox behavior remain unchanged, editorial navigation is hidden, and rollback to the pristine baseline is reproducible.
+**And** enabling the flag exposes only existing governed KB functionality; no direct-publish action appears before Story 14.3.
+
+**Given** the reconstructed checkout,
+**When** focused frontend/backend contract tests and direct Vite build run,
+**Then** route placement, BFF registration, sidebar anchors, token forwarding, inbox compatibility and modified-file allowlist pass.
+**And** known upstream `npm run build`, global `svelte-check` and ESLint debt remains explicit and is not reported as newly passing.
+
+**Dependencies:** current G1 live acceptance and existing E09–E11 canonical seams; no future Epic 14 story.
+
+**Evidence:** versioned overlay/patch manifest with source/destination/baseline hashes; pristine rebuild log; collision/idempotence/cleanup tests; BFF authentication tests; focused Vitest/Python results; direct Vite output; Notes/chat regression; final modified-file allowlist.
+
+**Status:** PROPOSED / BLOCKED by current G1 scope; user approved this story direction 2026-11-12, implementation approval is not claimed.
+
+**Rollback/upgrade impact:** feature flag off restores stock behavior; incompatible upstream drift blocks assembly instead of silently erasing KB functionality.
+
+### Story 14.2 (F02): Department-scoped editorial assignments
+
+As a department scope owner,
+I want to assign and revoke editors only among current members of my department, including myself,
+So that editorial responsibility is delegated explicitly without making job titles or infrastructure roles into publication rights.
+
+Requirements: ED-F-04, ED-F-05, ED-F-06, ED-F-09, ED-F-16; ED-N-01, ED-N-05, ED-N-08, ED-N-09, ED-N-10; ED-F-17; ED-A; ED-UX-03.
+Acceptance ownership: Full/direct — scoped delegation, self-assignment, revocation and cross-department negatives; Supporting — existing Space ACL/revocation acceptance.
+
+**Acceptance Criteria:**
+
+**Given** an authenticated department scope owner and a current member of the same department,
+**When** the owner assigns or self-assigns `editor`,
+**Then** a durable audited grant records trusted grantee/grantor stable IDs, explicit Space/path scope, membership evidence, policy revision, creation time and active state.
+**And** department ownership alone does not silently activate `edit_and_publish`; the explicit self-grant is the enabling action, and no GitLab/Open WebUI infrastructure role is changed.
+
+**Given** a grantor outside the department, a non-member grantee, a cross-department/global scope, a forged browser actor or a stale membership snapshot,
+**When** assignment or revocation is attempted,
+**Then** the operation is denied before any grant/policy write and returns no cross-Space membership details.
+**And** department membership alone grants neither editor rights nor additional read ACL, and global `kb_admin`/chief-editor appointment is outside this department self-service path.
+
+**Given** active grants and concurrent/repeated assignment, revocation or mover/joiner events,
+**When** operations are processed,
+**Then** idempotent replay does not duplicate grants, conflicting concurrent updates cannot silently overwrite each other, leaving the department disables subsequent editorial operations and joining does not auto-assign editor.
+**And** edit/publish/reject/grant-management checks use fresh grant/membership/scope/policy/revocation evidence and fail closed when it is stale or unavailable.
+
+**Given** the organic department settings view,
+**When** an authorized owner manages editors,
+**Then** the picker contains only eligible department members and supports self-assignment, active/revoked grants show scope/grantor/timestamp, and revocation is available without free-form actor/tenant/scope fields.
+**And** effective capabilities returned by the server control available UI actions, while direct API bypass receives the same denial.
+
+**Dependencies:** Story 14.1; G1; owner-approved editorial registry/personal-grant lifecycle and schema-ownership ADR/spec changes.
+
+**Evidence:** grant/registry contract and migration ownership; unit/API tests for self-assignment, non-member/cross-scope denial, idempotency, concurrent writes, mover/joiner/leaver and fresh revocation; browser grant-management tests; audit/export/rebuild evidence with sanitized identities.
+
+**Status:** PROPOSED / PENDING BATCH REVIEW / BLOCKED.
+
+**Rollback/upgrade impact:** new grants are additive and feature-flagged; rollback disables new editorial writes without rewriting historical grants or existing ACL/policy evidence.
+
+### Story 14.3 (F03): Editorial direct publication and takeover
+
+As an explicitly assigned editor,
+I want to publish my own or an employee’s exact final document version without creating an MR or obtaining a second review,
+So that accountable editorial publication is immediate while authorship, integrity and recovery remain verifiable.
+
+Requirements: ED-F-02, ED-F-03, ED-F-04, ED-F-07, ED-F-15, ED-F-16; ED-N-01, ED-N-02, ED-N-04, ED-N-07, ED-N-08, ED-N-09, ED-N-10; ED-F-17; ED-A; ED-UX-02, ED-UX-07.
+Acceptance ownership: Full/direct — no-MR publication, takeover disposition, attribution, idempotency, target race and crash recovery; Supporting — existing MR merge/recovery acceptance.
+
+**Acceptance Criteria:**
+
+**Given** an editor with an active `edit_and_publish` grant for the current Space/path and an exact expected base,
+**When** the editor creates or updates a document and confirms `Опубликовать`,
+**Then** GO freshly verifies actor/grant/scope/policy/base and creates one attributed commit directly in the protected target through the dedicated target-writer credential, with **zero MR creation** and one expected parent equal to `expected_base_sha`.
+**And** the browser never receives a GitLab token, direct human GitLab push remains forbidden, ordinary employees receive `403` before any GitLab write, and the existing employee MR/independent-review path remains operational.
+
+**Given** an employee submission in the editor’s scope,
+**When** the editor publishes it unchanged or selects `Редактировать и опубликовать`,
+**Then** GO binds original author, version editor and publisher as distinct principals, locks the source proposal against ordinary merge, publishes only the exact confirmed final content and gives the original proposal one terminal superseded disposition linked to the publication commit.
+**And** the original proposal cannot later be merged as a duplicate, no fake self-approved DecisionRecord is created, and pre-epic pending proposals follow an explicit migration policy rather than silent auto-publication.
+
+**Given** the direct-publication request and a global idempotency key,
+**When** GO prepares the apply,
+**Then** a payload hash binds actor/route/Space/branch/path/content/base/grant/policy, same-key identical replay returns the existing result, changed payload is rejected, and a shared per-target advisory lock covers both direct publications and MR merges.
+**And** stale base, target recovery, lost grant/membership, policy mismatch, invalid preview or newer unconfirmed content produces zero new `main` writes and no automatic conflict merge/rebase/squash/fast-forward.
+
+**Given** a validated publication operation,
+**When** GO performs the external write,
+**Then** a durable operation/recovery barrier is committed first, the resulting commit carries versioned publication ID/hash/actor/scope trailers, and a canonical publication record is anchored by a protected tag with exact base/commit/content/policy evidence.
+**And** GO reads back parent, trailers, tag and path content before reporting `published`, triggers normal index reconciliation separately, and export/backup/restore can reconstruct the publication without an MR note or fabricated independent decision.
+
+**Given** a timeout, crash, missing audit anchor, target race or inconclusive response during publication,
+**When** the operation is retried or reconciled,
+**Then** the UI shows `recovery_required`/conflict rather than success, blind retry is forbidden, and only conclusive Git-derived evidence completes or quarantines the operation.
+**And** the recovery barrier blocks further writes to the affected target until reconciliation, with sanitized audit of every attempt.
+
+**Given** server-derived editorial capabilities and the full exact diff,
+**When** an authorized editor uses Open WebUI,
+**Then** `Опубликовать` and `Редактировать и опубликовать` appear only in granted scopes, confirmation identifies original author/current version/scope, and any subsequent edit requires a fresh confirmation.
+**And** unauthorized direct navigation or API calls cannot enable the action by changing browser role/state.
+
+**Dependencies:** Stories 14.1 and 14.2; owner-approved no-MR canonical publication/credential/recovery ADR and R/I/spec amendments; live GitLab target-writer/protection probes; shared target-lock readiness.
+
+**Evidence:** synthetic and live tests for authorized create/update with zero MR, employee takeover terminal disposition, author/editor/publisher attribution, wrong-scope/admin/browser spoof denial, idempotent replay, same-key changed payload, stale base, concurrent MR/direct writes, timeout/crash reconciliation, protected tag/trailers/content verification, export/restore and two-browser ordinary MR regression.
+
+**Status:** PROPOSED / PENDING BATCH REVIEW / BLOCKED.
+
+**Rollback/upgrade impact:** independent feature flag disables new direct writes while preserving verified Git history and recovery barriers; ordinary MR remains the fallback, never direct human GitLab push or history rewrite.
+
+<!-- End proposed epic stories part 1 -->
+
+### Story 14.4 (F04): Durable author notifications in the Open WebUI inbox
+
+As an employee author,
+I want a simple trustworthy notification when my submission is published, published with editor edits or rejected,
+So that I know the verified outcome without having to interpret GitLab activity or receive a diff in the notification.
+
+Requirements: ED-F-02, ED-F-08, ED-F-15, ED-F-16; ED-N-02, ED-N-03, ED-N-07, ED-N-08, ED-N-09, ED-N-11; ED-F-17; ED-A; ED-UX-01, ED-UX-05.
+Acceptance ownership: Full/direct — post-publication/rejection timing, content comparison, dedupe, crash replay, identity mapping and inbox privacy; Supporting — native Open WebUI inbox behavior.
+
+**Acceptance Criteria:**
+
+**Given** an employee submission and its last relevant employee-submitted canonical content,
+**When** a Git publication is conclusively verified,
+**Then** the original author receives `опубликовано` if the canonical published content bytes match that employee version, or exactly `опубликовано с правками редактора` if they differ.
+**And** compared revisions/hashes are stored in publication evidence, a rebase without content change produces the normal published message, and no diff is required in the notification while full versions remain available through authorized Git history.
+
+**Given** a rejected proposal,
+**When** the rejected decision is durable and MR closure is verified,
+**Then** the original author receives `отклонено`.
+**And** accepted-but-unmerged, stale, conflicted, timed-out, quarantined, lost-grant or otherwise inconclusive operations emit no published/rejected success message, and notification delivery never substitutes for Git or index evidence.
+
+**Given** a committed publication/rejection operation,
+**When** its notification intent is created,
+**Then** the intent and operation state share the owning GO transaction where applicable and use a stable recipient/outcome/publication dedupe key plus immutable payload hash.
+**And** bounded retry/DLQ, dispatcher restart, Git/webhook duplication and reconciliation produce at-least-once delivery without duplicate native inbox rows, while notification failure does not roll back verified Git state.
+
+**Given** the authenticated Open WebUI notification bridge,
+**When** GO dispatches an allowlisted event,
+**Then** structured issuer/provider + subject resolves exactly one Open WebUI recipient without email fallback, native `(user_id,event_key)` dedupe is used, commit precedes socket emission and only a validated internal proposal/document UUID target is accepted.
+**And** unknown/ambiguous recipients remain pending/dead-letter, browser/model/agent producers cannot forge publication facts, and no token or raw private document/diff/rationale appears in payload or logs.
+
+**Given** an author using the inbox with keyboard or screen reader,
+**When** notifications arrive, are opened or marked read,
+**Then** unread/read state persists, Russian labels and the special message render without HTML/Markdown injection, and navigation reauthorizes the target before exposing title/content.
+**And** revoked access does not expose protected content through notification list, preview or deep link, and native count/open/read behavior remains compatible with upstream.
+
+**Dependencies:** Stories 14.1 and 14.3 for editorial publication outcomes; owner-approved notification event/identity/retention contracts and outbox schema; existing MR closure semantics for rejection.
+
+**Evidence:** transactional outbox tests; exact byte-comparison cases including rebase/front matter; post-verification timing tests; retry/DLQ/crash/reconciliation dedupe; issuer+sub mapping negatives; native bridge authorization/socket-after-commit tests; inbox accessibility/XSS/unread/revocation browser checks and two-user live acceptance.
+
+**Status:** PROPOSED / PENDING BATCH REVIEW / BLOCKED.
+
+**Rollback/upgrade impact:** disabling notification dispatch leaves verified publication and durable intents intact; native upstream tables are not migrated by KB code, replay remains deduplicated after re-enable/rollback.
+
+### Story 14.5 (F05): SDD dependencies and company-wide publication triggers
+
+As a chief editor,
+I want company-common documents, typed dependencies and dependent-department triggers presented in one editorial view,
+So that company-wide changes have explicit ownership and downstream review signals without claiming that harmonization has already happened.
+
+Requirements: ED-F-04, ED-F-09, ED-F-10, ED-F-11, ED-F-15, ED-F-16; ED-N-01, ED-N-03, ED-N-05, ED-N-08, ED-N-09, ED-N-11; ED-F-17; ED-A; ED-UX-04, ED-UX-05.
+Acceptance ownership: Full/direct — ownership/dependency graph, exact-snapshot trigger fanout, scope privacy and chief/department UX; Supporting — index dependency closure.
+
+**Acceptance Criteria:**
+
+**Given** managed documents and versioned editorial policy,
+**When** ownership is resolved,
+**Then** each document has exactly one stable machine-readable editorial scope of type `department` or `company_common`, chief-editor accountability is explicit for common content and folder/front-matter declarations cannot self-assign authority.
+**And** editorial scope does not replace Space ACL, and unresolved/duplicate ownership blocks automatic processing rather than selecting a recipient by guesswork.
+
+**Given** typed `dependent → prerequisite` relations using stable document IDs,
+**When** the dependency graph is built for an exact published snapshot,
+**Then** harmonization dependencies are distinguishable from informational references and reverse lookup returns the owning scopes of dependent documents.
+**And** duplicates, orphans, ambiguous targets and cycles are reported explicitly, and cross-Space dependency processing remains disabled until a separately approved privacy/contract design exists.
+
+**Given** a verified company-common publication and its exact post-publication graph snapshot,
+**When** dependent scopes are computed,
+**Then** one durable trigger per `(source_publication_sha, dependent_scope_id)` records source document/publication SHA, publisher, dependency evidence/graph hash and delivery state.
+**And** repeated reconciliation does not duplicate triggers, fanout uses only independently authorized scope contexts and a trigger states only `requires review/harmonization`, never that target content/index/MR/approval is complete.
+
+**Given** an assigned department editor or chief editor,
+**When** they open the editorial dashboard or notification,
+**Then** they see authorized common documents, dependent departments, pending triggers, unassigned departments and partial/failed/stale states with simple sanitized text and accessible internal navigation.
+**And** department triggers go to the assigned editorial work queue/editors rather than broadcasting private content to every department member, and no nightly agent is required for this view to function.
+
+**Given** an index build or rebuild involving dependency relations,
+**When** the dependency closure changes,
+**Then** affected per-Space projections are invalidated/rebuilt according to existing pointer/activation rules without treating notification metadata as canonical content or creating a cross-Space read path.
+
+**Dependencies:** Stories 14.2, 14.3 and 14.4; owner-approved editorial ownership/dependency/event contracts and graph-storage ownership; Story 14.6 is not required.
+
+**Evidence:** registry/graph golden fixtures; reverse lookup and cycle/orphan/duplicate tests; exact graph-hash and publication-SHA assertions; fanout/coalescing/replay tests; cross-Space negatives; chief/department browser tests; partial/unassigned states; backup/rebuild and index-closure equivalence evidence.
+
+**Status:** PROPOSED / PENDING BATCH REVIEW / BLOCKED.
+
+**Rollback/upgrade impact:** disabling dependency triggers preserves canonical documents and existing links; versioned graph/policy can be rebuilt without rewriting history or sending backfill notifications unless explicitly enabled.
+
+<!-- End proposed epic stories part 2 -->
+
+### Story 14.6 (F06): Nightly semantic harmonization proposals
+
+As an assigned department editor,
+I want bounded nightly agents to turn company-wide changes into explained semantic update proposals for my scope,
+So that routine harmonization is prepared for me without allowing an agent to publish corporate knowledge autonomously.
+
+Requirements: ED-F-11, ED-F-12, ED-F-14, ED-F-15, ED-F-16; ED-N-01, ED-N-03, ED-N-04, ED-N-05, ED-N-06, ED-N-07, ED-N-08, ED-N-09, ED-N-11; ED-F-17; ED-A; ED-UX-04, ED-UX-06.
+Acceptance ownership: Full/direct — proposal-only agent boundary, exact revisions, run idempotency/coalescing, routing and bounded execution; Supporting — provider/egress and existing agent-tool acceptance.
+
+**Acceptance Criteria:**
+
+**Given** an explicitly activated nightly schedule, approved provider/data profile and pending company-common triggers,
+**When** a bounded run starts,
+**Then** it receives a trusted run ID and exact source/target revisions, editorial scope, policy/model/config hashes and resource limits from server-side orchestration.
+**And** the agent has only authorized read/search/propose capabilities, no publish/decision/grant/arbitrary Git credential, and no human review or merge transaction is held open during inference.
+
+**Given** a source change and authorized dependent documents,
+**When** the agent identifies a semantic candidate,
+**Then** GO creates an ordinary MR/ProposalRecord with exact base/proposal SHAs, source publication evidence, affected target scope, rationale/diff and assigned-editor routing.
+**And** every semantic change requires an explicit fresh human editorial decision on the exact version, including small changes, editor-launched runs or output labelled `link repair`.
+
+**Given** repeated source publications, outstanding proposals, retries or orchestrator restarts,
+**When** runs overlap or are replayed,
+**Then** schedule/input/scope/model idempotency prevents duplicate MRs, newer source revisions coalesce pending work according to policy, stale snapshots produce no `main` write and superseded proposals receive an explicit disposition.
+**And** missing eligible editors produce `unassigned` escalation rather than automatic publication, and failures enter bounded retry/DLQ with sanitized telemetry.
+
+**Given** multiple dependent Spaces or scopes,
+**When** harmonization spans them,
+**Then** separate independently authorized per-Space/per-scope proposals are linked to one run and partial completion remains visible; no cross-Space atomic merge, borrowed ACL context or automatic fallback is introduced.
+**And** the editor UI summarizes proposals by source change and scope with trusted run/source/evidence/stale/conflict state instead of creating an unbounded notification storm.
+
+**Dependencies:** Story 14.5; separate activation decision for nightly cadence, provider/egress, budgets, queue/retention thresholds and any expanded agent tool contract. Story 14.7 is not a dependency.
+
+**Evidence:** dry-run and synthetic-run manifests; exact-SHA/source-evidence checks; proposal-only credential matrix; idempotency/coalescing/restart tests; stale-base and unassigned outcomes; per-Space isolation; bounded cost/byte/document tests; MR explanation browser checks; live provider execution only when separately authorized.
+
+**Status:** DEFERRED / PENDING BATCH REVIEW. Reserve F06 for planning only; no executable task or provider/egress authorization is created by the initial Epic 14 activation.
+
+**Rollback/upgrade impact:** kill switch stops new runs without affecting human editorial flows; queued intents remain durable, existing MRs retain ordinary review semantics and no automatic apply is used during rollback.
+
+### Story 14.7 (F07): Code-proven deterministic link-fix auto-publication
+
+As a knowledge platform maintainer,
+I want a narrow maintenance worker to automatically publish only independently verified deterministic link repairs,
+So that mechanical link maintenance does not consume editorial time while semantic changes still require human review.
+
+Requirements: ED-F-07, ED-F-10, ED-F-13, ED-F-14, ED-F-15, ED-F-16; ED-N-01, ED-N-02, ED-N-04, ED-N-05, ED-N-06, ED-N-07, ED-N-08, ED-N-09, ED-N-12; ED-F-17; ED-A; ED-UX-07.
+Acceptance ownership: Full/direct — closed transformation proof, isolated writer, fail-closed validation, race/recovery and semantic-infiltration negatives; Supporting — existing link parser and direct-publication recovery.
+
+**Acceptance Criteria:**
+
+**Given** a versioned whitelist of deterministic transformations,
+**When** a rename/move or exact anchor mapping is processed,
+**Then** only unambiguous Markdown/link-target spans for the same stable document ID, relative link depth or exact unique anchor mapping may change.
+**And** prose, headings, titles, ownership/policy/attachments, relation meaning, external/unsafe destinations, ambiguous/orphan/cyclic targets and unrelated formatting cannot be auto-published; source-managed content is excluded unless its ADR explicitly allows it.
+
+**Given** an exact input revision and candidate repair,
+**When** the deterministic worker validates it,
+**Then** server code independently recomputes the output and verifies rule ID/version and implementation/config hash, canonical parse/schema validity, every changed span, stable target identity, safe destination and absence of unrelated bytes.
+**And** model/browser/job fields such as `deterministic=true` or `safe_to_publish=true` are never authoritative; an agent candidate is only a hint, and mixed/ambiguous/invalid output produces zero `main` writes plus ordinary MR or terminal validation failure.
+
+**Given** a fully validated repair and enabled automatic-link-fix flag,
+**When** publication occurs,
+**Then** a separate maintenance service uses its own narrow writer path and non-human publication record containing input/output SHAs, rule/version/hashes, changed-link evidence and trigger identity, without impersonating an author/editor or sharing the semantic-agent credential.
+**And** Story 14.3 serialization, idempotency, base/fresh-policy checks, protected audit anchor, content verification, recovery/quarantine, export and post-publication indexing apply with **zero MR creation** for this approved operation class.
+
+**Given** a concurrent human publication, stale base, worker restart or duplicate schedule,
+**When** the same repair is attempted,
+**Then** stale work is discarded and independently recomputed from a fresh eligible revision, replay does not duplicate commits and unknown outcomes remain quarantined until conclusive reconciliation.
+**And** disabling the independent kill switch stops automatic writes without disabling human editorial publication or semantic MR proposals.
+
+**Given** adversarial fixtures,
+**When** the validator and live writer are tested,
+**Then** Cyrillic/stable IDs, Unicode/encoded anchors, relative paths and no-op idempotence pass, while hidden prose edits, `javascript:`/credential-bearing/traversal links, deleted/ambiguous targets, attachment/policy changes and cross-Space retargeting fail closed.
+
+**Dependencies:** Stories 14.3 and 14.5; owner-approved deterministic transformation/auto-publication/service-attribution ADR and source-managed applicability decision; Story 14.6 is not required.
+
+**Evidence:** parser/AST golden vectors and independent recomputation proof; transformation-rule/version hashes; semantic-infiltration and unsafe-link negatives; isolated credential matrix; no-MR live publication with service record/tag/trailers; stale-base/race/restart/kill-switch tests; export/restore/index evidence.
+
+**Status:** PROPOSED / PENDING BATCH REVIEW / BLOCKED.
+
+**Rollback/upgrade impact:** automatic writer flag off leaves human flows and existing verified repairs intact; rule versions remain auditable and rollback never rewrites canonical history.
+
+### Epic 14 Coverage Verification
+
+| Requirement | Story coverage |
+|---|---|
+| ED-F-01 | 14.1 |
+| ED-F-02, ED-F-03, ED-F-04 | 14.2, 14.3 |
+| ED-F-05, ED-F-06 | 14.2 |
+| ED-F-07 | 14.1, 14.3, 14.7 |
+| ED-F-08 | 14.4 |
+| ED-F-09 | 14.2, 14.5 |
+| ED-F-10 | 14.5, 14.7 |
+| ED-F-11 | 14.5, 14.6 |
+| ED-F-12 | 14.6 |
+| ED-F-13 | 14.7 |
+| ED-F-14 | 14.6, 14.7 |
+| ED-F-15 | 14.1, 14.3–14.7 |
+| ED-F-16 | 14.2–14.7 |
+| ED-F-17 | 14.1–14.7 |
+| ED-UX-01 | 14.1, 14.4 |
+| ED-UX-02 | 14.1, 14.3 |
+| ED-UX-03 | 14.2 |
+| ED-UX-04 | 14.5, 14.6 |
+| ED-UX-05 | 14.1, 14.4, 14.5 |
+| ED-UX-06 | 14.6 |
+| ED-UX-07 | 14.1, 14.3, 14.7 |
+
+All ED-N and ED-A constraints are carried by the story `Requirements`, `Dependencies`, `Evidence` and `Rollback/upgrade impact` blocks above. No A37+ acceptance ID or live PASS is created.
+
+<!-- End proposed epic stories -->

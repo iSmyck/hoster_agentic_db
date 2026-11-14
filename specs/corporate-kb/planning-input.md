@@ -2,9 +2,9 @@
 
 ## 1. Назначение, аудитория и правила использования
 
-Документ собирает уже подготовленный design package в единый вход для последующей декомпозиции существующих **E00–E08** и задач **T00–T20**. Он предназначен для product owner, tech lead, backend/frontend, QA, DevOps, source owners и business approvers.
+Документ собирает уже подготовленный design package в единый вход для последующей декомпозиции существующих **E00–E08** и задач **T00–T20**. Отдельный [§17](#17-proposed-epic-14-planning-input--non-normative-and-blocked) добавляет non-normative proposed Epic 14 без изменения этого approved scope. Документ предназначен для product owner, tech lead, backend/frontend, QA, DevOps, source owners и business approvers.
 
-Это **не список новых эпиков или stories**, не sprint commitment и не разрешение на реализацию. Идентификаторы E/T не переименовываются и не перенумеровываются. Предлагаемые ниже вертикальные срезы — варианты для будущего planning, а не новые backlog IDs. Capacity, сроки, оценки, story points, бюджет и новые SLA не назначаются. Уже утверждённые ограничения group refresh ≤ 15 минут и revocation SLO ≤ 30 минут остаются требованиями, а не новым плановым обещанием.
+Это planning input, а не sprint commitment или разрешение на реализацию. Идентификаторы существующих E/T не переименовываются и не перенумеровываются. Предлагаемые ниже вертикальные срезы — варианты для будущего planning; отдельный Epic 14 в §17 является proposed/non-normative extension и также не получает implementation authorization. Capacity, сроки, story points, бюджет и новые SLA здесь не назначаются; отдельные LOW-confidence ranges для Epic 14 находятся только в `delivery-estimates.md`. Уже утверждённые ограничения group refresh ≤ 15 минут и revocation SLO ≤ 30 минут остаются требованиями, а не новым плановым обещанием.
 
 Нормативный приоритет: [Architecture Spine AD-1–AD-17](architecture-spine.md) → [spec.md v1.3, R01–R18 и I01–I14](spec.md) → [ADR-03–ADR-17](adr/README.md) → component/database/integration design → плановые детали. Дополнительные ограничения фазы: [AGENTS.md](../../AGENTS.md). Полнота связей находится в [traceability.md](traceability.md), фактические статусы — в [tasks.md](tasks.md). T00 baseline evidence: [baseline.md](baseline.md) и [evidence/t00](evidence/t00/README.md); owner decision record: [g0-review.md](g0-review.md) (**APPROVED**). **T00 DONE, G0 APPROVED**; можно переходить к декомпозиции эпиков, сохраняя deferred gates и зависимости задач.
 
@@ -103,7 +103,7 @@ T19/T20 относятся к последующим measured optimizations и �
 | Repeatable client delivery | **E08 / T15,T16,T18**, условно **T17**; полный T18/G3 явно после T16 | Source adapters + dedicated deployment/backup/upgrade/operations | A14–A16,A19,A20,A23,A28,A33; G3 |
 | Measured evolution, вне текущих E00–E08 | **T19,T20** после benchmark/business gate | Retrieval/QA/operations по измеренной необходимости | T19 зависит T14; T20 зависит T14,T18; G4; новые E IDs здесь не создаются |
 
-Один T может поддерживать несколько результатов, но при будущей декомпозиции получает одного ответственного и единый учёт труда. Компонентная таблица не назначает людей или capacity.
+Один T может поддерживать несколько результатов, но при будущей декомпозиции получает одного ответственного и единый учёт труда. Компонентная таблица не назначает людей или capacity. Proposed Epic 14 вынесен в [§17](#17-proposed-epic-14-planning-input--non-normative-and-blocked) и не добавляется в эту workstream table.
 
 ## 6. Dependency map: реальные блокеры и параллельность
 
@@ -138,6 +138,8 @@ T14+full T18 → T20; T14 → T19
 - UI T07/T08 может готовиться по согласованным contracts параллельно с backend работой, но формальные Depends T08←T07 и T09←T06+T08 сохраняются; mock UI не закрывает G1.
 - QA fixtures/contract vectors готовятся вместе с компонентами после T01, но real integration PASS требует реальных GitLab/IdP/PostgreSQL/CI/hoster по области проверки.
 
+Proposed Epic 14 имеет собственный dependency graph в [§17](#17-proposed-epic-14-planning-input--non-normative-and-blocked), не изменяет указанный critical path и остаётся BLOCKED до G1/ADR/readiness gates.
+
 ### 6.3. Блокеры, которые нельзя «распараллелить»
 
 Исходные T00 blockers сохранены для traceability и помечены RESOLVED с датой/scope; они не являются текущими открытыми G0 blockers. Оставшиеся UNKNOWN/BLOCKED относятся к конкретным последующим tasks.
@@ -170,6 +172,8 @@ T14+full T18 → T20; T14 → T19
 | Провести internal pilot на согласованном corpus и approved hoster.ai | E07/T11,T14 + необходимый T18; A03,A16,A18,A20,A21; G2 | После E04–E06; real endpoint, expert questions, quality dimensions отдельно, deterministic P0 suite и runbook evidence |
 | Подключить один источник и повторить dedicated delivery | E08/T15,T16,T18 + условный T17; A14–A16,A19,A20,A23,A28,A33; G3 | После G2 и owner source selection; no auto-merge, source cursor/crash evidence, second isolated instance, restore/upgrade rehearsal; full T18/G3 явно после T16 и включает correction restore/linked-MR reconciliation |
 | Изменить retrieval/performance/trust только по измерениям | T19,T20; G4 | После T14/T18 и benchmark/business gate; не относить к E00–E08 и не создавать stack expansion заранее |
+
+Proposed Epic 14 editorial publishing не является дополнительным срезом этой таблицы; его independently gated user outcomes и stories находятся в [§17](#17-proposed-epic-14-planning-input--non-normative-and-blocked).
 
 ## 8. Requirement / component / contract / test ownership
 
@@ -337,6 +341,7 @@ Git-native канон; repository=Space; merge-only-GO и запрет direct hu
 - RPO/RTO, retention по branches/MR/notes/tags/audit/chats/files/object versions/mirrors/backups и idempotency replay retention.
 - Session/context TTL и operational retry/backoff/resource limits без ослабления revocation barrier.
 - Commercial distribution/branding/license/SBOM/legal review и любые deferred capabilities через новый ADR.
+- Для proposed Epic 14: canonical no-MR publication, personal editorial grants, notification identity/retention, cross-Space dependencies, deterministic writer/source-managed applicability и nightly activation — полный перечень в [§17](#17-proposed-epic-14-planning-input--non-normative-and-blocked), значения не выдумываются в текущей фазе.
 
 ## 16. Известные пробелы и ограничения пакета
 
@@ -349,3 +354,88 @@ Git-native канон; repository=Space; merge-only-GO и запрет direct hu
 7. **Подготовленные projection/state mappings — DESIGN output, не VERIFIED test.** [projection-mapping.md](contracts/projection-mapping.md) уже фиксирует Decision/Cutover/Proposal/index/source/AuthZ/path mappings; [t01-contract-tests.yaml](contracts/t01-contract-tests.yaml) задаёт будущие consumer roundtrips и negatives. Их наличие не доказывает реализацию.
 8. **`operations.md` существует как `design_not_executed`.** Он включён в G0 design review; T18 restore/upgrade/startup rehearsals и production readiness не выполнялись.
 9. **Оценки даны как LOW/VERY LOW confidence сценарии, не commitments.** [delivery-estimates.md](delivery-estimates.md) фиксирует capacity assumption 24 person-days/sprint, ranges и риски; реальные capacity, даты и velocity не назначаются.
+
+## 17. Proposed Epic 14 planning input — non-normative and blocked
+
+### 17.1. Status и product boundary
+
+Epic 14 — Editorial Publishing добавлен как отдельный future workstream после подтверждения product direction пользователем. Полные requirements, stories и AC: [epics.md](../../_bmad-output/planning-artifacts/epics.md#proposed-requirements-extension--editorial-publishing). Planning impact и approval perimeter: [Sprint Change Proposal](../../_bmad-output/planning-artifacts/sprint-change-proposal-2026-11-12.md). Фактические blocked states: [tasks.md §16](tasks.md#16-proposed-epic-14-backlog--planning-only--blocked).
+
+Это не изменение R01–R18/I01–I14/A01–A36, не current G1 scope и не implementation authorization. Сохраняются:
+
+- repository=Space, unified Space ACL, stable identities/document IDs и fresh per-Space authorization;
+- employee `draft → MR → independent review → DecisionRecord → GO merge` path;
+- Git canonical history, exact-SHA reads, full diff, lossless TipTap/front-matter behavior и no silent overwrite;
+- proposal-only semantic agents, single-writer schemas, personal Notes/ordinary chats и pinned Open WebUI baseline;
+- source-managed human decision по умолчанию и deferred T19/T20.
+
+Новые product directions: scoped human `edit_and_publish` без MR/second review; global `kb_admin`/chief-editor editorial grants; department-scoped personal editor assignment включая self-assignment; simple author notifications; SDD ownership/dependency triggers; последующие nightly semantic MRs; code-proven deterministic link-fix auto-publication.
+
+### 17.2. Story sequence и user outcomes
+
+```text
+F01 Open WebUI module/BFF + upgrade contracts
+  → F02 scoped editorial grants
+  → F03 no-MR editorial publication/takeover
+  → F04 durable author notifications
+  → F05 SDD dependencies/company-wide triggers
+      ├─→ F06 nightly semantic proposals — DEFERRED, separate activation
+      └─→ F07 deterministic link-fix auto-publication — BLOCKED, no F06 dependency
+```
+
+| Story | Пользовательский результат | Первичные dependencies |
+|---|---|---|
+| 14.1 (F01) | Один canonical authenticated Open WebUI KB module без divergent prototypes и silent upgrade loss | G1, E09–E11 seams |
+| 14.2 (F02) | Department owner назначает/отзывает editors только внутри отдела, включая себя | F01, G1, grant/registry ADR |
+| 14.3 (F03) | Assigned editor напрямую публикует own/employee exact final content с audit/recovery | F01+F02, publication/credential ADR, live GitLab probes |
+| 14.4 (F04) | Author получает verified published/published-with-edits/rejected notification | F01+F03, notification/outbox contracts |
+| 14.5 (F05) | Chief editor/departments видят ownership, dependencies и review triggers | F02+F03+F04, dependency/privacy contracts |
+| 14.6 (F06) | Ночные agents готовят semantic MR для assigned editors | F05 + отдельная activation; executable task не создаётся |
+| 14.7 (F07) | Только независимо доказанные deterministic link fixes автоматически публикуются | F03+F05, deterministic/service ADR; не F06 |
+
+### 17.3. Component и contract ownership
+
+| Component | Proposed responsibility | Запрещённый shortcut |
+|---|---|---|
+| Open WebUI editorial module/BFF | Authenticated `(app)/kb` routes, editor/review/admin/dashboard/inbox UX, server-side OAuth token forwarding, authorized notification bridge | Browser direct GitLab/GO authority, non-HttpOnly sandbox token cookie, upstream migration writes |
+| Identity/AuthZ + `kb_authz` | Editorial scope registry, personal grants, department membership/ownership, global per-Space capabilities, revocation | `users.is_editor`, job-title/CODEOWNERS/upstream-admin inference, cross-schema writes |
+| GO + `kb_ops` | No-MR publication/takeover, publication records, target writer/lock/recovery, notification outbox, department trigger coordination | Direct browser/human push, fake self-approved DecisionRecord, direct upstream inbox table writes |
+| CI/index + `kb_index` | Typed dependency projections, exact-snapshot graph hashes и affected-closure rebuild | Canonical content writes, notification queue как canonical state, cross-Space ACL joins |
+| Nightly orchestrator | Trusted bounded runs и proposal-only semantic candidates после activation | Publish/decision/grant capability или unbounded provider/egress |
+| Deterministic maintenance worker | Independent closed-whitelist recomputation и service evidence через GO writer path | LLM self-certification, semantic edits, shared agent/CI credential |
+| QA/Security/Operations | Synthetic/live/fault/browser/restore/upgrade evidence, feature flags/kill switches, sanitized audit | Mock-as-live PASS, hidden upstream debt, automatic production rollout |
+
+Все новые contracts остаются PROPOSED до G1 и owner approval. Новые tables/migrations принадлежат только согласованному component owner; upstream Open WebUI migrations не расширяются.
+
+### 17.4. Owner inputs и открытые design decisions
+
+До соответствующих stories требуются явные решения:
+
+1. Canonical PublicationRecord/tag/trailer/parent/recovery/export semantics и protected GitLab target-writer profile для no-MR human/service publication.
+2. Versioned editorial registry/personal-grant storage и governed administrative apply; global `kb_admin`/chief-editor appointment authority.
+3. Author comparison basis по canonical bytes/front matter, notification channel/retention/latency и recipient policy для department triggers.
+4. Typed dependency schema, existing-corpus backfill, cross-Space privacy/contract и treatment of link-only automatic publications.
+5. Deterministic transformation whitelist, service attribution, source-managed applicability и independent kill switch.
+6. F06 nightly cadence, approved provider/model/data profile/egress, budgets, queue limits, tool expansion и retention — только при отдельной activation.
+7. Migration/disposition для pre-epic pending proposals и безопасная tracking regeneration после readiness/generator repair.
+
+Party Mode choices фиксируют product direction, но не заменяют эти formal owner/ADR decisions.
+
+### 17.5. DoR / DoD и evidence additions
+
+В дополнение к §§9–11 каждая activated Epic 14 story должна иметь:
+
+- approved ED requirement/story mapping и явный список affected existing R/I/A candidate dependencies без falsification Full/Supporting coverage;
+- reviewed versioned contract и owning migration/schema design, feature flag, rollback и upstream upgrade impact;
+- synthetic editorial scopes/grants, employee/editor canonical-byte pairs, publication anchors, outbox/dependency/unsafe-link fixtures и cross-Space negatives;
+- positive/negative/anti-enumeration/concurrency/crash/restart/replay tests по scope, а для GitLab/IdP/inbox/index — real sandbox evidence;
+- exact actor/grantor/editor/publisher/service attribution и policy revisions, content/base/publication hashes и audit anchor;
+- durable notification/outbox recovery без success до conclusive Git publication и без duplicate delivery;
+- pristine Open WebUI reconstruction, Notes/chats regression, focused Vitest/Python и direct Vite build без сокрытия known-FAIL debt;
+- backup/export/restore/rebuild для publication/grant/dependency/outbox/run state и отсутствие secrets/raw private content в evidence.
+
+Machine outputs размещаются в `_bmad-output/test-artifacts/epic14/`; только sanitized reviewable extracts — в `specs/corporate-kb/evidence/epic14/`. Отсутствующие live resources оставляют проверку BLOCKED. Ночной F06 не получает schedule/test run до activation.
+
+### 17.6. Capacity boundary
+
+Этот раздел не назначает capacity, dates или commitments. Отдельный LOW-confidence impact scenario находится в [delivery-estimates.md §6](delivery-estimates.md#6-proposed-epic-14-scenario--low-confidence-not-a-commitment); текущий G1 не вытесняется Epic 14.

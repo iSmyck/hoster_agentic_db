@@ -79,3 +79,41 @@ Confidence: **VERY LOW**. Main risks: editor adapter, target-race/recovery seman
 - Preserving Open WebUI branding vs obtaining enterprise/white-label rights.
 - Actual team size and QA/DevOps availability.
 - Whether the first slice requires browser accessibility/XSS and personal Notes/chats regression before implementation.
+
+## 6. Proposed Epic 14 scenario — LOW confidence, not a commitment
+
+Epic 14 — Editorial Publishing является separately gated future scope по [Sprint Change Proposal 2026-11-12](../../_bmad-output/planning-artifacts/sprint-change-proposal-2026-11-12.md). Этот сценарий не изменяет historical Sprint 1/2 commitments, не назначает team/calendar dates и не вытесняет текущий G1/WP-00–WP-05.
+
+### 6.1. Prerequisites before any start
+
+- Explicit SCP approval и batch review Stories 14.1–14.7.
+- G1 live acceptance и разрешение нового workstream текущей фазой.
+- Owner-approved ADR/spec/contracts для editorial grants, no-MR publication/recovery, notifications/outbox, dependencies/privacy и deterministic writer.
+- Свежий readiness review, real synthetic sandbox capabilities и tracking/generator repair без all-backlog reset или activation F06.
+- Отдельные owner inputs для source-managed applicability, global appointment authority, retention/thresholds и migration/disposition старых pending proposals.
+
+Approval waiting time, G1 completion и remediation найденных capability gaps не включены и неизвестны.
+
+### 6.2. Initial scope ranges, excluding F06
+
+| Work | LOW-confidence person-days | Included evidence |
+|---|---:|---|
+| Major SCP, owner ADR/spec package и fresh readiness | 10–18 | Governance, canonical contracts, schema ownership, readiness/tracking plan |
+| F01 module/pristine overlay | 12–20 | BFF/navigation/inbox seams, focused tests, direct Vite, Notes/chats regression, rollback |
+| F02 editorial grants | 12–20 | Registry/grant writes/UI, membership/revocation/concurrency/security/audit/export tests |
+| F03 no-MR publication/takeover | 25–40 | Canonical record/writer/lock/recovery, exact diff/UI, live GitLab race/crash/export/restore |
+| F04 durable notifications | 15–25 | Outbox/bridge/inbox UX, byte comparison, retry/DLQ/dedupe/restart/two-user live checks |
+| F05 dependency graph/triggers | 18–30 | Ownership/graph/fanout/dashboard, exact snapshots, cross-Space negatives, rebuild/index closure |
+| F07 deterministic writer | 20–35 | Closed transformations, independent recomputation, isolated service, semantic/unsafe negatives, live recovery/kill switch |
+| Cross-story browser/security/fault/export/restore/upgrade acceptance | 18–30 | End-to-end two/three-user editorial flow, isolated Spaces, pristine upgrade и clean restore |
+| **Initial total, excluding F06** | **130–218** | Story-level tests включены; owner waiting и G1 excluded |
+
+При сохранении assumption **19.2–20.4 commitment person-days per two-week sprint** диапазон соответствует приблизительно **6.4–11.4 capacity equivalents**, практически **7–12 спринтам / 14–24 календарным неделям после prerequisites**. Это не forecast/SLA: параллелизм ограничен `F01 → F02 → F03 → F04 → F05 → F07`, component/security dependencies и review gates могут увеличить срок.
+
+### 6.3. Separately activated F06
+
+Nightly semantic harmonization — **25–45 person-days**, ориентировочно **1–3 sprint equivalents / 3–6 недель** при той же capacity assumption. F06 исключён из initial total и executable backlog до решения о cadence, provider/egress, approved models/data profile, budgets, queue/retention limits и agent-tool contract. Стоимость provider calls, nightly operations и owner approval waiting не оцениваются заранее.
+
+### 6.4. Confidence и replanning triggers
+
+Confidence: **LOW / VERY LOW** до live proof direct target writes, final grant/publication contracts и Open WebUI pristine module assembly. Replanning обязателен при невозможности narrow GitLab writer/protection, lossless editor/diff failure, небезопасном personal-grant lifecycle, cross-Space privacy gap, semantic-infiltration deterministic writer или incompatibility новых upstream seams. Нельзя уменьшать estimate за счёт пропуска security/race/crash/recovery/upgrade evidence.
