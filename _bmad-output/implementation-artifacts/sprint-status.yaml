@@ -15,7 +15,7 @@
 #   - blocked: cannot proceed without owner/external input
 
 generated: "2026-11-11 01:05"
-last_updated: "2026-11-12 14:11"
+last_updated: "2026-11-14 16:28"
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -74,152 +74,95 @@ readiness:
 # Development status
 # -----------------------------------------------------------------------------
 development_status:
-  phase-a:
-    status: verified
-    note: "G1 vertical slice synthetically verified and live API acceptance passed"
-    items:
-      - id: t00
-        title: "T00 baseline and G0 approval"
-        status: done
-      - id: t01
-        title: "T01 contracts and projection mappings"
-        status: done
-      - id: t02
-        title: "T02 document tree and canonical direct read"
-        status: done
-      - id: t03a
-        title: "T03a stable identity core and nested group snapshots"
-        status: done
-      - id: t03b
-        title: "T03b per-Space policy enforcement and revocation"
-        status: done
-      - id: t04a
-        title: "T04a durable drafts, guarded navigation, cursor-based Git history"
-        status: verified
-        note: "OIDC/Keycloak unified token seam implemented. T04a live browser acceptance passed 18/18 via run_openwebui_acceptance.py. The /kb editor sends the Keycloak OIDC access token to GO/session identity endpoints; session service falls back to OIDC introspection when the bearer is not a session JWT."
-      - id: t04b
-        title: "T04b lossless TipTap adapter and browser editor gate"
-        status: verified
-        note: "Lossless TipTap Markdown serializer implemented in src/lib/kb/markdown-serializer.ts using prosemirror-markdown + TipTap StarterKit; KBEditor replaced textarea with TipTap, DOMPurify-sanitized preview, and a11y/IME attributes; KBDocumentRead renders sanitized HTML. Overlay unit tests pass 40/40. Live browser smoke harness created at _bmad-output/test-artifacts/g1/run_openwebui_t04b_smoke.py; live run remains environment-gated by local stack availability and is not claimed from unit tests alone."
-      - id: t05
-        title: "T05 proposal/decision/merge lifecycle and recovery"
-        status: verified
-        note: "Live API subset 20/20 PASS; Open WebUI subset 17/17 PASS. A05–A10/A27–A30 and concurrency/fault matrix closed synthetically (20/20 PASS) with decision supersede support and unified error shape. Live destructive acceptance remains optional."
-      - id: t06
-        title: "T06 merge-only GO enforcement, fencing and quarantine"
-        status: verified
-      - id: t07
-        title: "T07 business review and independent decisions"
-        status: verified
-      - id: t07b
-        title: "T07b DocOps review projections and correction tasks"
-        status: verified
-      - id: t08
-        title: "T08 scoped working context and canonical direct read"
-        status: done
-      - id: t09
-        title: "T09 restricted single-page agent proposal tools"
-        status: done
-      - id: local-stack
-        title: "Local development stack orchestration"
-        status: verified
-        note: "Stack starts and smoke tests pass (17 PASS, 0 FAIL, 0 BLOCKED). Keycloak corp-kb realm seeds openwebui and identity-service clients plus G1 test users/groups. Open WebUI v0.13.0 runs on port 3100 with OIDC to Keycloak. Custom /kb editor page loads and sends the OIDC access token to GO/session endpoints."
+  epic-0: backlog
+  0-1-t00-baseline-audit-and-owner-g0-approval: backlog
+  epic-0-retrospective: optional
 
-  phase-b:
-    status: done
-    note: "Phase B live acceptance complete. ACT-006 ran the retrieval benchmark against PostgreSQL/pgvector with KIMI embeddings on a dedicated kb_index_benchmark schema using a synthetic Russian corpus and team-defined ACL/thresholds. All metrics passed."
-    items:
-      - id: b.1
-        title: "B.1 Identity service live integration"
-        status: verified
-        note: "Keycloak adapter introspects OIDC access tokens and resolves stable identities/groups for the /kb editor and GO endpoints."
-      - id: b.2
-        title: "B.2 Session service"
-        status: verified
-        note: "Session service validates session JWTs and falls back to OIDC introspection via the identity adapter for Keycloak-issued tokens."
-      - id: b.3
-        title: "B.3 Retrieval API and search/ranking"
-        status: done
-        note: "Live closure via src/retrieval/scripts/benchmark_retrieval.py with KIMI embeddings, PostgreSQL/pgvector, semantic search, and synthetic Russian corpus on kb_index_benchmark. recall@5=1.0, MRR=1.0, p95~1150ms."
-      - id: b.4
-        title: "B.4 Index management and relevance tuning"
-        status: done
-        note: "Live closure via ACT-006 benchmark: Alembic migrations target the configurable benchmark schema, index build/activate works on pgvector, and vector distance ranking returns relevant chunks."
+  epic-1: backlog
+  1-1-t01-reproducible-two-space-sandbox-and-executable-defect-evi: backlog
+  epic-1-retrospective: optional
 
-  phase-c:
-    status: backlog
-    note: "Ingestion/source connectors"
-    items:
-      - id: c.1.1
-        title: "C.1.1 MinIO object-store staging"
-        status: done
-        note: "Pulled from backlog to unblock D.1.2."
-      - id: c.1.2
-        title: "C.1.2 Media classification and critical-media gating"
-        status: backlog
-      - id: c.2
-        title: "C.2 Connector framework"
-        status: backlog
-      - id: c.3
-        title: "C.3 Parsing pipeline"
-        status: backlog
-      - id: c.4
-        title: "C.4 Content-standard enforcement and ingestion job queue"
-        status: backlog
+  epic-2: backlog
+  2-1-t02-git-backed-document-tree-and-canonical-direct-read: backlog
+  2-2-t03a-stable-identity-core-and-nested-group-snapshots: backlog
+  2-3-t03b-per-space-policy-enforcement-and-revocation: backlog
+  epic-2-retrospective: optional
 
-  phase-d:
-    status: verified
-    note: "Backup/restore and disaster recovery"
-    items:
-      - id: d.1.1
-        title: "D.1.1 Git mirror and metadata backup"
-        status: done
-      - id: d.1.2
-        title: "D.1.2 PostgreSQL and object-store backup"
-        status: done
-      - id: d.2
-        title: "D.2 Point-in-time restore"
-        status: done
-      - id: d.3
-        title: "D.3 Cross-site replication / DR"
-        status: backlog
-        note: "Deferred by D3-DEC1. Future RPO 1h, RTO 1h, secondary site another hoster DC, per-client buckets/accounts."
-      - id: d.4.1
-        title: "D.4.1 Integrity verification"
-        status: done
-      - id: d.4.2
-        title: "D.4.2 Encryption at rest"
-        status: backlog
-      - id: d.4.3
-        title: "D.4.3 Retention policy"
-        status: backlog
-      - id: d.4.4
-        title: "D.4.4 DR runbook"
-        status: backlog
+  epic-3: backlog
+  3-1-t04a-durable-drafts-guarded-navigation-and-cursor-based-git: backlog
+  3-2-t04b-lossless-tiptap-adapter-and-browser-editor-gate: backlog
+  3-3-tech-debt-pytest-baseline-and-harness-unit-tests: backlog
+  epic-3-retrospective: optional
 
-  phase-e:
-    status: backlog
-    note: "Production hardening"
-    items:
-      - id: e.1
-        title: "E.1 Production identity and SLO"
-        status: backlog
-      - id: e.2
-        title: "E.2 Object-store ACL and production storage"
-        status: backlog
-      - id: e.3
-        title: "E.3 Migrations and HA"
-        status: backlog
-      - id: e.4
-        title: "E.4 Hoster white-label and second-client deployment"
-        status: backlog
-      - id: e.5
-        title: "E.5 Security audit and egress/ingress policy"
-        status: backlog
+  epic-4: backlog
+  4-1-t05a-exact-proposalrecord-and-proposalversion-lifecycle: backlog
+  4-2-t05b-canonical-decisionrecord-exact-merge-and-conclusive-rec: backlog
+  4-3-t06-merge-only-go-enforcement-fencing-and-quarantine: backlog
+  4-4-t07-exact-business-review-and-independent-decisions: backlog
+  4-5-t08-scoped-working-context-and-canonical-direct-read-agent-t: backlog
+  4-6-t09-restricted-single-page-agent-proposal-tools: backlog
+  4-7-t07b-docops-review-projections-correction-tasks-and-ux-telem: backlog
+  epic-4-retrospective: optional
 
-# -----------------------------------------------------------------------------
-# Action items
-# -----------------------------------------------------------------------------
+  epic-5: backlog
+  5-1-t10a-exact-sha-ci-index-build-and-validated-preflight-artifa: backlog
+  5-2-t10b-published-retrieval-search-cursors-and-monotonic-public: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-t12a-deterministic-dry-run-import-and-admission-gates: backlog
+  6-2-t12b-controlled-cutover-and-activation-using-the-e05-preflig: backlog
+  6-3-t13a-complete-portable-export-with-exact-refs-and-closure: backlog
+  6-4-t13b-mirror-metadata-backup-rebuild-and-conservative-clean-r: backlog
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-t11-approved-hoster-ai-studio-inference-lifecycle: backlog
+  7-2-t14-reproducible-quality-safety-and-operational-evaluation: backlog
+  7-3-t18-necessary-pilot-part-pilot-hardening-protected-deploymen: backlog
+  epic-7-retrospective: optional
+
+  epic-8: backlog
+  8-1-t15-safe-source-registry-three-way-updates-and-durable-curso: backlog
+  8-2-t16-one-owner-selected-real-source-connector: backlog
+  8-3-t17-conditional-evidence-gated-extraction-media-and-ocr-qual: backlog
+  8-4-t18a-repeatable-config-only-dedicated-deployment: backlog
+  8-5-t18b-full-g3-backup-restore-upgrade-and-full-operational-acc: backlog
+  epic-8-retrospective: optional
+
+  epic-9: backlog
+  9-1-i01-project-bootstrap-and-local-infrastructure: backlog
+  9-2-i02-identity-domain-models-and-kb_authz-migrations: backlog
+  9-3-i03-identity-resolution-and-group-snapshot-ingestion: backlog
+  9-4-i04-policy-activation-authzcontext-and-path-approval: backlog
+  epic-9-retrospective: optional
+
+  epic-10: backlog
+  10-1-i05-git-orchestrator-bootstrap-and-gitlab-client: backlog
+  10-2-i06-proposalrecord-and-decisionrecord-lifecycle: backlog
+  epic-10-retrospective: optional
+
+  epic-11: backlog
+  11-1-i07-open-webui-fork-setup-and-kb-api-client: backlog
+  epic-11-retrospective: optional
+
+  epic-12: backlog
+  12-1-i08-index-worker-and-pgvector-search: backlog
+  epic-12-retrospective: optional
+
+  epic-13: backlog
+  13-1-i09-dry-run-importer-and-source-registry: backlog
+  epic-13-retrospective: optional
+
+  epic-14: backlog
+  14-1-f01-organic-and-upgrade-resilient-open-webui-editorial-modul: backlog
+  14-2-f02-department-scoped-editorial-assignments: backlog
+  14-3-f03-editorial-direct-publication-and-takeover: backlog
+  14-4-f04-durable-author-notifications-in-the-open-webui-inbox: backlog
+  14-5-f05-sdd-dependencies-and-company-wide-publication-triggers: backlog
+  14-6-f06-nightly-semantic-harmonization-proposals: backlog
+  14-7-f07-code-proven-deterministic-link-fix-auto-publication: backlog
+  epic-14-retrospective: optional
 action_items:
   - id: ACT-001
     epic: A
@@ -396,3 +339,150 @@ backlog:
     title: "Index management and relevance tuning (B.4)"
     reason: "Deferred by owner decision: current Markdown-based knowledge base is sufficient for launch; full index worker, CI builds, incremental/full equivalence, profile shadow builds and Russian-aware chunking/embedding tuning are not required now."
     owner: "Backend + Owner"
+phase_status:
+  phase-a:
+    status: verified
+    note: "G1 vertical slice synthetically verified and live API acceptance passed"
+    items:
+      - id: t00
+        title: "T00 baseline and G0 approval"
+        status: done
+      - id: t01
+        title: "T01 contracts and projection mappings"
+        status: done
+      - id: t02
+        title: "T02 document tree and canonical direct read"
+        status: done
+      - id: t03a
+        title: "T03a stable identity core and nested group snapshots"
+        status: done
+      - id: t03b
+        title: "T03b per-Space policy enforcement and revocation"
+        status: done
+      - id: t04a
+        title: "T04a durable drafts, guarded navigation, cursor-based Git history"
+        status: verified
+        note: "OIDC/Keycloak unified token seam implemented. T04a live browser acceptance passed 18/18 via run_openwebui_acceptance.py. The /kb editor sends the Keycloak OIDC access token to GO/session identity endpoints; session service falls back to OIDC introspection when the bearer is not a session JWT."
+      - id: t04b
+        title: "T04b lossless TipTap adapter and browser editor gate"
+        status: verified
+        note: "Lossless TipTap Markdown serializer implemented in src/lib/kb/markdown-serializer.ts using prosemirror-markdown + TipTap StarterKit; KBEditor replaced textarea with TipTap, DOMPurify-sanitized preview, and a11y/IME attributes; KBDocumentRead renders sanitized HTML. Overlay unit tests pass 40/40. Live browser smoke harness created at _bmad-output/test-artifacts/g1/run_openwebui_t04b_smoke.py; live run remains environment-gated by local stack availability and is not claimed from unit tests alone."
+      - id: t05
+        title: "T05 proposal/decision/merge lifecycle and recovery"
+        status: verified
+        note: "Live API subset 20/20 PASS; Open WebUI subset 17/17 PASS. A05–A10/A27–A30 and concurrency/fault matrix closed synthetically (20/20 PASS) with decision supersede support and unified error shape. Live destructive acceptance remains optional."
+      - id: t06
+        title: "T06 merge-only GO enforcement, fencing and quarantine"
+        status: verified
+      - id: t07
+        title: "T07 business review and independent decisions"
+        status: verified
+      - id: t07b
+        title: "T07b DocOps review projections and correction tasks"
+        status: verified
+      - id: t08
+        title: "T08 scoped working context and canonical direct read"
+        status: done
+      - id: t09
+        title: "T09 restricted single-page agent proposal tools"
+        status: done
+      - id: local-stack
+        title: "Local development stack orchestration"
+        status: verified
+        note: "Stack starts and smoke tests pass (17 PASS, 0 FAIL, 0 BLOCKED). Keycloak corp-kb realm seeds openwebui and identity-service clients plus G1 test users/groups. Open WebUI v0.13.0 runs on port 3100 with OIDC to Keycloak. Custom /kb editor page loads and sends the OIDC access token to GO/session endpoints."
+
+  phase-b:
+    status: done
+    note: "Phase B live acceptance complete. ACT-006 ran the retrieval benchmark against PostgreSQL/pgvector with KIMI embeddings on a dedicated kb_index_benchmark schema using a synthetic Russian corpus and team-defined ACL/thresholds. All metrics passed."
+    items:
+      - id: b.1
+        title: "B.1 Identity service live integration"
+        status: verified
+        note: "Keycloak adapter introspects OIDC access tokens and resolves stable identities/groups for the /kb editor and GO endpoints."
+      - id: b.2
+        title: "B.2 Session service"
+        status: verified
+        note: "Session service validates session JWTs and falls back to OIDC introspection via the identity adapter for Keycloak-issued tokens."
+      - id: b.3
+        title: "B.3 Retrieval API and search/ranking"
+        status: done
+        note: "Live closure via src/retrieval/scripts/benchmark_retrieval.py with KIMI embeddings, PostgreSQL/pgvector, semantic search, and synthetic Russian corpus on kb_index_benchmark. recall@5=1.0, MRR=1.0, p95~1150ms."
+      - id: b.4
+        title: "B.4 Index management and relevance tuning"
+        status: done
+        note: "Live closure via ACT-006 benchmark: Alembic migrations target the configurable benchmark schema, index build/activate works on pgvector, and vector distance ranking returns relevant chunks."
+
+  phase-c:
+    status: backlog
+    note: "Ingestion/source connectors"
+    items:
+      - id: c.1.1
+        title: "C.1.1 MinIO object-store staging"
+        status: done
+        note: "Pulled from backlog to unblock D.1.2."
+      - id: c.1.2
+        title: "C.1.2 Media classification and critical-media gating"
+        status: backlog
+      - id: c.2
+        title: "C.2 Connector framework"
+        status: backlog
+      - id: c.3
+        title: "C.3 Parsing pipeline"
+        status: backlog
+      - id: c.4
+        title: "C.4 Content-standard enforcement and ingestion job queue"
+        status: backlog
+
+  phase-d:
+    status: verified
+    note: "Backup/restore and disaster recovery"
+    items:
+      - id: d.1.1
+        title: "D.1.1 Git mirror and metadata backup"
+        status: done
+      - id: d.1.2
+        title: "D.1.2 PostgreSQL and object-store backup"
+        status: done
+      - id: d.2
+        title: "D.2 Point-in-time restore"
+        status: done
+      - id: d.3
+        title: "D.3 Cross-site replication / DR"
+        status: backlog
+        note: "Deferred by D3-DEC1. Future RPO 1h, RTO 1h, secondary site another hoster DC, per-client buckets/accounts."
+      - id: d.4.1
+        title: "D.4.1 Integrity verification"
+        status: done
+      - id: d.4.2
+        title: "D.4.2 Encryption at rest"
+        status: backlog
+      - id: d.4.3
+        title: "D.4.3 Retention policy"
+        status: backlog
+      - id: d.4.4
+        title: "D.4.4 DR runbook"
+        status: backlog
+
+  phase-e:
+    status: backlog
+    note: "Production hardening"
+    items:
+      - id: e.1
+        title: "E.1 Production identity and SLO"
+        status: backlog
+      - id: e.2
+        title: "E.2 Object-store ACL and production storage"
+        status: backlog
+      - id: e.3
+        title: "E.3 Migrations and HA"
+        status: backlog
+      - id: e.4
+        title: "E.4 Hoster white-label and second-client deployment"
+        status: backlog
+      - id: e.5
+        title: "E.5 Security audit and egress/ingress policy"
+        status: backlog
+
+# -----------------------------------------------------------------------------
+# Action items
+# -----------------------------------------------------------------------------
