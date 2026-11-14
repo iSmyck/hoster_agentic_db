@@ -15,13 +15,13 @@
 #   - blocked: cannot proceed without owner/external input
 
 generated: "2026-11-11 01:05"
-last_updated: "2026-11-14 16:28"
+last_updated: "2026-11-14 17:01"
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
 story_location: /Users/antonsmychkin/Documents/Job/corp_ai_db/_bmad-output/implementation-artifacts
 
-current_phase: "Phase B — Identity/Retrieval live integration and G1 live closure"
+current_phase: "kb-ingestion module — planning/decomposition"
 
 # -----------------------------------------------------------------------------
 # Roadmap
@@ -56,6 +56,12 @@ roadmap:
     status: backlog
     target_milestone: "TBC — pending hoster inputs and second-client resources"
     note: "Deferred per owner decisions G1-D3, G1-D6, G1-D7."
+
+  - id: F
+    name: "kb-ingestion module"
+    status: todo
+    target_milestone: "TBC — pending implementation start"
+    note: "Separate module replacing Phase C scope. Three modes: convert, structure, source-sync. Spec approved: _bmad-output/implementation-artifacts/spec-phase-c-ingestion-source-connectors.md. Epics/stories: _bmad-output/planning-artifacts/kb-ingestion-epics.md."
 
 # -----------------------------------------------------------------------------
 # Readiness
@@ -249,6 +255,13 @@ action_items:
     owner: "Frontend + Owner"
     status: done
 
+  - id: ACT-013
+    epic: F
+    title: "ADR-018 source-sync auto-merge policy"
+    description: "Owner approved source-sync auto-merge policy. ADR-018 created at specs/corporate-kb/adr/ADR-018-source-sync-auto-merge-policy.md. Amends ADR-04/ADR-11 for trusted source-sync. Blocker for KBI.3.3 resolved."
+    owner: "Backend + Owner"
+    status: done
+
 # -----------------------------------------------------------------------------
 # Owner decisions
 # -----------------------------------------------------------------------------
@@ -311,18 +324,46 @@ decisions:
     decision: "Tenant isolation for future DR: separate buckets/accounts per client"
     status: accepted
 
+  - id: "KBI-D1"
+    decision: "Auto-merge for source-sync allowed via per-source config auto_merge=true; requires ADR-018"
+    status: accepted
+
+  - id: "KBI-D2"
+    decision: "Continuous source update mode named source-sync, not docops"
+    status: accepted
+
+  - id: "KBI-D3"
+    decision: "Diagram→Mermaid included as evidence-gated route with optional Kroki validation"
+    status: accepted
+
+  - id: "KBI-D4"
+    decision: "Object-store adapter extracted to shared module src/shared/object_store/"
+    status: accepted
+
+  - id: "KBI-D5"
+    decision: "Simple Python extractors by default; Docling as evidence-gated route"
+    status: accepted
+
+  - id: "KBI-D6"
+    decision: "Job queue uses PostgreSQL table + poll worker"
+    status: accepted
+
+  - id: "KBI-D7"
+    decision: "Media classification rule-based by default; LLM/vision as future gate"
+    status: accepted
+
 # -----------------------------------------------------------------------------
 # Backlog
 # -----------------------------------------------------------------------------
 backlog:
   - id: c.1.2
     title: "Media classification and critical-media gating (C.1.2)"
-    reason: "Remaining part of C.1; object-store staging is now done for D.1.2 dependency."
+    reason: "Superseded by KBI.1.3 / KBI-105 in kb-ingestion module."
     owner: "Backend + Owner"
 
   - id: c.2-c.4
     title: "Connector framework, parsing pipeline, content-standard enforcement (C.2–C.4)"
-    reason: "Deferred by owner decision G1-D4-rev2: no corpus/connector work or data migration beyond MinIO staging needed now."
+    reason: "Superseded by kb-ingestion module (phase F). Scope migrated to KBI epics."
     owner: "Backend + Owner"
 
   - id: d.3
@@ -414,24 +455,28 @@ phase_status:
 
   phase-c:
     status: backlog
-    note: "Ingestion/source connectors"
+    note: "Superseded by kb-ingestion module (phase F). C.1.1 MinIO staging remains done; C.1.2–C.4 scope migrated to KBI epics."
     items:
       - id: c.1.1
         title: "C.1.1 MinIO object-store staging"
         status: done
-        note: "Pulled from backlog to unblock D.1.2."
+        note: "Pulled from backlog to unblock D.1.2. Will be extracted to src/shared/object_store/ under KBI-901."
       - id: c.1.2
         title: "C.1.2 Media classification and critical-media gating"
         status: backlog
+        note: "Superseded by KBI.1.3 / KBI-105."
       - id: c.2
         title: "C.2 Connector framework"
         status: backlog
+        note: "Superseded by KBI.3 source-sync; source-specific clients live in n8n."
       - id: c.3
         title: "C.3 Parsing pipeline"
         status: backlog
+        note: "Superseded by KBI.1.2/KBI.1.4 and KBI.5."
       - id: c.4
         title: "C.4 Content-standard enforcement and ingestion job queue"
         status: backlog
+        note: "Superseded by KBI.4."
 
   phase-d:
     status: verified
@@ -482,6 +527,35 @@ phase_status:
       - id: e.5
         title: "E.5 Security audit and egress/ingress policy"
         status: backlog
+
+  phase-f:
+    status: todo
+    note: "kb-ingestion module. Spec approved; epics/stories decomposed. Implementation not started."
+    items:
+      - id: kbi.1
+        title: "KBI.1 Single-document conversion"
+        status: todo
+        note: "Stories KBI.1.1–KBI.1.6; tasks KBI-101–109."
+      - id: kbi.2
+        title: "KBI.2 Agent KB structuring"
+        status: todo
+        note: "Stories KBI.2.1–KBI.2.4; tasks KBI-201–205."
+      - id: kbi.3
+        title: "KBI.3 Source-sync"
+        status: todo
+        note: "Stories KBI.3.1–KBI.3.5; tasks KBI-301–307. ADR-018 accepted 2026-11-14."
+      - id: kbi.4
+        title: "KBI.4 Content-standard enforcement and job queue"
+        status: todo
+        note: "Stories KBI.4.1–KBI.4.3; tasks KBI-401–405."
+      - id: kbi.5
+        title: "KBI.5 Diagram→Mermaid (evidence-gated)"
+        status: todo
+        note: "Stories KBI.5.1–KBI.5.4; tasks KBI-501–505."
+      - id: kbi-cross-cutting
+        title: "KBI cross-cutting tasks"
+        status: todo
+        note: "Tasks KBI-901–906: shared object-store, scaffold, ADR-018, local stack, evidence."
 
 # -----------------------------------------------------------------------------
 # Action items

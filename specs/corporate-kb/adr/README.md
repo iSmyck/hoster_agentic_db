@@ -4,7 +4,7 @@
 
 Каталог фиксирует архитектурные решения для G0 design review. Нормативные требования R01–R18 и инварианты I01–I14 из [spec.md](../spec.md) имеют приоритет над деталями планирования. Новые проектные решения и их rationale взяты из [ARCHITECTURE-SPINE.md](../architecture-spine.md), который является authority для данного комплекта, и сопутствующего [.memlog.md](../../../_bmad-output/planning-artifacts/architecture/architecture-corp_ai_db-2026-11-06/.memlog.md). [content-standard.md](../content-standard.md) определяет контентный конвейер в границах этих решений.
 
-Поле `access` во front matter не является самостоятельным источником авторизации; CODEOWNERS относится только к инженерному ownership/review; после cutover auto-merge запрещён, включая source-managed и детерминированную синхронизацию. Эти правила не смешиваются с более ранними информационными формулировками стандарта.
+Поле `access` во front matter не является самостоятельным источником авторизации; CODEOWNERS относится только к инженерному ownership/review; после cutover auto-merge запрещён для всех managed changes, **кроме** trusted source-sync с per-source `auto_merge=true` по [ADR-18](ADR-018-source-sync-auto-merge-policy.md). Эти правила не смешиваются с более ранними информационными формулировками стандарта.
 
 Канонический ID записывается как `ADR-03`…`ADR-17`; ноль в именах файлов `ADR-003`…`ADR-017` является только форматом имени. Ссылки в тексте используют канонический ID.
 
@@ -29,6 +29,7 @@
 | [ADR-15](ADR-015-postgresql-schema-ownership.md) | PostgreSQL schema ownership | **Accepted during architecture coaching 2026-11-06; реализация зависит от результатов T00** | 2026-11-06 |
 | [ADR-16](ADR-016-repository-per-space.md) | One repository per Space | **Accepted during architecture coaching 2026-11-06; реализация зависит от результатов T00** | 2026-11-06 |
 | [ADR-17](ADR-017-gitlab-deployment-topology.md) | GitLab deployment topology and tenant profiles | **Accepted by project owner**; GitLab вне application namespace, `shared`/`dedicated` по tenant profile; production gates открыты | 2026-11-09 |
+| [ADR-18](ADR-018-source-sync-auto-merge-policy.md) | Source-sync auto-merge policy | **Accepted by project owner**; amends ADR-04/ADR-11 для trusted source-sync auto-merge | 2026-11-14 |
 
 ## Границы статусов
 
