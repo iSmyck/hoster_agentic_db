@@ -46,6 +46,10 @@ class ObjectStore(ABC):
         """Return staged bytes when present."""
 
     @abstractmethod
+    def get_staged(self, space_id: str, client_id: str, object_id: str) -> StagedObject | None:
+        """Return staging metadata when present."""
+
+    @abstractmethod
     def count(self) -> int:
         """Return how many staged objects exist (for tests)."""
 
@@ -88,6 +92,20 @@ class InMemoryObjectStore(ObjectStore):
         if entry is None:
             return None
         return entry[0]
+
+    def get_staged(self, space_id: str, client_id: str, object_id: str) -> StagedObject | None:
+        key = self._key(space_id, client_id, object_id)
+        entry = self._objects.get(key)
+        if entry is None:
+            return None
+        data, digest, version_id, media_type = entry
+        return StagedObject(
+            object_id=object_id,
+            sha256=digest,
+            version_id=version_id,
+            size=len(data),
+            media_type=media_type,
+        )
 
     def count(self) -> int:
         return len(self._objects)

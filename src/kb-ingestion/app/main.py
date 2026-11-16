@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from .adapters.object_store import InMemoryObjectStore, ObjectStore
 from .api.router import router
 from .core.config import settings
+from .services.converter import ConversionService
 from .services.staging import StagingService
 
 
@@ -22,10 +23,12 @@ def create_app(
     )
     store = object_store or InMemoryObjectStore()
     app.state.object_store = store
-    app.state.staging_service = StagingService(
+    staging = StagingService(
         store,
         max_upload_size_bytes=settings.INGEST_MAX_UPLOAD_SIZE_BYTES,
     )
+    app.state.staging_service = staging
+    app.state.conversion_service = ConversionService(store)
     app.include_router(router)
     return app
 

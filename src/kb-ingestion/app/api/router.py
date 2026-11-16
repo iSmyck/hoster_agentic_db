@@ -7,6 +7,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 
 from ..core.config import settings
+from ..schemas.convert import ConvertRunRequest, DryRunReport
+from ..services.converter import ConversionError, ConversionService
 from ..services.staging import StagingError, StagingService
 
 router = APIRouter()
@@ -14,6 +16,10 @@ router = APIRouter()
 
 def get_staging_service(request: Request) -> StagingService:
     return request.app.state.staging_service
+
+
+def get_conversion_service(request: Request) -> ConversionService:
+    return request.app.state.conversion_service
 
 
 @router.get("/health")
@@ -69,3 +75,21 @@ def convert_upload(
         "size": result.size,
         "media_type": result.media_type,
     }
+
+
+@router.post(
+    "/api/kb/v1/ingest/convert/run",
+    response_model=DryRunReport,
+    status_code=status.HTTP_200_OK,
+)
+def convert_run(
+    body: ConvertRunRequest,
+    service: Annotated[ConversionService, Depends(get_conversion_service)],
+) -> DryRunReport:
+    try:
+        return service.run_dry_convert(body)
+    except ConversionError as exc:
+        raise HTTPException(
+            status_code=exc.http_status,
+            detail={"code": exc.code, "message": exc.message},
+        ) from exc
