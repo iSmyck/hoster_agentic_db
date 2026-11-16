@@ -14,6 +14,9 @@ class ConvertRunRequest(BaseModel):
     source_path: str = Field(min_length=1, max_length=1024)
     ownership_mode: Literal["migrated", "source_managed", "curated"] = "migrated"
     origin: dict[str, Any] | None = None
+    data_profile: Literal["strict", "pii_permitted"] = "strict"
+    legal_basis: str | None = None
+    inference_provider: str = "internal"
 
 
 class AttachmentManifestEntry(BaseModel):
@@ -27,6 +30,9 @@ class AttachmentManifestEntry(BaseModel):
     verification_status: Literal["not_required", "pending", "verified", "rejected"]
     alt_text: str
     automatic: bool = False
+    diagram_candidate: bool = False
+    mermaid_source: str | None = None
+    mermaid_status: Literal["none", "skipped", "generated", "validated", "invalid"] = "none"
 
 
 class CorrectionTaskDraft(BaseModel):

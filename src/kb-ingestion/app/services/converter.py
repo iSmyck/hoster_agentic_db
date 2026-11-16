@@ -16,7 +16,9 @@ from ..schemas.convert import (
 )
 from ..services.converted_corpus import ConvertedCorpus, ConvertedDocument
 from ..services.media_processor import classify_image, requires_verification
+from ..services.mermaid_route import MermaidRoute
 from ..validators import front_matter
+from ..validators.data_barrier import DataBarrierError, enforce_data_barrier
 
 
 class ConversionError(Exception):
@@ -28,9 +30,15 @@ class ConversionError(Exception):
 
 
 class ConversionService:
-    def __init__(self, store: ObjectStore, corpus: ConvertedCorpus | None = None) -> None:
+    def __init__(
+        self,
+        store: ObjectStore,
+        corpus: ConvertedCorpus | None = None,
+        mermaid_route: MermaidRoute | None = None,
+    ) -> None:
         self._store = store
         self._corpus = corpus or ConvertedCorpus()
+        self._mermaid = mermaid_route or MermaidRoute()
 
     def run_dry_convert(self, request: ConvertRunRequest) -> DryRunReport:
         staged = self._store.get_staged(request.space_id, request.client_id, request.object_id)
@@ -49,6 +57,7 @@ class ConversionService:
 
         attachments: list[AttachmentManifestEntry] = []
         blockers: list[dict[str, str]] = []
+        errors = list(parsed.errors)
         markdown_parts = [parsed.markdown_body] if parsed.markdown_body else []
         empty_placeholders = {
             "",
@@ -79,7 +88,15 @@ class ConversionService:
                 classified.media_type,
             )
             alt_text = Path(classified.filename).stem.replace("-", " ") or "image"
-            pending = requires_verification(classified.media_class)
+            mermaid_source = None
+            mermaid_status = "none"
+            mermaid_error = None
+            if classified.diagram_candidate:
+                converted = self._mermaid.convert_diagram(classified.filename, classified.data)
+                mermaid_source = converted.source
+                mermaid_status = converted.status
+                mermaid_error = converted.error
+            pending = requires_verification(classified.media_class) and mermaid_status != "validated"
             verification_status: str = "pending" if pending else "not_required"
             entry = AttachmentManifestEntry(
                 object_id=staged_media.object_id,
@@ -92,11 +109,24 @@ class ConversionService:
                 verification_status=verification_status,
                 alt_text=alt_text,
                 automatic=True,
+                diagram_candidate=classified.diagram_candidate,
+                mermaid_source=mermaid_source,
+                mermaid_status=mermaid_status,  # type: ignore[arg-type]
             )
             attachments.append(entry)
             if classified.media_class == "decorative":
                 continue
-            markdown_parts.append(f"![{alt_text}](attachment://{staged_media.object_id})")
+            if mermaid_status == "validated" and mermaid_source:
+                markdown_parts.append(f"```mermaid\n{mermaid_source}\n```")
+            else:
+                markdown_parts.append(f"![{alt_text}](attachment://{staged_media.object_id})")
+            if mermaid_status == "invalid":
+                errors.append(
+                    {
+                        "code": "MERMAID_INVALID",
+                        "detail": mermaid_error or "mermaid validation failed",
+                    }
+                )
             if pending:
                 blockers.append(
                     {
@@ -117,8 +147,22 @@ class ConversionService:
                 staged_object_id=request.object_id,
                 staged_version_id=staged.version_id,
             )
-        except front_matter.FrontMatterError as exc:
-            raise ConversionError(exc.code, exc.message) from exc
+        except front_matter.FrontMatterError as extra:
+            raise ConversionError(extra.code, extra.message) from extra
+
+        try:
+            enforce_data_barrier(
+                data_profile=request.data_profile,
+                text=markdown,
+                legal_basis=request.legal_basis,
+                inference_provider=request.inference_provider,
+                document_path=request.source_path,
+                document_id=str(draft["id"]),
+            )
+        except DataBarrierError as barrier:
+            if barrier.code != "PII_BLOCKED":
+                raise ConversionError(barrier.code, barrier.message) from barrier
+            blockers.append({"code": "PII_REVIEW_REQUIRED", "detail": barrier.message})
 
         correction_tasks = _build_correction_tasks(
             blockers=blockers,
@@ -158,7 +202,7 @@ class ConversionService:
             attachments=attachments,
             blockers=blockers,
             losses=parsed.losses,
-            errors=parsed.errors,
+            errors=errors,
             front_matter_draft=draft,
             correction_tasks=correction_tasks,
             status=status,

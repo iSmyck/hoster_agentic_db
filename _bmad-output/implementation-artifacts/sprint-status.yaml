@@ -530,7 +530,7 @@ phase_status:
 
   phase-f:
     status: in-progress
-    note: "kb-ingestion module. KBI.1–KBI.2 synthetically done (specs + pytest). Next: KBI.3. Live GO/GitLab not claimed."
+    note: "kb-ingestion module. KBI.1–KBI.5 synthetically done (specs + pytest). Next: kbi-cross-cutting. Live GO/GitLab/PostgreSQL/vision/Kroki not claimed."
     items:
       - id: kbi.1
         title: "KBI.1 Single-document conversion"
@@ -542,16 +542,16 @@ phase_status:
         note: "KBI.2.1–2.4 specs done with review. Evidence 2026-11-17: uv run pytest -q src/kb-ingestion/tests → 138 passed; ruff clean. Stub GO only; live GitLab not claimed. Residual: partial GO fail-fast, no PATCH lock."
       - id: kbi.3
         title: "KBI.3 Source-sync"
-        status: todo
-        note: "Stories KBI.3.1–KBI.3.5; tasks KBI-301–307. ADR-018 accepted 2026-11-14."
+        status: done
+        note: "KBI.3.1–3.5 specs done with review. Evidence 2026-11-17: uv run pytest -q src/kb-ingestion/tests → 165 passed; ruff clean. Stub GO only; n8n supplies delta; in-memory registry/cursor/jobs. Residual: ADR FM/data_profile/CONFLICT_WITH_CURATED → KBI.4; live GO/GitLab not claimed."
       - id: kbi.4
         title: "KBI.4 Content-standard enforcement and job queue"
-        status: todo
-        note: "Stories KBI.4.1–KBI.4.3; tasks KBI-401–405."
+        status: done
+        note: "KBI.4.1–4.3 specs done with review. Evidence 2026-11-17: uv run pytest -q src/kb-ingestion/tests → 186 passed; ruff clean. In-memory job queue (ADR-015, no new PG schema). Residual: live kb_ops queue, GO CONFLICT_WITH_CURATED, production PII NER."
       - id: kbi.5
         title: "KBI.5 Diagram→Mermaid (evidence-gated)"
-        status: todo
-        note: "Stories KBI.5.1–KBI.5.4; tasks KBI-501–505."
+        status: done
+        note: "KBI.5.1–5.4 specs done with review. Evidence 2026-11-17: uv run pytest -q src/kb-ingestion/tests → 194 passed; ruff clean. Route default-off; StubVision/StubKroki. Residual: live vision/Kroki, pixel detector."
       - id: kbi-cross-cutting
         title: "KBI cross-cutting tasks"
         status: todo

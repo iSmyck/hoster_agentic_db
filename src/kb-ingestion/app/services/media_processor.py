@@ -8,12 +8,23 @@ from pathlib import Path
 MediaClass = str
 
 
+_DIAGRAM_TOKENS = (
+    "diagram",
+    "schematic",
+    "flowchart",
+    "architecture",
+    "uml",
+    "mermaid",
+)
+
+
 @dataclass(frozen=True)
 class ClassifiedMedia:
     filename: str
     data: bytes
     media_type: str
     media_class: MediaClass
+    diagram_candidate: bool = False
 
 
 def classify_image(filename: str, data: bytes, media_type: str, *, primary_asset: bool = False) -> ClassifiedMedia:
@@ -36,7 +47,13 @@ def classify_image(filename: str, data: bytes, media_type: str, *, primary_asset
         data=data,
         media_type=media_type,
         media_class=media_class,
+        diagram_candidate=is_diagram_candidate(name),
     )
+
+
+def is_diagram_candidate(filename: str) -> bool:
+    name = Path(filename).name.lower()
+    return any(token in name for token in _DIAGRAM_TOKENS)
 
 
 def requires_verification(media_class: str) -> bool:

@@ -20,6 +20,7 @@ from ..schemas.convert import AttachmentManifestEntry
 _CONTRACTS = Path(__file__).resolve().parents[4] / "specs" / "corporate-kb" / "contracts"
 
 _OWNERSHIP_MODES = frozenset({"migrated", "source_managed", "curated"})
+_FORBIDDEN_KEYS = frozenset({"access", "owner", "status"})
 
 
 class FrontMatterError(Exception):
@@ -127,6 +128,28 @@ def _front_matter_validator() -> Draft202012Validator:
 
 def validate_front_matter_draft(draft: dict[str, Any]) -> None:
     """Validate a front-matter mapping against document-front-matter-v2."""
+    enforce_front_matter(draft)
+
+
+def enforce_front_matter(draft: dict[str, Any]) -> None:
+    """Reject forbidden keys, archive invariant breaks, and schema-invalid drafts."""
+    if not isinstance(draft, dict):
+        raise FrontMatterError("FRONT_MATTER_INVALID", "front matter must be an object")
+    forbidden = sorted(_FORBIDDEN_KEYS.intersection(draft))
+    if forbidden:
+        raise FrontMatterError(
+            "FRONT_MATTER_INVALID",
+            f"forbidden front-matter keys: {', '.join(forbidden)}",
+        )
+    archived = bool(draft.get("archived"))
+    has_archive = draft.get("archive") is not None
+    if archived != has_archive:
+        raise FrontMatterError(
+            "ARCHIVE_INVARIANT_VIOLATION",
+            "archived=true if and only if archive is present",
+        )
+    if draft.get("ownership_mode") == "source_managed" and not draft.get("origin"):
+        raise FrontMatterError("ORIGIN_REQUIRED", "origin is required for source_managed")
     _validate_against_schema(draft)
 
 
