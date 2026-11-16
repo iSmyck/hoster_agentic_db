@@ -1,0 +1,19 @@
+{
+  "command": "uv run pytest -q src/kb-ingestion/tests",
+  "ruff": "clean",
+  "passed": 211,
+  "failed": 0,
+  "status": "VERIFIED(synthetic)",
+  "claim": "VERIFIED(synthetic)",
+  "backup_command": "uv run pytest -q src/backup/tests",
+  "backup_passed": 60,
+  "backup_skipped": 1,
+  "live_gates": {
+    "identity_http": "BLOCKED",
+    "go_http": "BLOCKED",
+    "gitlab": "BLOCKED",
+    "minio_acl": "BLOCKED",
+    "vision_kroki": "BLOCKED",
+    "local_stack_live": "BLOCKED"
+  }
+}

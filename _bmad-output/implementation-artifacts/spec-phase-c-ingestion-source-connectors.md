@@ -81,11 +81,10 @@ context:
 - `src/kb-ingestion/app/parsers/extraction_router.py` — evidence-gated route activation.
 - `src/kb-ingestion/app/validators/front_matter.py` — front-matter-v2 validation.
 - `src/kb-ingestion/app/validators/data_barrier.py` — strict/pii_permitted gate.
-- `src/kb-ingestion/app/jobs/` — PostgreSQL queue, worker, retry/DLQ.
-- `src/kb-ingestion/app/models/ingestion.py` — models для conversion, source, sync run, queue.
-- `src/kb-ingestion/migrations/` — alembic для kb_ingestion schema.
-- `src/shared/object_store/` — extracted from backup: adapter + service + models.
-- `src/backup/app/adapters/object_store.py` — refactor to use shared module.
+- `src/kb-ingestion/app/jobs/` — in-memory queue/retry/DLQ (PostgreSQL/`kb_ops` deferred, ADR-015).
+- `src/kb-ingestion/migrations/` — deferred package; no ingest-owned Alembic revisions (ADR-015).
+- `src/shared/object_store/` — shared put/get protocol, MinIO adapter, `sha256_hex`.
+- `src/backup/app/adapters/object_store.py` — versioned MinIO API; hashes via shared helper.
 - `src/identity/app/api/router.py` — AuthzContext/check endpoints.
 - `src/git-orchestrator/app/api/router.py` — proposal/decision/merge endpoints.
 - `specs/corporate-kb/contracts/front-matter.schema.json` — canonical schema.
@@ -94,9 +93,9 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `src/shared/object_store/` -- extract adapter/service/models from backup -- shared staging semantics.
-- [ ] `src/backup/app/adapters/object_store.py` + `services/object_store.py` -- refactor to use shared module -- no behavior change.
-- [ ] `src/kb-ingestion/app/main.py` + `core/config.py` + `api/router.py` -- module scaffold with convert/structure/sources endpoints -- foundation.
+- [x] `src/shared/object_store/` -- extract adapter/service/models from backup -- shared staging semantics (KBI-901; backup keeps versioned MinIO API).
+- [x] `src/backup/app/adapters/object_store.py` -- hash via `shared.object_store.hashing.sha256_hex`; versioned MinIO port unchanged.
+- [x] `src/kb-ingestion/app/main.py` + `core/config.py` + `api/router.py` -- module scaffold with convert/structure/sources endpoints -- foundation.
 - [ ] `src/kb-ingestion/app/services/converter.py` -- single-doc conversion orchestration -- `convert` mode.
 - [ ] `src/kb-ingestion/app/services/media_processor.py` -- extract, classify, integrate images -- C.1.2 + image integration.
 - [ ] `src/kb-ingestion/app/parsers/` -- DOCX/PDF/HTML extractors with loss report -- C.3.
@@ -106,11 +105,11 @@ context:
 - [ ] `src/kb-ingestion/app/services/source_sync.py` -- delta engine + auto-merge policy -- `source-sync` mode.
 - [ ] `src/kb-ingestion/app/services/notifier.py` -- editor notifications on merge -- D1.
 - [ ] `src/kb-ingestion/app/validators/front_matter.py` + `data_barrier.py` -- content-standard enforcement -- C.4.
-- [ ] `src/kb-ingestion/app/jobs/` -- PostgreSQL queue + worker + DLQ -- C.4.
-- [ ] `src/kb-ingestion/migrations/versions/2026_11_14_0001_initial_kb_ingestion.py` -- schema migration.
-- [ ] `src/kb-ingestion/tests/` -- unit/live tests for all modes.
+- [ ] `src/kb-ingestion/app/jobs/` -- in-memory queue done (KBI.4); PostgreSQL/`kb_ops` deferred ADR-015.
+- [ ] `src/kb-ingestion/migrations/` -- deferred package only; no ingest-owned Alembic revisions (ADR-015).
+- [x] `src/kb-ingestion/tests/` -- unit tests for convert/structure/source-sync/enforce/mermaid/cross-cutting; live BLOCKED.
 - [x] `specs/corporate-kb/adr/ADR-018-source-sync-auto-merge-policy.md` -- ADR for auto-merge; accepted 2026-11-14.
-- [ ] `specs/corporate-kb/evidence/kb-ingestion/` + `_bmad-output/test-artifacts/kb-ingestion/` -- evidence.
+- [x] `specs/corporate-kb/evidence/kb-ingestion/` + `_bmad-output/test-artifacts/kb-ingestion/` -- sanitized evidence (KBI-906).
 
 **Acceptance Criteria:**
 - Given PDF upload, when convert completes, then Markdown is staged with `attachment://` image refs and `sha256` metadata.

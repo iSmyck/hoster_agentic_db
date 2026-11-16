@@ -1,163 +1,233 @@
 # Deployment Handover
 
 **Project:** corp_ai_db  
-**Date:** 2026-11-12  
-**Overall readiness:** 90 %  
-**Target:** Minimal production launch under hoster.by white-label
+**Updated:** 2026-11-17  
+**Target:** первый запуск на одном сервере hoster.by, ежедневные копии, обычный вход через браузер
 
-## Repository layout
+Техническая модель контуров по-прежнему в `specs/corporate-kb/operations.md` (статус design, не production). Этот файл — рабочий порядок: что уже есть, что сделать по шагам и что должен дать владелец.
+
+## 1. Как закончить продукт
+
+Коротко, для человека, который принимает решение, а не пишет код.
+
+### Что это за система
+
+Это корпоративная база знаний.
+
+- Сотрудник открывает страницу в браузере и правит текст.
+- Правка не попадает в базу сразу. Сначала она становится предложением, его смотрит второй человек, и только потом система записывает итог в GitLab (хранилище версий).
+- Поиск, вход и резервные копии — отдельные части той же системы.
+- Загрузка файлов и автосинхронизация из внешних систем уже собраны в коде, но **в первый запуск не входят**. Для запуска источник один: страницы, которые люди ведут через редактор и GitLab.
+
+### Что уже можно считать готовым
+
+- Песочница на этом компьютере живая: база, GitLab, вход Keycloak.
+- Сценарий «правка → решение второго человека → запись в GitLab → откат» проверен: 20 из 20.
+- Загрузка файла и автозапись одной тестовой страницы через сервис приёма документов тоже проверены на этой песочнице.
+- Поиск на тестовом русском наборе пройден раньше.
+- Правила запуска согласованы: один сервер базы, ежедневные копии, без второй площадки и без внешнего пентеста в первом запуске. Вход в модель — KIMI. Бренд hoster.by ждёт логотип и юридическое разрешение.
+
+### Порядок до конца
+
+Идти сверху вниз. Следующий шаг не начинает работу, пока предыдущий не принят.
+
+**Шаг 1. Дожать редактор в браузере.**  
+Понять: API уже пишет в GitLab, экран редактора в этом прогоне не открывали.  
+Сделать команде: поднять сайт на порту 3100 и пройти путь двумя людьми — автор и согласующий.  
+Как подключиться: открыть `http://127.0.0.1:3100`, войти тестовыми пользователями песочницы. Владельцу ничего присылать не нужно.
+
+**Шаг 2. Сделать приём документов постоянным.**  
+Понять: сейчас очередь и «где остановились» живут в памяти процесса. После перезапуска они пропадают. Файлы пока не кладутся в постоянное хранилище.  
+Сделать команде: хранить очередь в базе Git Orchestrator и складывать файлы в уже поднятый MinIO.  
+Как подключиться: владелец не нужен, если первый запуск остаётся только через редактор. Если нужна загрузка файлов с первого дня — сказать об этом явно.
+
+**Шаг 3. Принять песочницу глазами.**  
+Понять: автоматические проверки не заменяют «я открыл и увидел».  
+Сделать владельцу: два человека правят одну страницу, второй согласует, страница появляется в базе, откат возвращает старый текст, поиск находит её.  
+Как подключиться: тот же адрес `http://127.0.0.1:3100`. GitLab для проверки версий: `http://127.0.0.1:8081`. Пароли не присылать в чат и не класть в документы.
+
+**Шаг 4. Перенести на сервер hoster.**  
+Понять: локальная песочница — не боевой адрес для сотрудников.  
+Сделать: один сервер, одно имя сайта, шифрование адреса (HTTPS), одна база, ежедневная копия, мониторинг, который уже есть у hoster.  
+Как подключиться: hoster даёт сервер, домен и доступ. Владелец называет, кто дежурит, если сайт лежит. Секреты — в хранилище паролей, не в письме.
+
+**Шаг 5. Боевой вход сотрудников.**  
+Понять: сейчас вход тестовый (Keycloak песочницы). Боевой каталог компании (AD) в первый запуск не обязателен, если владельца устраивают учётки, заведённые в этой системе.  
+Сделать: либо оставить вход песочницы как образец и завести реальных людей так же, либо дать адрес корпоративного каталога и кто имеет право читать группы.  
+Как подключиться: владелец присылает название каталога и контакт администратора. Сам пароль администратора в репозиторий не класть.
+
+**Шаг 6. Бренд.**  
+Понять: без юридического разрешения логотип Open WebUI менять нельзя. Имя окна уже можно задать.  
+Сделать владельцу: прислать логотип, фавикон и письменное «можно заменить».  
+Как подключиться: файлы и разрешение — отдельно от кода. Пока их нет, сайт выходит со стандартным видом и своим названием.
+
+**Шаг 7. Короткая проверка безопасности по чеклисту.**  
+Понять: внешний пентест отложен. Внутренний чеклист уже лежит в репозитории.  
+Сделать: пройти `specs/corporate-kb/runbooks/security-review-checklist.md` на боевом сервере до открытия сотрудникам.  
+Как подключиться: владелец или безопасность ставит «принято» в evidence. Команда не отмечает это за владельца.
+
+**Шаг 8. Вторая внутренняя песочница.**  
+Понять: это не второй клиент и не продажа. Это проверка, что данные двух контуров не смешиваются.  
+Сделать команде: отдельная группа в GitLab, отдельная схема базы, отдельное ведро файлов, отдельная область входа.  
+Как подключиться: владелец подтверждает, что это внутренний контур, и называет его имя.
+
+После шага 7 сайт можно открывать сотрудникам первого контура. Шаг 8 можно вести параллельно, но не вместо приёмки.
+
+### Что в первый запуск не входит
+
+Это уже решённые отложения, не дыры в текущем коде:
+
+- вторая площадка и восстановление в другом дата-центре;
+- внешний пентест;
+- модель hoster.ai вместо KIMI;
+- SharePoint, FTP и другие внешние источники;
+- замена поискового движка и отдельные политики «быстро / доверенно / масштаб» (T19/T20);
+- редакционный контур без merge (Epic 14) — после живой приёмки редактора.
+
+## 2. Что уже проверено на песочнице
+
+| Проверка | Результат | Где смотреть |
+|---|---|---|
+| G1: правка → решение → запись → откат | 20 PASS, 0 FAIL | `specs/corporate-kb/evidence/g1/g1-live-summary.md` |
+| Приём файла и автозапись страницы | 5 PASS | `specs/corporate-kb/evidence/kb-ingestion/live-stack-ingest.md` |
+| Поиск на синтетическом русском наборе | пройден ранее | `specs/corporate-kb/evidence/` фаза B |
+
+Не проверено в этом прогоне: сайт на порту 3100, постоянная очередь приёма документов, права доступа к файловому хранилищу, полный каталог сценариев A01–A36.
+
+## 3. Раскладка репозитория
 
 ```
 ├── src/
-│   ├── identity/          # Identity + AuthZ service (port 8001)
-│   ├── git-orchestrator/  # Git Orchestrator service (port 8002)
-│   ├── retrieval/         # Retrieval + Indexing service (port 8003)
-│   ├── session/           # Session service (port 8004)
-│   ├── backup/            # Backup/restore service
-│   └── open-webui/        # Frontend overlay (port 3100)
+│   ├── identity/          # вход и права (порт 8001)
+│   ├── git-orchestrator/  # запись в GitLab (порт 8002)
+│   ├── retrieval/         # поиск (порт 8003)
+│   ├── session/           # сессия браузера (порт 8004)
+│   ├── backup/            # копии (порт 8005)
+│   ├── kb-ingestion/      # приём файлов и синхронизация (порт 8006)
+│   └── open-webui/        # наши экраны поверх Open WebUI
 ├── scripts/
-│   ├── local_stack.py     # Start/stop local Docker stack
+│   ├── local_stack.py
 │   └── smoke_local_stack.py
-├── specs/corporate-kb/    # Specs, ADRs, runbooks, evidence
-│   ├── runbooks/          # Operational runbooks
-│   └── evidence/          # Acceptance evidence
-├── _bmad-output/          # Generated test artifacts and sprint status
-├── .env.example           # Local development configuration template
-└── DEPLOYMENT.md          # This file
+├── specs/corporate-kb/    # правила, решения, runbook, evidence
+├── .env.example
+└── DEPLOYMENT.md
 ```
 
-## Prerequisites
+Сам сайт Open WebUI для песочницы лежит в `_bmad-output/test-artifacts/t00/upstream/open-webui`. Каталог `src/open-webui` — только наши экраны базы знаний.
 
-- Python 3.12+
-- `uv` (Python package manager)
-- Node.js 20+ and npm
-- Docker and Docker Compose (for local stack)
+## 4. Что нужно на машине разработчика
+
+- Python 3.12+, `uv`
+- Node.js 20+ и npm
+- Docker
 - Git
 
-## Initial setup
-
-1. Clone the repository.
-2. Copy the environment template:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-3. Fill in real values for:
-   - `GITLAB_TOKEN` / `GO_GITLAB_TOKEN` (if using real GitLab)
-   - `KEYCLOAK_CLIENT_SECRET`
-   - `KIMI_API_KEY`
-   - `MINIO_SECRET_KEY`
-   - `SESSION_SECRET_KEY` (change in production)
-
-4. Install Python dependencies:
-
-   ```bash
-   uv sync
-   ```
-
-5. Install frontend dependencies:
-
-   ```bash
-   cd src/open-webui
-   npm install
-   ./setup-openwebui.sh   # clones the pinned upstream Open WebUI checkout
-   ```
-
-## Local development stack
-
-Start all services (PostgreSQL, MinIO, Keycloak, GitLab CE, Open WebUI):
+Первый запуск:
 
 ```bash
-python scripts/local_stack.py start
+cp .env.example .env
+uv sync
 ```
 
-Run smoke tests:
+В `.env` заполняются настоящие значения, файл не коммитится:
+
+- `GO_GITLAB_TOKEN` — доступ GitLab песочницы
+- `KEYCLOAK_CLIENT_SECRET`
+- `KIMI_API_KEY`
+- `SESSION_SECRET_KEY` — на бою заменить
+- для приёма документов в постоянное хранилище: `KB_INGEST_MINIO_ENDPOINT` и ключи MinIO
+
+Экран базы:
+
+```bash
+cd src/open-webui
+npm install
+./setup-openwebui.sh
+```
+
+## 5. Песочница
+
+Инфраструктура (база, GitLab, Keycloak, MinIO) и сервисы:
+
+```bash
+python scripts/local_stack.py
+```
+
+Без сайта:
+
+```bash
+python scripts/local_stack.py --no-openwebui
+```
+
+Остановка инфраструктуры:
+
+```bash
+python scripts/local_stack.py --stop
+```
+
+Проверка здоровья:
 
 ```bash
 python scripts/smoke_local_stack.py
 ```
 
-Stop the stack:
+Песочница только для синтетических данных.
+
+Повтор живых проверок (схема `kb_ops_g1_test`, рабочую схему не трогает):
 
 ```bash
-python scripts/local_stack.py stop
+G1_ALLOW_DESTRUCTIVE_RESET=1 GO_KB_OPS_SCHEMA=kb_ops_g1_test \
+  uv run python _bmad-output/test-artifacts/g1/run_g1_live_acceptance.py
+uv run python _bmad-output/test-artifacts/kb-ingestion/run_live_stack_ingest.py
 ```
 
-> The local stack uses disposable fixtures. Do not use it for production data.
+## 6. Порты
 
-## Service ports
+| Что | Порт | Зачем человеку |
+|---|---|---|
+| Сайт | 3100 | править страницы |
+| Вход и права | 8001 | кто есть кто |
+| Запись в GitLab | 8002 | предложения и слияния |
+| Поиск | 8003 | ответы по базе |
+| Сессия | 8004 | «вы вошли» |
+| Копии | 8005 | резервные копии |
+| Приём файлов | 8006 | загрузка и синхронизация |
+| База | 5432 | данные сервисов |
+| Файловое хранилище | 9000 | вложения |
+| Вход Keycloak | 8082 | тестовые учётки |
+| GitLab | 8081 | версии страниц |
 
-| Service | Port | Notes |
-|---------|------|-------|
-| Identity + AuthZ | 8001 | Keycloak-backed in local stack |
-| Git Orchestrator | 8002 | GitLab adapter stub by default |
-| Retrieval | 8003 | pgvector-backed in local stack |
-| Session | 8004 | JWT + OIDC fallback |
-| Open WebUI | 3100 | Custom `/kb` route included |
-| PostgreSQL | 5432 | `corp_kb` database |
-| MinIO | 9000 | Object-store staging |
-| Keycloak | 8082 | `corp-kb` realm |
-| GitLab CE | 8081 | Sandbox GitLab |
+На боевом сервере наружу открывается сайт по HTTPS. Остальные порты остаются внутри.
 
-## Running tests
+## 7. Сборка сайта
 
-Backend:
-
-```bash
-uv run pytest src/git-orchestrator/tests -q
-uv run pytest src/identity/tests -q
-uv run pytest src/session/tests -q
-uv run pytest src/retrieval/tests -q
-uv run pytest src/backup/tests -q
-```
-
-Frontend overlay:
-
-```bash
-cd src/open-webui
-npm run kb:test
-```
-
-Live acceptance (requires running local stack and `G1_ALLOW_DESTRUCTIVE_RESET=1`):
-
-```bash
-export G1_ALLOW_DESTRUCTIVE_RESET=1
-uv run python _bmad-output/test-artifacts/g1/run_g1_live_acceptance.py
-uv run python _bmad-output/test-artifacts/g1/run_openwebui_acceptance.py
-```
-
-## Building for deployment
-
-Default build:
+Обычная:
 
 ```bash
 cd src/open-webui
 npm run kb:build
 ```
 
-White-label build (requires legal clearance and asset paths):
+С брендом, когда есть разрешение и файлы:
 
 ```bash
 cd src/open-webui
 cp .white-label-env.example .white-label-env
-# edit .white-label-env with real asset paths
-source .white-label-env
+# пути к логотипу — в .white-label-env
 WHITE_LABEL_LEGAL_CLEARANCE=1 npm run kb:build:white-label
 ```
 
-> White-label assets and final legal clearance are pending. The default build keeps standard Open WebUI branding with `WEBUI_NAME` customization only.
+Пока разрешения нет, остаётся стандартный вид и своё название окна.
 
-## Production deployment notes
+## 8. Боевой контур (минимум, уже согласован)
 
-- The minimal production target is owner-approved: single-node PostgreSQL, daily backups, basic hoster monitoring, repo runbooks.
-- HA/DR, cross-site replication, and external penetration tests are deferred.
-- KIMI remains the production inference provider; hoster.ai integration is deferred.
-- External source connectors are deferred; the only canonical source is Git-managed Spaces plus manual uploads through `/kb`.
+- один сервер PostgreSQL, ежедневные копии;
+- мониторинг hoster, runbook в `specs/corporate-kb/runbooks/`;
+- модель KIMI;
+- страницы ведут люди через редактор и GitLab;
+- вторая площадка, внешний пентест и hoster.ai — после запуска.
 
-## Operational runbooks
-
-See `specs/corporate-kb/runbooks/`:
+Runbook:
 
 - `incident-response.md`
 - `rollback-and-recovery.md`
@@ -166,24 +236,18 @@ See `specs/corporate-kb/runbooks/`:
 - `monitoring-alerting-checklist.md`
 - `backup-and-retention.md`
 
-## Blocked gates for production launch
+## 9. Что ещё закрывает владелец, а не код
 
-The following require owner/hoster/external input and cannot be resolved from the codebase alone:
+| Вопрос | Если молчать |
+|---|---|
+| Кто входит в первый день: свои учётки или корпоративный каталог | свои учётки по образцу песочницы |
+| Нужна ли загрузка файлов в первый день | нет, только редактор |
+| Логотип и разрешение на замену | стандартный вид, своё имя |
+| Кто подтверждает чеклист безопасности | запуск сотрудникам не открываем |
+| Имя второй внутренней песочницы | шаг 8 ждёт |
 
-- **T13/T16** — object-store ACL production engine recheck.
-- **Production AD / live SLO** — production IdP integration.
-- **HA / cross-site DR** — deferred to post-launch.
-- **External penetration test** — not performed for the minimal target.
-- **Real white-label assets** — build config ready, assets pending.
+Решения, которые уже приняты: `specs/corporate-kb/owner-input-request.md`.
 
-## Known approved debt
+## 10. Известный долг сборки
 
-- Upstream `svelte-check` / ESLint are known-fail approved debt (G0-D9); use the direct Vite build and Vitest instead.
-- Full A01–A36 live destructive acceptance and live browser IME/a11y/XSS gates are environment-gated and deferred.
-
-## Support contacts
-
-- Architecture / design: `specs/corporate-kb/architecture.md`, `specs/corporate-kb/adr/`
-- Sprint status: `_bmad-output/implementation-artifacts/sprint-status.yaml`
-- Owner input decisions: `specs/corporate-kb/owner-input-request.md`
-- Release readiness: `specs/corporate-kb/evidence/release-readiness-checklist.md`
+Проверки `svelte-check` и ESLint у исходного Open WebUI падают. Это согласованный долг (G0-D9). Для наших экранов используются Vitest и прямая сборка Vite.

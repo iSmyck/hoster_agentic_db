@@ -20,7 +20,20 @@ for _original in list(sys.modules):
         sys.modules[_aliased] = sys.modules[_original]
 
 from kb_ingestion.app.adapters.object_store import InMemoryObjectStore
+from kb_ingestion.app.core.config import settings
 from kb_ingestion.app.main import create_app
+
+
+@pytest.fixture(autouse=True)
+def _isolate_ingest_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep unit tests on stubs regardless of a developer .env."""
+    monkeypatch.setattr(settings, "INGEST_GO_BASE_URL", "")
+    monkeypatch.setattr(settings, "INGEST_IDENTITY_BASE_URL", "")
+    monkeypatch.setattr(settings, "INGEST_REQUIRE_IDENTITY", False)
+    monkeypatch.setattr(settings, "INGEST_SESSION_URL", "")
+    monkeypatch.setattr(settings, "INGEST_GITLAB_URL", "")
+    monkeypatch.setattr(settings, "INGEST_GITLAB_TOKEN", "")
+    monkeypatch.setattr(settings, "MINIO_ENDPOINT", "")
 
 
 @pytest.fixture

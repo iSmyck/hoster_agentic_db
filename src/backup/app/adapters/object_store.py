@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import hashlib
 from abc import ABC, abstractmethod
 from typing import Any
+
+from shared.object_store.hashing import sha256_hex
 
 
 class ObjectStoreAdapterError(Exception):
@@ -159,7 +160,7 @@ class MinioObjectStoreAdapter(ObjectStoreAdapter):
         from minio.error import S3Error
 
         key = self._object_key(space_id, object_id)
-        sha256 = hashlib.sha256(data).hexdigest()
+        sha256 = sha256_hex(data)
         metadata: dict[str, str] = {"sha256": sha256}
         if source_ref is not None:
             metadata["source_ref"] = source_ref
@@ -218,7 +219,7 @@ class MinioObjectStoreAdapter(ObjectStoreAdapter):
         from minio.error import S3Error
 
         key = self._object_key(space_id, object_id)
-        sha256 = hashlib.sha256(data).hexdigest()
+        sha256 = sha256_hex(data)
         metadata: dict[str, str] = {
             "sha256": sha256,
             "backup_version": version or "null",
@@ -341,7 +342,7 @@ class StubObjectStoreAdapter(ObjectStoreAdapter):
         media_type: str | None = None,
         source_ref: str | None = None,
     ) -> ObjectStoreEntry:
-        sha256 = hashlib.sha256(data).hexdigest()
+        sha256 = sha256_hex(data)
         version = f"v{len(self._content) + 1}"
         entry = ObjectStoreEntry(
             object_id=object_id,
@@ -370,7 +371,7 @@ class StubObjectStoreAdapter(ObjectStoreAdapter):
         media_type: str | None = None,
         source_ref: str | None = None,
     ) -> ObjectStoreEntry:
-        sha256 = hashlib.sha256(data).hexdigest()
+        sha256 = sha256_hex(data)
         next_version = f"v{len(self._content) + 1}"
         entry = ObjectStoreEntry(
             object_id=object_id,
@@ -409,7 +410,7 @@ class StubObjectStoreAdapter(ObjectStoreAdapter):
                     ObjectStoreEntry(
                         object_id=object_id,
                         version=v,
-                        sha256=hashlib.sha256(data).hexdigest(),
+                        sha256=sha256_hex(data),
                         size=len(data),
                         media_type=current.media_type if current else None,
                         source_ref=current.source_ref if current else None,

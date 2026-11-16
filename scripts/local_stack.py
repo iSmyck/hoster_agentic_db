@@ -69,6 +69,12 @@ SERVICES: list[dict[str, Any]] = [
         "module": "backup.app.main:app",
         "migrations": None,
     },
+    {
+        "name": "kb-ingestion",
+        "port": 8006,
+        "module": "kb_ingestion.app.main:app",
+        "migrations": None,
+    },
 ]
 
 OPENWEBUI_DIR = REPO_ROOT / "_bmad-output" / "test-artifacts" / "t00" / "upstream" / "open-webui"

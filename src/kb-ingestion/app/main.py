@@ -6,9 +6,10 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from .adapters.go_client import GOClient, StubGOClient
+from .adapters.go_client import GOClient, HttpGOClient, StubGOClient
+from .adapters.identity_client import HttpIdentityClient, IdentityClient, StubIdentityClient
 from .adapters.kroki_client import StubKrokiClient
-from .adapters.object_store import InMemoryObjectStore, ObjectStore
+from .adapters.object_store import ObjectStore, build_object_store
 from .adapters.vision_llm import StubVisionLLM
 from .api.router import router
 from .core.config import settings
@@ -24,10 +25,30 @@ from .services.staging import StagingService
 from .services.structure_proposals import StructureProposalStore, StructureReviewService
 
 
+def _default_go_client() -> GOClient:
+    if settings.INGEST_GO_BASE_URL:
+        return HttpGOClient(
+            settings.INGEST_GO_BASE_URL,
+            session_url=settings.INGEST_SESSION_URL,
+            author_id=settings.INGEST_GO_AUTHOR_ID,
+            approver_id=settings.INGEST_GO_APPROVER_ID,
+            gitlab_url=settings.INGEST_GITLAB_URL,
+            gitlab_token=settings.INGEST_GITLAB_TOKEN,
+        )
+    return StubGOClient()
+
+
+def _default_identity_client() -> IdentityClient:
+    if settings.INGEST_IDENTITY_BASE_URL:
+        return HttpIdentityClient(settings.INGEST_IDENTITY_BASE_URL)
+    return StubIdentityClient()
+
+
 def create_app(
     object_store: ObjectStore | None = None,
     corpus: ConvertedCorpus | None = None,
     go_client: GOClient | None = None,
+    identity_client: IdentityClient | None = None,
 ) -> FastAPI:
     """Create the kb-ingestion app; ``object_store`` is a test override."""
     app = FastAPI(
@@ -36,7 +57,13 @@ def create_app(
         docs_url="/docs",
         redoc_url="/redoc",
     )
-    store = object_store or InMemoryObjectStore()
+    store = object_store or build_object_store(
+        endpoint=settings.MINIO_ENDPOINT,
+        access_key=settings.MINIO_ACCESS_KEY,
+        secret_key=settings.MINIO_SECRET_KEY,
+        bucket=settings.INGEST_OBJECT_STORE_BUCKET,
+        secure=settings.MINIO_USE_SSL,
+    )
     converted_corpus = corpus or ConvertedCorpus()
     app.state.object_store = store
     app.state.converted_corpus = converted_corpus
@@ -52,8 +79,10 @@ def create_app(
     app.state.agent_structurer = structurer
     proposal_store = StructureProposalStore()
     app.state.structure_proposals = proposal_store
-    resolved_go = go_client or StubGOClient()
+    resolved_go = go_client or _default_go_client()
+    resolved_identity = identity_client or _default_identity_client()
     app.state.go_client = resolved_go
+    app.state.identity_client = resolved_identity
     app.state.structure_review = StructureReviewService(structurer, proposal_store, resolved_go)
     notifier = Notifier()
     registry = SourceRegistry()

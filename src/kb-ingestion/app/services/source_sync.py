@@ -374,12 +374,11 @@ def _proposal_payload(
         "idempotency_key": f"{sync_run_id}:{document.source_object_id}",
         "proposal_data": {
             "actor_type": "source_sync",
-            "author_stable_id": "source-sync-bot",
-            "requester_stable_id": "source-sync-bot",
             "source_id": source.source_id,
             "source_version": document.source_version,
             "sync_run_id": sync_run_id,
             "path": document.path,
+            "markdown": document.markdown,
             "kind": change.kind,
             "tombstone": document.tombstone,
             "origin": {

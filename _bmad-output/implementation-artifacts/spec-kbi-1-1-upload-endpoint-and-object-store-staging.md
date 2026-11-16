@@ -81,7 +81,7 @@ context:
 
 - Сервис `src/kb-ingestion/`, alias импорта `kb_ingestion` в тестах (каталог с дефисом).
 - `validate_metadata()` вызывается до чтения тела upload.
-- MinIO-адаптер и `local_stack` — вне scope (KBI-901/905).
+- MinIO-адаптер и `local_stack` закрыты в KBI-901/905 (synthetic; live MinIO ACL BLOCKED).
 
 ## Spec Change Log
 

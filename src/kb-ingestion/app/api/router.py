@@ -5,8 +5,19 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    Header,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
 
+from ..adapters.identity_client import enforce_identity
 from ..core.config import settings
 from ..jobs.queue import InMemoryJobQueue
 from ..jobs.scheduler import Scheduler
@@ -55,6 +66,10 @@ from ..validators.data_barrier import DataBarrierError, enforce_data_barrier
 from ..validators.front_matter import FrontMatterError, enforce_front_matter
 
 router = APIRouter()
+
+
+def get_actor_id(x_actor_id: Annotated[str | None, Header()] = None) -> str | None:
+    return x_actor_id
 
 
 def get_staging_service(request: Request) -> StagingService:
@@ -155,13 +170,16 @@ def health() -> dict[str, str]:
     status_code=status.HTTP_201_CREATED,
 )
 def convert_upload(
+    request: Request,
     data_profile: Annotated[str, Form()],
     service: Annotated[StagingService, Depends(get_staging_service)],
+    actor_id: Annotated[str | None, Depends(get_actor_id)],
     space_id: Annotated[str, Form()] = "",
     client_id: Annotated[str, Form()] = "",
     legal_basis: Annotated[str | None, Form()] = None,
     file: Annotated[UploadFile | None, File()] = None,
 ) -> dict[str, object]:
+    enforce_identity(request, space_id=space_id, path=f"/{space_id}/", actor_id=actor_id)
     if file is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
@@ -206,9 +224,12 @@ def convert_upload(
     status_code=status.HTTP_200_OK,
 )
 def convert_run(
+    request: Request,
     body: ConvertRunRequest,
     service: Annotated[ConversionService, Depends(get_conversion_service)],
+    actor_id: Annotated[str | None, Depends(get_actor_id)],
 ) -> DryRunReport:
+    enforce_identity(request, space_id=body.space_id, path=f"/{body.space_id}/", actor_id=actor_id)
     try:
         return service.run_dry_convert(body)
     except ConversionError as exc:
@@ -355,9 +376,12 @@ def _sync_http(exc: SourceSyncError) -> HTTPException:
     status_code=status.HTTP_201_CREATED,
 )
 def register_source(
+    request: Request,
     body: SourceRegisterRequest,
     registry: Annotated[SourceRegistry, Depends(get_source_registry)],
+    actor_id: Annotated[str | None, Depends(get_actor_id)],
 ) -> SourceRecord:
+    enforce_identity(request, space_id=body.space_id, path=f"/{body.space_id}/", actor_id=actor_id)
     try:
         return registry.register(body)
     except SourceSyncError as exc:
@@ -380,10 +404,18 @@ def get_source(
     response_model=SyncReport,
 )
 def sync_source(
+    request: Request,
     source_id: str,
     body: SyncRequest,
     service: Annotated[SourceSyncService, Depends(get_source_sync)],
+    registry: Annotated[SourceRegistry, Depends(get_source_registry)],
+    actor_id: Annotated[str | None, Depends(get_actor_id)],
 ) -> SyncReport:
+    try:
+        record = registry.get(source_id)
+    except SourceSyncError as exc:
+        raise _sync_http(exc) from exc
+    enforce_identity(request, space_id=record.space_id, path=f"/{record.space_id}/", actor_id=actor_id)
     try:
         return service.run_sync(source_id, body)
     except SourceSyncError as exc:

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import hashlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+
+from .hashing import object_key, sha256_hex
 
 
 class ObjectStoreError(Exception):
@@ -54,7 +55,7 @@ class InMemoryObjectStore(ObjectStore):
         self._versions: dict[str, int] = {}
 
     def _key(self, space_id: str, client_id: str, object_id: str) -> str:
-        return f"{space_id}/{client_id}/{object_id}"
+        return object_key(space_id, client_id, object_id)
 
     def put(
         self,
@@ -68,7 +69,7 @@ class InMemoryObjectStore(ObjectStore):
         version_num = self._versions.get(key, 0) + 1
         self._versions[key] = version_num
         version_id = f"v{version_num}"
-        digest = hashlib.sha256(data).hexdigest()
+        digest = sha256_hex(data)
         self._objects[key] = (data, digest, version_id, media_type)
         return StagedObject(
             object_id=object_id,

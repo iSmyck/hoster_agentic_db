@@ -530,7 +530,7 @@ phase_status:
 
   phase-f:
     status: in-progress
-    note: "kb-ingestion module. KBI.1–KBI.5 synthetically done (specs + pytest). Next: kbi-cross-cutting. Live GO/GitLab/PostgreSQL/vision/Kroki not claimed."
+    note: "KBI.1–KBI.5 and kbi-cross-cutting synthetically done. Live local stack 2026-11-17: services 8001–8006 healthy; ingest convert+source-sync auto-merge PASS; G1 live API 20/20 PASS. Residual: Open WebUI this run not started; T04b; MinIO ACL; A01–A36 full matrix."
     items:
       - id: kbi.1
         title: "KBI.1 Single-document conversion"
@@ -554,8 +554,8 @@ phase_status:
         note: "KBI.5.1–5.4 specs done with review. Evidence 2026-11-17: uv run pytest -q src/kb-ingestion/tests → 194 passed; ruff clean. Route default-off; StubVision/StubKroki. Residual: live vision/Kroki, pixel detector."
       - id: kbi-cross-cutting
         title: "KBI cross-cutting tasks"
-        status: todo
-        note: "Tasks KBI-901–906: shared object-store, scaffold, ADR-018, local stack, evidence."
+        status: done
+        note: "KBI-901–906 specs done with review. Evidence 2026-11-17: uv run pytest -q src/kb-ingestion/tests → 211 passed; ruff clean; backup tests 60 passed. Shared store+MinIO stub, identity default-off, local_stack port 8006, ADR-018 verified. Residual: live Identity/GO/GitLab/MinIO ACL/local_stack HTTP; ingest PG schema deferred ADR-015."
 
 # -----------------------------------------------------------------------------
 # Action items

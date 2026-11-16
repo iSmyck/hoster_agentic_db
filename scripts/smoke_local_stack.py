@@ -46,6 +46,7 @@ SERVICES: dict[str, str] = {
     "go": "http://127.0.0.1:8002/health",
     "retrieval": "http://127.0.0.1:8003/health",
     "backup": "http://127.0.0.1:8005/health",
+    "kb-ingestion": "http://127.0.0.1:8006/health",
     "openwebui": "http://127.0.0.1:3100/api/config",
 }
 
