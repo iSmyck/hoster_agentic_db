@@ -31,7 +31,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "src/identity/tests", "src/git-orchestrator/tests", "src/retrieval/tests", "src/ingestion/tests", "src/session/tests", "src/backup/tests"]
+testpaths = ["tests", "src/identity/tests", "src/git-orchestrator/tests", "src/retrieval/tests", "src/ingestion/tests", "src/session/tests", "src/backup/tests", "src/kb-ingestion/tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 pythonpath = ["src"]
@@ -48,4 +48,5 @@ target-version = "py312"
 "src/ingestion/tests/conftest.py" = ["E402"]
 "src/ingestion/migrations/env.py" = ["E402"]
 "src/session/tests/conftest.py" = ["E402"]
+"src/kb-ingestion/tests/conftest.py" = ["E402"]
 "src/session/migrations/env.py" = ["E402"]

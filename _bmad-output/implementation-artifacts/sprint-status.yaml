@@ -15,7 +15,7 @@
 #   - blocked: cannot proceed without owner/external input
 
 generated: "2026-11-11 01:05"
-last_updated: "2026-11-14 17:01"
+last_updated: "2026-11-17 00:05"
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -59,9 +59,9 @@ roadmap:
 
   - id: F
     name: "kb-ingestion module"
-    status: todo
+    status: in-progress
     target_milestone: "TBC — pending implementation start"
-    note: "Separate module replacing Phase C scope. Three modes: convert, structure, source-sync. Spec approved: _bmad-output/implementation-artifacts/spec-phase-c-ingestion-source-connectors.md. Epics/stories: _bmad-output/planning-artifacts/kb-ingestion-epics.md."
+    note: "KBI.1.1 upload/staging DONE (src/kb-ingestion, POST /api/kb/v1/ingest/convert, 15 pytest). Next KBI.1.2 format router. Epics: _bmad-output/planning-artifacts/kb-ingestion-epics.md."
 
 # -----------------------------------------------------------------------------
 # Readiness
@@ -529,13 +529,13 @@ phase_status:
         status: backlog
 
   phase-f:
-    status: todo
-    note: "kb-ingestion module. Spec approved; epics/stories decomposed. Implementation not started."
+    status: in-progress
+    note: "kb-ingestion module. KBI.1.1 implemented; KBI.1.2+ in progress."
     items:
       - id: kbi.1
         title: "KBI.1 Single-document conversion"
-        status: todo
-        note: "Stories KBI.1.1–KBI.1.6; tasks KBI-101–109."
+        status: in-progress
+        note: "KBI.1.1 upload/staging done (spec-kbi-1-1-*, KBI-101–102 partial). Open: KBI.1.2–KBI.1.6, KBI-103–109."
       - id: kbi.2
         title: "KBI.2 Agent KB structuring"
         status: todo
