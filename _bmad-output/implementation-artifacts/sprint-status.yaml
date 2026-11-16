@@ -15,7 +15,7 @@
 #   - blocked: cannot proceed without owner/external input
 
 generated: "2026-11-11 01:05"
-last_updated: "2026-11-17 01:10"
+last_updated: "2026-11-17 02:30"
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -61,7 +61,7 @@ roadmap:
     name: "kb-ingestion module"
     status: in-progress
     target_milestone: "TBC — pending implementation start"
-    note: "KBI.1 synthetically complete (1.1–1.6 specs + pytest). Next: KBI.2. Residual: Form XObjects, zip lying headers, no MinIO, Docling stub."
+    note: "KBI.1 and KBI.2 synthetically complete (specs + pytest). Residual: Form XObjects, zip lying headers, no MinIO, Docling stub, stub-only GO, fail-fast partial submit."
 
 # -----------------------------------------------------------------------------
 # Readiness
@@ -530,7 +530,7 @@ phase_status:
 
   phase-f:
     status: in-progress
-    note: "kb-ingestion module. KBI.1 done synthetically; next KBI.2."
+    note: "kb-ingestion module. KBI.1–KBI.2 synthetically done (specs + pytest). Next: KBI.3. Live GO/GitLab not claimed."
     items:
       - id: kbi.1
         title: "KBI.1 Single-document conversion"
@@ -538,8 +538,8 @@ phase_status:
         note: "KBI.1.1–1.6 specs done with review. Evidence 2026-11-17: uv run pytest -q src/kb-ingestion/tests → 93 passed; ruff clean. PDF XObject (no Pillow), jsonschema FM, dry-run errors[]. Residual deferred: Form XObjects, zip header bombs. No commit (AGENTS.md)."
       - id: kbi.2
         title: "KBI.2 Agent KB structuring"
-        status: todo
-        note: "Stories KBI.2.1–KBI.2.4; tasks KBI-201–205."
+        status: done
+        note: "KBI.2.1–2.4 specs done with review. Evidence 2026-11-17: uv run pytest -q src/kb-ingestion/tests → 138 passed; ruff clean. Stub GO only; live GitLab not claimed. Residual: partial GO fail-fast, no PATCH lock."
       - id: kbi.3
         title: "KBI.3 Source-sync"
         status: todo

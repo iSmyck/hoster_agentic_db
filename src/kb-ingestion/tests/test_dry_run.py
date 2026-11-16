@@ -29,6 +29,7 @@ def test_ready_markdown_report_shape(client: TestClient) -> None:
     assert report["correction_tasks"] == []
     assert report["status"] == "ready"
     assert "front_matter_draft" in report
+    assert len(report["markdown_object_id"]) == 32
 
 
 def test_pdf_empty_page_loss(client: TestClient) -> None:

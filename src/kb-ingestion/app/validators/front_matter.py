@@ -118,7 +118,16 @@ def _front_matter_validator() -> Draft202012Validator:
             ),
         ]
     )
-    return Draft202012Validator(fm_schema, registry=registry)
+    return Draft202012Validator(
+        fm_schema,
+        registry=registry,
+        format_checker=Draft202012Validator.FORMAT_CHECKER,
+    )
+
+
+def validate_front_matter_draft(draft: dict[str, Any]) -> None:
+    """Validate a front-matter mapping against document-front-matter-v2."""
+    _validate_against_schema(draft)
 
 
 def _validate_against_schema(draft: dict[str, Any]) -> None:

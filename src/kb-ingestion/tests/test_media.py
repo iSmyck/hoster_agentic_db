@@ -123,7 +123,8 @@ def test_matrix_docx_media_illustrative(client: TestClient, object_store: InMemo
     object_id = _upload(client, filename="policy.docx", content=docx, content_type=_DOCX_CT)
     before = object_store.count()
     report = _run(client, object_id, "docs/policy.docx")["body"]
-    assert object_store.count() > before
+    assert object_store.count() == before + 2
+    assert object_store.get("sales", "n8n-1", report["markdown_object_id"]) is not None
     media_att = [a for a in report["attachments"] if a["source_ref"].startswith("embedded:")]
     assert len(media_att) == 1
     assert media_att[0]["sha256"]
@@ -139,7 +140,8 @@ def test_matrix_pptx_media_staged_count(client: TestClient, object_store: InMemo
     object_id = _upload(client, filename="deck.pptx", content=pptx, content_type=_PPTX_CT)
     before = object_store.count()
     report = _run(client, object_id, "decks/deck.pptx")["body"]
-    assert object_store.count() == before + 1
+    # media object + persisted markdown object
+    assert object_store.count() == before + 2
     assert report["attachments"]
     assert report["attachments"][-1]["sha256"]
 

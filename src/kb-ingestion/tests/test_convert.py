@@ -208,7 +208,8 @@ def test_docx_media_classification_and_blockers(
     assert report["blockers"]
     assert report["correction_tasks"]
     assert report["correction_tasks"][0]["blocker_code"] == "MEDIA_VERIFICATION_PENDING"
-    assert object_store.count() > before
+    assert object_store.count() == before + 3
+    assert object_store.get("sales", "n8n-1", report["markdown_object_id"]) is not None
     pending = [a for a in report["attachments"] if a["verification_status"] == "pending"]
     assert pending
     assert pending[0]["automatic"] is True

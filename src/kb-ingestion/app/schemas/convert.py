@@ -40,6 +40,7 @@ class CorrectionTaskDraft(BaseModel):
 
 class DryRunReport(BaseModel):
     path_map: dict[str, str]
+    markdown_object_id: str
     markdown: str
     attachments: list[AttachmentManifestEntry]
     blockers: list[dict[str, str]]

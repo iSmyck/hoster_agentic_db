@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from pathlib import Path
 
-from ..adapters.object_store import ObjectStore
+from ..adapters.object_store import ObjectStore, ObjectStoreError
 from ..parsers import extraction_router
 from ..parsers.base import ParserError
 from ..schemas.convert import (
@@ -14,6 +14,7 @@ from ..schemas.convert import (
     CorrectionTaskDraft,
     DryRunReport,
 )
+from ..services.converted_corpus import ConvertedCorpus, ConvertedDocument
 from ..services.media_processor import classify_image, requires_verification
 from ..validators import front_matter
 
@@ -27,8 +28,9 @@ class ConversionError(Exception):
 
 
 class ConversionService:
-    def __init__(self, store: ObjectStore) -> None:
+    def __init__(self, store: ObjectStore, corpus: ConvertedCorpus | None = None) -> None:
         self._store = store
+        self._corpus = corpus or ConvertedCorpus()
 
     def run_dry_convert(self, request: ConvertRunRequest) -> DryRunReport:
         staged = self._store.get_staged(request.space_id, request.client_id, request.object_id)
@@ -125,8 +127,33 @@ class ConversionService:
         )
         status = "blocked" if blockers else "ready"
         path_map = {request.source_path: request.object_id}
+        markdown_object_id = uuid.uuid4().hex
+        try:
+            self._store.put(
+                request.space_id,
+                request.client_id,
+                markdown_object_id,
+                markdown.encode("utf-8"),
+                "text/markdown",
+            )
+            self._corpus.put(
+                ConvertedDocument(
+                    markdown_object_id=markdown_object_id,
+                    source_object_id=request.object_id,
+                    space_id=request.space_id,
+                    client_id=request.client_id,
+                    source_path=request.source_path,
+                    status=status,
+                    markdown=markdown,
+                    attachments=list(attachments),
+                    front_matter_draft=draft,
+                )
+            )
+        except ObjectStoreError as exc:
+            raise ConversionError("PERSIST_FAILED", exc.message, http_status=500) from exc
         return DryRunReport(
             path_map=path_map,
+            markdown_object_id=markdown_object_id,
             markdown=markdown,
             attachments=attachments,
             blockers=blockers,
