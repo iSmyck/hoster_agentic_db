@@ -3,11 +3,19 @@
 from __future__ import annotations
 
 import io
+import zipfile
 
 from .base import ParserError, ParseResult
+from .ooxml import ooxml_security_check
 
 
 def extract(filename: str, data: bytes) -> ParseResult:
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(data))
+    except zipfile.BadZipFile as exc:
+        raise ParserError("UNSUPPORTED_FORMAT", "xlsx is not a valid zip archive") from exc
+    with zf:
+        ooxml_security_check(zf)
     try:
         from openpyxl import load_workbook
     except ImportError as exc:

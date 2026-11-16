@@ -18,11 +18,24 @@ class ConvertRunRequest(BaseModel):
 
 class AttachmentManifestEntry(BaseModel):
     object_id: str
+    version: str
+    sha256: str
+    size: int
     media_type: str
+    source_ref: str
     media_class: str
+    verification_status: Literal["not_required", "pending", "verified", "rejected"]
     alt_text: str
     automatic: bool = False
-    verification_status: Literal["pending"] | None = None
+
+
+class CorrectionTaskDraft(BaseModel):
+    schema_version: Literal["docops-correction-task-v1"] = "docops-correction-task-v1"
+    state: Literal["proposed_draft"] = "proposed_draft"
+    blocker_code: str
+    document_path: str
+    document_id: str
+    reason: str
 
 
 class DryRunReport(BaseModel):
@@ -33,4 +46,5 @@ class DryRunReport(BaseModel):
     losses: list[dict[str, str]]
     errors: list[dict[str, str]]
     front_matter_draft: dict[str, Any]
+    correction_tasks: list[CorrectionTaskDraft]
     status: Literal["ready", "blocked"]

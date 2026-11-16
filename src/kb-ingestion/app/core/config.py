@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     MINIO_ACCESS_KEY: str = Field(default="", validation_alias="KB_INGEST_MINIO_ACCESS_KEY")
     MINIO_SECRET_KEY: str = Field(default="", validation_alias="KB_INGEST_MINIO_SECRET_KEY")
     MINIO_USE_SSL: bool = Field(default=False, validation_alias="KB_INGEST_MINIO_USE_SSL")
+    DOCLING_EVIDENCE_GATE: bool = Field(
+        default=False,
+        validation_alias="KB_INGEST_DOCLING_EVIDENCE_GATE",
+    )
 
 
 settings = Settings()

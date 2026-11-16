@@ -15,7 +15,7 @@
 #   - blocked: cannot proceed without owner/external input
 
 generated: "2026-11-11 01:05"
-last_updated: "2026-11-17 00:05"
+last_updated: "2026-11-17 01:10"
 project: corp_ai_db
 project_key: NOKEY
 tracking_system: file-system
@@ -61,7 +61,7 @@ roadmap:
     name: "kb-ingestion module"
     status: in-progress
     target_milestone: "TBC — pending implementation start"
-    note: "KBI.1 convert epic DONE: upload + POST /api/kb/v1/ingest/convert/run dry-run pipeline (24 pytest). Next KBI.2 structure."
+    note: "KBI.1 synthetically complete (1.1–1.6 specs + pytest). Next: KBI.2. Residual: Form XObjects, zip lying headers, no MinIO, Docling stub."
 
 # -----------------------------------------------------------------------------
 # Readiness
@@ -530,12 +530,12 @@ phase_status:
 
   phase-f:
     status: in-progress
-    note: "kb-ingestion module. KBI.1 done; KBI.2+ pending."
+    note: "kb-ingestion module. KBI.1 done synthetically; next KBI.2."
     items:
       - id: kbi.1
         title: "KBI.1 Single-document conversion"
         status: done
-        note: "Stories KBI.1.1–KBI.1.6: staging, parsers, media, front-matter, dry-run (KBI-101–109)."
+        note: "KBI.1.1–1.6 specs done with review. Evidence 2026-11-17: uv run pytest -q src/kb-ingestion/tests → 93 passed; ruff clean. PDF XObject (no Pillow), jsonschema FM, dry-run errors[]. Residual deferred: Form XObjects, zip header bombs. No commit (AGENTS.md)."
       - id: kbi.2
         title: "KBI.2 Agent KB structuring"
         status: todo

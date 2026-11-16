@@ -24,3 +24,4 @@ class ParseResult:
     markdown_body: str
     embedded_media: list[ExtractedMedia] = field(default_factory=list)
     losses: list[dict[str, str]] = field(default_factory=list)
+    errors: list[dict[str, str]] = field(default_factory=list)

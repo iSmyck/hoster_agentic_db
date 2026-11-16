@@ -16,15 +16,17 @@ class ClassifiedMedia:
     media_class: MediaClass
 
 
-def classify_image(filename: str, data: bytes, media_type: str) -> ClassifiedMedia:
+def classify_image(filename: str, data: bytes, media_type: str, *, primary_asset: bool = False) -> ClassifiedMedia:
     name = Path(filename).name.lower()
     size = len(data)
-    if size < 512 or any(token in name for token in ("watermark", "icon", "logo")):
+    if any(token in name for token in ("watermark", "icon", "logo")):
         media_class = "decorative"
     elif any(token in name for token in ("signature", "handwritten", "handwriting")):
         media_class = "handwritten"
     elif any(token in name for token in ("critical", "diagram", "schematic")):
         media_class = "critical"
+    elif not primary_asset and size < 512:
+        media_class = "decorative"
     elif size > 50_000:
         media_class = "substantive"
     else:

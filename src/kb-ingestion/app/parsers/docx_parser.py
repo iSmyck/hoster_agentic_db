@@ -8,18 +8,9 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 from .base import ExtractedMedia, ParserError, ParseResult
+from .ooxml import ooxml_security_check
 
 _NS = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
-_MAX_ZIP_MEMBERS = 256
-_MAX_UNCOMPRESSED = 52_428_800
-
-
-def _docx_security_check(zf: zipfile.ZipFile) -> None:
-    if len(zf.infolist()) > _MAX_ZIP_MEMBERS:
-        raise ParserError("SECURITY_BLOCKER", "docx archive has too many entries")
-    total = sum(info.file_size for info in zf.infolist())
-    if total > _MAX_UNCOMPRESSED:
-        raise ParserError("SECURITY_BLOCKER", "docx archive exceeds uncompressed limit")
 
 
 def extract(filename: str, data: bytes) -> ParseResult:
@@ -28,7 +19,7 @@ def extract(filename: str, data: bytes) -> ParseResult:
     except zipfile.BadZipFile as exc:
         raise ParserError("UNSUPPORTED_FORMAT", "docx is not a valid zip archive") from exc
     with zf:
-        _docx_security_check(zf)
+        ooxml_security_check(zf)
         media: list[ExtractedMedia] = []
         for name in zf.namelist():
             if not name.startswith("word/media/"):
@@ -41,7 +32,10 @@ def extract(filename: str, data: bytes) -> ParseResult:
             document_xml = zf.read("word/document.xml")
         except KeyError as exc:
             raise ParserError("UNSUPPORTED_FORMAT", "docx missing document.xml") from exc
-        root = ET.fromstring(document_xml)
+        try:
+            root = ET.fromstring(document_xml)
+        except ET.ParseError as exc:
+            raise ParserError("UNSUPPORTED_FORMAT", "docx document.xml is not valid xml") from exc
         texts = [node.text for node in root.findall(".//w:t", _NS) if node.text]
         body = " ".join(texts).strip()
         body = re.sub(r"\s+", " ", body)

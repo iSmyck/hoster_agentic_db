@@ -2,13 +2,22 @@
 
 from __future__ import annotations
 
+import json
 import re
 import uuid
 from datetime import UTC, datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from jsonschema import Draft202012Validator
+from jsonschema.exceptions import ValidationError
+from referencing import Registry, Resource
+from referencing.jsonschema import DRAFT202012
+
 from ..schemas.convert import AttachmentManifestEntry
+
+_CONTRACTS = Path(__file__).resolve().parents[4] / "specs" / "corporate-kb" / "contracts"
 
 _OWNERSHIP_MODES = frozenset({"migrated", "source_managed", "curated"})
 
@@ -27,6 +36,22 @@ def validate_source_path(source_path: str) -> None:
         raise FrontMatterError("SECURITY_BLOCKER", "invalid source_path characters")
 
 
+def attachment_to_front_matter_ref(entry: AttachmentManifestEntry) -> dict[str, Any]:
+    ref: dict[str, Any] = {
+        "object_id": entry.object_id,
+        "version": entry.version,
+        "sha256": entry.sha256,
+        "size": entry.size,
+        "media_type": entry.media_type,
+        "source_ref": entry.source_ref,
+        "media_class": entry.media_class,
+        "verification_status": entry.verification_status,
+    }
+    if entry.alt_text:
+        ref["description"] = {"automatic": entry.automatic, "text": entry.alt_text}
+    return ref
+
+
 def build_front_matter_draft(
     *,
     source_path: str,
@@ -42,14 +67,7 @@ def build_front_matter_draft(
         raise FrontMatterError("FRONT_MATTER_INVALID", "invalid ownership_mode")
     title = _title_from_path(source_path, markdown_body)
     doc_id = str(uuid.uuid4())
-    attachment_refs = [
-        {
-            "object_id": item.object_id,
-            "media_type": item.media_type,
-            "media_class": item.media_class,
-        }
-        for item in attachments
-    ]
+    attachment_refs = [attachment_to_front_matter_ref(item) for item in attachments]
     draft: dict[str, Any] = {
         "schema_version": "document-front-matter-v2",
         "id": doc_id,
@@ -76,7 +94,38 @@ def build_front_matter_draft(
         )
     elif origin is not None:
         draft["origin"] = origin
+    _validate_against_schema(draft)
     return draft
+
+
+@lru_cache(maxsize=1)
+def _front_matter_validator() -> Draft202012Validator:
+    fm_schema = json.loads((_CONTRACTS / "front-matter.schema.json").read_text())
+    origin_schema = json.loads((_CONTRACTS / "source-origin.schema.json").read_text())
+    registry = Registry().with_resources(
+        [
+            (
+                "front-matter.schema.json",
+                Resource.from_contents(fm_schema, default_specification=DRAFT202012),
+            ),
+            (
+                "source-origin.schema.json",
+                Resource.from_contents(origin_schema, default_specification=DRAFT202012),
+            ),
+            (
+                "./source-origin.schema.json",
+                Resource.from_contents(origin_schema, default_specification=DRAFT202012),
+            ),
+        ]
+    )
+    return Draft202012Validator(fm_schema, registry=registry)
+
+
+def _validate_against_schema(draft: dict[str, Any]) -> None:
+    try:
+        _front_matter_validator().validate(draft)
+    except ValidationError as exc:
+        raise FrontMatterError("FRONT_MATTER_INVALID", exc.message) from exc
 
 
 def _title_from_path(source_path: str, markdown_body: str) -> str:

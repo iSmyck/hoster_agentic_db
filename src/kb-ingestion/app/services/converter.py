@@ -8,7 +8,12 @@ from pathlib import Path
 from ..adapters.object_store import ObjectStore
 from ..parsers import extraction_router
 from ..parsers.base import ParserError
-from ..schemas.convert import AttachmentManifestEntry, ConvertRunRequest, DryRunReport
+from ..schemas.convert import (
+    AttachmentManifestEntry,
+    ConvertRunRequest,
+    CorrectionTaskDraft,
+    DryRunReport,
+)
 from ..services.media_processor import classify_image, requires_verification
 from ..validators import front_matter
 
@@ -43,34 +48,54 @@ class ConversionService:
         attachments: list[AttachmentManifestEntry] = []
         blockers: list[dict[str, str]] = []
         markdown_parts = [parsed.markdown_body] if parsed.markdown_body else []
+        empty_placeholders = {
+            "",
+            "(empty pdf)",
+            "(empty document)",
+            "(empty docx)",
+            "(empty pptx)",
+            "(empty html document)",
+        }
         for media in parsed.embedded_media:
-            classified = classify_image(media.filename, media.data, media.media_type)
+            primary_asset = (
+                parsed.markdown_body.strip() in empty_placeholders
+                and len(parsed.embedded_media) == 1
+                and Path(media.filename).name == filename
+            )
+            classified = classify_image(
+                media.filename,
+                media.data,
+                media.media_type,
+                primary_asset=primary_asset,
+            )
             media_object_id = uuid.uuid4().hex
-            self._store.put(
+            staged_media = self._store.put(
                 request.space_id,
                 request.client_id,
                 media_object_id,
                 classified.data,
                 classified.media_type,
             )
-            alt_text = Path(classified.filename).stem.replace("-", " ")
-            automatic = True
-            verification_status = "pending" if requires_verification(classified.media_class) else None
+            alt_text = Path(classified.filename).stem.replace("-", " ") or "image"
+            pending = requires_verification(classified.media_class)
+            verification_status: str = "pending" if pending else "not_required"
             entry = AttachmentManifestEntry(
-                object_id=media_object_id,
-                media_type=classified.media_type,
+                object_id=staged_media.object_id,
+                version=staged_media.version_id,
+                sha256=staged_media.sha256,
+                size=staged_media.size,
+                media_type=staged_media.media_type,
+                source_ref=f"embedded:{classified.filename}",
                 media_class=classified.media_class,
-                alt_text=alt_text,
-                automatic=automatic,
                 verification_status=verification_status,
+                alt_text=alt_text,
+                automatic=True,
             )
             attachments.append(entry)
             if classified.media_class == "decorative":
                 continue
-            markdown_parts.append(
-                f"![{alt_text}](attachment://{media_object_id})",
-            )
-            if verification_status == "pending":
+            markdown_parts.append(f"![{alt_text}](attachment://{staged_media.object_id})")
+            if pending:
                 blockers.append(
                     {
                         "code": "MEDIA_VERIFICATION_PENDING",
@@ -93,6 +118,11 @@ class ConversionService:
         except front_matter.FrontMatterError as exc:
             raise ConversionError(exc.code, exc.message) from exc
 
+        correction_tasks = _build_correction_tasks(
+            blockers=blockers,
+            source_path=request.source_path,
+            document_id=str(draft["id"]),
+        )
         status = "blocked" if blockers else "ready"
         path_map = {request.source_path: request.object_id}
         return DryRunReport(
@@ -101,7 +131,27 @@ class ConversionService:
             attachments=attachments,
             blockers=blockers,
             losses=parsed.losses,
-            errors=[],
+            errors=parsed.errors,
             front_matter_draft=draft,
+            correction_tasks=correction_tasks,
             status=status,
         )
+
+
+def _build_correction_tasks(
+    *,
+    blockers: list[dict[str, str]],
+    source_path: str,
+    document_id: str,
+) -> list[CorrectionTaskDraft]:
+    tasks: list[CorrectionTaskDraft] = []
+    for blocker in blockers:
+        tasks.append(
+            CorrectionTaskDraft(
+                blocker_code=blocker["code"],
+                document_path=source_path,
+                document_id=document_id,
+                reason=blocker["detail"],
+            )
+        )
+    return tasks
